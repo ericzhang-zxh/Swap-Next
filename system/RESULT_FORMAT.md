@@ -1,22 +1,26 @@
-# 原始结果契约 v1
+# Raw Result Contract v1
 
-此契约用于未来独立 runner 接入。当前没有部署采集器；不要由 worker 编造该格式
-来冒充测量。测试目录生成的 synthetic fixture 仅验证分析器，不是实测。
+This v1 contract supports future integration with an independent runner. A
+collector implementing this full contract is not deployed. The Evolve pilot uses
+a separate, narrower protocol; its output does not satisfy this contract. Workers
+must not fabricate this format and present it as measurements. Synthetic fixtures generated in the test directory
+validate only the analyzer; they are not empirical measurements.
 
 ## Manifest
 
-保存 manifest.json；所有 evidence 的相对路径必须留在同一证据目录内，不允许
-符号链接、空文件、../、重复 raw 文件。使用 controller protocol 查询当前协议 hash。
-每个 gate 需要 candidate_commit + pass + 非空日志哈希；skip 不等于 pass。
+Save manifest.json. All relative evidence paths must remain inside the same
+evidence directory. Symlinks, empty files, ../, and duplicate raw files are
+forbidden. Use controller protocol to query the current protocol hash. Every
+gate requires candidate_commit + pass + a hash of a nonempty log; skip is not pass.
 
 ```json
 {
   "schema_version": 1,
   "experiment_id": "trial-001-eval-001",
   "execution_kind": "isolated_guest",
-  "protocol_sha256": "<controller protocol 输出>",
+  "protocol_sha256": "<controller protocol output>",
   "baseline_commit": "<pinned upstream commit>",
-  "candidate_commit": "<候选完整 SHA>",
+  "candidate_commit": "<full candidate SHA>",
   "environment": {
     "compiler_sha256": "<sha256>",
     "config_sha256": "<sha256>",
@@ -25,18 +29,18 @@
     "machine_profile_sha256": "<sha256>"
   },
   "gates": {
-    "<policy 中每一个 gate>": {
+    "<every gate in the policy>": {
       "status": "pass",
-      "candidate_commit": "<候选完整 SHA>",
+      "candidate_commit": "<full candidate SHA>",
       "evidence": {"path": "gates/example.log", "sha256": "<sha256>"}
     }
   },
-  "planned_run_ids": ["<执行前冻结的全部 run ID，包含所有尝试>"],
+  "planned_run_ids": ["<all run IDs frozen before execution, including every attempt>"],
   "runs": [{"path": "runs/example.json", "sha256": "<sha256>"}]
 }
 ```
 
-## 每个 raw run
+## Each Raw Run
 
 ```json
 {
@@ -46,8 +50,8 @@
   "run_id": "unique-run-001",
   "boot_id": "unique-boot-001",
   "variant": "baseline",
-  "kernel_commit": "<完整 SHA>",
-  "booted_commit": "<独立验证的实际 boot SHA>",
+  "kernel_commit": "<full SHA>",
+  "booted_commit": "<independently verified actual boot SHA>",
   "environment": {"compiler_sha256": "...", "config_sha256": "...", "rootfs_sha256": "...", "suite_sha256": "...", "machine_profile_sha256": "..."},
   "partition": "discovery",
   "workload": "anon_disk",
@@ -60,7 +64,7 @@
   "completed_operations": 1000,
   "elapsed_s": 20,
   "cpu_core_seconds": 10,
-  "latency_us": ["每个完成操作的正数延迟；此占位符不是有效数据"],
+  "latency_us": ["positive latency for every completed operation; this placeholder is not valid data"],
   "backend_read_bytes": 4096000,
   "backend_write_bytes": 4096000,
   "metadata_samples": [{"attributable_bytes": 8192, "occupied_slots": 1024}],
@@ -72,24 +76,25 @@
 }
 ```
 
-- baseline/candidate 按同 workload、partition、pair_id 配对，输入 seed 与工作量相同。
-- AB 表示 baseline 先执行，BA 反之，时间戳必须与顺序一致。
-- 每次使用不同 boot_id；所有测量区间不重叠。
-- 每 workload 每分区至少 10 对、两种顺序各至少 5 对。
-- 每分区内 seed 唯一；confirmation 不复用 discovery 的 seed。
-- environment 在 pair 及整个报告内相同；debug gates 可以单独配置，
-  对应配置/工具信息保存在 gate evidence 中，由 reviewer 检查。
-- 分母必须反映真正完成且校验成功的工作。超时、无 swap 活动、零工作均拒绝。
-- 不允许 NaN/Infinity、bool 冒充数字、缺字段、重复 JSON key、错 SHA 或 stale gate。
+- Pair baseline/candidate by the same workload, partition, and pair_id, with identical input seeds and amounts of work.
+- AB means baseline executes first; BA means the reverse. Timestamps must agree with that order.
+- Use a different boot_id each time; all measurement intervals must be nonoverlapping.
+- At least 10 pairs per workload per partition, with at least 5 pairs in each order.
+- Seeds are unique within each partition; confirmation does not reuse discovery seeds.
+- The environment is identical within each pair and throughout the report. Debug gates may use separate configurations; record the corresponding configuration/tool information in gate evidence for reviewer inspection.
+- Denominators must reflect work actually completed and successfully validated. Reject timeouts, no swap activity, and zero work.
+- Reject NaN/Infinity, bool values masquerading as numbers, missing fields, duplicate JSON keys, incorrect SHAs, and stale gates.
 
-## 信任边界
+## Trust Boundary
 
-哈希只能发现文件变化，不能证明内容是真的。schema 中的 booted_commit、
-gates 和计数仍是输入声明。分析器输出始终 provenance_verified=false、
-holdout_verified=false、auto_promote=false。必须由 controller 的可信采集
-通道验证 boot/kernel image/日志/计数，并审核 hash 对应的内容；不能让候选同时
-控制日志和 hash。报告是 review 输入，不是签名证书。
+Hashes detect file changes; they do not prove that the contents are true. The
+schema’s booted_commit, gates, and counters remain input claims. Analyzer output
+always sets provenance_verified=false, holdout_verified=false, and
+auto_promote=false. The controller’s trusted collection channel must verify
+boot/kernel image/logs/counters and review the contents associated with each
+hash; candidates must not control both logs and hashes. A report is input to
+review, not a signed certificate.
 
-NEEDS_CALIBRATION：还没冻结数值阈值。
-REJECT_OR_NO_GAIN：统计效果没有达到已校准约束。
-REVIEW_REQUIRED：数值约束满足，但仍不是可自动合并的结论。
+NEEDS_CALIBRATION: numerical thresholds have not yet been frozen.
+REJECT_OR_NO_GAIN: statistical effects do not satisfy the calibrated constraints.
+REVIEW_REQUIRED: numerical constraints are satisfied, but the result still does not authorize automatic merging.

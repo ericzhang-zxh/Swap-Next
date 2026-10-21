@@ -41,3 +41,7 @@ These results predate this repository layout. Each backend has only two AB/BA pa
 ## Provenance and license
 
 Our controller and kernel modifications use GPL-2.0-only; see [LICENSE](LICENSE). Linux retains its own licenses in the submodule. OpenEvolve is an external pinned dependency with its own license. The code and experiment descriptions were developed with substantial AI assistance. No AI-generated Signed-off-by tags or human DCO certification are implied. Experimental patches are independent alternatives, not a patch series.
+
+## Contributor guidance
+
+Project-authored writing is in English. Follow [kernel code taste rules](system/CODE_PATTERNS.md) and use the repository-local [kernel patch review skill](.agents/skills/kernel-patch-review/SKILL.md) when reviewing kernel changes. This policy does not alter upstream content or global assistant preferences.
