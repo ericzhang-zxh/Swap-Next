@@ -1,0 +1,4 @@
+interface:
+  display_name: "Closed-loop Evolve"
+  short_description: "Run bounded experiments with verified feedback"
+  default_prompt: "Use $closed-loop-evolve to resume the current campaign, reconcile its evidence, and execute the next authorized feedback round."

@@ -1,6 +1,7 @@
 # Swap Next contributor contract
 
 - Write all project-authored documentation, code comments, commit messages and repository review artifacts in English. This rule applies only to this repository; preserve upstream and third-party source text.
+- For bounded optimization campaigns and resume decisions, use `.agents/skills/closed-loop-evolve/SKILL.md`; this does not itself authorize running or publishing experiments.
 - For kernel patch reviews, use `.agents/skills/kernel-patch-review/SKILL.md` and `evolve/control/CODE_PATTERNS.md`.
 - Read README.md, evolve/control/PRINCIPLES.md, evolve/control/CODE_PATTERNS.md and evolve/control/config/policy.json first.
 - Run all kernel and sparse work on the designated Linux worker, never the controller laptop.

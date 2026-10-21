@@ -30,3 +30,12 @@ written to benchmark/xswap/state-layout-v1/calibration.json for its evaluator.
 Archived Evolve runtime is never searched or imported. There is no unattended
 model worker, automatic merge, or promotion. The dated xswap deadline remains
 frozen; relocation does not authorize another campaign.
+
+## Unified workflow
+
+Use the repository [closed-loop-evolve skill](../.agents/skills/closed-loop-evolve/SKILL.md)
+for campaign preparation, recovery, candidate execution, benchmark feedback and
+stop decisions. Its [Swap Next binding](../.agents/skills/closed-loop-evolve/references/swap-next.md)
+maps the workflow to these commands and distinguishes historical campaigns from
+newly authorized experiments. The skill coordinates the existing components;
+it does not introduce another database, worker service or acceptance mechanism.
