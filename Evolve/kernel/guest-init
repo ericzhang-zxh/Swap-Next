@@ -1,0 +1,27 @@
+#!/bin/sh
+export PATH=/bin:/sbin
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+exec </dev/console >/dev/console 2>&1
+fail(){ echo "EVOLVE_FAIL $1"; poweroff -f; }
+echo 65536 > /proc/sys/vm/min_free_kbytes
+echo EVOLVE_BOOT
+uname -a
+cat /proc/cmdline
+cat /proc/sys/kernel/random/boot_id
+mkswap /dev/vda || fail mkswap
+swapon /dev/vda || fail swapon
+echo VMSTAT_BEFORE
+grep -E 'pswpin|pswpout|zswpin|zswpout' /proc/vmstat
+kernel-workload || fail workload
+echo VMSTAT_AFTER
+grep -E 'pswpin|pswpout|zswpin|zswpout' /proc/vmstat
+[ "$(wc -l < /proc/swaps)" -eq 1 ] || fail swapoff
+echo META_AFTER_SWAPOFF
+cat /proc/swap_next_metrics
+echo KERNEL_LOG_BEGIN
+dmesg
+echo KERNEL_LOG_END
+echo EVOLVE_PASS
+poweroff -f

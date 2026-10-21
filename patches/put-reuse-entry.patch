@@ -1,0 +1,47 @@
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 601979b97..0fb9950a8 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -1535,13 +1535,11 @@ static void swap_extend_table_try_free(struct swap_cluster_info *ci)
+ 
+ /* Decrease the swap count of one slot, without freeing it */
+ static void __swap_cluster_put_entry(struct swap_cluster_info *ci,
+-				    unsigned int ci_off)
++				    unsigned int ci_off, unsigned long swp_tb)
+ {
+ 	int count;
+-	unsigned long swp_tb;
+ 
+ 	lockdep_assert_held(&ci->lock);
+-	swp_tb = __swap_table_get(ci, ci_off);
+ 	count = __swp_tb_get_count(swp_tb);
+ 
+ 	VM_WARN_ON_ONCE(count <= 0);
+@@ -1618,7 +1616,7 @@ static void swap_put_entries_cluster(struct swap_info_struct *si,
+ 		 * slots will be freed when folio is removed from swap cache
+ 		 * (__swap_cache_del_folio).
+ 		 */
+-		__swap_cluster_put_entry(ci, ci_off);
++		__swap_cluster_put_entry(ci, ci_off, swp_tb);
+ 		if (ci_batch != -1) {
+ 			__swap_cluster_free_entries(si, ci, ci_batch, ci_off - ci_batch);
+ 			ci_batch = -1;
+@@ -1721,7 +1719,7 @@ static int swap_dup_entries_cluster(struct swap_info_struct *si,
+ 	return 0;
+ failed:
+ 	while (ci_off-- > ci_start)
+-		__swap_cluster_put_entry(ci, ci_off);
++		__swap_cluster_put_entry(ci, ci_off, __swap_table_get(ci, ci_off));
+ 	swap_extend_table_try_free(ci);
+ 	swap_cluster_unlock(ci);
+ 	return err;
+@@ -2201,7 +2199,8 @@ void swap_free_hibernation_slot(swp_entry_t entry)
+ 	pgoff_t offset = swp_offset(entry);
+ 
+ 	ci = swap_cluster_lock(si, offset);
+-	__swap_cluster_put_entry(ci, offset % SWAPFILE_CLUSTER);
++	__swap_cluster_put_entry(ci, offset % SWAPFILE_CLUSTER,
++				 __swap_table_get(ci, offset % SWAPFILE_CLUSTER));
+ 	/*
+ 	 * A slot with a folio in the swap cache is freed when the folio
+ 	 * leaves the cache, the same rule swap_put_entries_cluster() follows.

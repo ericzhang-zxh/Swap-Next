@@ -1,0 +1,15 @@
+# Runtime state and build products
+worktrees/
+system/state/
+**/__pycache__/
+**/.venv/
+Evolve/kernel/builds/
+Evolve/kernel/runs/
+Evolve/kernel/evaluations/
+Evolve/kernel/state*/
+Evolve/kernel/rootfs/
+Evolve/kernel/*.cpio.gz
+Evolve/kernel/.runtime.lock
+*.log
+.env
+.env.*

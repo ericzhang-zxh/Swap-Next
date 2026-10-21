@@ -1,0 +1,9 @@
+{
+  "upstream_url": "https://github.com/torvalds/linux.git",
+  "upstream_ref": "refs/heads/master",
+  "upstream_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "baseline_date": "2026-10-20",
+  "author": "Eric Zhang <zxh@xh-zhang.com>",
+  "note": "The submodule is pinned to public upstream; our controller is outside its tree. Moving upstream requires a new baseline/campaign.",
+  "source_layout": "linux submodule plus sibling system and Evolve"
+}

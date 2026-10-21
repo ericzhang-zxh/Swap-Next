@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "kind": "historical_observation_summary",
+  "upstream": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "original_framework_commit": "f3cec46477166e01e4c732006a85a21faaff10f1",
+  "note": "Recorded before repository relocation. Original source commit IDs are provenance identifiers, not fetchable commits in this repository. Patches are independently based on upstream; do not apply cumulatively. Raw logs/builds remain outside this public repository. No performance acceptance, calibration or holdout. mean run-p99 is not pooled p99.",
+  "candidates": [
+    {
+      "candidate": "extend-early-return",
+      "original_source_commit": "59f82b530070fc0f0c308530b28b33113b7503a1",
+      "patch": "patches/extend-early-return.patch",
+      "status": "PILOT_COMPLETE_REVIEW_REQUIRED",
+      "independent_boots": 8,
+      "metrics": {
+        "pilot_pass": 1.0,
+        "combined_score": 0.9852081445536897,
+        "latency_worst_backend_relative_score": 0.9852081445536897,
+        "metadata_peak_ratio": 1.0039772251528092
+      },
+      "comparison": {
+        "disk": {
+          "A": {
+            "swapped_first_access_p99_us": 349.009,
+            "selected_metadata_requested_peak_bytes": 4240896.0,
+            "fork_exit_wall_ms": 4.577404
+          },
+          "B": {
+            "swapped_first_access_p99_us": 354.249,
+            "selected_metadata_requested_peak_bytes": 4194816.0,
+            "fork_exit_wall_ms": 4.7612775
+          }
+        },
+        "zswap": {
+          "A": {
+            "swapped_first_access_p99_us": 287.2425,
+            "selected_metadata_requested_peak_bytes": 6114816.0,
+            "fork_exit_wall_ms": 5.0233455
+          },
+          "B": {
+            "swapped_first_access_p99_us": 262.805,
+            "selected_metadata_requested_peak_bytes": 6139136.0,
+            "fork_exit_wall_ms": 4.6964760000000005
+          }
+        }
+      },
+      "performance_accepted": false
+    },
+    {
+      "candidate": "put-reuse-entry",
+      "original_source_commit": "642866aeba504f9273bad151dd586fd6609a67ea",
+      "patch": "patches/put-reuse-entry.patch",
+      "status": "PILOT_COMPLETE_REVIEW_REQUIRED",
+      "independent_boots": 8,
+      "metrics": {
+        "pilot_pass": 1.0,
+        "combined_score": 0.8857343670131198,
+        "latency_worst_backend_relative_score": 0.8857343670131198,
+        "metadata_peak_ratio": 1.0177698800533097
+      },
+      "comparison": {
+        "disk": {
+          "A": {
+            "swapped_first_access_p99_us": 366.3425,
+            "selected_metadata_requested_peak_bytes": 4248576.0,
+            "fork_exit_wall_ms": 6.539035999999999
+          },
+          "B": {
+            "swapped_first_access_p99_us": 367.13149999999996,
+            "selected_metadata_requested_peak_bytes": 4015616.0,
+            "fork_exit_wall_ms": 5.0733795
+          }
+        },
+        "zswap": {
+          "A": {
+            "swapped_first_access_p99_us": 228.7285,
+            "selected_metadata_requested_peak_bytes": 6338816.0,
+            "fork_exit_wall_ms": 4.5968824999999995
+          },
+          "B": {
+            "swapped_first_access_p99_us": 258.236,
+            "selected_metadata_requested_peak_bytes": 6451456.0,
+            "fork_exit_wall_ms": 5.8324295
+          }
+        }
+      },
+      "performance_accepted": false
+    },
+    {
+      "candidate": "put-reuse-early-return",
+      "original_source_commit": "ad79918bba11eb7aeee39b411f2aaa96a3c0bae7",
+      "patch": "patches/put-reuse-early-return.patch",
+      "status": "PILOT_COMPLETE_REVIEW_REQUIRED",
+      "independent_boots": 8,
+      "metrics": {
+        "pilot_pass": 1.0,
+        "combined_score": 0.8362418066752053,
+        "latency_worst_backend_relative_score": 0.8362418066752053,
+        "metadata_peak_ratio": 1.0141329728401132
+      },
+      "comparison": {
+        "disk": {
+          "A": {
+            "swapped_first_access_p99_us": 355.182,
+            "selected_metadata_requested_peak_bytes": 4211456.0,
+            "fork_exit_wall_ms": 5.280628999999999
+          },
+          "B": {
+            "swapped_first_access_p99_us": 424.736,
+            "selected_metadata_requested_peak_bytes": 4263936.0,
+            "fork_exit_wall_ms": 3.930805
+          }
+        },
+        "zswap": {
+          "A": {
+            "swapped_first_access_p99_us": 287.052,
+            "selected_metadata_requested_peak_bytes": 6249216.0,
+            "fork_exit_wall_ms": 5.938409500000001
+          },
+          "B": {
+            "swapped_first_access_p99_us": 301.5195,
+            "selected_metadata_requested_peak_bytes": 6337536.0,
+            "fork_exit_wall_ms": 5.5325415
+          }
+        }
+      },
+      "performance_accepted": false
+    }
+  ]
+}

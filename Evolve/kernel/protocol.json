@@ -1,0 +1,41 @@
+{
+  "schema": 2,
+  "name": "swap-next-public-pilot-v1",
+  "purpose": "Connect proposal, immutable patch, isolated build, KVM evidence and OpenEvolve feedback; not performance acceptance",
+  "baseline_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "baseline_build": "baseline",
+  "backends": [
+    "disk",
+    "zswap"
+  ],
+  "pairs_per_backend": 2,
+  "order": [
+    "AB",
+    "BA"
+  ],
+  "primary_observation": "swapped_first_access_p99_us",
+  "metadata_observation": "selected cluster/table requested bytes, not physical RAM or all swap metadata",
+  "candidate_specific_observation": "fork_exit_wall_ms includes scheduling and child access; not isolated helper duration",
+  "max_candidates": 8,
+  "build_wall_seconds": 900,
+  "guest_wall_seconds": 600,
+  "performance_acceptance": false,
+  "auto_promote": false,
+  "unimplemented_acceptance_gates": [
+    "gcc_swap_off",
+    "sparse",
+    "allocation_failure",
+    "io_failure",
+    "memcg_limits",
+    "large_folio",
+    "lockdep",
+    "kasan",
+    "kcsan",
+    "fragmented_swap",
+    "mixed_file_anon",
+    "AA calibration",
+    "independent confirmation and holdout"
+  ],
+  "revision_reason": "Relocated public source layout; prepare new baseline and initrd before evaluation. No historical manifests are reused.",
+  "session_runtime_enabled": true
+}
