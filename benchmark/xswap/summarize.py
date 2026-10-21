@@ -27,7 +27,7 @@ def main():
             row['boot_id_sha256'] = hashlib.sha256(run['boot_id'].encode()).hexdigest()
             rows.append(row)
         evaluations.append({key: report[key] for key in ('evaluation_id', 'candidate_id', 'candidate_commit', 'calibration', 'status', 'suite_sha256', 'metrics', 'comparison', 'missing_acceptance_gates')} | {'runs': rows, 'performance_accepted': False, 'auto_promote': False})
-    attempts = json.loads((BASE / 'state-runtime/attempts.json').read_text())
+    attempts = json.loads((BASE / 'state-runtime-layout-v1/attempts.json').read_text())
     passed = 0
     failures = []
     for attempt in attempts:

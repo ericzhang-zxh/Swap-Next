@@ -103,7 +103,7 @@ def evaluate(program_path):
                 raise ValueError('A/A commit mismatch')
             buildname, manifest = protocol['baseline_build'], baseline
         else:
-            calibration_path = BASE / 'state-v2/calibration.json'
+            calibration_path = BASE / 'state-layout-v1/calibration.json'
             calibration_report = json.loads(calibration_path.read_text())
             if calibration_report['suite_sha256'] != hashes or calibration_report['status'] != 'PILOT_COMPLETE_REVIEW_REQUIRED':
                 raise ValueError('missing or stale A/A calibration')
@@ -114,7 +114,7 @@ def evaluate(program_path):
             buildname = ident + '-' + request['candidate_commit'][:8]
             build = KERNEL / 'builds' / buildname
             if not build.exists():
-                invoke(['python3', str(KERNEL / 'build.py'), '--commit', request['candidate_commit'], '--name', buildname, '--config', str(PROJECT / 'config/xswap-kernel.config'), '--no-instrumentation'], state / 'build.log', 1000)
+                invoke(['python3', str(KERNEL / 'build.py'), '--commit', request['candidate_commit'], '--name', buildname, '--config', str(PROJECT / 'benchmark/config/xswap-kernel.config'), '--no-instrumentation'], state / 'build.log', 1000)
             manifest = json.loads((build / 'result.json').read_text())
             if not manifest['passed'] or manifest['commit'] != request['candidate_commit']:
                 raise ValueError('failed or stale candidate build')

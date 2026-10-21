@@ -7,9 +7,13 @@ from openevolve.evaluator import Evaluator
 BASE=pathlib.Path(__file__).resolve().parent
 PROJECT=BASE.parents[1]
 CONTROL=PROJECT/"linux"
+# Suite-owned state never imports archived Evolve runtime.
+ADAPTER=BASE
+BASE=PROJECT/"benchmark"/"kernel"
+sys.path.insert(0,str(BASE))
 def main():
  p=argparse.ArgumentParser();p.add_argument("action",choices=["evaluate","next","status"]);p.add_argument("--candidate")
- a=p.parse_args();state=BASE/"state-v2";state.mkdir(exist_ok=True)
+ a=p.parse_args();state=ADAPTER/"state-layout-v1";state.mkdir(exist_ok=True)
  with (state/".lock").open("a") as lock:
   fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
   db=ProgramDatabase(DatabaseConfig(in_memory=True,population_size=8,archive_size=8,num_islands=1,random_seed=42))

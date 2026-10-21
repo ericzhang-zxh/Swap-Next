@@ -1,9 +1,9 @@
-# OpenEvolve kernel pilot adapter
+# Benchmark setup and legacy kernel pilot
 
 This directory connects controller-approved kernel patches to an isolated build,
 KVM guest measurements, retained evidence, and OpenEvolve's program database.
 It is a pilot, not a performance acceptance system. **The legacy instrumented adapter has not yet been rebuilt and booted after relocation.**
-The separate [xswap adapter](xswap/README.md) has fresh build/KVM evidence in
+The separate [xswap suite](xswap/README.md) has historical build/KVM evidence from before this relocation in
 [its dated report](../results/xswap-2026-10-21/README.md). No historical build
 manifests, guest evidence, database, binaries, or runtime state are bundled.
 
@@ -18,7 +18,7 @@ All paths derive from this checkout, with no sibling private repositories:
 - `../linux/`: upstream Linux submodule and Git objects used for snapshots.
 - `../system/controller.py`: candidate scope/static checks.
 - `../system/state/`: controller state, including the `STOP` sentinel.
-- `../config/kernel.config`: shared baseline/candidate configuration.
+- `config/kernel.config`: shared baseline/candidate configuration.
 - `kernel/`: trusted evaluator, workload, overlay, build and guest runners.
 
 The frozen public baseline is upstream commit
@@ -41,18 +41,18 @@ Linux KVM access and QEMU. Do not run these kernel tasks on a non-Linux controll
 Use a dedicated Linux environment with Git, Python, GCC/static libc development
 files, kernel build dependencies, util-linux (`unshare`, `setpriv`, `prlimit`),
 GNU core utilities, cpio, gzip, and `qemu-system-x86_64`.
-`requirements.snapshot.txt` records pinned Python dependencies and the public
+`../evolve/requirements.snapshot.txt` records pinned Python dependencies and the public
 OpenEvolve Git revision; fresh installation of this snapshot is not verified here.
 
 From the superproject root:
 
 ```sh
-python3 -m venv Evolve/.venv
-Evolve/.venv/bin/pip install -r Evolve/requirements.snapshot.txt
-python3 Evolve/kernel/build.py \
+python3 -m venv evolve/.venv
+evolve/.venv/bin/pip install -r evolve/requirements.snapshot.txt
+python3 benchmark/kernel/build.py \
   --commit 744e5400b36f84b4816e3ff8531ec2dff52b474c \
-  --name baseline --config config/kernel.config
-python3 Evolve/kernel/prepare-rootfs.py --rootfs-template /path/to/trusted-guest-template
+  --name baseline --config benchmark/config/kernel.config
+python3 benchmark/kernel/prepare-rootfs.py --rootfs-template /path/to/trusted-guest-template
 ```
 
 A new baseline build and initrd are required before any evaluation. Existing
@@ -79,9 +79,9 @@ needed. Templates and generated binaries remain local artifacts.
 After creating and committing a candidate through `system/controller.py` from the superproject root:
 
 ```sh
-Evolve/.venv/bin/python Evolve/kernel/loop.py evaluate --candidate example-candidate
-Evolve/.venv/bin/python Evolve/kernel/loop.py status
-Evolve/.venv/bin/python Evolve/kernel/loop.py next
+evolve/.venv/bin/python evolve/kernel/loop.py evaluate --candidate example-candidate
+evolve/.venv/bin/python evolve/kernel/loop.py status
+evolve/.venv/bin/python evolve/kernel/loop.py next
 ```
 
 `next` writes a proposal brief; it does not start a model. Evaluation runs fresh
@@ -106,7 +106,7 @@ run from this environment, with its referenced `serial.log` still present:
 
 ```sh
 SWAP_NEXT_EVIDENCE_FIXTURE=/path/to/disk-run/result.json \
-  python3 -m unittest discover -s Evolve/kernel -p test_evidence.py -v
+  python3 -m unittest discover -s benchmark/kernel -p test_evidence.py -v
 ```
 
 Without that variable the fixture-dependent test class explicitly skips. A skip

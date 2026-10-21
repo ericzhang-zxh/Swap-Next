@@ -18,15 +18,15 @@ def main():
     if not re.fullmatch("[a-z0-9-]{1,48}",a.build):raise SystemExit("invalid build name")
     if STOP.exists() or CAMPAIGN_STOP.exists():raise SystemExit("STOP")
     BASE.joinpath("runs").mkdir(exist_ok=True)
-    with (PROJECT/"Evolve/kernel/.runtime.lock").open("a") as lock:
+    with (PROJECT/"benchmark/kernel/.runtime.lock").open("a") as lock:
       fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
       protocol=json.loads((BASE/"protocol.json").read_text())
       if expired(protocol):raise SystemExit("campaign deadline")
-      state=BASE/"state-runtime";state.mkdir(exist_ok=True)
+      state=BASE/"state-runtime-layout-v1";state.mkdir(exist_ok=True)
       ledger=state/"attempts.json"
       attempts=json.loads(ledger.read_text()) if ledger.exists() else []
       if len(attempts)>=protocol["max_guest_attempts"]:raise SystemExit("guest attempt budget exhausted")
-      build=PROJECT/"Evolve/kernel/builds"/a.build
+      build=PROJECT/"benchmark/kernel/builds"/a.build
       manifest=json.loads((build/"result.json").read_text())
       image=build/"output/arch/x86/boot/bzImage";initrd=BASE/"initramfs.cpio.gz";config=build/"output/.config"
       if manifest.get("passed") is not True or sha(image)!=manifest.get("image_sha256") or sha(config)!=manifest.get("config_sha256"):raise SystemExit("build attestation mismatch")

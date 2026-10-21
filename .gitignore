@@ -23,3 +23,25 @@ Evolve/xswap/*.cpio.gz
 Evolve/xswap/.runtime.lock
 Evolve/xswap/initramfs.json
 system/campaigns/xswap-reference-replay/
+
+# Relocated benchmark runtime; retain old ignores for historical evidence.
+benchmark/kernel/builds/
+benchmark/kernel/runs/
+benchmark/kernel/evaluations/
+benchmark/kernel/state*/
+benchmark/kernel/rootfs/
+benchmark/kernel/*.cpio.gz
+benchmark/kernel/.runtime.lock
+benchmark/kernel/initramfs.json
+benchmark/xswap/builds/
+benchmark/xswap/runs/
+benchmark/xswap/evaluations/
+benchmark/xswap/state*/
+benchmark/xswap/rootfs/
+benchmark/xswap/*.cpio.gz
+benchmark/xswap/.runtime.lock
+benchmark/xswap/initramfs.json
+
+# Lowercase adapter search state; historical uppercase runtime stays archived.
+evolve/kernel/state*/
+evolve/xswap/state*/

@@ -102,5 +102,5 @@
     "no_new_kernel_warnings"
   ],
   "promotion": "human_review_only",
-  "session_pilot_adapter": "Evolve/kernel"
+  "session_pilot_adapter": "benchmark/kernel"
 }

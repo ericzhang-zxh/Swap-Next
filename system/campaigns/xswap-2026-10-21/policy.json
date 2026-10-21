@@ -92,7 +92,7 @@
     "no_new_kernel_warnings"
   ],
   "promotion": "human_review_only",
-  "session_pilot_adapter": "Evolve/xswap",
+  "session_pilot_adapter": "benchmark/xswap",
   "checkout_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
   "scope_note": "Only conservative xswap metadata growth/shrink heuristics. Full performance acceptance remains disabled. Imported Phase I v4 plus Phase II v1; Phase III excluded.",
   "primary_metric": "mapped_clusters_after_settle"

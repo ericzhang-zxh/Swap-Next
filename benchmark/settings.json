@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "role": "Recorded settings inventory only; runtime source files are authoritative. Source hashes detect drift; review and update records deliberately.",
+  "vm": {
+    "both_suites": {
+      "vcpus": 2,
+      "memory_mib": 4096,
+      "private_disk_gib": 8,
+      "guest_wall_seconds": 600,
+      "serial_log_limit_mib": 16,
+      "network": false,
+      "cpu": "host,migratable=off",
+      "machine": "pc",
+      "min_free_kbytes": 65536
+    },
+    "xswap_max": "8G"
+  },
+  "build": {
+    "jobs": 4,
+    "wall_seconds": 900,
+    "output_budget_gib": 2,
+    "per_process_address_space_bytes": 2147483648,
+    "per_file_bytes": 536870912,
+    "nofile": 512,
+    "nproc": 512,
+    "namespace_root_tmpfs_mib": 128,
+    "namespace_tmp_mib": 64
+  },
+  "workload": {
+    "both_suites": {
+      "target_pages": 16384,
+      "page_bytes": 4096,
+      "target_mib": 64,
+      "shuffle_seed": "0x51a9",
+      "pressure_argv": [
+        "/bin/usemem",
+        "-O",
+        "5G"
+      ],
+      "fork_children": 48,
+      "minimum_timed_samples": 1000,
+      "pageout_wait_seconds": 2,
+      "parent_verification": "Every 64-bit word, including after swapoff",
+      "timing": "CLOCK_MONOTONIC_RAW first access of shuffled swapped parent PTEs"
+    },
+    "kernel": {
+      "pattern": "word index * 0x9e3779b97f4a7c15 XOR 0xa5a5a5a5a5a5a5a5",
+      "child_reads": "one word per child; shared pages",
+      "metadata": "selected requested bytes; not physical RAM"
+    },
+    "xswap": {
+      "pattern": "((word_index/512)*8+word_index%8) * 0x9e3779b97f4a7c15 XOR 0xa5a5a5a5a5a5a5a5",
+      "child_checks": "one page per child after COW",
+      "settle_wait_seconds": 2,
+      "metadata_snapshots": 6,
+      "metadata": "mapped clusters; maximum is sampled, not continuous",
+      "sample_identity": "Every timed swapped PTE must name selected xswap type"
+    }
+  },
+  "protocols": {
+    "kernel": "kernel/protocol.json",
+    "xswap": "xswap/protocol.json"
+  },
+  "kernel_configurations": [
+    "config/kernel.config",
+    "config/xswap-kernel.config"
+  ],
+  "formal_acceptance_policy": "../system/config/policy.json",
+  "discovery_policy": "../system/campaigns/xswap-2026-10-21/policy.json",
+  "protocol_snapshots": {
+    "kernel": {
+      "schema": 2,
+      "name": "swap-next-public-pilot-v1",
+      "purpose": "Connect proposal, immutable patch, isolated build, KVM evidence and OpenEvolve feedback; not performance acceptance",
+      "baseline_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "baseline_build": "baseline",
+      "backends": [
+        "disk",
+        "zswap"
+      ],
+      "pairs_per_backend": 2,
+      "order": [
+        "AB",
+        "BA"
+      ],
+      "primary_observation": "swapped_first_access_p99_us",
+      "metadata_observation": "selected cluster/table requested bytes, not physical RAM or all swap metadata",
+      "candidate_specific_observation": "fork_exit_wall_ms includes scheduling and child access; not isolated helper duration",
+      "max_candidates": 8,
+      "build_wall_seconds": 900,
+      "guest_wall_seconds": 600,
+      "performance_acceptance": false,
+      "auto_promote": false,
+      "unimplemented_acceptance_gates": [
+        "gcc_swap_off",
+        "sparse",
+        "allocation_failure",
+        "io_failure",
+        "memcg_limits",
+        "large_folio",
+        "lockdep",
+        "kasan",
+        "kcsan",
+        "fragmented_swap",
+        "mixed_file_anon",
+        "AA calibration",
+        "independent confirmation and holdout"
+      ],
+      "revision_reason": "Relocated public source layout; prepare new baseline and initrd before evaluation. No historical manifests are reused.",
+      "session_runtime_enabled": true
+    },
+    "xswap": {
+      "schema_version": 1,
+      "campaign": "xswap-2026-10-21",
+      "baseline_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+      "baseline_build": "xswap-reference",
+      "backends": [
+        "disk",
+        "zswap"
+      ],
+      "order": [
+        "AB",
+        "BA"
+      ],
+      "max_candidates": 3,
+      "max_guest_attempts": 48,
+      "deadline_utc": "2026-10-21T12:52:23+00:00",
+      "primary_metric": "mapped_clusters_after_settle",
+      "score": "min across backends of baseline/candidate settled mapped clusters, multiplied by min(1, worst backend baseline/candidate p99)",
+      "performance_accepted": false,
+      "auto_promote": false,
+      "unimplemented_acceptance_gates": [
+        "ten pairs per backend",
+        "independent confirmation",
+        "holdout",
+        "allocation and I/O failure injection",
+        "memcg limit matrix",
+        "large folios",
+        "lockdep",
+        "KASAN",
+        "KCSAN",
+        "fragmentation and multiple physical devices",
+        "oscillating pressure",
+        "full metadata physical RAM accounting"
+      ],
+      "aggregation": "arithmetic mean of per-run metrics; sampled maximum is not a continuous peak"
+    }
+  },
+  "external_inputs": {
+    "rootfs_template": "explicit trusted guest directory; not bundled",
+    "usemem": "external executable from trusted template; version and behavior need separate provenance",
+    "toolchain": "Debian/Ubuntu style x86-64 layout; host tools are not pinned by this inventory"
+  },
+  "source_sha256": {
+    "config/kernel.config": "2c4a7f1d0fdb7bc60e05954729e37763031aba4ecb3d6b385ae88454219e1744",
+    "config/xswap-kernel.config": "2bd105115c661999352074f958a2e9457c57a2934211c5289109dd3687884c67",
+    "kernel/build.py": "6a8fd4c59d076f2670070b07ffe7fd9b4bb659ec42401eef8b9949ca0a0f5729",
+    "kernel/build_namespace.sh": "163322492647feca6a29541739e1f47975349ef6c789f69f69a4a59b236ef668",
+    "kernel/evaluate_kernel.py": "8db86edeb8008525f92ae40bdc9df4699c996ea319b4a8087d29f9fda6ec20dd",
+    "kernel/guest-init": "080340f9d6abc937e335a274213aee79deee13dc99d3d97d20f2102cc8aa4c09",
+    "kernel/instrument.py": "09dd340a226adc5492850f8e20045b81fb615ff2fbcd831dacf6b519e440c26c",
+    "kernel/lifetime.py": "e38c6ce71c80a01a95c6170cdc9d0d5878f83f0dbc016b872afecdd6c69c777e",
+    "kernel/prepare-rootfs.py": "976eaf42023f63d31aead2e48ac341ea4f91fb56b3f48430c5f3fa5027e3d8cc",
+    "kernel/protocol.json": "c04d96b879b0720ec1bfa4f8d5fb466c2e7f69f3f78f39627b6e808f12c0b6ef",
+    "kernel/run.py": "3cd6308aa7b38b4c3db62bca40ce7eede73fabd997e397da92af9cb556218fa1",
+    "kernel/test_evidence.py": "09435dbdf881a39547e32f444c0eb05d97394a73a65b537614d67237425f4280",
+    "kernel/workload.c": "ac08e1244ae505665a3d01e2c923476e1d8a88e55c16468909b057c17de8f2f6",
+    "xswap/evaluate_kernel.py": "1783b1665a07b4d8b95ca341f1e2e48882b3e7024683689066199b3924ce1380",
+    "xswap/evidence.py": "a4f1cf57f65ac0a5fbf7be1bd73ea544a96a416af7f43f5b3143e44073f57784",
+    "xswap/guest-init": "6b9ddc43fbfd7196c5bf313076920cd89abaf3623acdddac149d4ab33596b737",
+    "xswap/import-reference.py": "f6f4c757732f95f59cd9fc13634a625d6830aa30326e2e93956ead3755758268",
+    "xswap/lifetime.py": "e38c6ce71c80a01a95c6170cdc9d0d5878f83f0dbc016b872afecdd6c69c777e",
+    "xswap/prepare-rootfs.py": "454824c480cf5776a59e86a6c937099c506a88035bdd24b2e116dddd63b48e05",
+    "xswap/protocol.json": "aa3a260f9459a5646b651fdf236e82481e25788b7416a199f04ef3d5cba88fd8",
+    "xswap/run.py": "07b051751083cc88d391359d0d1b53cc4c8ee29c353879c9ba6128cbb7ac6644",
+    "xswap/summarize.py": "fc2d6a7f7b0c4f52f3a938a386700a3e6183da06372fc8dea08c48475c66ff37",
+    "xswap/test_evidence.py": "e11b3e81f7f28031ac19e4e6f885ab39b19fd474f215635af8b899acd0b997f8",
+    "xswap/test_provenance.py": "4bba08b906786e16e6f6ac9a0870db30bdab94a4485be31641e5089242d08b9b",
+    "xswap/workload.c": "073e38eca5474f63317320d53fbae8d326f91e43d4ed0c95b2599a7ed30b097f"
+  }
+}

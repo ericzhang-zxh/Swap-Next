@@ -105,7 +105,7 @@
     "no_new_kernel_warnings"
   ],
   "promotion": "human_review_only",
-  "session_pilot_adapter": "Evolve/kernel",
+  "session_pilot_adapter": "benchmark/kernel",
   "checkout_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
   "scope_note": "Import Phase I v4 and Phase II v1 as a separately reviewed baseline. Candidate scope will be narrowed and frozen before optimization. Phase III excluded."
 }

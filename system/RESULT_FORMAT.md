@@ -1,7 +1,7 @@
 # Raw Result Contract v1
 
 This v1 contract supports future integration with an independent runner. A
-collector implementing this full contract is not deployed. The Evolve pilot uses
+collector implementing this full contract is not deployed. The benchmark pilot uses
 a separate, narrower protocol; its output does not satisfy this contract. Workers
 must not fabricate this format and present it as measurements. Synthetic fixtures generated in the test directory
 validate only the analyzer; they are not empirical measurements.

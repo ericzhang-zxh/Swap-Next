@@ -56,7 +56,7 @@ def evaluate(program_path):
         buildname=ident+"-"+request["candidate_commit"][:8];build=BASE/"builds"/buildname
         if not build.exists():
             invoke(["python3",str(BASE/"build.py"),"--commit",request["candidate_commit"],"--name",buildname,
-              "--config",str(PROJECT/"config/kernel.config")],state/"build.log",1500)
+              "--config",str(PROJECT/"benchmark/config/kernel.config")],state/"build.log",1500)
         bm=json.loads((build/"result.json").read_text())
         if not bm["passed"] or bm["commit"]!=request["candidate_commit"]:raise ValueError("failed/stale build")
         if bm["instrument_sha256"]!=baseline["instrument_sha256"] or bm["instrument_sha256"]!=hashes["instrument.py"]:

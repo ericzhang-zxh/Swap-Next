@@ -2,7 +2,7 @@
 
 This isolated harness is not the legacy swap metadata evaluator. It requires a
 controller-reviewed Phase I/II xswap build in the main project's
-Evolve/kernel/builds directory, with instrument_sha256 explicitly null.
+benchmark/kernel/builds directory, with instrument_sha256 explicitly null.
 No candidate source executes on the host through this runner.
 
 Prepare the guest only with an explicitly selected trusted template:
@@ -57,11 +57,11 @@ Primary review limits each child integrity scan to one page; the parent verifies
 
 ## Frozen discovery loop
 
-Run loop.py calibrate with the pinned OpenEvolve Python environment before
+Run evolve/xswap/loop.py calibrate from the repository root with the pinned OpenEvolve Python environment before
 evaluating a candidate. The evaluator requires that successful A/A report to
-match the frozen suite hashes. loop.py evaluate --candidate NAME builds an
+match the frozen suite hashes. evolve/xswap/loop.py evaluate --candidate NAME builds an
 immutable controller candidate and collects fresh AB/BA guest pairs on both
-backends. loop.py next selects references and returns feedback; the active
+backends. evolve/xswap/loop.py next selects references and returns feedback; the active
 assistant proposes the next change. There is no unattended model worker or
 automatic promotion. All patches still use the same imported seed.
 

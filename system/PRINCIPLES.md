@@ -13,7 +13,7 @@ or “successful build” as proof of correctness.
 - **Mechanical gates**: diff allowlists, size budgets, input validation, and frozen configuration hashes reject noncompliant results.
 - **Security boundary**: independent VMs/containers/permission principals, no credentials, no writable host mounts, and network and resource isolation.
 
-The controller provides the first two layers. The Evolve pilot additionally
+The controller provides the first two layers. The benchmark pilot additionally
 provides namespace-isolated builds and KVM guest isolation, which still require
 verification in the deployment environment. The same Unix user can alter rules
 and evidence, so worktrees, JSON, and hashes neither isolate a malicious agent
