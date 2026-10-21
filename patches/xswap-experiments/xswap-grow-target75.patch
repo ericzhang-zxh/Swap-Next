@@ -1,0 +1,38 @@
+From 447ebcc3889c371453c3a5042a9c2cd07ac46a67 Mon Sep 17 00:00:00 2001
+From: Eric Zhang <zxh@xh-zhang.com>
+Date: Wed, 21 Oct 2026 02:24:38 -0700
+Subject: [PATCH] mm: xswap: test tighter headroom with the larger growth cap
+
+The eight-chunk experiment reduced zswap growth episodes from 15-16 to
+13, but neither retention nor tail latency justified adoption under the
+observed A/A variability. Retain that cap and test a 75 percent growth
+occupancy target instead of 65 percent to request less spare mapping.
+
+The target remains between the 50 percent shrink trigger and 85 percent
+grow trigger. Keep the chunk rounding, maximum clamp, stale-range
+validation, locks, no-reclaim allocation and failure handling unchanged.
+
+This trades less requested headroom for potentially more growth calls.
+It is an evolution of the preceding experiment, expressed as a complete
+independent patch against the same frozen reference. It is not a proven
+performance improvement or a correctness certification.
+---
+ mm/swapfile.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 180cf538f..12cb01f29 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -81,9 +81,9 @@
+  */
+ #define XSWAP_SHRINK_WHEN	50
+ #define XSWAP_SHRINK_UNTIL	70
+-#define XSWAP_GROW_UNTIL	65
++#define XSWAP_GROW_UNTIL	75
+ #define XSWAP_GROW_WHEN		85
+-#define XSWAP_GROW_CHUNKS	4
++#define XSWAP_GROW_CHUNKS	8
+ 
+ static bool xswap_should_grow(struct swap_info_struct *si);
+ static unsigned long xswap_grow(struct swap_info_struct *si);

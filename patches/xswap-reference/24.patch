@@ -1,0 +1,147 @@
+From 80bc843731f44b6476957a06fc908241a11bc770 Mon Sep 17 00:00:00 2001
+From: Baoquan He <hebaoquan@kylinos.cn>
+Date: Wed, 21 Oct 2026 01:59:13 -0700
+Subject: [PATCH] mm, swap: enable THP swapin for xswap entries
+
+Read a large anon folio back as one unit when all of its xswap entries are
+contiguous on one physical swap device, instead of falling back to order-0
+faults. The device is marked SWP_SYNCHRONOUS_IO, which is required for THP
+swapin and also skips readahead, so no swap cache slot is pinned while
+xswap tries to shrink.
+
+A batched read is refused when its data is still in zswap or spans more
+than one device, since zswap cannot load a large folio. It is then read
+page by page and the fault retries at a smaller order.
+xswap_check_backing() decides this under the cluster lock, before the folio
+is allocated, so zswap_load() takes the physical path instead of warning.
+
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ mm/memory.c     |  7 +++++--
+ mm/swap.h       |  8 ++++++++
+ mm/swap_state.c |  6 ++++++
+ mm/swapfile.c   | 36 +++++++++++++++++++++++++++++++++++-
+ 4 files changed, 54 insertions(+), 3 deletions(-)
+
+diff --git a/mm/memory.c b/mm/memory.c
+index 1f83a26f8..6fd925877 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -4833,15 +4833,18 @@ static unsigned long thp_swapin_suitable_orders(struct vm_fault *vmf)
+ 	if (unlikely(userfaultfd_armed(vma)))
+ 		return 0;
+ 
++	entry = softleaf_from_pte(vmf->orig_pte);
++
+ 	/*
+ 	 * A large swapped out folio could be partially or fully in zswap. We
+ 	 * lack handling for such cases, so fallback to swapping in order-0
+ 	 * folio.
++	 * An xswap entry is deferred to __swap_cache_add_check() instead.
+ 	 */
+-	if (!zswap_never_enabled())
++	if (!(__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&
++	    !zswap_never_enabled())
+ 		return 0;
+ 
+-	entry = softleaf_from_pte(vmf->orig_pte);
+ 	/*
+ 	 * Get a list of all the (large) orders below PMD_ORDER that are enabled
+ 	 * and suitable for swapping THP.
+diff --git a/mm/swap.h b/mm/swap.h
+index 9f04c8486..628395885 100644
+--- a/mm/swap.h
++++ b/mm/swap.h
+@@ -477,6 +477,8 @@ int shmem_writeout(struct swap_io_ctx *ctx, struct folio *folio,
+ swp_entry_t xswap_slot_backend(struct swap_cluster_info *ci, unsigned int slot);
+ swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order);
+ void xswap_backend_free(swp_entry_t entry, swp_entry_t phys, unsigned int order);
++int xswap_check_backing(struct swap_cluster_info *ci, unsigned int off,
++			unsigned int nr);
+ #else
+ static inline swp_entry_t xswap_slot_backend(struct swap_cluster_info *ci,
+ 					     unsigned int slot)
+@@ -492,6 +494,12 @@ static inline swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int or
+ static inline void xswap_backend_free(swp_entry_t entry, swp_entry_t phys, unsigned int order)
+ {
+ }
++
++static inline int xswap_check_backing(struct swap_cluster_info *ci,
++				      unsigned int off, unsigned int nr)
++{
++	return nr;
++}
+ #endif /* CONFIG_XSWAP */
+ 
+ #endif /* _MM_SWAP_H */
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index c5c182489..56e4879ab 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -194,6 +194,12 @@ static int __swap_cache_add_check(struct swap_cluster_info *ci,
+ 	if (nr == 1)
+ 		return 0;
+ 
++	/* A zswap-backed or mixed batch falls back to a smaller order. */
++	if (__swap_entry_to_info(targ_entry)->flags & SWP_XSWAP) {
++		if (xswap_check_backing(ci, round_down(ci_off, nr), nr) != nr)
++			return -EBUSY;
++	}
++
+ 	is_zero = __swap_table_test_zero(ci, ci_off);
+ 	ci_off = round_down(ci_off, nr);
+ 	ci_end = ci_off + nr;
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 8e005e8d2..8e6b0cb89 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -4454,6 +4454,36 @@ swp_entry_t xswap_slot_backend(struct swap_cluster_info *ci, unsigned int slot)
+ 	return (swp_entry_t){ .val = xs[slot] };
+ }
+ 
++/*
++ * A large xswap folio is read back as one IO only when the whole range is
++ * backed by one device, contiguously. Returns how many leading slots are.
++ */
++int xswap_check_backing(struct swap_cluster_info *ci, unsigned int off,
++			unsigned int nr)
++{
++	swp_entry_t first;
++	unsigned int i;
++
++	lockdep_assert_held(&ci->lock);
++	/* A folio's slots never straddle a cluster, or the walk runs off. */
++	VM_WARN_ON_ONCE(off + nr > SWAPFILE_CLUSTER);
++
++	/* In zswap, which cannot load a large folio. */
++	if (!ci->xs_table || !ci->xs_table[off])
++		return 1;
++
++	first.val = ci->xs_table[off];
++	for (i = 1; i < nr; i++) {
++		swp_entry_t cur = { .val = ci->xs_table[off + i] };
++
++		if (swp_type(cur) != swp_type(first) ||
++		    swp_offset(cur) != swp_offset(first) + i)
++			break;
++	}
++
++	return i;
++}
++
+ /* Cluster lock held. xswap never unmaps a cluster below the mapped prefix. */
+ static unsigned long *xswap_xs_table_locked(struct swap_cluster_info *ci,
+ 					    gfp_t gfp)
+@@ -5345,7 +5375,11 @@ static int xswap_create(int prio)
+ 	maxpages = rounddown(maxpages, SWAPFILE_CLUSTER);
+ 
+ 	si->bdev = NULL;
+-	si->flags |= SWP_XSWAP | SWP_SOLIDSTATE;
++	/*
++	 * Reads are served from zswap, so no readahead. Only a synchronous
++	 * device can swap a large folio back in as a unit.
++	 */
++	si->flags |= SWP_XSWAP | SWP_SOLIDSTATE | SWP_SYNCHRONOUS_IO;
+ 	si->max = maxpages;
+ 	si->pages = maxpages - 1;
+ 	/*

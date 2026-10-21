@@ -1,0 +1,49 @@
+From 3d006f617761bd331218a3a3cbe97b99d8ad3cd0 Mon Sep 17 00:00:00 2001
+From: Baoquan He <hebaoquan@kylinos.cn>
+Date: Wed, 21 Oct 2026 01:59:13 -0700
+Subject: [PATCH] mm, swap: drop swap_folio_sector()
+
+No one uses it now.
+
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ include/linux/swap.h |  1 -
+ mm/swapfile.c        | 13 -------------
+ 2 files changed, 14 deletions(-)
+
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index 2080540c6..e78717327 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -417,7 +417,6 @@ extern int __swap_count(swp_entry_t entry);
+ extern bool swap_entry_swapped(struct swap_info_struct *si, swp_entry_t entry);
+ extern int swp_swapcount(swp_entry_t entry);
+ extern struct swap_info_struct *get_swap_device(swp_entry_t entry);
+-sector_t swap_folio_sector(struct folio *folio);
+ sector_t swap_entry_sector(swp_entry_t entry);
+ 
+ /*
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 8e6b0cb89..c63f1c641 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -541,19 +541,6 @@ offset_to_swap_extent(struct swap_info_struct *sis, unsigned long offset)
+ 	BUG();
+ }
+ 
+-sector_t swap_folio_sector(struct folio *folio)
+-{
+-	struct swap_info_struct *sis = __swap_entry_to_info(folio->swap);
+-	struct swap_extent *se;
+-	sector_t sector;
+-	pgoff_t offset;
+-
+-	offset = swp_offset(folio->swap);
+-	se = offset_to_swap_extent(sis, offset);
+-	sector = se->start_block + (offset - se->start_page);
+-	return sector << (PAGE_SHIFT - 9);
+-}
+-
+ sector_t swap_entry_sector(swp_entry_t entry)
+ {
+ 	struct swap_info_struct *sis = __swap_entry_to_info(entry);

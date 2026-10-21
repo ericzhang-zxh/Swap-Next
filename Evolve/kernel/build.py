@@ -28,6 +28,7 @@ def run(cmd, log, timeout=900, output=None):
 def main():
     p=argparse.ArgumentParser();p.add_argument("--commit",required=True);p.add_argument("--name",required=True)
     p.add_argument("--config",type=pathlib.Path,required=True);p.add_argument("--probe",action="store_true")
+    p.add_argument("--no-instrumentation",action="store_true",help="Build without the legacy swap metadata overlay; requires a separate evaluation protocol")
     a=p.parse_args()
     if STOP.exists(): raise SystemExit("STOP")
     if not __import__("re").fullmatch("[a-z0-9-]{1,48}",a.name): raise SystemExit("invalid name")
@@ -41,13 +42,13 @@ def main():
     subprocess.run(["tar","-xf",str(archive),"-C",str(source)],check=True,timeout=120)
     archive.unlink()
     overlay=BASE/"instrument.py"
-    if overlay.exists():
+    if not a.no_instrumentation and overlay.exists():
         subprocess.run(["python3",str(overlay),str(source)],check=True,timeout=30)
     out=dest/"output";out.mkdir();shutil.copyfile(a.config,out/".config")
     root=dest/"root";root.mkdir()
     cmd=["unshare","--user","--map-root-user","--mount","--net","--pid","--fork","--kill-child",
          "bash",str(BASE/"build_namespace.sh"),str(root),str(source),str(out),"probe" if a.probe else "build"]
-    meta={"commit":commit,"input_config_sha256":sha(a.config),"instrument_sha256":sha(overlay) if overlay.exists() else None,
+    meta={"commit":commit,"input_config_sha256":sha(a.config),"instrument_sha256":sha(overlay) if not a.no_instrumentation and overlay.exists() else None,
           "isolation":"user/mount/pid/net namespaces, readonly source/toolchain, capabilities dropped",
           "security_limit":"shared host kernel; same-user controller/proposer not isolated; per-process AS limit, monitored disk budget",
           "command":cmd}

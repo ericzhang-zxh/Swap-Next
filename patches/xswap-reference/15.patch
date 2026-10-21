@@ -1,0 +1,286 @@
+From 5c264f367fa61124c26fb4b4d04cd624ba036f8d Mon Sep 17 00:00:00 2001
+From: Nhat Pham <nphamcs@gmail.com>
+Date: Wed, 21 Oct 2026 01:59:13 -0700
+Subject: [PATCH] mm, swap: prepare the swap IO path for xswap backends
+
+An xswap folio is written to a physical device, but stays in the swap
+cache of its own xswap entry, so folio->swap no longer says where the IO
+goes.
+
+The batched swap IO path takes the bio sector from folio->swap, which for
+such a folio resolves the xswap device. That device has no bdev and no
+extents, so the IO is set up wrong.
+
+Pass the entry explicitly instead: __swap_writeout(), swap_add_folio()
+and swap_ops->can_merge() take it as a parameter, and swap_iocb records
+the first entry of each batch. The merge check, the bio sector and the
+completion path all use it.
+
+Signed-off-by: Nhat Pham <nphamcs@gmail.com>
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ include/linux/swap.h     |  1 +
+ include/linux/swap_ops.h |  9 ++++---
+ mm/page_io.c             | 55 ++++++++++++++++++++--------------------
+ mm/swap.h                |  3 ++-
+ mm/swapfile.c            | 13 ++++++++++
+ mm/zswap.c               |  2 +-
+ 6 files changed, 49 insertions(+), 34 deletions(-)
+
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index ae2e49386..2080540c6 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -418,6 +418,7 @@ extern bool swap_entry_swapped(struct swap_info_struct *si, swp_entry_t entry);
+ extern int swp_swapcount(swp_entry_t entry);
+ extern struct swap_info_struct *get_swap_device(swp_entry_t entry);
+ sector_t swap_folio_sector(struct folio *folio);
++sector_t swap_entry_sector(swp_entry_t entry);
+ 
+ /*
+  * If there is an existing swap slot reference (swap entry) and the caller
+diff --git a/include/linux/swap_ops.h b/include/linux/swap_ops.h
+index 57ac6c703..198c5738c 100644
+--- a/include/linux/swap_ops.h
++++ b/include/linux/swap_ops.h
+@@ -10,6 +10,7 @@ struct swap_iocb {
+ 		struct bio	bio;
+ 	};
+ 	struct bio_vec		bvecs[SWAP_CLUSTER_MAX];
++	swp_entry_t		entry;	/* First entry of the batch */
+ 	int			nr_bvecs;
+ 	int			len;
+ };
+@@ -30,15 +31,15 @@ struct swap_io_ctx {
+ struct swap_ops {
+ 	unsigned int		flags;
+ 
+-	bool (*can_merge)(struct folio *folio, struct folio *prev_folio,
+-			size_t prev_folio_size, int rw);
++	bool (*can_merge)(struct folio *folio, swp_entry_t entry,
++			  struct swap_iocb *sio, int rw);
+ 	void (*submit_write)(struct swap_io_ctx *ctx);
+ 	void (*submit_read)(struct swap_io_ctx *ctx);
+ };
+ 
+ void swap_fs_prepare_rw(struct swap_io_ctx *ctx, int rw, struct iov_iter *iter);
+-bool swap_fs_can_merge(struct folio *folio, struct folio *prev_folio,
+-		size_t prev_folio_size, int rw);
++bool swap_fs_can_merge(struct folio *folio, swp_entry_t entry,
++		       struct swap_iocb *sio, int rw);
+ int swap_fs_activate(struct swap_info_struct *sis, const struct swap_ops *ops);
+ 
+ #endif /* _MM_SWAP_OPS_H */
+diff --git a/mm/page_io.c b/mm/page_io.c
+index 25fa9b82e..16ae84e6b 100644
+--- a/mm/page_io.c
++++ b/mm/page_io.c
+@@ -257,7 +257,7 @@ int swap_writeout(struct swap_io_ctx *ctx, struct folio *folio)
+ 		return AOP_WRITEPAGE_ACTIVATE;
+ 	}
+ 
+-	__swap_writeout(ctx, folio);
++	__swap_writeout(ctx, folio, folio->swap);
+ 	return 0;
+ out_unlock:
+ 	folio_unlock(folio);
+@@ -332,24 +332,22 @@ int sio_pool_init(void)
+ }
+ 
+ static bool swap_can_merge(struct swap_io_ctx *ctx, struct folio *folio,
+-		int rw)
++		swp_entry_t entry, int rw)
+ {
+-	struct swap_info_struct *sis = __swap_entry_to_info(folio->swap);
+-	struct bio_vec *last_bv = &ctx->sio->bvecs[ctx->sio->nr_bvecs - 1];
+-	struct folio *prev_folio = bvec_folio(last_bv);
+-	size_t prev_folio_size = folio_size(prev_folio);
++	struct swap_info_struct *sis = __swap_entry_to_info(entry);
+ 
+ 	if (ctx->sis != sis)
+ 		return false;
+-	return sis->ops->can_merge(folio, prev_folio, prev_folio_size, rw);
++	return sis->ops->can_merge(folio, entry, ctx->sio, rw);
+ }
+ 
+-static void swap_add_folio(struct swap_io_ctx *ctx, struct folio *folio, int rw)
++static void swap_add_folio(struct swap_io_ctx *ctx, struct folio *folio,
++			   swp_entry_t entry, int rw)
+ {
+-	struct swap_info_struct *sis = __swap_entry_to_info(folio->swap);
++	struct swap_info_struct *sis = __swap_entry_to_info(entry);
+ 	struct swap_iocb *sio = ctx->sio;
+ 
+-	if (sio && !swap_can_merge(ctx, folio, rw)) {
++	if (sio && !swap_can_merge(ctx, folio, entry, rw)) {
+ 		if (rw == WRITE)
+ 			swap_write_submit(ctx);
+ 		else
+@@ -362,6 +360,7 @@ static void swap_add_folio(struct swap_io_ctx *ctx, struct folio *folio, int rw)
+ 		ctx->sio = sio = mempool_alloc(sio_pool, GFP_NOIO);
+ 		sio->nr_bvecs = 0;
+ 		sio->len = 0;
++		sio->entry = entry;
+ 	}
+ 	bvec_set_folio(&sio->bvecs[sio->nr_bvecs], folio, folio_size(folio), 0);
+ 	sio->len += folio_size(folio);
+@@ -382,7 +381,8 @@ static void swap_add_folio(struct swap_io_ctx *ctx, struct folio *folio, int rw)
+ 	}
+ }
+ 
+-void __swap_writeout(struct swap_io_ctx *ctx, struct folio *folio)
++void __swap_writeout(struct swap_io_ctx *ctx, struct folio *folio,
++		     swp_entry_t entry)
+ {
+ 	VM_BUG_ON_FOLIO(!folio_test_swapcache(folio), folio);
+ 
+@@ -398,7 +398,7 @@ void __swap_writeout(struct swap_io_ctx *ctx, struct folio *folio)
+ 
+ 	folio_start_writeback(folio);
+ 	folio_unlock(folio);
+-	swap_add_folio(ctx, folio, WRITE);
++	swap_add_folio(ctx, folio, entry, WRITE);
+ }
+ 
+ /*
+@@ -507,7 +507,7 @@ void swap_read_folio(struct swap_io_ctx *ctx, struct folio *folio)
+ 
+ 	/* We have to read from slower devices. Increase zswap protection. */
+ 	zswap_folio_swapin(folio);
+-	swap_add_folio(ctx, folio, READ);
++	swap_add_folio(ctx, folio, folio->swap, READ);
+ 
+ finish:
+ 	if (workingset) {
+@@ -539,8 +539,6 @@ static void swap_fs_write_complete(struct kiocb *iocb, long ret)
+ 	bool failed = ret != sio->len;
+ 
+ 	if (failed) {
+-		struct folio *folio = bvec_folio(&sio->bvecs[0]);
+-
+ 		/*
+ 		 * In the case of swap-over-nfs, this can be a temporary failure
+ 		 * if the system has limited memory for allocating transmit
+@@ -548,7 +546,7 @@ static void swap_fs_write_complete(struct kiocb *iocb, long ret)
+ 		 * folio_rotate_reclaimable but rate-limit the messages.
+ 		 */
+ 		pr_err_ratelimited("Write error %ld on dio swapfile (%llu)\n",
+-				   ret, swap_dev_pos(folio->swap));
++				   ret, swap_dev_pos(sio->entry));
+ 	}
+ 
+ 	swap_write_end(sio, failed);
+@@ -620,7 +618,7 @@ static void swap_bdev_submit_write(struct swap_io_ctx *ctx)
+ 	bio_init(bio, ctx->sis->bdev, sio->bvecs, ARRAY_SIZE(sio->bvecs),
+ 			REQ_OP_WRITE | REQ_SWAP);
+ 	bio->bi_iter.bi_size = sio->len;
+-	bio->bi_iter.bi_sector = swap_folio_sector(bio_first_folio_all(bio));
++	bio->bi_iter.bi_sector = swap_entry_sector(sio->entry);
+ 	bio_associate_blkg_from_folio(bio, bio_first_folio_all(bio));
+ 
+ 	if (ctx->sis->flags & SWP_SYNCHRONOUS_IO) {
+@@ -649,7 +647,7 @@ static void swap_bdev_submit_read(struct swap_io_ctx *ctx)
+ 	bio_init(bio, ctx->sis->bdev, sio->bvecs, ARRAY_SIZE(sio->bvecs),
+ 			REQ_OP_READ);
+ 	bio->bi_iter.bi_size = sio->len;
+-	bio->bi_iter.bi_sector = swap_folio_sector(bio_first_folio_all(bio));
++	bio->bi_iter.bi_sector = swap_entry_sector(sio->entry);
+ 
+ 	if (ctx->sis->flags & SWP_SYNCHRONOUS_IO) {
+ 		/*
+@@ -667,13 +665,15 @@ static void swap_bdev_submit_read(struct swap_io_ctx *ctx)
+ 	}
+ }
+ 
+-static bool swap_bdev_can_merge(struct folio *folio, struct folio *prev_folio,
+-		size_t prev_folio_size, int rw)
++static bool swap_bdev_can_merge(struct folio *folio, swp_entry_t entry,
++				struct swap_iocb *sio, int rw)
+ {
+-	if (swap_folio_sector(folio) !=
+-	    swap_folio_sector(prev_folio) + (prev_folio_size >> SECTOR_SHIFT))
++	if (swap_entry_sector(entry) !=
++	    swap_entry_sector(sio->entry) + (sio->len >> SECTOR_SHIFT))
+ 		return false;
+-	if (rw == WRITE && !folio_blkg_can_merge(folio, prev_folio))
++	if (rw == WRITE &&
++	    !folio_blkg_can_merge(folio,
++				  bvec_folio(&sio->bvecs[sio->nr_bvecs - 1])))
+ 		return false;
+ 	return true;
+ }
+@@ -689,7 +689,7 @@ void swap_fs_prepare_rw(struct swap_io_ctx *ctx, int rw, struct iov_iter *iter)
+ 	struct swap_iocb *sio = ctx->sio;
+ 
+ 	init_sync_kiocb(&sio->iocb, ctx->sis->swap_file);
+-	sio->iocb.ki_pos = swap_dev_pos(bvec_folio(&sio->bvecs[0])->swap);
++	sio->iocb.ki_pos = swap_dev_pos(sio->entry);
+ 	if (rw == WRITE)
+ 		sio->iocb.ki_complete = swap_fs_write_complete;
+ 	else
+@@ -700,11 +700,10 @@ void swap_fs_prepare_rw(struct swap_io_ctx *ctx, int rw, struct iov_iter *iter)
+ }
+ EXPORT_SYMBOL_GPL(swap_fs_prepare_rw);
+ 
+-bool swap_fs_can_merge(struct folio *folio, struct folio *prev_folio,
+-		size_t prev_folio_size, int rw)
++bool swap_fs_can_merge(struct folio *folio, swp_entry_t entry,
++		       struct swap_iocb *sio, int rw)
+ {
+-	return swap_dev_pos(folio->swap) ==
+-		swap_dev_pos(prev_folio->swap) + prev_folio_size;
++	return swap_dev_pos(entry) == swap_dev_pos(sio->entry) + sio->len;
+ }
+ EXPORT_SYMBOL_GPL(swap_fs_can_merge);
+ 
+diff --git a/mm/swap.h b/mm/swap.h
+index d5bf21f51..fcde284b1 100644
+--- a/mm/swap.h
++++ b/mm/swap.h
+@@ -258,7 +258,8 @@ void swap_read_folio(struct swap_io_ctx *ctx, struct folio *folio);
+ void swap_read_submit(struct swap_io_ctx *ctx);
+ void swap_write_submit(struct swap_io_ctx *ctx);
+ int swap_writeout(struct swap_io_ctx *ctx, struct folio *folio);
+-void __swap_writeout(struct swap_io_ctx *ctx, struct folio *folio);
++void __swap_writeout(struct swap_io_ctx *ctx, struct folio *folio,
++		     swp_entry_t entry);
+ 
+ /* linux/mm/swap_state.c */
+ extern struct address_space swap_space __read_mostly;
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index bf95663c2..0d1288d36 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -540,6 +540,19 @@ sector_t swap_folio_sector(struct folio *folio)
+ 	return sector << (PAGE_SHIFT - 9);
+ }
+ 
++sector_t swap_entry_sector(swp_entry_t entry)
++{
++	struct swap_info_struct *sis = __swap_entry_to_info(entry);
++	struct swap_extent *se;
++	sector_t sector;
++	pgoff_t offset;
++
++	offset = swp_offset(entry);
++	se = offset_to_swap_extent(sis, offset);
++	sector = se->start_block + (offset - se->start_page);
++	return sector << (PAGE_SHIFT - 9);
++}
++
+ /*
+  * swap allocation tell device that a cluster of swap can now be discarded,
+  * to allow the swap device to optimize its wear-levelling.
+diff --git a/mm/zswap.c b/mm/zswap.c
+index 7fe25f0b1..cdba35e0f 100644
+--- a/mm/zswap.c
++++ b/mm/zswap.c
+@@ -1087,7 +1087,7 @@ static int zswap_writeback_entry(struct zswap_entry *entry,
+ 	folio_put(folio);
+ 
+ 	/* start writeback */
+-	__swap_writeout(&ctx, folio);
++	__swap_writeout(&ctx, folio, folio->swap);
+ 	swap_write_submit(&ctx);
+ 
+ 	return 0;

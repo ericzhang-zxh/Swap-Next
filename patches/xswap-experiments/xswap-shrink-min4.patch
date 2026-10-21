@@ -1,0 +1,34 @@
+From e3c6ac74d117d5fe065cbc0c7a591347663430ce Mon Sep 17 00:00:00 2001
+From: Eric Zhang <zxh@xh-zhang.com>
+Date: Wed, 21 Oct 2026 02:11:23 -0700
+Subject: [PATCH] mm: xswap: test a four-chunk minimum tail shrink
+
+The initial disk and zswap smoke observations retained 429 and 471 free
+clusters at the mapped tail without a shrink. The eight-chunk minimum
+and one-chunk slack require a larger free run in this configuration.
+
+Lower the minimum to four chunks as a bounded metadata-retention
+experiment. Keep the occupancy trigger, shrink target and slack intact.
+The exact tail scan, locked revalidation, PCP invalidation, RCU wait,
+backend release and allocation-failure fallback remain unchanged.
+
+More frequent shrinking can increase unmap and grace-period costs and
+can cause regrowth under oscillating demand. No performance improvement
+or general correctness acceptance is claimed by this experiment.
+---
+ mm/swapfile.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 180cf538f..225c86db5 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -4995,7 +4995,7 @@ static int xswap_mapped_end(pte_t *pte, unsigned long addr, void *data)
+  * costs.
+  */
+ #define XSWAP_SHRINK_SLACK	XSWAP_GROW_CLUSTERS
+-#define XSWAP_SHRINK_MIN	(XSWAP_GROW_CLUSTERS * 8)
++#define XSWAP_SHRINK_MIN	(XSWAP_GROW_CLUSTERS * 4)
+ 
+ static void xswap_shrink_work_fn(struct work_struct *work)
+ {

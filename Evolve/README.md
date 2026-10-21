@@ -2,8 +2,9 @@
 
 This directory connects controller-approved kernel patches to an isolated build,
 KVM guest measurements, retained evidence, and OpenEvolve's program database.
-It is a pilot, not a performance acceptance system. **The relocated public layout
-has not yet been compiled or booted in a fresh KVM run.** No historical build
+It is a pilot, not a performance acceptance system. **The legacy instrumented adapter has not yet been rebuilt and booted after relocation.**
+The separate [xswap adapter](xswap/README.md) has fresh build/KVM evidence in
+[its dated report](../results/xswap-2026-10-21/README.md). No historical build
 manifests, guest evidence, database, binaries, or runtime state are bundled.
 
 The current conversation's assistant proposes changes. There is no automatic

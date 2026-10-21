@@ -24,6 +24,7 @@ PROJECT = CONTROL.parent
 ROOT = PROJECT / "linux"
 STATE = CONTROL / "state"
 POLICY = CONTROL / "config/policy.json"
+WORKTREES = PROJECT / "worktrees"
 
 
 def emit(data):
@@ -35,6 +36,17 @@ def git(root, *args, binary=False, timeout=90):
                        timeout=timeout, check=False)
     require(p.returncode == 0, "git failed: " + p.stderr.decode(errors="replace")[:1000])
     return p.stdout if binary else p.stdout.decode().strip()
+
+
+def configure_campaign(name):
+    """Select a controller-owned frozen campaign, never a worker-supplied path."""
+    global POLICY, STATE, WORKTREES
+    require(re.fullmatch(r"[a-z][a-z0-9-]{0,47}", name), "invalid campaign name")
+    candidate = CONTROL / "campaigns" / name / "policy.json"
+    require(candidate.is_file(), "unknown campaign")
+    POLICY = candidate
+    STATE = CONTROL / "state" / name
+    WORKTREES = PROJECT / "worktrees" / name
 
 
 def host_check():
@@ -60,12 +72,18 @@ def seed():
 def trusted_control():
     require(git(ROOT, "status", "--porcelain", "--untracked-files=all") == "",
             "control checkout is dirty; finalize framework separately")
-    require(git(ROOT, "rev-parse", "HEAD") == seed(),
-            "control checkout must be at frozen framework seed")
+    expected_checkout = policy().get("checkout_ref", seed())
+    require(git(ROOT, "rev-parse", "HEAD") ==
+            git(ROOT, "rev-parse", expected_checkout + "^{commit}"),
+            "control checkout must be at frozen upstream revision")
+
+
+def stopped():
+    return (CONTROL / "state/STOP").exists() or (STATE / "STOP").exists()
 
 
 def active():
-    require(not (STATE / "STOP").exists(), "STOP is set; controller halted")
+    require(not stopped(), "STOP is set; controller halted")
 
 
 @contextmanager
@@ -145,7 +163,7 @@ def get_candidate(name):
     record = records[name]
     require(record["status"] == "active", "candidate is closed")
     root = Path(record["worktree"]).resolve()
-    allowed = (PROJECT / "worktrees").resolve()
+    allowed = WORKTREES.resolve()
     require(root.parent == allowed and root.name == name, "unexpected worktree location")
     require(git(root, "rev-parse", "--path-format=absolute", "--git-common-dir") ==
             git(ROOT, "rev-parse", "--path-format=absolute", "--git-common-dir"),
@@ -188,7 +206,7 @@ def create(name, hypothesis):
         require(len(records) < config["budget"]["max_candidates"], "campaign candidate budget exhausted")
         require(sum(r["status"] == "active" for r in records.values()) <
                 config["budget"]["max_active_candidates"], "active candidate limit reached")
-        root = PROJECT / "worktrees" / name
+        root = WORKTREES / name
         require(not root.exists(), "worktree path already exists")
         root.parent.mkdir(parents=True, exist_ok=True)
         parent = seed()
@@ -200,7 +218,7 @@ def create(name, hypothesis):
         write_json(STATE / "candidates.json", records)
         task = dict(record, allowed_modify=config["allowed_modify"],
                     allowed_add=config["allowed_add"], budget=config["budget"],
-                    primary_metric="throughput_ops_s",
+                    primary_metric=config.get("primary_metric", "throughput_ops_s"),
                     required_reading=[str(PROJECT / "AGENTS.md"), str(CONTROL / "CODE_PATTERNS.md"),
                                       str(CONTROL / "PRINCIPLES.md"), str(CONTROL / "METRICS.md")],
                     boundaries="Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
@@ -243,6 +261,7 @@ def check_candidate(name, static=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--campaign", help="controller-owned campaign name")
     commands = parser.add_subparsers(dest="command", required=True)
     for name in ("doctor", "status", "protocol"):
         commands.add_parser(name)
@@ -260,10 +279,12 @@ def main():
     args = parser.parse_args()
     try:
         host_check()
+        if args.campaign:
+            configure_campaign(args.campaign)
         if args.command == "doctor":
             result = doctor()
         elif args.command == "status":
-            result = {"stopped": (STATE / "STOP").exists(), "candidates": registry(),
+            result = {"stopped": stopped(), "candidates": registry(),
                       "runtime_enabled": policy()["runtime_enabled"],
                       "thresholds_calibrated": policy()["thresholds_calibrated"],
                       "auto_promote": False}

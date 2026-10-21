@@ -1,0 +1,3944 @@
+{
+  "created_utc": "2026-10-21T09:29:57.625489+00:00",
+  "scope": "Phase I v4 + Phase II v1 xswap discovery; Phase III excluded",
+  "evaluations": [
+    {
+      "evaluation_id": "35170481-f8a6-4a3f-b94f-175ebd8fac82",
+      "candidate_id": "xswap-shrink-min4",
+      "candidate_commit": "e3c6ac74d117d5fe065cbc0c7a591347663430ce",
+      "calibration": false,
+      "status": "PILOT_COMPLETE_REVIEW_REQUIRED",
+      "suite_sha256": {
+        "protocol.json": "aa3a260f9459a5646b651fdf236e82481e25788b7416a199f04ef3d5cba88fd8",
+        "evaluate_kernel.py": "1edc23262354c42c075d25869975737777c08143f2505ccd829ca9ff51f9f6ca",
+        "run.py": "2f7ca70a5a08c87a7c745627d189216857d02d88b33bd8b27c1d49af0881af81",
+        "workload.c": "073e38eca5474f63317320d53fbae8d326f91e43d4ed0c95b2599a7ed30b097f",
+        "guest-init": "6b9ddc43fbfd7196c5bf313076920cd89abaf3623acdddac149d4ab33596b737",
+        "prepare-rootfs.py": "454824c480cf5776a59e86a6c937099c506a88035bdd24b2e116dddd63b48e05",
+        "lifetime.py": "e38c6ce71c80a01a95c6170cdc9d0d5878f83f0dbc016b872afecdd6c69c777e",
+        "evidence.py": "a4f1cf57f65ac0a5fbf7be1bd73ea544a96a416af7f43f5b3143e44073f57784",
+        "build.py": "6a8fd4c59d076f2670070b07ffe7fd9b4bb659ec42401eef8b9949ca0a0f5729",
+        "build_namespace.sh": "163322492647feca6a29541739e1f47975349ef6c789f69f69a4a59b236ef668"
+      },
+      "metrics": {
+        "pilot_pass": 1.0,
+        "combined_score": 0.6716417910447762,
+        "latency_worst_backend_relative_score": 1.0309877468571873,
+        "settled_clusters_worst_backend_relative_score": 0.6716417910447762
+      },
+      "comparison": {
+        "disk": {
+          "A": {
+            "mapped_clusters_after_settle": 1058.5,
+            "sampled_mapped_clusters_max": 1058.5,
+            "swapped_first_access_p99_us": 368.7495,
+            "workload_wall_seconds": 21.447537728,
+            "grows_after_settle": 12.0,
+            "shrinks_after_settle": 0.5
+          },
+          "B": {
+            "mapped_clusters_after_settle": 219.0,
+            "sampled_mapped_clusters_max": 219.0,
+            "swapped_first_access_p99_us": 336.61350000000004,
+            "workload_wall_seconds": 19.2769063165,
+            "grows_after_settle": 12.0,
+            "shrinks_after_settle": 1.5
+          }
+        },
+        "zswap": {
+          "A": {
+            "mapped_clusters_after_settle": 1642.5,
+            "sampled_mapped_clusters_max": 1642.5,
+            "swapped_first_access_p99_us": 259.2795,
+            "workload_wall_seconds": 17.436411873,
+            "grows_after_settle": 15.5,
+            "shrinks_after_settle": 0.5
+          },
+          "B": {
+            "mapped_clusters_after_settle": 2445.5,
+            "sampled_mapped_clusters_max": 2445.5,
+            "swapped_first_access_p99_us": 251.48649999999998,
+            "workload_wall_seconds": 17.3800726305,
+            "grows_after_settle": 15.5,
+            "shrinks_after_settle": 1.0
+          }
+        }
+      },
+      "missing_acceptance_gates": [
+        "ten pairs per backend",
+        "independent confirmation",
+        "holdout",
+        "allocation and I/O failure injection",
+        "memcg limit matrix",
+        "large folios",
+        "lockdep",
+        "KASAN",
+        "KCSAN",
+        "fragmentation and multiple physical devices",
+        "oscillating pressure",
+        "full metadata physical RAM accounting"
+      ],
+      "runs": [
+        {
+          "side": "A",
+          "pair": 0,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "32b46a75e92288ff9bce6b0c0186cd26c4fe354b2b0002c76b3735d494e3fc1d",
+          "metrics": {
+            "swapped_first_access_p99_us": 384.583,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 20.945179704,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25470,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25470,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25470,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 9021,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 9021,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25315,
+            "pswpout": 376818,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202520,
+            "sectors_written": 3014544
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 22.010659237013897,
+          "boot_id_sha256": "4aff0eb5c1d5f633f46df407bd22d7f8e65040bb2ae5acf100e16265d7cbb562"
+        },
+        {
+          "side": "B",
+          "pair": 0,
+          "backend": "disk",
+          "source_commit": "e3c6ac74d117d5fe065cbc0c7a591347663430ce",
+          "image_sha256": "9866d88476305472d5d42d74ddb5f3f949819d928c0fad952a6655599d7cf868",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "1901ead7ae4e96d275ee48725fde0ec76342c277b239014e35ff54605fa29992",
+          "metrics": {
+            "swapped_first_access_p99_us": 334.244,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 19.309270135,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 2
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25323,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25323,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25323,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8874,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8874,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25323,
+            "pswpout": 402172,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202584,
+            "sectors_written": 3217376
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 20.009972030005883,
+          "boot_id_sha256": "fa69b4725f2a3f6eeb2bc37801e8fe300c16fb8e8777f219ee560ae8c953ed5b"
+        },
+        {
+          "side": "B",
+          "pair": 1,
+          "backend": "disk",
+          "source_commit": "e3c6ac74d117d5fe065cbc0c7a591347663430ce",
+          "image_sha256": "9866d88476305472d5d42d74ddb5f3f949819d928c0fad952a6655599d7cf868",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "2e9a7e302fa837a44c3959d25c6d96e4d23b5ba26b27144497e04a709f0a0d18",
+          "metrics": {
+            "swapped_first_access_p99_us": 338.983,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 19.244542498,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25312,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25312,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25312,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8863,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8863,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25315,
+            "pswpout": 428446,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202520,
+            "sectors_written": 3427568
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 20.010400603991002,
+          "boot_id_sha256": "e2ae66372ba101a431069caaa9165316800372033c64bf5c4badccdcd5343733"
+        },
+        {
+          "side": "A",
+          "pair": 1,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "4e359b3330e26e774e381539e0bf54aec6c2bed93c160a123920c9d50bcae533",
+          "metrics": {
+            "swapped_first_access_p99_us": 352.916,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 1898,
+              "fork_shared": 1898,
+              "after_children": 1898,
+              "after_reads": 1898,
+              "after_settle": 1898
+            },
+            "sampled_mapped_clusters_max": 1898,
+            "workload_wall_seconds": 21.949895752,
+            "mapped_clusters_after_settle": 1898,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 25499,
+              "tail_free": 236,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 25499,
+              "tail_free": 236,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 25499,
+              "tail_free": 236,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 9050,
+              "tail_free": 236,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 9050,
+              "tail_free": 236,
+              "grows": 12,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25304,
+            "pswpout": 376978,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202432,
+            "sectors_written": 3015824
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 23.011696061992552,
+          "boot_id_sha256": "b64b2f5b219a4fb3ef6b9f2b078554ddfb12bad1686aa4cc7066429f6351cded"
+        },
+        {
+          "side": "A",
+          "pair": 0,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "ff311993568925bbb6166d5cafb36580913164018b3a16f7cb7de709582cf6e9",
+          "metrics": {
+            "swapped_first_access_p99_us": 253.29,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 3066,
+              "fork_shared": 3066,
+              "after_children": 3066,
+              "after_reads": 3066,
+              "after_settle": 3066
+            },
+            "sampled_mapped_clusters_max": 3066,
+            "workload_wall_seconds": 17.302405404,
+            "mapped_clusters_after_settle": 3066,
+            "grows_after_settle": 16,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 3066,
+              "usage_pages": 33713,
+              "tail_free": 636,
+              "grows": 16,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 3066,
+              "usage_pages": 33713,
+              "tail_free": 636,
+              "grows": 16,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 3066,
+              "usage_pages": 33713,
+              "tail_free": 636,
+              "grows": 16,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 3066,
+              "usage_pages": 17264,
+              "tail_free": 636,
+              "grows": 16,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 3066,
+              "usage_pages": 17264,
+              "tail_free": 636,
+              "grows": 16,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 432,
+            "pswpout": 92803,
+            "zswpin": 41242,
+            "zswpout": 546579
+          },
+          "disk_delta": {
+            "sectors_read": 3456,
+            "sectors_written": 742424
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.009940794989234,
+          "boot_id_sha256": "52294fa11f77a14a838ecb80c81295207bd925cab6bee81c3e28928f50bf9813"
+        },
+        {
+          "side": "B",
+          "pair": 0,
+          "backend": "zswap",
+          "source_commit": "e3c6ac74d117d5fe065cbc0c7a591347663430ce",
+          "image_sha256": "9866d88476305472d5d42d74ddb5f3f949819d928c0fad952a6655599d7cf868",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "44bca947b217d0fb89dadef63fdffaffe7f3c0901cd3a7aedb7dd90962985481",
+          "metrics": {
+            "swapped_first_access_p99_us": 267.599,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2409,
+              "fork_shared": 2409,
+              "after_children": 2409,
+              "after_reads": 2409,
+              "after_settle": 2409
+            },
+            "sampled_mapped_clusters_max": 2409,
+            "workload_wall_seconds": 17.776191115,
+            "mapped_clusters_after_settle": 2409,
+            "grows_after_settle": 15,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2409,
+              "usage_pages": 25321,
+              "tail_free": 82,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2409,
+              "usage_pages": 25321,
+              "tail_free": 82,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2409,
+              "usage_pages": 25321,
+              "tail_free": 82,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2409,
+              "usage_pages": 8872,
+              "tail_free": 82,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2409,
+              "usage_pages": 8872,
+              "tail_free": 82,
+              "grows": 15,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 761,
+            "pswpout": 68872,
+            "zswpin": 40927,
+            "zswpout": 546898
+          },
+          "disk_delta": {
+            "sectors_read": 6088,
+            "sectors_written": 550976
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.51003138901433,
+          "boot_id_sha256": "b5a91336bbe62d4b718724598ba517d1c8eddebf316b36563c2c2e9375cc63e7"
+        },
+        {
+          "side": "B",
+          "pair": 1,
+          "backend": "zswap",
+          "source_commit": "e3c6ac74d117d5fe065cbc0c7a591347663430ce",
+          "image_sha256": "9866d88476305472d5d42d74ddb5f3f949819d928c0fad952a6655599d7cf868",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "3dfd30178021886f191278b6927d516a3d5ba0356708e38d4ed7eb14aae86815",
+          "metrics": {
+            "swapped_first_access_p99_us": 235.374,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2482,
+              "fork_shared": 2482,
+              "after_children": 2482,
+              "after_reads": 2482,
+              "after_settle": 2482
+            },
+            "sampled_mapped_clusters_max": 2482,
+            "workload_wall_seconds": 16.983954146,
+            "mapped_clusters_after_settle": 2482,
+            "grows_after_settle": 16,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 25521,
+              "tail_free": 121,
+              "grows": 16,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 25521,
+              "tail_free": 121,
+              "grows": 16,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 25521,
+              "tail_free": 121,
+              "grows": 16,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 9072,
+              "tail_free": 121,
+              "grows": 16,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 9072,
+              "tail_free": 121,
+              "grows": 16,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 421,
+            "pswpout": 75063,
+            "zswpin": 41284,
+            "zswpout": 546812
+          },
+          "disk_delta": {
+            "sectors_read": 3368,
+            "sectors_written": 600504
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.00960941100493,
+          "boot_id_sha256": "65508a061cfd60289f9591bdbbba32bad9a1855174feebf4232cf9e29e4542c0"
+        },
+        {
+          "side": "A",
+          "pair": 1,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "93ffd2c048e24c26c102d4c208a0cde5f106bf0badad24152837a9a31b8af438",
+          "metrics": {
+            "swapped_first_access_p99_us": 265.269,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 17.570418342,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 15,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25312,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25312,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25312,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8863,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8863,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 1197,
+            "pswpout": 70397,
+            "zswpin": 40497,
+            "zswpout": 546280
+          },
+          "disk_delta": {
+            "sectors_read": 9576,
+            "sectors_written": 563176
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.50998543400783,
+          "boot_id_sha256": "c1cb10a15f9d81d9ddbcccf615f7a63fbbc17d3c6c5557472bd7f545433e8c56"
+        }
+      ],
+      "performance_accepted": false,
+      "auto_promote": false
+    },
+    {
+      "evaluation_id": "56009df7-fe08-47d5-942b-9962c93c8bfc",
+      "candidate_id": "xswap-grow-target75",
+      "candidate_commit": "447ebcc3889c371453c3a5042a9c2cd07ac46a67",
+      "calibration": false,
+      "status": "PILOT_COMPLETE_REVIEW_REQUIRED",
+      "suite_sha256": {
+        "protocol.json": "aa3a260f9459a5646b651fdf236e82481e25788b7416a199f04ef3d5cba88fd8",
+        "evaluate_kernel.py": "1edc23262354c42c075d25869975737777c08143f2505ccd829ca9ff51f9f6ca",
+        "run.py": "2f7ca70a5a08c87a7c745627d189216857d02d88b33bd8b27c1d49af0881af81",
+        "workload.c": "073e38eca5474f63317320d53fbae8d326f91e43d4ed0c95b2599a7ed30b097f",
+        "guest-init": "6b9ddc43fbfd7196c5bf313076920cd89abaf3623acdddac149d4ab33596b737",
+        "prepare-rootfs.py": "454824c480cf5776a59e86a6c937099c506a88035bdd24b2e116dddd63b48e05",
+        "lifetime.py": "e38c6ce71c80a01a95c6170cdc9d0d5878f83f0dbc016b872afecdd6c69c777e",
+        "evidence.py": "a4f1cf57f65ac0a5fbf7be1bd73ea544a96a416af7f43f5b3143e44073f57784",
+        "build.py": "6a8fd4c59d076f2670070b07ffe7fd9b4bb659ec42401eef8b9949ca0a0f5729",
+        "build_namespace.sh": "163322492647feca6a29541739e1f47975349ef6c789f69f69a4a59b236ef668"
+      },
+      "metrics": {
+        "pilot_pass": 1.0,
+        "combined_score": 0.8966653632707356,
+        "latency_worst_backend_relative_score": 0.9438582771270903,
+        "settled_clusters_worst_backend_relative_score": 0.95
+      },
+      "comparison": {
+        "disk": {
+          "A": {
+            "mapped_clusters_after_settle": 1898.0,
+            "sampled_mapped_clusters_max": 1898.0,
+            "swapped_first_access_p99_us": 363.2835,
+            "workload_wall_seconds": 20.876195015999997,
+            "grows_after_settle": 12.0,
+            "shrinks_after_settle": 0.0
+          },
+          "B": {
+            "mapped_clusters_after_settle": 949.0,
+            "sampled_mapped_clusters_max": 949.0,
+            "swapped_first_access_p99_us": 384.892,
+            "workload_wall_seconds": 20.4516475705,
+            "grows_after_settle": 18.5,
+            "shrinks_after_settle": 0.5
+          }
+        },
+        "zswap": {
+          "A": {
+            "mapped_clusters_after_settle": 2774.0,
+            "sampled_mapped_clusters_max": 2774.0,
+            "swapped_first_access_p99_us": 257.66999999999996,
+            "workload_wall_seconds": 19.393077585,
+            "grows_after_settle": 15.0,
+            "shrinks_after_settle": 0.0
+          },
+          "B": {
+            "mapped_clusters_after_settle": 2920.0,
+            "sampled_mapped_clusters_max": 2920.0,
+            "swapped_first_access_p99_us": 218.0645,
+            "workload_wall_seconds": 18.4111323765,
+            "grows_after_settle": 23.0,
+            "shrinks_after_settle": 0.0
+          }
+        }
+      },
+      "missing_acceptance_gates": [
+        "ten pairs per backend",
+        "independent confirmation",
+        "holdout",
+        "allocation and I/O failure injection",
+        "memcg limit matrix",
+        "large folios",
+        "lockdep",
+        "KASAN",
+        "KCSAN",
+        "fragmentation and multiple physical devices",
+        "oscillating pressure",
+        "full metadata physical RAM accounting"
+      ],
+      "runs": [
+        {
+          "side": "A",
+          "pair": 0,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "3d2548e5b6146edafb35d7f3eca9b448338b2a19d03558b1204696168bf3f968",
+          "metrics": {
+            "swapped_first_access_p99_us": 381.806,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 1898,
+              "fork_shared": 1898,
+              "after_children": 1898,
+              "after_reads": 1898,
+              "after_settle": 1898
+            },
+            "sampled_mapped_clusters_max": 1898,
+            "workload_wall_seconds": 20.87565015,
+            "mapped_clusters_after_settle": 1898,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26426,
+              "tail_free": 457,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26425,
+              "tail_free": 457,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26425,
+              "tail_free": 457,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 9976,
+              "tail_free": 457,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 9976,
+              "tail_free": 457,
+              "grows": 12,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25349,
+            "pswpout": 385318,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202792,
+            "sectors_written": 3082544
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 22.011727513978258,
+          "boot_id_sha256": "f68c91024acc20c67e30523d31f1f0b3189d33f24151c7dfd715174e6a7b27f2"
+        },
+        {
+          "side": "B",
+          "pair": 0,
+          "backend": "disk",
+          "source_commit": "447ebcc3889c371453c3a5042a9c2cd07ac46a67",
+          "image_sha256": "a892669189778b3cb454fa5a371573105a47b844b7b2cb7e36eb0cf4a90cd863",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "170523af5e2e5252cba327d7a268b6bfb5d806b223ba7f2e568d15b08d06eeee",
+          "metrics": {
+            "swapped_first_access_p99_us": 423.004,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 20.518713567,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 19,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25301,
+              "tail_free": 119,
+              "grows": 19,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25301,
+              "tail_free": 119,
+              "grows": 19,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25301,
+              "tail_free": 119,
+              "grows": 19,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8852,
+              "tail_free": 119,
+              "grows": 19,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8852,
+              "tail_free": 119,
+              "grows": 19,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25298,
+            "pswpout": 391467,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202384,
+            "sectors_written": 3131736
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 21.510764754988486,
+          "boot_id_sha256": "27ef542f6f54233800ae10f231e9340d5efcd38f37c2d37b0a100448407b3d7a"
+        },
+        {
+          "side": "B",
+          "pair": 1,
+          "backend": "disk",
+          "source_commit": "447ebcc3889c371453c3a5042a9c2cd07ac46a67",
+          "image_sha256": "a892669189778b3cb454fa5a371573105a47b844b7b2cb7e36eb0cf4a90cd863",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "91891d936f959088d8ae7fe7ab12ff8acbc8c3efe0224bedbbc15d1bf65b3cdd",
+          "metrics": {
+            "swapped_first_access_p99_us": 346.78,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 1679,
+              "fork_shared": 1679,
+              "after_children": 1679,
+              "after_reads": 1679,
+              "after_settle": 1679
+            },
+            "sampled_mapped_clusters_max": 1679,
+            "workload_wall_seconds": 20.384581574,
+            "mapped_clusters_after_settle": 1679,
+            "grows_after_settle": 18,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1679,
+              "usage_pages": 27008,
+              "tail_free": 230,
+              "grows": 18,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1679,
+              "usage_pages": 27008,
+              "tail_free": 230,
+              "grows": 18,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1679,
+              "usage_pages": 27008,
+              "tail_free": 230,
+              "grows": 18,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1679,
+              "usage_pages": 10559,
+              "tail_free": 230,
+              "grows": 18,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1679,
+              "usage_pages": 10559,
+              "tail_free": 230,
+              "grows": 18,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25305,
+            "pswpout": 381859,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202440,
+            "sectors_written": 3054872
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 21.510985255998094,
+          "boot_id_sha256": "68bda81c698b933522637aceab04d9ccafa355b28b529e45dc1800bf73d09cb6"
+        },
+        {
+          "side": "A",
+          "pair": 1,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "94d694d6e63c58632d3d659c7050ae8288e004c037e8700a95293df96ff8cbbf",
+          "metrics": {
+            "swapped_first_access_p99_us": 344.761,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 1898,
+              "fork_shared": 1898,
+              "after_children": 1898,
+              "after_reads": 1898,
+              "after_settle": 1898
+            },
+            "sampled_mapped_clusters_max": 1898,
+            "workload_wall_seconds": 20.876739882,
+            "mapped_clusters_after_settle": 1898,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26511,
+              "tail_free": 407,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26511,
+              "tail_free": 407,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26511,
+              "tail_free": 407,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 10062,
+              "tail_free": 407,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 10062,
+              "tail_free": 407,
+              "grows": 12,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25348,
+            "pswpout": 397952,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202784,
+            "sectors_written": 3183616
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 22.011792061006417,
+          "boot_id_sha256": "065ff18898e9f8943ea3cab2cd8a202695a8e333b2b7f53e28a8cd439f3d92d4"
+        },
+        {
+          "side": "A",
+          "pair": 0,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "20d63d5ff2e27887cde3ff4e744723ddde7cf91c3d8c31ef6b201cd734cd039e",
+          "metrics": {
+            "swapped_first_access_p99_us": 257.366,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2774,
+              "fork_shared": 2774,
+              "after_children": 2774,
+              "after_reads": 2774,
+              "after_settle": 2774
+            },
+            "sampled_mapped_clusters_max": 2774,
+            "workload_wall_seconds": 18.317540419,
+            "mapped_clusters_after_settle": 2774,
+            "grows_after_settle": 15,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25304,
+              "tail_free": 437,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25304,
+              "tail_free": 437,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25304,
+              "tail_free": 437,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 8855,
+              "tail_free": 437,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 8855,
+              "tail_free": 437,
+              "grows": 15,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 729,
+            "pswpout": 74181,
+            "zswpin": 40953,
+            "zswpout": 546894
+          },
+          "disk_delta": {
+            "sectors_read": 5832,
+            "sectors_written": 593448
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 19.010364465997554,
+          "boot_id_sha256": "25ef6901e8c4f06a7bd15d5be6483ef26c1b08fe5bc4392910b5abebed833971"
+        },
+        {
+          "side": "B",
+          "pair": 0,
+          "backend": "zswap",
+          "source_commit": "447ebcc3889c371453c3a5042a9c2cd07ac46a67",
+          "image_sha256": "a892669189778b3cb454fa5a371573105a47b844b7b2cb7e36eb0cf4a90cd863",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "eb378ac6b6db08d3d3637b23401478548e4fc5136c35a368c38562dd3b91b1ab",
+          "metrics": {
+            "swapped_first_access_p99_us": 253.09,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2920,
+              "fork_shared": 2920,
+              "after_children": 2920,
+              "after_reads": 2920,
+              "after_settle": 2920
+            },
+            "sampled_mapped_clusters_max": 2920,
+            "workload_wall_seconds": 20.891739063,
+            "mapped_clusters_after_settle": 2920,
+            "grows_after_settle": 23,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 25871,
+              "tail_free": 588,
+              "grows": 23,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 25871,
+              "tail_free": 588,
+              "grows": 23,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 25871,
+              "tail_free": 588,
+              "grows": 23,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 9422,
+              "tail_free": 588,
+              "grows": 23,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 9422,
+              "tail_free": 588,
+              "grows": 23,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 815,
+            "pswpout": 67788,
+            "zswpin": 40880,
+            "zswpout": 546823
+          },
+          "disk_delta": {
+            "sectors_read": 6520,
+            "sectors_written": 542304
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 22.011768508004025,
+          "boot_id_sha256": "ef14694bda120cd5cafb37f8e52543447bfb0b7073da86d9fe1822a4e5b8537d"
+        },
+        {
+          "side": "B",
+          "pair": 1,
+          "backend": "zswap",
+          "source_commit": "447ebcc3889c371453c3a5042a9c2cd07ac46a67",
+          "image_sha256": "a892669189778b3cb454fa5a371573105a47b844b7b2cb7e36eb0cf4a90cd863",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "dbaa8e4e9cf03d7b7474796c4e3bff75f293580aecba473997e49268f25a2973",
+          "metrics": {
+            "swapped_first_access_p99_us": 183.039,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2920,
+              "fork_shared": 2920,
+              "after_children": 2920,
+              "after_reads": 2920,
+              "after_settle": 2920
+            },
+            "sampled_mapped_clusters_max": 2920,
+            "workload_wall_seconds": 15.93052569,
+            "mapped_clusters_after_settle": 2920,
+            "grows_after_settle": 23,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 25382,
+              "tail_free": 322,
+              "grows": 23,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 25382,
+              "tail_free": 322,
+              "grows": 23,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 25382,
+              "tail_free": 322,
+              "grows": 23,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 8933,
+              "tail_free": 322,
+              "grows": 23,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2920,
+              "usage_pages": 8933,
+              "tail_free": 322,
+              "grows": 23,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 389,
+            "pswpout": 76069,
+            "zswpin": 41315,
+            "zswpout": 546779
+          },
+          "disk_delta": {
+            "sectors_read": 3112,
+            "sectors_written": 608552
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 17.01000612101052,
+          "boot_id_sha256": "56491effce874533a1c5624e9c7db4d304e3d9484bad93b20704657f4fb994f0"
+        },
+        {
+          "side": "A",
+          "pair": 1,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "063883a1364614735a3ece0a72a0b4c514ca2826e48ea82b31b465519bcc738c",
+          "metrics": {
+            "swapped_first_access_p99_us": 257.974,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2774,
+              "fork_shared": 2774,
+              "after_children": 2774,
+              "after_reads": 2774,
+              "after_settle": 2774
+            },
+            "sampled_mapped_clusters_max": 2774,
+            "workload_wall_seconds": 20.468614751,
+            "mapped_clusters_after_settle": 2774,
+            "grows_after_settle": 15,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25327,
+              "tail_free": 466,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25327,
+              "tail_free": 466,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25327,
+              "tail_free": 466,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 8878,
+              "tail_free": 466,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 8878,
+              "tail_free": 466,
+              "grows": 15,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 792,
+            "pswpout": 61659,
+            "zswpin": 40896,
+            "zswpout": 546790
+          },
+          "disk_delta": {
+            "sectors_read": 6336,
+            "sectors_written": 493272
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 21.512066271010553,
+          "boot_id_sha256": "572f6d29ee233ee721e24788c1ea37e3a3a674b1bdb2f066915637f5c258a27c"
+        }
+      ],
+      "performance_accepted": false,
+      "auto_promote": false
+    },
+    {
+      "evaluation_id": "ac358244-e774-4b61-af18-ca02c8beda1d",
+      "candidate_id": "calibration-aa",
+      "candidate_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+      "calibration": true,
+      "status": "PILOT_COMPLETE_REVIEW_REQUIRED",
+      "suite_sha256": {
+        "protocol.json": "aa3a260f9459a5646b651fdf236e82481e25788b7416a199f04ef3d5cba88fd8",
+        "evaluate_kernel.py": "1edc23262354c42c075d25869975737777c08143f2505ccd829ca9ff51f9f6ca",
+        "run.py": "2f7ca70a5a08c87a7c745627d189216857d02d88b33bd8b27c1d49af0881af81",
+        "workload.c": "073e38eca5474f63317320d53fbae8d326f91e43d4ed0c95b2599a7ed30b097f",
+        "guest-init": "6b9ddc43fbfd7196c5bf313076920cd89abaf3623acdddac149d4ab33596b737",
+        "prepare-rootfs.py": "454824c480cf5776a59e86a6c937099c506a88035bdd24b2e116dddd63b48e05",
+        "lifetime.py": "e38c6ce71c80a01a95c6170cdc9d0d5878f83f0dbc016b872afecdd6c69c777e",
+        "evidence.py": "a4f1cf57f65ac0a5fbf7be1bd73ea544a96a416af7f43f5b3143e44073f57784",
+        "build.py": "6a8fd4c59d076f2670070b07ffe7fd9b4bb659ec42401eef8b9949ca0a0f5729",
+        "build_namespace.sh": "163322492647feca6a29541739e1f47975349ef6c789f69f69a4a59b236ef668"
+      },
+      "metrics": {
+        "pilot_pass": 1.0,
+        "combined_score": 0.9647931159633333,
+        "latency_worst_backend_relative_score": 0.9647931159633333,
+        "settled_clusters_worst_backend_relative_score": 1.0
+      },
+      "comparison": {
+        "disk": {
+          "A": {
+            "mapped_clusters_after_settle": 1898.0,
+            "sampled_mapped_clusters_max": 1898.0,
+            "swapped_first_access_p99_us": 428.416,
+            "workload_wall_seconds": 20.939376393499998,
+            "grows_after_settle": 12.0,
+            "shrinks_after_settle": 0.0
+          },
+          "B": {
+            "mapped_clusters_after_settle": 219.0,
+            "sampled_mapped_clusters_max": 219.0,
+            "swapped_first_access_p99_us": 327.14300000000003,
+            "workload_wall_seconds": 18.934005703,
+            "grows_after_settle": 12.5,
+            "shrinks_after_settle": 1.0
+          }
+        },
+        "zswap": {
+          "A": {
+            "mapped_clusters_after_settle": 1496.5,
+            "sampled_mapped_clusters_max": 1496.5,
+            "swapped_first_access_p99_us": 237.91750000000002,
+            "workload_wall_seconds": 16.6533306335,
+            "grows_after_settle": 15.5,
+            "shrinks_after_settle": 1.0
+          },
+          "B": {
+            "mapped_clusters_after_settle": 1496.5,
+            "sampled_mapped_clusters_max": 1496.5,
+            "swapped_first_access_p99_us": 246.5995,
+            "workload_wall_seconds": 17.4547213445,
+            "grows_after_settle": 15.5,
+            "shrinks_after_settle": 1.0
+          }
+        }
+      },
+      "missing_acceptance_gates": [
+        "ten pairs per backend",
+        "independent confirmation",
+        "holdout",
+        "allocation and I/O failure injection",
+        "memcg limit matrix",
+        "large folios",
+        "lockdep",
+        "KASAN",
+        "KCSAN",
+        "fragmentation and multiple physical devices",
+        "oscillating pressure",
+        "full metadata physical RAM accounting"
+      ],
+      "runs": [
+        {
+          "side": "A",
+          "pair": 0,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "cf3d0bd772b6156d290c06db9888e0bfa10b2ea7c8a05cd74388a08616b9e2a4",
+          "metrics": {
+            "swapped_first_access_p99_us": 398.868,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 1898,
+              "fork_shared": 1898,
+              "after_children": 1898,
+              "after_reads": 1898,
+              "after_settle": 1898
+            },
+            "sampled_mapped_clusters_max": 1898,
+            "workload_wall_seconds": 20.912712296,
+            "mapped_clusters_after_settle": 1898,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26911,
+              "tail_free": 434,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26911,
+              "tail_free": 434,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26911,
+              "tail_free": 434,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 10462,
+              "tail_free": 434,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 10462,
+              "tail_free": 434,
+              "grows": 12,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25304,
+            "pswpout": 391229,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202432,
+            "sectors_written": 3129832
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 22.0102323339961,
+          "boot_id_sha256": "65482602bf52659981a95f4dec2ce0519465229b1c18513e23b456933ed5683c"
+        },
+        {
+          "side": "B",
+          "pair": 0,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "f231dc74a9641e09e3ed6f8b79ed538c46db814034bc15f21d553abc06075dde",
+          "metrics": {
+            "swapped_first_access_p99_us": 300.198,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 17.732191309,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25311,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25311,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25311,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8862,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8862,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25311,
+            "pswpout": 379363,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202488,
+            "sectors_written": 3034904
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.50864119900507,
+          "boot_id_sha256": "1e5b4a13f1bbd5e9509ec3a97119c248c174be392c6eb0671d6fbc16f6de905f"
+        },
+        {
+          "side": "B",
+          "pair": 1,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "59f6d8ecef2cbf10f53ea19504702323c2ad4a25754bae753cbbe1c35e2f09b9",
+          "metrics": {
+            "swapped_first_access_p99_us": 354.088,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 20.135820097,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 13,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25321,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25321,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25321,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8872,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8872,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25320,
+            "pswpout": 429617,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202560,
+            "sectors_written": 3436936
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 21.010522408992983,
+          "boot_id_sha256": "aff5e944d5ef5b81c5dc6ccdeb96831a816a0d3323584c406b399c3f45593531"
+        },
+        {
+          "side": "A",
+          "pair": 1,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "166de3826b15400ab87bf263099f0ad4ea3fecd04c1c7c4c7c109852906a5101",
+          "metrics": {
+            "swapped_first_access_p99_us": 457.964,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 1898,
+              "fork_shared": 1898,
+              "after_children": 1898,
+              "after_reads": 1898,
+              "after_settle": 1898
+            },
+            "sampled_mapped_clusters_max": 1898,
+            "workload_wall_seconds": 20.966040491,
+            "mapped_clusters_after_settle": 1898,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 25925,
+              "tail_free": 197,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 25925,
+              "tail_free": 197,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 25925,
+              "tail_free": 197,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 9476,
+              "tail_free": 197,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 9476,
+              "tail_free": 197,
+              "grows": 12,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25349,
+            "pswpout": 389070,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202792,
+            "sectors_written": 3112560
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 22.01823641001829,
+          "boot_id_sha256": "6d3a31afcd2068484389a8cba1fa75e7bea4b01ea16e7d71dcf4bb5759837a16"
+        },
+        {
+          "side": "A",
+          "pair": 0,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "56eea79da0a0208b00d89ec527869b02dcbdc4fc0d002c1efeb4ba3dbbdf79d3",
+          "metrics": {
+            "swapped_first_access_p99_us": 220.072,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2774,
+              "fork_shared": 2774,
+              "after_children": 2774,
+              "after_reads": 2774,
+              "after_settle": 2774
+            },
+            "sampled_mapped_clusters_max": 2774,
+            "workload_wall_seconds": 15.903370509,
+            "mapped_clusters_after_settle": 2774,
+            "grows_after_settle": 15,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25329,
+              "tail_free": 460,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25329,
+              "tail_free": 460,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25329,
+              "tail_free": 460,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 8880,
+              "tail_free": 460,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 8880,
+              "tail_free": 460,
+              "grows": 15,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 1528,
+            "pswpout": 64106,
+            "zswpin": 40177,
+            "zswpout": 546834
+          },
+          "disk_delta": {
+            "sectors_read": 12224,
+            "sectors_written": 512848
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 17.009850406000623,
+          "boot_id_sha256": "c58fca50736a8bdd21b16fe3f90972a110e794e02ef6adf1de3c2ffc81ef8949"
+        },
+        {
+          "side": "B",
+          "pair": 0,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "b5d5b8582a532997998b20fb1b051bf96fbf6c672e7f58ce70e4475d2424cef1",
+          "metrics": {
+            "swapped_first_access_p99_us": 254.633,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 17.46945025,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 16,
+            "shrinks_after_settle": 2
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25346,
+              "tail_free": 118,
+              "grows": 16,
+              "shrinks": 2
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25346,
+              "tail_free": 118,
+              "grows": 16,
+              "shrinks": 2
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25346,
+              "tail_free": 118,
+              "grows": 16,
+              "shrinks": 2
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8897,
+              "tail_free": 118,
+              "grows": 16,
+              "shrinks": 2
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8897,
+              "tail_free": 118,
+              "grows": 16,
+              "shrinks": 2
+            }
+          },
+          "swap_delta": {
+            "pswpin": 833,
+            "pswpout": 82551,
+            "zswpin": 40875,
+            "zswpout": 545958
+          },
+          "disk_delta": {
+            "sectors_read": 6664,
+            "sectors_written": 660408
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.510640660999343,
+          "boot_id_sha256": "d04e93ad69b8a8586747fbabf1bb78aa5b5204924810ce31a12a1e0a251ce6f0"
+        },
+        {
+          "side": "B",
+          "pair": 1,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "8e103332588f1ededa752a9097876ce67b66e24c7f3550b4ce3251d51967a033",
+          "metrics": {
+            "swapped_first_access_p99_us": 238.566,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2774,
+              "fork_shared": 2774,
+              "after_children": 2774,
+              "after_reads": 2774,
+              "after_settle": 2774
+            },
+            "sampled_mapped_clusters_max": 2774,
+            "workload_wall_seconds": 17.439992439,
+            "mapped_clusters_after_settle": 2774,
+            "grows_after_settle": 15,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25833,
+              "tail_free": 453,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25833,
+              "tail_free": 453,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25833,
+              "tail_free": 453,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 9384,
+              "tail_free": 453,
+              "grows": 15,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 9384,
+              "tail_free": 453,
+              "grows": 15,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 482,
+            "pswpout": 64621,
+            "zswpin": 41214,
+            "zswpout": 546804
+          },
+          "disk_delta": {
+            "sectors_read": 3856,
+            "sectors_written": 516968
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.509856135002337,
+          "boot_id_sha256": "ab48af8a625710cdbfd4a98ee5951ffb01654e6ba5e2bfaf105e4fea277b79ef"
+        },
+        {
+          "side": "A",
+          "pair": 1,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "6321a339bfdeb1506bdce2f557386aee5f46ae7ec15abd7006b76922c45f4491",
+          "metrics": {
+            "swapped_first_access_p99_us": 255.763,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 17.403290758,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 16,
+            "shrinks_after_settle": 2
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25300,
+              "tail_free": 119,
+              "grows": 16,
+              "shrinks": 2
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25300,
+              "tail_free": 119,
+              "grows": 16,
+              "shrinks": 2
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25300,
+              "tail_free": 119,
+              "grows": 16,
+              "shrinks": 2
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8851,
+              "tail_free": 119,
+              "grows": 16,
+              "shrinks": 2
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8851,
+              "tail_free": 119,
+              "grows": 16,
+              "shrinks": 2
+            }
+          },
+          "swap_delta": {
+            "pswpin": 743,
+            "pswpout": 79838,
+            "zswpin": 40912,
+            "zswpout": 546279
+          },
+          "disk_delta": {
+            "sectors_read": 5944,
+            "sectors_written": 638704
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.51022803300293,
+          "boot_id_sha256": "aaad2602ced402fdd998d807ccac1c40c5ed7d4880d2c572e43897edaf1e4eb1"
+        }
+      ],
+      "performance_accepted": false,
+      "auto_promote": false
+    },
+    {
+      "evaluation_id": "dfebfe42-2ba5-4f79-ab9e-7123a628526d",
+      "candidate_id": "xswap-grow-cap8",
+      "candidate_commit": "9a599ae63ff12b1b0963f71e46375c5713ff4456",
+      "calibration": false,
+      "status": "PILOT_COMPLETE_REVIEW_REQUIRED",
+      "suite_sha256": {
+        "protocol.json": "aa3a260f9459a5646b651fdf236e82481e25788b7416a199f04ef3d5cba88fd8",
+        "evaluate_kernel.py": "1edc23262354c42c075d25869975737777c08143f2505ccd829ca9ff51f9f6ca",
+        "run.py": "2f7ca70a5a08c87a7c745627d189216857d02d88b33bd8b27c1d49af0881af81",
+        "workload.c": "073e38eca5474f63317320d53fbae8d326f91e43d4ed0c95b2599a7ed30b097f",
+        "guest-init": "6b9ddc43fbfd7196c5bf313076920cd89abaf3623acdddac149d4ab33596b737",
+        "prepare-rootfs.py": "454824c480cf5776a59e86a6c937099c506a88035bdd24b2e116dddd63b48e05",
+        "lifetime.py": "e38c6ce71c80a01a95c6170cdc9d0d5878f83f0dbc016b872afecdd6c69c777e",
+        "evidence.py": "a4f1cf57f65ac0a5fbf7be1bd73ea544a96a416af7f43f5b3143e44073f57784",
+        "build.py": "6a8fd4c59d076f2670070b07ffe7fd9b4bb659ec42401eef8b9949ca0a0f5729",
+        "build_namespace.sh": "163322492647feca6a29541739e1f47975349ef6c789f69f69a4a59b236ef668"
+      },
+      "metrics": {
+        "pilot_pass": 1.0,
+        "combined_score": 0.8621314494934982,
+        "latency_worst_backend_relative_score": 0.9553348494387411,
+        "settled_clusters_worst_backend_relative_score": 0.9024390243902439
+      },
+      "comparison": {
+        "disk": {
+          "A": {
+            "mapped_clusters_after_settle": 1058.5,
+            "sampled_mapped_clusters_max": 1058.5,
+            "swapped_first_access_p99_us": 335.8105,
+            "workload_wall_seconds": 20.383769226,
+            "grows_after_settle": 12.5,
+            "shrinks_after_settle": 0.5
+          },
+          "B": {
+            "mapped_clusters_after_settle": 219.0,
+            "sampled_mapped_clusters_max": 219.0,
+            "swapped_first_access_p99_us": 332.972,
+            "workload_wall_seconds": 18.269637658,
+            "grows_after_settle": 12.0,
+            "shrinks_after_settle": 1.5
+          }
+        },
+        "zswap": {
+          "A": {
+            "mapped_clusters_after_settle": 1350.5,
+            "sampled_mapped_clusters_max": 1350.5,
+            "swapped_first_access_p99_us": 223.064,
+            "workload_wall_seconds": 18.130167682,
+            "grows_after_settle": 15.5,
+            "shrinks_after_settle": 1.0
+          },
+          "B": {
+            "mapped_clusters_after_settle": 1496.5,
+            "sampled_mapped_clusters_max": 1496.5,
+            "swapped_first_access_p99_us": 233.493,
+            "workload_wall_seconds": 17.4444622655,
+            "grows_after_settle": 13.0,
+            "shrinks_after_settle": 0.5
+          }
+        }
+      },
+      "missing_acceptance_gates": [
+        "ten pairs per backend",
+        "independent confirmation",
+        "holdout",
+        "allocation and I/O failure injection",
+        "memcg limit matrix",
+        "large folios",
+        "lockdep",
+        "KASAN",
+        "KCSAN",
+        "fragmentation and multiple physical devices",
+        "oscillating pressure",
+        "full metadata physical RAM accounting"
+      ],
+      "runs": [
+        {
+          "side": "A",
+          "pair": 0,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "21fe9f37b4c5e7ac2a1ec25055b28609cd45466a20292cb10b428a53dc4f2ed5",
+          "metrics": {
+            "swapped_first_access_p99_us": 347.976,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 1898,
+              "fork_shared": 1898,
+              "after_children": 1898,
+              "after_reads": 1898,
+              "after_settle": 1898
+            },
+            "sampled_mapped_clusters_max": 1898,
+            "workload_wall_seconds": 20.931455279,
+            "mapped_clusters_after_settle": 1898,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26815,
+              "tail_free": 463,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26815,
+              "tail_free": 463,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 26815,
+              "tail_free": 463,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 10366,
+              "tail_free": 463,
+              "grows": 12,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 1898,
+              "usage_pages": 10366,
+              "tail_free": 463,
+              "grows": 12,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25310,
+            "pswpout": 382941,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202480,
+            "sectors_written": 3063528
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 22.011729221994756,
+          "boot_id_sha256": "2f16def8735374f1d22c5caf61b7572fb9a04528accbd2bd45517b8d5edf63a5"
+        },
+        {
+          "side": "B",
+          "pair": 0,
+          "backend": "disk",
+          "source_commit": "9a599ae63ff12b1b0963f71e46375c5713ff4456",
+          "image_sha256": "3b53ce9b3f9abce9c9317fefd17e6b55c5893b05a558e5806574cdd194e9182b",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "8784df1192f7ad9e2249fde2d57b4d238865d11479e3b867b8e191d264e6e8f2",
+          "metrics": {
+            "swapped_first_access_p99_us": 337.544,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 17.665946695,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 2
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25312,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25312,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25312,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8863,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8863,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 2
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25314,
+            "pswpout": 397565,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202512,
+            "sectors_written": 3180520
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.50956470600795,
+          "boot_id_sha256": "eff3c8f0002e2c10e7a6fbd329895f5e3340bd74bad9227ea9820cfc694304c9"
+        },
+        {
+          "side": "B",
+          "pair": 1,
+          "backend": "disk",
+          "source_commit": "9a599ae63ff12b1b0963f71e46375c5713ff4456",
+          "image_sha256": "3b53ce9b3f9abce9c9317fefd17e6b55c5893b05a558e5806574cdd194e9182b",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "41e61688408f02321136a881264aefe32a4cee8557f535d7e0415aa8b4e8923c",
+          "metrics": {
+            "swapped_first_access_p99_us": 328.4,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 18.873328621,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 12,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25347,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25347,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25347,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8898,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8898,
+              "tail_free": 119,
+              "grows": 12,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25350,
+            "pswpout": 419875,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202800,
+            "sectors_written": 3359000
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 20.010369898023782,
+          "boot_id_sha256": "95cceab78a8cf015cfb055f6f5cd3affbae5f96407e7026f4a390381780c6d31"
+        },
+        {
+          "side": "A",
+          "pair": 1,
+          "backend": "disk",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "1f6050f132615daa1c858564b6381a047342a7957a260b19c24eca00c1ebe594",
+          "metrics": {
+            "swapped_first_access_p99_us": 323.645,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 19.836083173,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 13,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25320,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25320,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25320,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8871,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8871,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 25316,
+            "pswpout": 447908,
+            "zswpin": 0,
+            "zswpout": 0
+          },
+          "disk_delta": {
+            "sectors_read": 202528,
+            "sectors_written": 3583264
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 21.010497798008146,
+          "boot_id_sha256": "b304807790bcdf50dca586bdca9ff3f20a8aed094b458aa80042db835faaa29f"
+        },
+        {
+          "side": "A",
+          "pair": 0,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "e48a4415ddc24c6fed006b7db1514d8a0cdad99c03ecbfb1ae8292a3e019f22d",
+          "metrics": {
+            "swapped_first_access_p99_us": 192.613,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2482,
+              "fork_shared": 2482,
+              "after_children": 2482,
+              "after_reads": 2482,
+              "after_settle": 2482
+            },
+            "sampled_mapped_clusters_max": 2482,
+            "workload_wall_seconds": 17.093657847,
+            "mapped_clusters_after_settle": 2482,
+            "grows_after_settle": 16,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 25423,
+              "tail_free": 107,
+              "grows": 16,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 25423,
+              "tail_free": 107,
+              "grows": 16,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 25423,
+              "tail_free": 107,
+              "grows": 16,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 8974,
+              "tail_free": 107,
+              "grows": 16,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2482,
+              "usage_pages": 8974,
+              "tail_free": 107,
+              "grows": 16,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 539,
+            "pswpout": 78813,
+            "zswpin": 41158,
+            "zswpout": 546833
+          },
+          "disk_delta": {
+            "sectors_read": 4312,
+            "sectors_written": 630504
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.010633083991706,
+          "boot_id_sha256": "9f1c0ee9e10340758a600b1287686e45cdbd3516fb85831a6f932df3756b829b"
+        },
+        {
+          "side": "B",
+          "pair": 0,
+          "backend": "zswap",
+          "source_commit": "9a599ae63ff12b1b0963f71e46375c5713ff4456",
+          "image_sha256": "3b53ce9b3f9abce9c9317fefd17e6b55c5893b05a558e5806574cdd194e9182b",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "11dc2d61d12aef6a5302c7e7ad448610588b5ce7e2f3436a1ceb1fe39f970dee",
+          "metrics": {
+            "swapped_first_access_p99_us": 199.173,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 17.322146167,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 13,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25304,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25304,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25304,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8855,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8855,
+              "tail_free": 119,
+              "grows": 13,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 760,
+            "pswpout": 73540,
+            "zswpin": 40923,
+            "zswpout": 546369
+          },
+          "disk_delta": {
+            "sectors_read": 6080,
+            "sectors_written": 588320
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.010049578995677,
+          "boot_id_sha256": "5e78aab2868666ef24f212b1f54a5f182d0e4ab069e1354c89766941e7b0e474"
+        },
+        {
+          "side": "B",
+          "pair": 1,
+          "backend": "zswap",
+          "source_commit": "9a599ae63ff12b1b0963f71e46375c5713ff4456",
+          "image_sha256": "3b53ce9b3f9abce9c9317fefd17e6b55c5893b05a558e5806574cdd194e9182b",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "2ab72cf0babb65fe0f64ba1f69885d6e4ba00f173e800589e50a3952e1a704f7",
+          "metrics": {
+            "swapped_first_access_p99_us": 267.813,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 2774,
+              "fork_shared": 2774,
+              "after_children": 2774,
+              "after_reads": 2774,
+              "after_settle": 2774
+            },
+            "sampled_mapped_clusters_max": 2774,
+            "workload_wall_seconds": 17.566778364,
+            "mapped_clusters_after_settle": 2774,
+            "grows_after_settle": 13,
+            "shrinks_after_settle": 0
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25433,
+              "tail_free": 443,
+              "grows": 13,
+              "shrinks": 0
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25433,
+              "tail_free": 443,
+              "grows": 13,
+              "shrinks": 0
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 25433,
+              "tail_free": 443,
+              "grows": 13,
+              "shrinks": 0
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 8984,
+              "tail_free": 443,
+              "grows": 13,
+              "shrinks": 0
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 2774,
+              "usage_pages": 8984,
+              "tail_free": 443,
+              "grows": 13,
+              "shrinks": 0
+            }
+          },
+          "swap_delta": {
+            "pswpin": 1637,
+            "pswpout": 68595,
+            "zswpin": 40049,
+            "zswpout": 546829
+          },
+          "disk_delta": {
+            "sectors_read": 13096,
+            "sectors_written": 548760
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 18.509811890980927,
+          "boot_id_sha256": "077cd14b5ff204808d74ae88070a6b4913eaa4d79a8a1886ac107bbc2c9c5d70"
+        },
+        {
+          "side": "A",
+          "pair": 1,
+          "backend": "zswap",
+          "source_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+          "image_sha256": "a0b7ed6c3f6e31e73f21e46bf3a0cd1db4b8dfda120862048211794bd3ed9799",
+          "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+          "initrd_sha256": "6854ec601819d3daa97a8c848475fdf56a7f1d761f6be8ea741bc7b2e5e12913",
+          "serial_sha256": "7a1f48c01ef8ae36b84d39440d17810d4a23d417abfa589b9289fd26f040f0cd",
+          "metrics": {
+            "swapped_first_access_p99_us": 253.515,
+            "samples": 16384,
+            "mapped_clusters_by_phase": {
+              "before": 73,
+              "after_pressure": 219,
+              "fork_shared": 219,
+              "after_children": 219,
+              "after_reads": 219,
+              "after_settle": 219
+            },
+            "sampled_mapped_clusters_max": 219,
+            "workload_wall_seconds": 19.166677517,
+            "mapped_clusters_after_settle": 219,
+            "grows_after_settle": 15,
+            "shrinks_after_settle": 1
+          },
+          "snapshots": {
+            "before": {
+              "clusters_max": 8192,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "after_pressure": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25321,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "fork_shared": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25321,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "after_children": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 25321,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "after_reads": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8872,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            },
+            "after_settle": {
+              "clusters_max": 8192,
+              "clusters_mapped": 219,
+              "usage_pages": 8872,
+              "tail_free": 119,
+              "grows": 15,
+              "shrinks": 1
+            }
+          },
+          "swap_delta": {
+            "pswpin": 913,
+            "pswpout": 61208,
+            "zswpin": 40787,
+            "zswpout": 546034
+          },
+          "disk_delta": {
+            "sectors_read": 7304,
+            "sectors_written": 489664
+          },
+          "gates": {
+            "evidence_complete": true,
+            "data_roundtrip": true,
+            "fork_shared": true,
+            "cow": true,
+            "destroy_live_data": true,
+            "swapoff_live_data": true,
+            "empty_swaps": true,
+            "runtime_xswap": true,
+            "sample_count": true,
+            "every_sample_xswap": true,
+            "swap_activity": true,
+            "no_kernel_warnings": true,
+            "kernel_log_complete": true,
+            "boot_identity": true,
+            "completed": true,
+            "destroy_live_xswap_ptes": true,
+            "workload_duration": true,
+            "backend_exercised": true,
+            "disk_activity": true,
+            "qemu_exit": true
+          },
+          "pilot_pass": true,
+          "wall_seconds": 20.010789055988425,
+          "boot_id_sha256": "d5ba2f74ab0f4cad34d04d678dd60c9715e07dc23c62503467dece6b9986c063"
+        }
+      ],
+      "performance_accepted": false,
+      "auto_promote": false
+    }
+  ],
+  "guest_attempts": 35,
+  "guest_pilot_passes": 34,
+  "failed_attempts": [
+    {
+      "build": "xswap-reference",
+      "backend": "disk",
+      "serial_sha256": "6c80bc67383705956e078a812aa358a3168762d97ae2193014e5034164b70605",
+      "failed_gates": [
+        "evidence_complete",
+        "data_roundtrip",
+        "fork_shared",
+        "cow",
+        "destroy_live_data",
+        "swapoff_live_data",
+        "empty_swaps",
+        "runtime_xswap",
+        "sample_count",
+        "every_sample_xswap",
+        "swap_activity",
+        "completed",
+        "destroy_live_xswap_ptes",
+        "workload_duration",
+        "disk_activity"
+      ]
+    }
+  ],
+  "performance_accepted": false,
+  "auto_promote": false,
+  "statistical_limit": "Two AB/BA pairs per backend; initial A/A shows large mapped-cluster state variation. Scores and mean differences do not establish an optimization.",
+  "raw_evidence": "Retained privately on the Linux worker; hashes published here. No guest disks, binaries, local paths or raw serial logs are exported."
+}

@@ -1,0 +1,44 @@
+From fad23a203f908644c60441fa00cfa38cbb75d59e Mon Sep 17 00:00:00 2001
+From: Baoquan He <hebaoquan@kylinos.cn>
+Date: Wed, 21 Oct 2026 01:59:13 -0700
+Subject: [PATCH] mm, swap: fall back to disk when zswap refuses an xswap page
+
+zswap_store() can refuse a page if the pool may be at its limit, or
+the page may not compress well enough. For an xswap device there was
+no way to store it, so swap_writeout() put the page back on the LRU.
+Under memory pressure that turns into a livelock: reclaim keeps picking
+the same page and the pool keeps refusing it.
+
+Now that xswap slots have a physical backend, write the page out
+instead. If no backend can be reserved, keep the old behaviour.
+
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ mm/page_io.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/mm/page_io.c b/mm/page_io.c
+index 6dc90182f..7a7b7eecb 100644
+--- a/mm/page_io.c
++++ b/mm/page_io.c
+@@ -253,8 +253,18 @@ int swap_writeout(struct swap_io_ctx *ctx, struct folio *folio)
+ 	 * yet, so look the device up from the entry.
+ 	 */
+ 	if (unlikely(__swap_entry_to_info(folio->swap)->flags & SWP_XSWAP)) {
+-		folio_mark_dirty(folio);
+-		return AOP_WRITEPAGE_ACTIVATE;
++		swp_entry_t entry = folio->swap;
++		swp_entry_t phys;
++
++		/* The pool refused it: fall back to a real swap device. */
++		phys = xswap_backend_alloc(entry);
++		if (!phys.val) {
++			folio_mark_dirty(folio);
++			return AOP_WRITEPAGE_ACTIVATE;
++		}
++
++		__swap_writeout(ctx, folio, phys);
++		return 0;
+ 	}
+ 
+ 	__swap_writeout(ctx, folio, folio->swap);

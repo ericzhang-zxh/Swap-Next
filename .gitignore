@@ -13,3 +13,13 @@ Evolve/kernel/.runtime.lock
 *.log
 .env
 .env.*
+
+# Separate xswap discovery campaign artifacts
+Evolve/xswap/runs/
+Evolve/xswap/evaluations/
+Evolve/xswap/state*/
+Evolve/xswap/rootfs/
+Evolve/xswap/*.cpio.gz
+Evolve/xswap/.runtime.lock
+Evolve/xswap/initramfs.json
+system/campaigns/xswap-reference-replay/

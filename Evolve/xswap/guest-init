@@ -1,0 +1,58 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+export PATH=/bin:/sbin
+fail() {
+    echo "XSWAP_FAIL $1"
+    echo KERNEL_LOG_BEGIN
+    dmesg
+    echo KERNEL_LOG_END
+    poweroff -f
+    exit 1
+}
+mount -t proc proc /proc || fail proc
+mount -t sysfs sysfs /sys || fail sysfs
+mount -t devtmpfs devtmpfs /dev || fail devtmpfs
+exec </dev/console >/dev/console 2>&1
+mkdir -p /sys/kernel/debug || fail debugfs_directory
+mount -t debugfs debugfs /sys/kernel/debug || fail debugfs
+echo 65536 > /proc/sys/vm/min_free_kbytes || fail min_free
+echo XSWAP_BOOT
+uname -a
+cat /proc/cmdline
+cat /proc/sys/kernel/random/boot_id
+[ -w /sys/kernel/mm/xswap/create ] || fail xswap_create_missing
+[ -w /sys/kernel/mm/xswap/destroy ] || fail xswap_destroy_missing
+mkswap /dev/vda || fail mkswap
+swapon /dev/vda || fail swapon
+echo 32767 > /sys/kernel/mm/xswap/create || fail xswap_create
+set -- /sys/kernel/debug/xswap/type*
+[ "$#" -eq 1 ] && [ -f "$1" ] || fail xswap_type_count
+type=${1##*/type}
+case "$type" in ''|*[!0-9]*) fail xswap_type_invalid;; esac
+echo "XSWAP_TYPE $type"
+case " $(cat /proc/cmdline) " in
+    *" evolve.backend=disk "*) echo N > /sys/module/zswap/parameters/enabled || fail disable_zswap
+        [ "$(cat /sys/module/zswap/parameters/enabled)" = N ] || fail zswap_still_enabled;;
+    *" evolve.backend=zswap "*) [ "$(cat /sys/module/zswap/parameters/enabled)" = Y ] || fail zswap_disabled;;
+    *) fail backend_missing;;
+esac
+echo XSWAP_RUNTIME_PASS
+echo VMSTAT_BEFORE
+grep -E '^(pswpin|pswpout|zswpin|zswpout) ' /proc/vmstat || fail vmstat_before
+echo DISKSTAT_BEFORE
+cat /sys/block/vda/stat || fail diskstat_before
+xswap-workload "$type" || fail workload
+echo VMSTAT_AFTER
+grep -E '^(pswpin|pswpout|zswpin|zswpout) ' /proc/vmstat || fail vmstat_after
+echo DISKSTAT_AFTER
+cat /sys/block/vda/stat || fail diskstat_after
+[ "$(wc -l < /proc/swaps)" -eq 1 ] || fail swapoff
+echo EMPTY_SWAPS_PASS
+echo SWAPS_BEGIN
+cat /proc/swaps
+echo SWAPS_END
+echo KERNEL_LOG_BEGIN
+dmesg
+echo KERNEL_LOG_END
+echo XSWAP_PASS
+poweroff -f

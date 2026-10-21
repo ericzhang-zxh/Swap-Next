@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-2026-10-21",
+  "baseline_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "baseline_build": "xswap-reference",
+  "backends": [
+    "disk",
+    "zswap"
+  ],
+  "order": [
+    "AB",
+    "BA"
+  ],
+  "max_candidates": 3,
+  "max_guest_attempts": 48,
+  "deadline_utc": "2026-10-21T12:52:23+00:00",
+  "primary_metric": "mapped_clusters_after_settle",
+  "score": "min across backends of baseline/candidate settled mapped clusters, multiplied by min(1, worst backend baseline/candidate p99)",
+  "performance_accepted": false,
+  "auto_promote": false,
+  "unimplemented_acceptance_gates": [
+    "ten pairs per backend",
+    "independent confirmation",
+    "holdout",
+    "allocation and I/O failure injection",
+    "memcg limit matrix",
+    "large folios",
+    "lockdep",
+    "KASAN",
+    "KCSAN",
+    "fragmentation and multiple physical devices",
+    "oscillating pressure",
+    "full metadata physical RAM accounting"
+  ],
+  "aggregation": "arithmetic mean of per-run metrics; sampled maximum is not a continuous peak"
+}

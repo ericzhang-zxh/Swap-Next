@@ -34,6 +34,8 @@ The proposal author owns the hypothesis; OpenEvolve stores candidate programs an
 
 ## Current evidence
 
+[The xswap discovery campaign](results/xswap-2026-10-21/README.md) completed three feedback-driven experiments on an independently imported Phase I/II reference, with 35 guest attempts (34 passed; one retained setup failure). No candidate was promoted: A/A revealed large metadata-state variation and all trials had mixed outcomes. The pinned Linux checkout remains unchanged.
+
 [Three historical pilots](results/pilot-summary.json) comprise 24 independent guest boots. The two latest trials reused a locked table read and combined that change with early overflow-scan termination. Their pilot gates passed, but neither showed consistent latency gains. One proposed RCU simplification was rejected during review because the cluster lock alone did not establish table lifetime across an unlocked allocation path.
 
 These results predate this repository layout. Each backend has only two AB/BA pairs per candidate; there is no A/A calibration, independent confirmation, or holdout. Metadata measures selected requested allocation bytes, not total physical RAM. Raw logs and VM artifacts are not published here. Relocation checks do not constitute a fresh kernel runtime validation.

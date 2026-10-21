@@ -1,0 +1,295 @@
+From 37de636c972a413f5c25e5b6c891fb4df2f53aed Mon Sep 17 00:00:00 2001
+From: Baoquan He <hebaoquan@kylinos.cn>
+Date: Wed, 21 Oct 2026 01:59:13 -0700
+Subject: [PATCH] mm, swap: skip a NOFS backend when reclaim cannot enter the
+ fs
+
+An xswap folio's swap entry points at the xswap device, but its data may
+be written to a real backend. may_enter_fs() reads the device out of that
+entry, so it checks the xswap device and not the backend: a context that
+cannot enter the fs is still allowed to write, and
+xswap_alloc_phys_slot() may pick NFS or SMB. Writing there re-enters the
+filesystem.
+
+Marking the xswap device REQUIRE_NOFS would block zswap too, and zswap
+needs no filesystem. Pass may_enter_fs down in swap_io_ctx instead, taken
+from sc->gfp_mask. xswap_alloc_phys_slot() skips a NOFS backend when it
+is false. With none left, AOP_WRITEPAGE_ACTIVATE keeps the folio.
+
+zswap reaches the allocator from two places. Its shrinker runs only when
+count_objects() saw __GFP_FS, and zswap_store() on the swapout path
+carries the reclaim's mask down through shrink_memcg(). The other
+swap_io_ctx users default to false, as shmem_write_folio() does, reached
+that way from i915 and TTM.
+
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ include/linux/swap_ops.h |  1 +
+ include/linux/zswap.h    |  4 ++--
+ mm/page_io.c             |  5 +++--
+ mm/swap.h                |  6 ++++--
+ mm/swapfile.c            | 10 +++++++---
+ mm/vmscan.c              |  4 +++-
+ mm/zswap.c               | 35 +++++++++++++++++++++++++----------
+ 7 files changed, 45 insertions(+), 20 deletions(-)
+
+diff --git a/include/linux/swap_ops.h b/include/linux/swap_ops.h
+index 198c5738c..ed0017be1 100644
+--- a/include/linux/swap_ops.h
++++ b/include/linux/swap_ops.h
+@@ -18,6 +18,7 @@ struct swap_iocb {
+ struct swap_io_ctx {
+ 	struct swap_iocb	*sio;
+ 	struct swap_info_struct	*sis;
++	bool			may_enter_fs;	/* this context may enter the fs */
+ };
+ 
+ /*
+diff --git a/include/linux/zswap.h b/include/linux/zswap.h
+index df6cafbe9..809b8b839 100644
+--- a/include/linux/zswap.h
++++ b/include/linux/zswap.h
+@@ -25,7 +25,7 @@ struct zswap_lruvec_state {
+ };
+ 
+ unsigned long zswap_total_pages(void);
+-bool zswap_store(struct folio *folio);
++bool zswap_store(struct folio *folio, bool may_enter_fs);
+ int zswap_load(struct folio *folio);
+ void zswap_invalidate(int type, pgoff_t offset, unsigned long nr_entries);
+ int zswap_swapon(int type, unsigned long nr_pages);
+@@ -39,7 +39,7 @@ bool zswap_never_enabled(void);
+ 
+ struct zswap_lruvec_state {};
+ 
+-static inline bool zswap_store(struct folio *folio)
++static inline bool zswap_store(struct folio *folio, bool may_enter_fs)
+ {
+ 	return false;
+ }
+diff --git a/mm/page_io.c b/mm/page_io.c
+index 7e8e8150b..fb32b9db1 100644
+--- a/mm/page_io.c
++++ b/mm/page_io.c
+@@ -235,7 +235,7 @@ int swap_writeout(struct swap_io_ctx *ctx, struct folio *folio)
+ 	 */
+ 	swap_zeromap_folio_clear(folio);
+ 
+-	if (zswap_store(folio)) {
++	if (zswap_store(folio, ctx->may_enter_fs)) {
+ 		count_mthp_stat(folio_order(folio), MTHP_STAT_ZSWPOUT);
+ 		goto out_unlock;
+ 	}
+@@ -257,7 +257,8 @@ int swap_writeout(struct swap_io_ctx *ctx, struct folio *folio)
+ 		swp_entry_t phys;
+ 
+ 		/* The pool refused it: fall back to a real swap device. */
+-		phys = xswap_backend_alloc(entry, folio_order(folio));
++		phys = xswap_backend_alloc(entry, folio_order(folio),
++					   ctx->may_enter_fs);
+ 		if (!phys.val) {
+ 			folio_mark_dirty(folio);
+ 			return AOP_WRITEPAGE_ACTIVATE;
+diff --git a/mm/swap.h b/mm/swap.h
+index 628395885..f7c832b7f 100644
+--- a/mm/swap.h
++++ b/mm/swap.h
+@@ -475,7 +475,8 @@ int shmem_writeout(struct swap_io_ctx *ctx, struct folio *folio,
+ 
+ #ifdef CONFIG_XSWAP
+ swp_entry_t xswap_slot_backend(struct swap_cluster_info *ci, unsigned int slot);
+-swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order);
++swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order,
++				bool may_enter_fs);
+ void xswap_backend_free(swp_entry_t entry, swp_entry_t phys, unsigned int order);
+ int xswap_check_backing(struct swap_cluster_info *ci, unsigned int off,
+ 			unsigned int nr);
+@@ -486,7 +487,8 @@ static inline swp_entry_t xswap_slot_backend(struct swap_cluster_info *ci,
+ 	return (swp_entry_t){};
+ }
+ 
+-static inline swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order)
++static inline swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order,
++					      bool may_enter_fs)
+ {
+ 	return (swp_entry_t){};
+ }
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index c63f1c641..180cf538f 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -4563,7 +4563,7 @@ static unsigned long xswap_alloc_slot_local(struct swap_info_struct *si,
+ 	return offset;
+ }
+ 
+-static swp_entry_t xswap_alloc_phys_slot(unsigned int order)
++static swp_entry_t xswap_alloc_phys_slot(unsigned int order, bool may_enter_fs)
+ {
+ 	struct swap_info_struct *devs[MAX_SWAPFILES], *si;
+ 	int nr = 0, i;
+@@ -4577,6 +4577,9 @@ static swp_entry_t xswap_alloc_phys_slot(unsigned int order)
+ 	plist_for_each_entry(si, &swap_avail_head, avail_list) {
+ 		if (si->flags & SWP_XSWAP)
+ 			continue;
++		/* Writing there would re-enter the fs this context is in. */
++		if (!may_enter_fs && (si->ops->flags & SWAP_OPS_F_REQUIRE_NOFS))
++			continue;
+ 		if (nr == MAX_SWAPFILES)
+ 			break;
+ 		devs[nr++] = si;
+@@ -4615,7 +4618,8 @@ static void xswap_install_rmap(swp_entry_t phys, swp_entry_t entry)
+ }
+ 
+ /* Back the range of 1 << @order slots at @entry with contiguous physical slots. */
+-swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order)
++swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order,
++				bool may_enter_fs)
+ {
+ 	struct swap_info_struct *si = __swap_entry_to_info(entry);
+ 	struct swap_cluster_info *ci;
+@@ -4637,7 +4641,7 @@ swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order)
+ 	}
+ 	swap_cluster_unlock(ci);
+ 
+-	phys = xswap_alloc_phys_slot(order);
++	phys = xswap_alloc_phys_slot(order, may_enter_fs);
+ 	if (!phys.val)
+ 		return phys;
+ 
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index 91295070c..fc4754779 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -1169,7 +1169,9 @@ static unsigned int shrink_folio_list(struct list_head *folio_list,
+ 	unsigned int nr_reclaimed = 0, nr_demoted = 0;
+ 	unsigned int pgactivate = 0;
+ 	bool do_demote_pass;
+-	struct swap_io_ctx ctx = {};
++	struct swap_io_ctx ctx = {
++		.may_enter_fs = !!(sc->gfp_mask & __GFP_FS),
++	};
+ 
+ 	folio_batch_init(&free_folios);
+ 	memset(stat, 0, sizeof(*stat));
+diff --git a/mm/zswap.c b/mm/zswap.c
+index 03171e4f2..789730c22 100644
+--- a/mm/zswap.c
++++ b/mm/zswap.c
+@@ -1003,7 +1003,7 @@ static bool zswap_decompress(struct zswap_entry *entry, struct folio *folio)
+  * freed.
+  */
+ static int zswap_writeback_entry(struct zswap_entry *entry,
+-				 swp_entry_t swpentry)
++				 swp_entry_t swpentry, bool may_enter_fs)
+ {
+ 	struct xarray *tree;
+ 	pgoff_t offset = swp_offset(swpentry);
+@@ -1056,7 +1056,7 @@ static int zswap_writeback_entry(struct zswap_entry *entry,
+ 
+ 	/* Reserve the destination before dropping the zswap copy. */
+ 	if (is_xswap) {
+-		phys = xswap_backend_alloc(swpentry, 0);
++		phys = xswap_backend_alloc(swpentry, 0, may_enter_fs);
+ 		if (!phys.val) {
+ 			ret = -ENOMEM;
+ 			goto err;
+@@ -1134,11 +1134,18 @@ static int zswap_writeback_entry(struct zswap_entry *entry,
+  *    can expect from writeback. We scale down the number of objects available
+  *    for reclaim by this ratio.
+  */
++
++struct zswap_shrink_arg {
++	bool	*swapcache_hit;	/* page was already in the swap cache */
++	bool	may_enter_fs;
++};
++
+ static enum lru_status shrink_memcg_cb(struct list_head *item, struct list_lru_one *l,
+ 				       void *arg)
+ {
++	struct zswap_shrink_arg *shrinking = arg;
+ 	struct zswap_entry *entry = container_of(item, struct zswap_entry, lru);
+-	bool *encountered_page_in_swapcache = (bool *)arg;
++	bool *encountered_page_in_swapcache = shrinking->swapcache_hit;
+ 	swp_entry_t swpentry;
+ 	enum lru_status ret = LRU_REMOVED_RETRY;
+ 	int writeback_result;
+@@ -1193,7 +1200,8 @@ static enum lru_status shrink_memcg_cb(struct list_head *item, struct list_lru_o
+ 	 */
+ 	spin_unlock(&l->lock);
+ 
+-	writeback_result = zswap_writeback_entry(entry, swpentry);
++	writeback_result = zswap_writeback_entry(entry, swpentry,
++						 shrinking->may_enter_fs);
+ 
+ 	if (writeback_result) {
+ 		zswap_reject_reclaim_fail++;
+@@ -1220,6 +1228,7 @@ static unsigned long zswap_shrinker_scan(struct shrinker *shrinker,
+ {
+ 	unsigned long shrink_ret;
+ 	bool encountered_page_in_swapcache = false;
++	struct zswap_shrink_arg shrinking = {};
+ 
+ 	if (!zswap_shrinker_enabled ||
+ 			!mem_cgroup_zswap_writeback_enabled(sc->memcg)) {
+@@ -1227,8 +1236,10 @@ static unsigned long zswap_shrinker_scan(struct shrinker *shrinker,
+ 		return SHRINK_STOP;
+ 	}
+ 
++	shrinking.swapcache_hit = &encountered_page_in_swapcache;
++	shrinking.may_enter_fs = !!(sc->gfp_mask & __GFP_FS);
+ 	shrink_ret = list_lru_shrink_walk(&zswap_list_lru, sc, &shrink_memcg_cb,
+-		&encountered_page_in_swapcache);
++		&shrinking);
+ 
+ 	if (encountered_page_in_swapcache)
+ 		return SHRINK_STOP;
+@@ -1332,8 +1343,11 @@ static struct shrinker *zswap_alloc_shrinker(void)
+  * were scanned but none could be written back, or -ENOENT if @memcg has
+  * writeback disabled, is a zombie cgroup, or has empty zswap LRUs.
+  */
+-static int shrink_memcg(struct mem_cgroup *memcg)
++static int shrink_memcg(struct mem_cgroup *memcg, bool may_enter_fs)
+ {
++	struct zswap_shrink_arg shrinking = {
++		.may_enter_fs = may_enter_fs,
++	};
+ 	int nid, shrunk = 0, scanned = 0;
+ 
+ 	if (!mem_cgroup_zswap_writeback_enabled(memcg))
+@@ -1350,7 +1364,8 @@ static int shrink_memcg(struct mem_cgroup *memcg)
+ 		unsigned long nr_to_walk = SWAP_CLUSTER_MAX;
+ 
+ 		shrunk += list_lru_walk_one(&zswap_list_lru, nid, memcg,
+-					    &shrink_memcg_cb, NULL, &nr_to_walk);
++					    &shrink_memcg_cb, &shrinking,
++					    &nr_to_walk);
+ 		scanned += SWAP_CLUSTER_MAX - nr_to_walk;
+ 	}
+ 
+@@ -1427,7 +1442,7 @@ static void shrink_worker(struct work_struct *w)
+ 			goto resched;
+ 		}
+ 
+-		ret = shrink_memcg(memcg);
++		ret = shrink_memcg(memcg, true);
+ 		/* drop the extra reference */
+ 		mem_cgroup_put(memcg);
+ 
+@@ -1544,7 +1559,7 @@ static bool zswap_store_page(struct folio *folio, long index,
+ 	return false;
+ }
+ 
+-bool zswap_store(struct folio *folio)
++bool zswap_store(struct folio *folio, bool may_enter_fs)
+ {
+ 	long nr_pages = folio_nr_pages(folio);
+ 	swp_entry_t swp = folio->swap;
+@@ -1563,7 +1578,7 @@ bool zswap_store(struct folio *folio)
+ 	objcg = get_obj_cgroup_from_folio(folio);
+ 	if (objcg && !obj_cgroup_may_zswap(objcg)) {
+ 		memcg = get_mem_cgroup_from_objcg(objcg);
+-		if (shrink_memcg(memcg)) {
++		if (shrink_memcg(memcg, may_enter_fs)) {
+ 			mem_cgroup_put(memcg);
+ 			goto put_objcg;
+ 		}

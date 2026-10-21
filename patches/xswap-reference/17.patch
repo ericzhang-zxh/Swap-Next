@@ -1,0 +1,94 @@
+From def9dcf3fe6db99f0333384c1a4e9309cdff0206 Mon Sep 17 00:00:00 2001
+From: Baoquan He <hebaoquan@kylinos.cn>
+Date: Wed, 21 Oct 2026 01:59:13 -0700
+Subject: [PATCH] mm, swap: prepare the folio-less allocation path for xswap
+
+The xswap backend writes data to a slot on a real swap device. That slot
+has no folio of its own, a case only hibernation used before, so the NULL
+folio path is no longer limited to hibernation.
+
+The backend takes its slots from a lower-priority device. The cluster it
+fills must not go into this CPU's swapout cache: swap_alloc_fast() reuses
+that cache without checking the device, so one backend allocation would
+send every later swapout there and xswap would never be picked again.
+
+A folio-less slot packs into a cluster already in use instead of taking a
+free cluster. Only a free cluster can serve a large order, so the free
+ones are kept for large folios.
+
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ mm/swapfile.c | 35 +++++++++++++++++++++++++----------
+ 1 file changed, 25 insertions(+), 10 deletions(-)
+
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index af7a7524f..dd18aad7c 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -1156,8 +1156,10 @@ static bool __swap_cluster_alloc_entries(struct swap_info_struct *si,
+ 	 * Such swap slots starts with count == 0 and will be increased
+ 	 * upon folio unmap.
+ 	 *
+-	 * Else, it's a exclusive order 0 allocation for hibernation.
+-	 * The slot starts with count == 1 and never increases.
++	 * Else, it's an exclusive order 0 allocation for a slot that has
++	 * no folio of its own: hibernation, and the physical slot that
++	 * backs an xswap entry. The slot starts with count == 1 and
++	 * never increases.
+ 	 */
+ 	if (likely(folio)) {
+ 		order = folio_order(folio);
+@@ -1165,16 +1167,12 @@ static bool __swap_cluster_alloc_entries(struct swap_info_struct *si,
+ 		swap_cluster_assert_empty(ci, ci_off, nr_pages, false);
+ 		__swap_cache_add_folio(ci, folio, swp_entry(si->type,
+ 							    ci_off + cluster_offset(si, ci)));
+-	} else if (IS_ENABLED(CONFIG_HIBERNATION)) {
++	} else {
+ 		order = 0;
+ 		nr_pages = 1;
+ 		swap_cluster_assert_empty(ci, ci_off, 1, false);
+-		/* Fake shadow placeholder with no flag, hibernation does not use the zeromap */
++		/* Fake shadow placeholder with no flag; no zeromap is used. */
+ 		__swap_table_set(ci, ci_off, __swp_tb_mk_count(shadow_to_swp_tb(NULL, 0), 1));
+-	} else {
+-		/* Allocation without folio is only possible with hibernation */
+-		WARN_ON_ONCE(1);
+-		return false;
+ 	}
+ 
+ 	/*
+@@ -1238,8 +1236,15 @@ static unsigned long alloc_swap_scan_cluster(struct swap_info_struct *si,
+ 	swap_cluster_unlock(ci);
+ 	rcu_read_unlock();
+ 	if (si->flags & SWP_SOLIDSTATE) {
+-		this_cpu_write(percpu_swap_cluster.offset[order], next);
+-		this_cpu_write(percpu_swap_cluster.si[order], si);
++		/*
++		 * A NULL folio is a backend or hibernation allocation: it must
++		 * not displace the swapout cluster cached here, which
++		 * swap_alloc_fast() reuses without picking a device again.
++		 */
++		if (folio) {
++			this_cpu_write(percpu_swap_cluster.offset[order], next);
++			this_cpu_write(percpu_swap_cluster.si[order], si);
++		}
+ 	} else {
+ 		si->global_cluster->next[order] = next;
+ 	}
+@@ -1379,6 +1384,16 @@ static unsigned long cluster_alloc_swap_entry(struct swap_info_struct *si,
+ 	}
+ 
+ new_cluster:
++	/*
++	 * A slot with no folio packs into a cluster already in use: a free
++	 * cluster is the only thing a large order can allocate from.
++	 */
++	if (!folio && order < PMD_ORDER) {
++		found = alloc_swap_scan_list(si, &si->frag_clusters[order], folio, false);
++		if (found)
++			goto done;
++	}
++
+ 	/*
+ 	 * If the device need discard, prefer new cluster over nonfull
+ 	 * to spread out the writes.

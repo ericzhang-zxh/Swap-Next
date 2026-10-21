@@ -1,0 +1,244 @@
+{
+  "base_commit": "9a0542b19a541eda3f82934ee747c61ec3f18847",
+  "reference_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "reference_tree": "0ed3147281f5e471dca61944239e941d7f98a884",
+  "phase_i_source": "https://patchew.org/linux/20261003003136.750633-1-hebaoquan@kylinos.cn/mbox",
+  "phase_ii_source": "https://ci.syzbot.org/series/01f881d5-45ec-487a-95ef-89aed31ae30c",
+  "phase_ii_published_base": "128a882559e489eea535bf31b7293058708d351b",
+  "patches": [
+    {
+      "file": "01.patch",
+      "sha256": "1e7c25bf1a5c494c0286fe20d349b6441180260e6696332a5ca52a403d599519",
+      "commit": "b1e39d2b3a8a9906603d14f83a55425d394b7e91",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm: xswap support for zswap"
+    },
+    {
+      "file": "02.patch",
+      "sha256": "41458c379869dc44eb4a0378e4bceb76aa34be9ddcde4fd73c737135b3e62100",
+      "commit": "43e5a448c22d7b007a19ba8f670626edb7240c82",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: refactor free_swap_cluster_info to take swap_info_struct"
+    },
+    {
+      "file": "03.patch",
+      "sha256": "8f141cac69f8ee9eab3e31706d23ba5e3cf9b846276f4be3136ccc3e91b94d5f",
+      "commit": "10afb55e5978c75b8e5126a49c0c7c91db072d30",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: back the cluster_info array with a sparse VM_SPARSE area"
+    },
+    {
+      "file": "04.patch",
+      "sha256": "4a8283e17a67ab1746cf4d6831499e93ddc97d594d521897de16f7442ee0077b",
+      "commit": "b7e57839b9054f338941c76d2f707f46df10e2dc",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: add sysfs create interface for xswap"
+    },
+    {
+      "file": "05.patch",
+      "sha256": "43c669e7ccbee3e71bcfeb9c154b290be420c33639275e5213de896a2830bafb",
+      "commit": "04919e7ea5d187c0a29b3c713808fc6525994c77",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: add xswap grow trigger on cluster allocation"
+    },
+    {
+      "file": "06.patch",
+      "sha256": "3226f44580cee347efa7b196edf820cb36d1d9d1a9d08aa0a3f35a3affb8b136",
+      "commit": "5ff28e698b43348ce1a2465774c5d8c4b640ee06",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: add xswap_try_shrink and shrink trigger on cluster free"
+    },
+    {
+      "file": "07.patch",
+      "sha256": "e126a9c6e481f5ee6191414d40fdb2ffe2610254b1b2a69ee46ed8def59e8765",
+      "commit": "75f4d2fc61c6682ea7a412853e227c86c505da8f",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: free backing pages in xswap_unmap_clusters"
+    },
+    {
+      "file": "08.patch",
+      "sha256": "301c4f0626b6b59567b73fcc2e96dd6e8fbc1857b65ec9cb6522c64705a00817",
+      "commit": "3e61d36f1d8117e41ea9204cc9243d2e2a0c269a",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: defer xswap shrink to workqueue to avoid lock recursion"
+    },
+    {
+      "file": "09.patch",
+      "sha256": "d6fb34ec26cd35092d4098025c41d0009b0b7cb9eae281e9a2ee35b99c9ac839",
+      "commit": "9d7f1180a7cf84aa72f8e26e27eeca374b028d43",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: refactor swapoff and add xswap_destroy"
+    },
+    {
+      "file": "10.patch",
+      "sha256": "aa61d273317917e4fd76564f967a24849c8860336e5f2354f316e3c6e364e889",
+      "commit": "11b8db4c0b8b01bccee8c2836901b62d3a82e3a3",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: require zswap for xswap devices"
+    },
+    {
+      "file": "11.patch",
+      "sha256": "a0097e01b957f5d9781a35c076ec7561b7fae2e7701f0bfad113f8bdb3451a81",
+      "commit": "c1834947897783aff292db555c4a3ca471383bee",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: do not give an xswap slot to a cgroup that cannot zswap"
+    },
+    {
+      "file": "12.patch",
+      "sha256": "6ce38c2ca6499c0f2c3b74916b169fe2e6f2820f798db6eab920629de1c16611",
+      "commit": "2beffc3837236660c21c65ef49cc277268d355eb",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: widen swap_info_struct max/pages to unsigned long"
+    },
+    {
+      "file": "13.patch",
+      "sha256": "d48640477cbe2d912836c5b6fb2cd4357f3ec13b2818309d573fa91e17db146f",
+      "commit": "6357d233c186f513bd60c15b98f8cc0079519983",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: add debugfs counters for xswap"
+    },
+    {
+      "file": "14.patch",
+      "sha256": "cda54c4afa91b28b23e936a1401e2c9966b3e70a5f1388f2613c32c09db568b7",
+      "commit": "dddeed248dcd1eac104204f6752a1a78743bba03",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:12-07:00",
+      "subject": "mm, swap: let the command line set the xswap device size"
+    },
+    {
+      "file": "15.patch",
+      "sha256": "2041f87aa24467b6f07b2db84338193ae6f21147d86e893d602a2b3ae5286161",
+      "commit": "5c264f367fa61124c26fb4b4d04cd624ba036f8d",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: prepare the swap IO path for xswap backends"
+    },
+    {
+      "file": "16.patch",
+      "sha256": "cd8a1c5d31cd24a2142a508e8482571db516bb307a47cf07bdae4ff1b9eb3548",
+      "commit": "6987abc3b8e11d20b35e356e79249598369a25aa",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: tag a swap table entry with its owning xswap entry"
+    },
+    {
+      "file": "17.patch",
+      "sha256": "5e81941f7dba8137d5ce3c1c267a81ab0c67b77bfac770e6760085f8742b634c",
+      "commit": "def9dcf3fe6db99f0333384c1a4e9309cdff0206",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: prepare the folio-less allocation path for xswap"
+    },
+    {
+      "file": "18.patch",
+      "sha256": "7fae05b8bda8490b6cd9ef6ad50eba1735b02f954fee99abd7ff7076e0ee6707",
+      "commit": "3a1b04f80402b1a7fb9c589304993f70b7e712a4",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: add a physical backend for xswap slots"
+    },
+    {
+      "file": "19.patch",
+      "sha256": "8f53ed3e0628c10cd5fbdbe6bc7f6fc4bc39044e9cdcbc7cce2ffc9c97588ac5",
+      "commit": "fbcd2a6c326e25d4aedf9d83494b81e642b1c108",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: use the xswap physical backend"
+    },
+    {
+      "file": "20.patch",
+      "sha256": "217bff75a05da50ca05c177978ca10232572196c538c77bb72e887baa4e7bfb4",
+      "commit": "fad23a203f908644c60441fa00cfa38cbb75d59e",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: fall back to disk when zswap refuses an xswap page"
+    },
+    {
+      "file": "21.patch",
+      "sha256": "a26bdf989ad64268c0946c74e374634da3ce2aec0a3672d864758ee7bd267c02",
+      "commit": "fac949f510e99a27c175ca5a2664a0c415b13956",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: support swapoff of an xswap physical backend"
+    },
+    {
+      "file": "22.patch",
+      "sha256": "b2a217d050d16381ea07edc091c166a48e6db07c0e80c12c759b7201ed8e3019",
+      "commit": "7914594c8b3239831ff783ed6487b3b4bb8baa58",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: reclaim physical slots backing cache-only xswap entries"
+    },
+    {
+      "file": "23.patch",
+      "sha256": "f471777615d59b76c9463031f672587cafdab3b8b6d219dac3c4559eab25b786",
+      "commit": "24a2917771fe09d042ad3f6dc0bc183e01543e2a",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: back a large xswap folio with a contiguous physical run"
+    },
+    {
+      "file": "24.patch",
+      "sha256": "ee07cd414cf9d7f7ff697b2b09555bd1113a3488542b7b72e30d7c768d07b5aa",
+      "commit": "80bc843731f44b6476957a06fc908241a11bc770",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: enable THP swapin for xswap entries"
+    },
+    {
+      "file": "25.patch",
+      "sha256": "4510ce766715284f11a3623de02c025182250d914018f1f8355478d5ed66640c",
+      "commit": "3d006f617761bd331218a3a3cbe97b99d8ad3cd0",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: drop swap_folio_sector()"
+    },
+    {
+      "file": "26.patch",
+      "sha256": "4f0144634890d02a3dfa8c124c3e1142aa260a3e6b5b46c78e2d34bd25788555",
+      "commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-21T01:59:13-07:00",
+      "subject": "mm, swap: skip a NOFS backend when reclaim cannot enter the fs"
+    }
+  ]
+}

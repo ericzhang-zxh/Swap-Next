@@ -1,0 +1,246 @@
+From 7914594c8b3239831ff783ed6487b3b4bb8baa58 Mon Sep 17 00:00:00 2001
+From: Baoquan He <hebaoquan@kylinos.cn>
+Date: Wed, 21 Oct 2026 01:59:13 -0700
+Subject: [PATCH] mm, swap: reclaim physical slots backing cache-only xswap
+ entries
+
+The swap count of an xswap entry can drop to 0 while its folio is still
+in the swap cache, which leaves the physical slot redundant but occupied
+until the folio leaves the cache. This happens when the page is faulted
+back in during its write to the backend: do_swap_page() does not wait for
+writeback, folio_free_swap() refuses a folio under writeback, and a
+real-device write does not drop the cache when it completes.
+
+Mark the slot with a cache-only bit in the swap table entry that points
+back to the owner, set when the count drops to 0 and cleared when the
+slot is reused. The physical reclaim scanner already walks full clusters;
+make it free the slots with the bit set. It reads the bit directly,
+without the xswap cluster lock, which would invert the lock order.
+
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ mm/swap_table.h |  37 +++++++++++++--
+ mm/swapfile.c   | 122 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 156 insertions(+), 3 deletions(-)
+
+diff --git a/mm/swap_table.h b/mm/swap_table.h
+index 22322519c..40bab9890 100644
+--- a/mm/swap_table.h
++++ b/mm/swap_table.h
+@@ -86,21 +86,52 @@ struct swap_memcg_table {
+  * Pointer-tagged swap table entry: the reverse map from a physical slot to
+  * the xswap entry it backs. Layout:
+  *
+- *   Pointer:  | xswap_type(8) | xswap_offset(53) |100|
++ *   Pointer:  |C| xswap_type(7) | xswap_offset(53) |100|
+  *
+  * The low three bits identify the entry: 0b000 is a free or bad slot, a
+  * shadow entry ends in 0b01 and a cached folio in 0b10, which leaves
+- * 0b100 as the only marker still free.
++ * 0b100 as the only marker still free. C is SWP_RMAP_CACHE_ONLY, the one
++ * bit left at the top.
+  */
+ #define SWP_TB_PTR_MARK			0b100UL
+ #define SWP_TB_PTR_OFF_BITS		53
+-#define SWP_TB_PTR_TYPE_BITS		8
++#define SWP_TB_PTR_TYPE_BITS		7
+ #define SWP_TB_PTR_OFF_SHIFT		3
+ #define SWP_TB_PTR_TYPE_SHIFT		(SWP_TB_PTR_OFF_SHIFT + \
+ 					 SWP_TB_PTR_OFF_BITS)
+ #define SWP_TB_PTR_OFF_MASK		((1UL << SWP_TB_PTR_OFF_BITS) - 1)
+ #define SWP_TB_PTR_TYPE_MASK		((1UL << SWP_TB_PTR_TYPE_BITS) - 1)
+ 
++/*
++ * Set when the xswap entry owning a physical slot has swap count 0 but its
++ * folio is still in the swap cache. The slot is redundant then, and the
++ * physical reclaim scanner may free it. The bit sits on the physical slot
++ * so that scanner can read it without the xswap cluster lock.
++ */
++#define SWP_RMAP_CACHE_ONLY		(1UL << (BITS_PER_LONG - 1))
++
++/* swp_type() must fit, and SWP_RMAP_CACHE_ONLY must own the top bit. */
++static_assert(BITS_PER_LONG - SWP_TYPE_SHIFT <= SWP_TB_PTR_TYPE_BITS,
++	      "xswap rmap type field is too narrow");
++static_assert(SWP_TB_PTR_TYPE_SHIFT + SWP_TB_PTR_TYPE_BITS == BITS_PER_LONG - 1,
++	      "xswap rmap fields do not pack");
++
++static inline void swap_rmap_mark_cache_only(struct swap_cluster_info *ci,
++					     unsigned int off)
++{
++	atomic_long_t *table = rcu_dereference_check(ci->table, true);
++
++	atomic_long_or(SWP_RMAP_CACHE_ONLY, &table[off]);
++}
++
++static inline void swap_rmap_clear_cache_only(struct swap_cluster_info *ci,
++					      unsigned int off)
++{
++	atomic_long_t *table = rcu_dereference_check(ci->table, true);
++
++	atomic_long_and(~SWP_RMAP_CACHE_ONLY, &table[off]);
++}
++
+ static inline bool swp_tb_is_pointer(unsigned long swp_tb)
+ {
+ 	return (swp_tb & (BIT(3) - 1)) == SWP_TB_PTR_MARK;
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 45a871eb7..5b33b2c78 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -109,6 +109,12 @@ static void xswap_release_slot_backend(struct swap_info_struct *si,
+ 				       unsigned int slot);
+ static void xswap_free_xs_table(struct swap_info_struct *si,
+ 				struct swap_cluster_info *ci);
++static void xswap_mark_cache_only(struct swap_cluster_info *ci,
++				  unsigned int slot);
++static void xswap_clear_cache_only(struct swap_cluster_info *ci,
++				   unsigned int start, unsigned int nr);
++static int xswap_reclaim_backing(struct swap_info_struct *si,
++				 unsigned long offset, swp_entry_t xentry);
+ 
+ static int xswap_create(int prio);
+ static int xswap_destroy(int type);
+@@ -1325,6 +1331,18 @@ static void swap_reclaim_full_clusters(struct swap_info_struct *si, bool force)
+ 					offset += abs(nr_reclaim);
+ 					continue;
+ 				}
++#ifdef CONFIG_XSWAP
++			} else if (swp_tb_is_pointer(swp_tb) &&
++				   (swp_tb & SWP_RMAP_CACHE_ONLY)) {
++				spin_unlock(&ci->lock);
++				nr_reclaim = xswap_reclaim_backing(si, offset,
++						xswap_rmap_to_entry(swp_tb));
++				spin_lock(&ci->lock);
++				if (nr_reclaim) {
++					offset += abs(nr_reclaim);
++					continue;
++				}
++#endif
+ 			}
+ 			offset++;
+ 		}
+@@ -1935,6 +1953,10 @@ static void swap_put_entries_cluster(struct swap_info_struct *si,
+ 			}
+ 			/* count will be 0 after put, slot can be reclaimed */
+ 			need_reclaim = true;
++#ifdef CONFIG_XSWAP
++			if (ci->xs_table)
++				xswap_mark_cache_only(ci, ci_off);
++#endif
+ 		}
+ 		/*
+ 		 * A count != 1 or cached slot can't be freed. Put its swap
+@@ -2041,6 +2063,10 @@ static int swap_dup_entries_cluster(struct swap_info_struct *si,
+ 			goto failed;
+ 		}
+ 	} while (++ci_off < ci_end);
++#ifdef CONFIG_XSWAP
++	if (ci->xs_table)
++		xswap_clear_cache_only(ci, ci_start, nr);
++#endif
+ 	swap_cluster_unlock(ci);
+ 	return 0;
+ failed:
+@@ -3263,6 +3289,102 @@ static void xswap_release_slot_backend(struct swap_info_struct *si,
+ 		xswap_free_phys_slot(psi, entry, phys);
+ }
+ 
++/*
++ * Mark the physical slot backing xswap slot @slot as cache-only. Its folio
++ * is in the swap cache, so the physical copy is redundant. The physical
++ * cluster lock is needed: xswap_free_phys_slot() clears the rmap under it.
++ */
++static void xswap_mark_cache_only(struct swap_cluster_info *ci,
++				  unsigned int slot)
++{
++	struct swap_cluster_info *pci;
++	swp_entry_t phys = { .val = ci->xs_table[slot] };
++
++	if (!phys.val)
++		return;			/* still in zswap, no backend */
++	pci = __swap_entry_to_cluster(phys);
++	spin_lock(&pci->lock);
++	swap_rmap_mark_cache_only(pci, swp_cluster_offset(phys));
++	spin_unlock(&pci->lock);
++}
++
++/*
++ * Clear the cache-only mark of slots that were re-referenced. A slot that
++ * was cache-only had count 0, so count 1 is exactly the one to clear.
++ */
++static void xswap_clear_cache_only(struct swap_cluster_info *ci,
++				   unsigned int start, unsigned int nr)
++{
++	unsigned int slot;
++
++	for (slot = start; slot < start + nr; slot++) {
++		struct swap_cluster_info *pci;
++		unsigned long swp_tb;
++		swp_entry_t phys;
++
++		swp_tb = __swap_table_get(ci, slot);
++		if (!swp_tb_is_folio(swp_tb) || swp_tb_get_count(swp_tb) != 1)
++			continue;
++		phys.val = ci->xs_table[slot];
++		if (!phys.val)
++			continue;
++		pci = __swap_entry_to_cluster(phys);
++		spin_lock(&pci->lock);
++		swap_rmap_clear_cache_only(pci, swp_cluster_offset(phys));
++		spin_unlock(&pci->lock);
++	}
++}
++
++/*
++ * Try to reclaim the physical slot backing cache-only @xentry. The physical
++ * cluster lock must not be held. Returns the folio size, negated if the free
++ * failed, or 0 if @offset turned out not to be the folio's slot.
++ */
++static int xswap_reclaim_backing(struct swap_info_struct *si,
++				 unsigned long offset, swp_entry_t xentry)
++{
++	struct swap_info_struct *xsi = __swap_entry_to_info(xentry);
++	struct swap_cluster_info *xci;
++	swp_entry_t first;
++	struct folio *folio;
++	unsigned long xoff, i;
++	int ret = 0;
++
++	folio = swap_cache_get_folio(xentry);
++	if (!folio)
++		return 0;
++	if (!folio_trylock(folio)) {
++		folio_put(folio);
++		return 0;
++	}
++
++	/*
++	 * The folio must own @xentry, and @offset must be the slot this device
++	 * holds for that page of the folio. Otherwise the rmap went stale.
++	 */
++	if (!folio_matches_swap_entry(folio, xentry))
++		goto out;
++	i = xentry.val - folio->swap.val;
++	xoff = swp_offset(folio->swap);
++	xci = swap_cluster_lock(xsi, xoff);
++	if (!xci)
++		goto out;
++	first = xswap_slot_backend(xci, xoff % SWAPFILE_CLUSTER);
++	swap_cluster_unlock(xci);
++	if (!first.val || swp_type(first) != si->type ||
++	    swp_offset(first) + i != offset)
++		goto out;
++
++	/* The run is ours: skip it all, whether or not the free succeeds. */
++	ret = folio_nr_pages(folio);
++	if (!folio_free_swap(folio))
++		ret = -ret;
++out:
++	folio_unlock(folio);
++	folio_put(folio);
++	return ret;
++}
++
+ /*
+  * A written-back slot has no folio of its own here, so the unuse loop would
+  * skip it. Resolve it through the reverse mapping and free both sides.

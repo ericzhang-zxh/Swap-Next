@@ -1,0 +1,150 @@
+From 6987abc3b8e11d20b35e356e79249598369a25aa Mon Sep 17 00:00:00 2001
+From: Baoquan He <hebaoquan@kylinos.cn>
+Date: Wed, 21 Oct 2026 01:59:13 -0700
+Subject: [PATCH] mm, swap: tag a swap table entry with its owning xswap entry
+
+An xswap folio can be written out to a physical device. The data then
+lives in a slot on that device, with no folio in the swap cache. Store
+the xswap entry in that slot's swap table entry, so the owner of a
+physical slot can be found again.
+
+The low three bits of a swap table entry tell its type; 0b100 is free.
+Use it to mark an entry that points at its owner, with the xswap type and
+offset in the bits above.
+
+Two paths hand out or cache a slot and know only the other two types.
+Make them skip a pointer entry: cluster_scan_range() must not hand it out
+as free, and __swap_cache_add_check() must not put a folio over it.
+Otherwise readahead on a physical device can walk into it.
+
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ mm/swap_state.c |  6 ++++-
+ mm/swap_table.h | 61 +++++++++++++++++++++++++++++++++++++++++++++----
+ mm/swapfile.c   |  3 +++
+ 3 files changed, 65 insertions(+), 5 deletions(-)
+
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 3a4e9e447..c5c182489 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -179,6 +179,9 @@ static int __swap_cache_add_check(struct swap_cluster_info *ci,
+ 		return -ENOENT;
+ 	ci_off = swp_cluster_offset(targ_entry);
+ 	old_tb = __swap_table_get(ci, ci_off);
++	/* Readahead of a physical device can hit an xswap-backing slot. */
++	if (swp_tb_is_pointer(old_tb))
++		return -ENOENT;
+ 	if (swp_tb_is_folio(old_tb))
+ 		return -EEXIST;
+ 	if (!__swp_tb_get_count(old_tb))
+@@ -196,7 +199,8 @@ static int __swap_cache_add_check(struct swap_cluster_info *ci,
+ 	ci_end = ci_off + nr;
+ 	do {
+ 		old_tb = __swap_table_get(ci, ci_off);
+-		if (unlikely(swp_tb_is_folio(old_tb) ||
++		if (unlikely(swp_tb_is_pointer(old_tb) ||
++			     swp_tb_is_folio(old_tb) ||
+ 			     !__swp_tb_get_count(old_tb) ||
+ 			     is_zero != __swap_table_test_zero(ci, ci_off) ||
+ 			     (memcg_id && *memcg_id != __swap_cgroup_get(ci, ci_off))))
+diff --git a/mm/swap_table.h b/mm/swap_table.h
+index e6613e62f..22322519c 100644
+--- a/mm/swap_table.h
++++ b/mm/swap_table.h
+@@ -28,7 +28,7 @@ struct swap_memcg_table {
+  * NULL:     |---------------- 0 ---------------| - Free slot
+  * Shadow:   |SWAP_COUNT|Z|---- SHADOW_VAL ---|1| - Swapped out slot
+  * PFN:      |SWAP_COUNT|Z|------ PFN -------|10| - Cached slot
+- * Pointer:  |----------- Pointer ----------|100| - (Unused)
++ * Pointer:  |C|-- xswap type/offset --|100| - Backend slot
+  * Bad:      |------------- 1 -------------|1000| - Bad slot
+  *
+  * COUNT is `SWP_TB_COUNT_BITS` long, Z is the `SWP_TB_ZERO_FLAG` bit,
+@@ -49,9 +49,9 @@ struct swap_memcg_table {
+  * - PFN: Swap slot is in use, and cached. Memcg info is recorded on the page
+  *   struct.
+  *
+- * - Pointer: Unused yet. `0b100` is reserved for potential pointer usage
+- *   because only the lower three bits can be used as a marker for 8 bytes
+- *   aligned pointers.
++ * - Pointer: A physical swap slot backed by an xswap entry. `0b100` marks it
++ *   and the xswap type and offset go above it; C is SWP_RMAP_CACHE_ONLY. See
++ *   the layout in the CONFIG_XSWAP block below.
+  *
+  * - Bad: Swap slot is reserved, protects swap header or holes on swap devices.
+  */
+@@ -81,6 +81,59 @@ struct swap_memcg_table {
+ /* Bad slot: ends with 0b1000 and rests of bits are all 1 */
+ #define SWP_TB_BAD		((~0UL) << 3)
+ 
++#ifdef CONFIG_XSWAP
++/*
++ * Pointer-tagged swap table entry: the reverse map from a physical slot to
++ * the xswap entry it backs. Layout:
++ *
++ *   Pointer:  | xswap_type(8) | xswap_offset(53) |100|
++ *
++ * The low three bits identify the entry: 0b000 is a free or bad slot, a
++ * shadow entry ends in 0b01 and a cached folio in 0b10, which leaves
++ * 0b100 as the only marker still free.
++ */
++#define SWP_TB_PTR_MARK			0b100UL
++#define SWP_TB_PTR_OFF_BITS		53
++#define SWP_TB_PTR_TYPE_BITS		8
++#define SWP_TB_PTR_OFF_SHIFT		3
++#define SWP_TB_PTR_TYPE_SHIFT		(SWP_TB_PTR_OFF_SHIFT + \
++					 SWP_TB_PTR_OFF_BITS)
++#define SWP_TB_PTR_OFF_MASK		((1UL << SWP_TB_PTR_OFF_BITS) - 1)
++#define SWP_TB_PTR_TYPE_MASK		((1UL << SWP_TB_PTR_TYPE_BITS) - 1)
++
++static inline bool swp_tb_is_pointer(unsigned long swp_tb)
++{
++	return (swp_tb & (BIT(3) - 1)) == SWP_TB_PTR_MARK;
++}
++
++static inline unsigned long xswap_entry_to_rmap(swp_entry_t entry)
++{
++	unsigned long type = swp_type(entry);
++	unsigned long off = swp_offset(entry);
++
++	VM_WARN_ON_ONCE(type > SWP_TB_PTR_TYPE_MASK);
++	VM_WARN_ON_ONCE(off > SWP_TB_PTR_OFF_MASK);
++	return (type << SWP_TB_PTR_TYPE_SHIFT) |
++	       (off << SWP_TB_PTR_OFF_SHIFT) |
++	       SWP_TB_PTR_MARK;
++}
++
++static inline swp_entry_t xswap_rmap_to_entry(unsigned long swp_tb)
++{
++	unsigned long type = (swp_tb >> SWP_TB_PTR_TYPE_SHIFT) &
++			     SWP_TB_PTR_TYPE_MASK;
++	unsigned long off = (swp_tb >> SWP_TB_PTR_OFF_SHIFT) &
++			    SWP_TB_PTR_OFF_MASK;
++
++	return swp_entry(type, off);
++}
++#else /* !CONFIG_XSWAP */
++static inline bool swp_tb_is_pointer(unsigned long swp_tb)
++{
++	return false;
++}
++#endif /* CONFIG_XSWAP */
++
+ /* Macro for shadow offset calculation */
+ #define SWAP_COUNT_SHIFT	SWP_TB_FLAGS_BITS
+ 
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 0d1288d36..af7a7524f 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -1120,6 +1120,9 @@ static bool cluster_scan_range(struct swap_info_struct *si,
+ 		swp_tb = __swap_table_get(ci, ci_off);
+ 		if (swp_tb_is_null(swp_tb))
+ 			continue;
++		/* Backs an xswap entry: the slot is not allocatable. */
++		if (swp_tb_is_pointer(swp_tb))
++			return false;
+ 		if (swp_tb_is_folio(swp_tb) && !__swp_tb_get_count(swp_tb)) {
+ 			if (!vm_swap_full())
+ 				return false;

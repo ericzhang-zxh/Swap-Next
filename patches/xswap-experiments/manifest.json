@@ -1,0 +1,27 @@
+{
+  "base_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "relationship": "Independent alternatives; do not apply as a series.",
+  "patches": [
+    {
+      "candidate": "xswap-shrink-min4",
+      "commit": "e3c6ac74d117d5fe065cbc0c7a591347663430ce",
+      "file": "xswap-shrink-min4.patch",
+      "sha256": "2780ae576e369120f2ee43b82bc8e9bcabd9ddbd9e5839e409977bb67b21719d",
+      "performance_accepted": false
+    },
+    {
+      "candidate": "xswap-grow-cap8",
+      "commit": "9a599ae63ff12b1b0963f71e46375c5713ff4456",
+      "file": "xswap-grow-cap8.patch",
+      "sha256": "0daecad161320ff0202140f89180d9fb11aade2e3663f8bedb8a79b4911ff046",
+      "performance_accepted": false
+    },
+    {
+      "candidate": "xswap-grow-target75",
+      "commit": "447ebcc3889c371453c3a5042a9c2cd07ac46a67",
+      "file": "xswap-grow-target75.patch",
+      "sha256": "d24e2ed40a370f114a47b4b9802d2e0aff11c0f104fd83cec14b98e6027a2564",
+      "performance_accepted": false
+    }
+  ]
+}
