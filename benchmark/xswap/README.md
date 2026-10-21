@@ -18,8 +18,8 @@ serial logs, a private sparse disk, command and hashes, counters, gates, and
 results. The copied parent-death preexec hook is identical to the reference.
 
 Each guest has 4 GiB RAM, two vCPUs, an 8 GiB private virtio disk, no network,
-no writable host mounts, and a 600-second timeout. Global system/state/STOP and
-system/state/xswap-2026-10-21/STOP stop execution. A frozen UTC deadline and a shared attempt ledger bound the campaign to at most 48 guest launches. The runner never needs host root, host
+no writable host mounts, and a 600-second timeout. Global evolve/control/state/STOP and
+evolve/control/state/xswap-2026-10-21/STOP stop execution. A frozen UTC deadline and a shared attempt ledger bound the campaign to at most 48 guest launches. The runner never needs host root, host
 swap, raw host devices, or host reboot.
 
 Guest control paths were checked in Phase I/II mm/swapfile.c: sysfs

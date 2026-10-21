@@ -42,7 +42,7 @@ def main():
    raise SystemExit(0 if metrics.get("pilot_pass")==1 else 1)
   elif a.action=="evaluate":
    if len(ledger)>=protocol["max_candidates"]:raise SystemExit("candidate budget exhausted")
-   records=json.loads((PROJECT/"system/state"/protocol["campaign"]/"candidates.json").read_text())
+   records=json.loads((PROJECT/"evolve/control/state"/protocol["campaign"]/"candidates.json").read_text())
    if a.candidate not in records:raise SystemExit("unknown candidate")
    record=records[a.candidate];worktree=pathlib.Path(record["worktree"])
    commit=subprocess.check_output(["git","-C",str(worktree),"rev-parse","HEAD"],text=True).strip()
@@ -76,7 +76,7 @@ def main():
    rngfile.write_text(json.dumps(random.getstate())+"\n")
    # Current guard requires all candidate patches to be based on the frozen seed.
    task={"selected_reference":parent.to_dict(),"inspirations":[x.to_dict() for x in inspirations],
-      "required_patch_base":protocol["baseline_commit"],"controller":str(PROJECT/"system/controller.py"),"campaign":protocol["campaign"],
+      "required_patch_base":protocol["baseline_commit"],"controller":str(PROJECT/"evolve/control/controller.py"),"campaign":protocol["campaign"],
       "instruction":"Current assistant proposes one hypothesis and creates a new controller worktree. References are context; rebase the complete patch on the frozen seed. Do not edit evaluator/thresholds. Never auto-merge.",
       "recent_feedback":ledger[-3:],"remaining_candidates":protocol["max_candidates"]-len(ledger)}
    out=state/("task-"+str(time.time_ns())+".json");out.write_text(json.dumps(task,indent=2)+"\n")

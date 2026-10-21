@@ -8,26 +8,27 @@ A bounded kernel optimization laboratory: immutable candidate patches, isolated 
 Swap-Next/
 ├── linux/       # upstream Linux submodule, pinned to a public commit
 ├── benchmark/   # builds, KVM, workloads, evidence, protocols and settings
-├── evolve/      # OpenEvolve loop adapters and dependency pin
-├── system/      # our candidate controller, policy, analysis and tests
+├── evolve/      # evolution workflow and adapters
+│   ├── control/ # our candidate controller, policy, analysis and tests
+│   └── openevolve/ # pinned upstream OpenEvolve submodule
 ├── patches/     # independent experimental patches against upstream
 └── results/     # historical observations, with explicit limitations
 ```
 
 The submodule tracks `torvalds/linux` at `744e5400b36f84b4816e3ff8531ec2dff52b474c`. Swap is a subsystem within Linux; it is not a separate upstream repository. Our controller is outside the upstream tree. Candidates run in disposable `worktrees/`; the pinned submodule stays clean.
 
-Clone this repository with `git clone --recurse-submodules <repository-url>`, or run `git submodule update --init linux` after a normal clone. The Linux checkout is large.
+Clone this repository with `git clone --recurse-submodules <repository-url>`, or run `git submodule update --init linux evolve/openevolve` after a normal clone. The Linux checkout is large. OpenEvolve is pinned at `59dfe764b5ab4478ac00214432fcac33bbe2bf4b` in `evolve/openevolve/`; our controller and adapters remain outside that upstream source.
 
 ## Workflow
 
 Run kernel tasks on a dedicated Linux KVM worker. See [benchmark](benchmark/README.md) and its setup guide for prerequisites and build/rootfs setup. The namespace launcher currently targets an x86-64 Debian/Ubuntu-style toolchain layout.
 
 ```sh
-python3 system/controller.py status
-python3 -m unittest discover -s system/tests -v
-python3 system/controller.py new my-trial --hypothesis 'One concrete hypothesis'
+python3 evolve/control/controller.py status
+python3 -m unittest discover -s evolve/control/tests -v
+python3 evolve/control/controller.py new my-trial --hypothesis 'One concrete hypothesis'
 # Edit only allowed paths in worktrees/my-trial and commit locally.
-python3 system/controller.py check my-trial
+python3 evolve/control/controller.py check my-trial
 ```
 
 The proposal author owns the hypothesis; OpenEvolve stores candidate programs and returns selection feedback. This adapter does not run a background model worker or call a paid model API. The full acceptance protocol remains disabled pending calibration and missing correctness/holdout gates. The separate pilot is for observations only. Nothing auto-merges, pushes, promotes, changes host swap, or replaces the host kernel.
@@ -46,4 +47,4 @@ Our controller and kernel modifications use GPL-2.0-only; see [LICENSE](LICENSE)
 
 ## Contributor guidance
 
-Project-authored writing is in English. Follow [kernel code taste rules](system/CODE_PATTERNS.md) and use the repository-local [kernel patch review skill](.agents/skills/kernel-patch-review/SKILL.md) when reviewing kernel changes. This policy does not alter upstream content or global assistant preferences.
+Project-authored writing is in English. Follow [kernel code taste rules](evolve/control/CODE_PATTERNS.md) and use the repository-local [kernel patch review skill](.agents/skills/kernel-patch-review/SKILL.md) when reviewing kernel changes. This policy does not alter upstream content or global assistant preferences.

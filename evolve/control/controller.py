@@ -20,7 +20,7 @@ sys.dont_write_bytecode = True
 from analysis import Invalid, analyze, digest, load_json, require
 
 CONTROL = Path(__file__).resolve().parent
-PROJECT = CONTROL.parent
+PROJECT = CONTROL.parents[1]
 ROOT = PROJECT / "linux"
 STATE = CONTROL / "state"
 POLICY = CONTROL / "config/policy.json"

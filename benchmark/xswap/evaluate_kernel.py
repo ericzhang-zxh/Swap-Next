@@ -24,8 +24,8 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 def bounded(protocol):
-    for path in (PROJECT / 'system/state/STOP',
-                 PROJECT / 'system/state' / protocol['campaign'] / 'STOP'):
+    for path in (PROJECT / 'evolve/control/state/STOP',
+                 PROJECT / 'evolve/control/state' / protocol['campaign'] / 'STOP'):
         if path.exists():
             raise ValueError('STOP')
     if datetime.datetime.now(datetime.timezone.utc) >= datetime.datetime.fromisoformat(protocol['deadline_utc']):
@@ -107,7 +107,7 @@ def evaluate(program_path):
             calibration_report = json.loads(calibration_path.read_text())
             if calibration_report['suite_sha256'] != hashes or calibration_report['status'] != 'PILOT_COMPLETE_REVIEW_REQUIRED':
                 raise ValueError('missing or stale A/A calibration')
-            invoke(['python3', str(PROJECT / 'system/controller.py'), '--campaign', protocol['campaign'], 'check', ident], state / 'static.log', 180)
+            invoke(['python3', str(PROJECT / 'evolve/control/controller.py'), '--campaign', protocol['campaign'], 'check', ident], state / 'static.log', 180)
             checked = json.loads((state / 'static.log').read_text())
             if checked['status'] != 'SCOPE_PASS' or checked['candidate_commit'] != request['candidate_commit'] or checked['parent'] != protocol['baseline_commit']:
                 raise ValueError('candidate static identity mismatch')

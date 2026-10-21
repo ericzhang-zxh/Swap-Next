@@ -14,7 +14,7 @@ repository in English; this skill sets no global conversation-language preferenc
 
 ## Establish the contract
 
-Locate the repository root and read `AGENTS.md`, `system/CODE_PATTERNS.md` and the
+Locate the repository root and read `AGENTS.md`, `evolve/control/CODE_PATTERNS.md` and the
 applicable policy. Follow the designated Linux-worker requirement. Inspect the
 pinned kernel's `Documentation/process/coding-assistants.rst` and the process
 documents it requires for the actual task. Use that source tree's APIs and

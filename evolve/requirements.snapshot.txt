@@ -15,7 +15,8 @@ jiter==0.17.0
 MarkupSafe==3.0.4
 numpy==2.5.4
 openai==3.35.1
--e git+https://github.com/algorithmicsuperintelligence/openevolve.git@59dfe764b5ab4478ac00214432fcac33bbe2bf4b#egg=openevolve
+# Run pip from the repository root; the Git submodule pins OpenEvolve.
+-e ./evolve/openevolve
 pydantic==2.14.1
 pydantic_core==2.50.1
 PyYAML==6.0.3

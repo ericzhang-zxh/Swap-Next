@@ -44,7 +44,7 @@ def evaluate(program_path):
        "aggregation":"arithmetic mean of per-run p99, not pooled p99"}
     result={"pilot_pass":0.0,"combined_score":0.0}
     try:
-        invoke(["python3",str(PROJECT/"system/controller.py"),"check",ident],state/"static.log",180)
+        invoke(["python3",str(PROJECT/"evolve/control/controller.py"),"check",ident],state/"static.log",180)
         checked=json.loads((state/"static.log").read_text())
         if checked["status"]!="SCOPE_PASS" or checked["candidate_commit"]!=request["candidate_commit"]:
             raise ValueError("candidate SHA/static mismatch")

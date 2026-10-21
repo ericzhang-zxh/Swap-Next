@@ -16,8 +16,8 @@ programs and feedback and selects references; it does not certify correctness.
 All paths derive from this checkout, with no sibling private repositories:
 
 - `../linux/`: upstream Linux submodule and Git objects used for snapshots.
-- `../system/controller.py`: candidate scope/static checks.
-- `../system/state/`: controller state, including the `STOP` sentinel.
+- `../evolve/control/controller.py`: candidate scope/static checks.
+- `../evolve/control/state/`: controller state, including the `STOP` sentinel.
 - `config/kernel.config`: shared baseline/candidate configuration.
 - `kernel/`: trusted evaluator, workload, overlay, build and guest runners.
 
@@ -42,11 +42,14 @@ Use a dedicated Linux environment with Git, Python, GCC/static libc development
 files, kernel build dependencies, util-linux (`unshare`, `setpriv`, `prlimit`),
 GNU core utilities, cpio, gzip, and `qemu-system-x86_64`.
 `../evolve/requirements.snapshot.txt` records pinned Python dependencies and the public
-OpenEvolve Git revision; fresh installation of this snapshot is not verified here.
+OpenEvolve editable source path. The evolve/openevolve Git submodule pins
+revision 59dfe764b5ab4478ac00214432fcac33bbe2bf4b; do not install a second
+Git-URL copy. Fresh dependency installation is not verified here.
 
 From the superproject root:
 
 ```sh
+git submodule update --init evolve/openevolve
 python3 -m venv evolve/.venv
 evolve/.venv/bin/pip install -r evolve/requirements.snapshot.txt
 python3 benchmark/kernel/build.py \
@@ -76,7 +79,7 @@ needed. Templates and generated binaries remain local artifacts.
 
 ## Run the bounded loop
 
-After creating and committing a candidate through `system/controller.py` from the superproject root:
+After creating and committing a candidate through `evolve/control/controller.py` from the superproject root:
 
 ```sh
 evolve/.venv/bin/python evolve/kernel/loop.py evaluate --candidate example-candidate
@@ -87,7 +90,7 @@ evolve/.venv/bin/python evolve/kernel/loop.py next
 `next` writes a proposal brief; it does not start a model. Evaluation runs fresh
 AB/BA boots for disk and zswap, preserves failures, verifies input identities,
 and stores measured feedback. Candidate and run budgets remain in
-`kernel/protocol.json`. `touch system/state/STOP` requests the existing stop
+`kernel/protocol.json`. `touch evolve/control/state/STOP` requests the existing stop
 checks; an active runner monitors the sentinel. No process launches are implied
 by merely reading or selecting references.
 

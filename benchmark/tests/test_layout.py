@@ -55,7 +55,7 @@ class LayoutTests(unittest.TestCase):
         self.assertEqual(protocol["deadline_utc"], "2026-10-21T12:52:23+00:00")
         self.assertFalse(protocol["performance_accepted"])
         self.assertFalse(protocol["auto_promote"])
-        policy = json.loads((ROOT / "system/config/policy.json").read_text())
+        policy = json.loads((ROOT / "evolve/control/config/policy.json").read_text())
         self.assertFalse(policy["runtime_enabled"])
         self.assertFalse(policy["thresholds_calibrated"])
 

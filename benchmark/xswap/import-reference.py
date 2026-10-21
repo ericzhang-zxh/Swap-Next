@@ -25,11 +25,11 @@ def main():
             raise SystemExit('patch hash mismatch')
     # Fetch the public base explicitly first if this local object is absent.
     command('git', '-C', str(PROJECT / 'linux'), 'cat-file', '-e', manifest['base_commit'] + '^{commit}')
-    campaign = PROJECT / 'system/campaigns' / NAME
-    policy = json.loads((PROJECT / 'system/campaigns/xswap-2026-10-21/import-policy.json').read_text())
+    campaign = PROJECT / 'evolve/control/campaigns' / NAME
+    policy = json.loads((PROJECT / 'evolve/control/campaigns/xswap-2026-10-21/import-policy.json').read_text())
     campaign.mkdir(exist_ok=False)
     (campaign / 'policy.json').write_text(json.dumps(policy, indent=2)+'\n')
-    controller = ['python3', str(PROJECT / 'system/controller.py'), '--campaign', NAME]
+    controller = ['python3', str(PROJECT / 'evolve/control/controller.py'), '--campaign', NAME]
     created = json.loads(command(*controller, 'new', NAME, '--hypothesis', 'Reproduce the imported public reference using preserved patch and commit identities; no optimization or performance acceptance.'))
     worktree = created['worktree']
     for row in manifest['patches']:

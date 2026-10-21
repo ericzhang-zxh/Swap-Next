@@ -6,7 +6,7 @@ from lifetime import bind_child_to_parent
 BASE=pathlib.Path(__file__).resolve().parent
 PROJECT=BASE.parents[1]
 CONTROL=PROJECT/"linux"
-STOP=PROJECT/"system/state/STOP"
+STOP=PROJECT/"evolve/control/state/STOP"
 def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
 def run(cmd, log, timeout=900, output=None):
     start=time.monotonic(); why=None

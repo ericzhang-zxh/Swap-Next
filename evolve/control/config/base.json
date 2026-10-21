@@ -5,5 +5,5 @@
   "baseline_date": "2026-10-20",
   "author": "Eric Zhang <zxh@xh-zhang.com>",
   "note": "The submodule is pinned to public upstream; our controller is outside its tree. Moving upstream requires a new baseline/campaign.",
-  "source_layout": "linux submodule plus sibling system, benchmark and Evolve"
+  "source_layout": "linux submodule, benchmark suites, and evolve adapters with control policy"
 }

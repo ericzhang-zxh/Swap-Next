@@ -1,10 +1,10 @@
 # Swap Next contributor contract
 
 - Write all project-authored documentation, code comments, commit messages and repository review artifacts in English. This rule applies only to this repository; preserve upstream and third-party source text.
-- For kernel patch reviews, use `.agents/skills/kernel-patch-review/SKILL.md` and `system/CODE_PATTERNS.md`.
-- Read README.md, system/PRINCIPLES.md, system/CODE_PATTERNS.md and system/config/policy.json first.
+- For kernel patch reviews, use `.agents/skills/kernel-patch-review/SKILL.md` and `evolve/control/CODE_PATTERNS.md`.
+- Read README.md, evolve/control/PRINCIPLES.md, evolve/control/CODE_PATTERNS.md and evolve/control/config/policy.json first.
 - Run all kernel and sparse work on the designated Linux worker, never the controller laptop.
-- Do not modify the linux submodule checkout. Create candidate worktrees through system/controller.py.
+- Do not modify the linux submodule checkout. Create candidate worktrees through evolve/control/controller.py.
 - Read linux/Documentation/process/coding-assistants.rst and its required process documents before kernel work.
 - Workers execute one assigned hypothesis; no further delegation, scope changes, evaluator changes or publishing.
 - Preserve locks, reference ownership, warnings, accounting and failure handling.
@@ -16,7 +16,7 @@
 ## Kernel code taste
 
 These core rules apply when authoring or reviewing kernel changes. See
-`system/CODE_PATTERNS.md` for detailed rationale and review guidance.
+`evolve/control/CODE_PATTERNS.md` for detailed rationale and review guidance.
 
 - Express one coherent intent per patch. Keep unrelated renaming, formatting and refactoring separate; preserve valid intermediate commits.
 - Follow the target subsystem's conventions and existing APIs. Prefer a clear state representation to accumulating special cases, but do not redesign beyond the task's scope.

@@ -45,3 +45,7 @@ benchmark/xswap/initramfs.json
 # Lowercase adapter search state; historical uppercase runtime stays archived.
 evolve/kernel/state*/
 evolve/xswap/state*/
+
+# Active controller state; retain system/state above for archived evidence.
+evolve/control/state/
+evolve/control/campaigns/xswap-reference-replay/

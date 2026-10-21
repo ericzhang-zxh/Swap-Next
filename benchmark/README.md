@@ -3,7 +3,7 @@
 This directory owns isolated kernel builds, KVM runners, guest workloads,
 parsers, evaluators, frozen discovery protocols, kernel configurations, and
 evidence tests. [Evolve](../evolve/README.md) owns OpenEvolve loop adapters and
-its dependency pin. [system](../system/README.md) owns candidate admission,
+its dependency pin. [control](../evolve/control/README.md) owns candidate admission,
 scope, campaign policy, and formal acceptance.
 
 Start with [settings.json](settings.json), the auditable settings inventory,
@@ -46,7 +46,7 @@ trusted template's usemem executable and remains an external input.
 
 Discovery scores sort hypotheses only. A passing pilot is not correctness
 certification or statistical acceptance. Formal acceptance remains disabled in
-system/config/policy.json, with missing gates and thresholds fail-closed.
+evolve/control/config/policy.json, with missing gates and thresholds fail-closed.
 No promotion is automatic.
 
 ## Layout migration and evidence
@@ -79,7 +79,7 @@ python3 benchmark/validate_settings.py
 python3 -m unittest discover -s benchmark/tests -v
 python3 -m unittest discover -s benchmark/kernel -p 'test_*.py' -v
 python3 -m unittest discover -s benchmark/xswap -p 'test_*.py' -v
-python3 -m unittest discover -s system/tests -v
+python3 -m unittest discover -s evolve/control/tests -v
 ```
 
 Kernel and xswap fixture tests require SWAP_NEXT_EVIDENCE_FIXTURE and

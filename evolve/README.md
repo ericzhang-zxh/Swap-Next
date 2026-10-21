@@ -1,9 +1,19 @@
-# OpenEvolve adapters
+# Evolution workflow
 
-This directory owns the pinned OpenEvolve dependency and proposal/feedback loop
-adapters only. Builds, workloads, protocols, parsers and evidence belong to
-[benchmark](../benchmark/README.md). Candidate scope and formal acceptance
-belong to [system](../system/README.md).
+This directory owns candidate control, search adapters, and the pinned OpenEvolve
+source dependency. Builds, workloads, protocols, parsers and measurement evidence
+belong to [benchmark](../benchmark/README.md).
+
+- [control](control/README.md): our controller, policies, acceptance analysis and tests.
+- `kernel/` and `xswap/`: our proposal/feedback adapters.
+- `openevolve/`: unmodified upstream Git submodule at
+  `59dfe764b5ab4478ac00214432fcac33bbe2bf4b` (Apache-2.0).
+
+Previously the requirements snapshot fetched the same OpenEvolve revision through
+a Git URL. The submodule now makes that source visible in this checkout; the
+snapshot installs it locally in editable mode. No OpenEvolve version upgrade is
+implied. Run installation from the repository root after initializing the submodule.
+Our controller remains separate code and is not an upstream OpenEvolve modification.
 
 Install the snapshot into evolve/.venv as described in
 [benchmark setup](../benchmark/SETUP.md), then use:
