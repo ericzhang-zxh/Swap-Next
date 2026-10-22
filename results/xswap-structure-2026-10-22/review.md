@@ -137,3 +137,52 @@ this brings the shared ledger to 55 attempts: 53 pass and two retained warning
 failures. Full normal-config comparison of xs-tailcache-v2 has now started;
 its results remain pending. These lockdep boots do not establish large-folio,
 failure-injection or general concurrency coverage.
+
+## Tail-cache v2 comparison result
+
+Evaluation `14917360-36d8-4a18-bfb3-76d3ebe8ed01` completed 40/40 pilot-passing
+boots of `xs-tailcache-v2` (`615f839bb6653ffd56dbb66ebdc855dea0823d54`) against
+the observation baseline (A = baseline, B = candidate). Every boot passed data
+roundtrip, repressure data, fork/COW, live destroy, swapoff and warning gates.
+
+| Backend | Mean clusters A / B | High regime A / B (Wilson 95%) | Mean first-access p99 A / B (us) | Mean workload s A / B |
+|---|---:|---|---|---|
+| disk | 890.6 / 219 | 4/10 (0.168-0.687) vs 0/10 (0.000-0.278) | 389.597 / 357.625 | 28.07 / 28.42 |
+| zswap | 1693.6 / 219 | 6/10 (0.313-0.832) vs 0/10 (0.000-0.278) | 239.977 / 243.986 | 24.99 / 24.70 |
+
+Finding: bounded cache-only tail reclamation removes the high retained-metadata
+regime after the first pressure/read/settle cycle on both backends in this
+workload. Confidence: medium-high; 20/20 candidate boots settled at 219 clusters
+while 10/20 baseline boots stayed high. A high-regime candidate boot under the
+same protocol would lower it. No latency or duration regression is visible
+(zswap p99 +1.7%, disk p99 -8.2%; both within the run-to-run spread).
+
+After the diagnostic second pressure cycle, both sides still reach high states
+(disk resettle 1/10 vs 1/10 at 1898; zswap 4/10 vs 2/10 at 2482-2774). The pass
+runs only when a free triggers shrink work and has no delayed retry, so blockers
+that appear after the last trigger stay. Confidence: medium.
+
+Status: closed as a promising mechanism, not accepted or promoted. The source-level
+descriptor retirement race in
+[descriptor-lifetime-review.md](descriptor-lifetime-review.md) applies to the
+baseline and this candidate and blocks promotion. The candidate also makes tail
+retirement more frequent, which raises the practical exposure of that race.
+The repair is proposed in
+[descriptor-lifetime-repair-plan.md](descriptor-lifetime-repair-plan.md).
+
+## Campaign close
+
+The ledger holds 95 of 96 guest attempts: 93 pass and the two retained lockdep
+warning failures. The controlled high-anchor hole probe was not run; its harness
+has never executed, and its first launch would have crossed the 16:05 UTC
+deadline. No attempt was made after the deadline.
+
+Next campaign, in order:
+1. Implement the dense-prefix lifetime repair and the controlled-pause
+   reproductions from the repair plan; the race must be reproduced on the
+   baseline and absent on the repaired kernel.
+2. Rebase tail-cache reclamation on the repaired kernel, add a delayed retry
+   for blockers seen after the last trigger, and rerun the paired comparison
+   including the repressure phase.
+3. Run the high-anchor hole probe to measure whether interior holes are worth
+   the representation change in [interior-reclamation-design.md](interior-reclamation-design.md).

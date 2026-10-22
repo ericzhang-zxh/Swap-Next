@@ -1,7 +1,9 @@
 # Structural xswap campaign 2026-10-22
 
-Status: preparation and observation-baseline build in progress. No candidate
-performance result or promotion exists yet.
+Status: closed at the 2026-10-22 16:05 UTC deadline. Tail-cache reclamation
+(`xs-tailcache-v2`) removed the high retained-metadata regime in 20/20 paired
+boots; a source-level descriptor retirement race blocks promotion. Low-first
+allocation was inconclusive. Results and next steps are in [review.md](review.md).
 
 ## Contract
 
