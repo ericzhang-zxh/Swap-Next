@@ -32,12 +32,28 @@ Per-phase snapshots in [summary.json](summary.json), all 32 measured boots:
 | zswap | no | 8 | 2774–3066 |
 
 From the end of `usemem` onward, neither `clusters_mapped` nor `shrinks`
-changes in any boot, so the "after settle" value is the post-pressure value.
-Shrink unmaps only a contiguous free tail. One long-lived slot high in the
-range blocks it. In the high regime the range is about 1% occupied.
+changes in any boot. The "after settle" value is therefore the post-pressure
+value. Usage still falls from about 25,400 to about 9,000 pages during that
+time.
+
 The A/A runs show the same split (disk 219/1898, zswap 219/2774) with
-identical kernels. The mechanism and the next steps are in
-[DESIGN.md](../../DESIGN.md#what-the-first-campaign-showed).
+identical kernels.
+
+**Mechanism (high confidence).** Shrink unmaps only a contiguous free tail.
+One long-lived slot high in the range keeps everything below it mapped.
+The 64 MiB target's slots are allocated first, so they sit low, and freeing
+them never creates a tail. Occupancy at the end is 7.9% in the low regime
+and 0.6–1.2% in the high regime, so about 99% of the mapped metadata is unused.
+
+**What pins the high clusters (medium confidence, untested).** Probably
+cache-only slots: swap-cache folios whose PTE references were dropped when
+`usemem` exited but whose slots were not freed because the folio was locked
+or under writeback. That would explain both the randomness (writeback timing
+at exit) and the roughly 9,000 pages still in use after the target is read back.
+
+**Upstream inconsistency.** The `06.patch` commit message says the minimum
+shrink is four chunks, but the code defines `XSWAP_SHRINK_MIN` as eight.
+The first candidate set the code to the value the message states.
 
 ## Candidates
 
@@ -62,10 +78,40 @@ delta above falls inside that A/A spread.
 ## Lessons
 
 - **The metric was never validated.** The A/A runs showed the split, and the
-  campaign compared candidates anyway. The next protocol must first show
-  that A/A gives a stable value or a measurable regime rate.
+  campaign compared candidates anyway.
 - **Constant tuning cannot reach the problem.** The bottleneck is
-  free-tail-only shrink. See the ranked hypotheses in DESIGN.md.
+  free-tail-only shrink.
+
+## Next steps for this direction
+
+The next protocol should measure the structure, not one snapshot:
+
+- **Add debugfs counters**: the highest in-use cluster index, the number of
+  non-empty clusters, and the number of cache-only slots. Then
+  - `mapped − (highest + 1)` is what tail shrink could still reclaim;
+  - `mapped − non_empty` is what any shrink design could reclaim.
+- **Report a regime rate**: the fraction of boots in the high state, with a
+  binomial interval, over at least 10 boots per side.
+- **Run a cheap diagnostic first**: in the high state, force reclaim of the
+  swap cache (for example, by applying pressure again after `usemem` exits)
+  and record whether the pinned clusters free up and the shrink then fires.
+
+Hypotheses, ranked:
+
+1. **Interior unmap.** Unmap any fully free cluster, not only the tail.
+   `VM_SPARSE` already allows holes. The obstacle is that `cluster_info`
+   walkers and the grow path treat the mapped range as a dense prefix
+   bounded by `nr_clusters_mapped`. Replacing that prefix with a mapped
+   bitmap or per-chunk state is the structural fix. It touches lock and
+   lifetime rules.
+2. **Low-first allocation while sparse.** When occupancy is low, allocate
+   from the lowest free cluster, so long-lived slots do not land high.
+   This is cheaper than (1) and leaves the lifetime rules unchanged. Risks
+   are allocator lock traffic and weaker per-CPU cluster locality. It is
+   falsified if the high-state rate does not fall.
+3. **Eager cache-only reclaim on exit.** Use this if the diagnostic confirms
+   that cache-only slots pin the tail. It has the smallest scope, but it
+   addresses only one source of pinning.
 
 ## Evidence
 

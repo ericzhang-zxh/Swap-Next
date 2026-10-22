@@ -58,7 +58,7 @@ stays inside the 50%/85% trigger band.
 
 Rounds 2 and 3 tuned growth while the round-1 evidence already pointed at
 free-tail-only shrink. They were the wrong next step, and that is the main
-process lesson. See [DESIGN.md](../../DESIGN.md#hypotheses-ranked).
+process lesson. See [next steps](README.md#next-steps-for-this-direction).
 
 Codex proposed and implemented these candidates. A later review (this
 revision) re-read the snapshots and replaced the original conclusions.

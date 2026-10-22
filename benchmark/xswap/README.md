@@ -42,9 +42,9 @@ fork shared, after children, after reads, and after a 2 s settle.
 
 The discovery score is the minimum across backends of baseline/candidate
 settled clusters, multiplied by `min(1, worst-backend p99 ratio)`.
-It only sorts candidates. In the 2026-10-21 campaign, the primary metric
-was decided by whether one tail shrink succeeded during `usemem`; see
-[DESIGN.md](../../DESIGN.md#what-the-first-campaign-showed).
+It only sorts candidates. The primary metric splits into two regimes,
+depending on whether a tail shrink succeeds during `usemem`; see
+[the 2026-10-21 report](../../results/xswap-2026-10-21/README.md#why-there-is-no-effect).
 Read the snapshots, not the score.
 
 ## Running

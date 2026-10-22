@@ -48,7 +48,4 @@ a kernel.
 
 ## Limitations
 
-See [DESIGN.md § Limitations](../DESIGN.md#limitations). The first xswap
-campaign showed that retained mapped clusters measure a two-regime layout
-event, not a stable quantity. Fix that before comparing candidates; see
-[DESIGN.md § Next protocol revision](../DESIGN.md#next-protocol-revision).
+See [DESIGN.md § Limitations](../DESIGN.md#limitations).

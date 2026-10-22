@@ -2,7 +2,8 @@
 
 ## Read first
 
-1. [README.md](README.md) and [DESIGN.md](DESIGN.md): purpose, findings, next hypotheses.
+1. [README.md](README.md) and [DESIGN.md](DESIGN.md): purpose, cost model, measurement principles.
+   Read the active campaign's report in `results/` for its findings and next steps.
 2. [evolve/control/PRINCIPLES.md](evolve/control/PRINCIPLES.md): scope, invariants,
    trust boundary, permissions.
 3. [evolve/control/CODE_PATTERNS.md](evolve/control/CODE_PATTERNS.md): kernel code

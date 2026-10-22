@@ -1,8 +1,8 @@
 # Swap Next binding
 
 Read [AGENTS.md](../../../../AGENTS.md) and [DESIGN.md](../../../../DESIGN.md)
-first. DESIGN.md owns the cost model, the roadmap, the current findings and the
-ranked hypotheses. All kernel, build and VM work runs on the Linux worker over SSH.
+first. DESIGN.md owns the cost model, the upstream landscape and the measurement
+principles; each campaign's findings and next steps live in its `results/` report. All kernel, build and VM work runs on the Linux worker over SSH.
 
 ## Components
 
@@ -53,7 +53,7 @@ harness has been relocated since. A new campaign needs:
 - its own policy and protocol;
 - a fresh baseline build and initrd;
 - fresh A/A calibration;
-- the measurement fixes in [DESIGN.md § Next protocol revision](../../../../DESIGN.md#next-protocol-revision).
+- the measurement fixes in [the 2026-10-21 report](../../../../results/xswap-2026-10-21/README.md#next-steps-for-this-direction).
 
 Never reset a budget by clearing a ledger or database.
 
