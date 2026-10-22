@@ -1,10 +1,10 @@
 # Controlled xswap hole probe
 
-This preparation contains a guest workload only. It tests mapped metadata
-retention while a live anchor occupies high virtual swap clusters, with explicit
-placement prerequisites and complete data checks. No runner, parser, protocol or
-campaign integration is included. Run it only inside the trusted disposable guest
-after xswap and its physical `/dev/vda` backend have been set up.
+This diagnostic tests mapped metadata retention while a live anchor occupies
+high virtual swap clusters, with explicit placement prerequisites and complete
+data checks. The trusted runner, guest init, packager and evidence parser are
+prepared here. The workload belongs only in the disposable guest after xswap and
+its physical `/dev/vda` backend have been set up.
 
 ## Fixed experiment
 
@@ -60,15 +60,22 @@ Snapshot phases are:
 Each cycle emits `HOLE_CYCLE_BEGIN N`, `FILLER_DATA_PASS N` and
 `HOLE_CYCLE_PASS N`. Successful final gates emit `ANCHOR_DATA_PASS`, `COW_PASS`,
 `DESTROY_LIVE_XSWAP_PTES <count>`, `DESTROY_LIVE_PASS`, `SWAPOFF_LIVE_PASS` and
-`KERNEL_WORKLOAD_PASS`. The surrounding future guest runner must still validate
-empty swaps, backend activity, kernel warnings, boot identity and completion.
+`KERNEL_WORKLOAD_PASS`. The trusted parser additionally checks empty swaps, backend activity, kernel
+warnings, boot/image identity and completion.
 The current xswap-structure parser is intentionally incompatible with this probe.
 
 ## Validation and limitations
 
 Preparation was checked remotely with
-`gcc -Wall -Wextra -Werror -fsyntax-only workload.c`. No binary was executed and
-no guest evidence exists for this probe yet.
+`gcc -Wall -Wextra -Werror -fsyntax-only workload.c` and synthetic parser, provenance
+and budget unit tests (`python3 -m unittest -v`). No workload binary was executed,
+rootfs packaged or guest launched during this preparation.
+
+The COW check uses resident pages. `SWAPOFF_LIVE_PASS` records backend teardown
+plus retained-data verification, without claiming live backend PTE coverage.
+High anchor placement is separate from a topology finding: the parser exports
+`clusters_free`, `tail_free` and their difference as a descriptive estimate from
+rolling snapshots. Placement success never produces an improvement verdict.
 
 The workload sequence and patterns are deterministic; allocator placement and
 MADV_PAGEOUT completion depend on kernel state. Failed prerequisites invalidate
@@ -79,3 +86,32 @@ readback deliberately changes cache state before unmap. Final swapoff verifies
 retained data, but does not require residual live physical-backend PTEs then.
 This is a structural diagnostic with no timing, throughput or performance
 acceptance claim. It has no concurrency stress, failure injection or sanitizers.
+
+
+## Trusted runner bounds
+
+`protocol.json` pins the reviewed observation commit and exact normalized config
+hash. The runner requires THP and THP swap disabled (an absent Kconfig symbol is
+disabled), preserving the 256-slot cluster assumption. It verifies kernel image,
+config, source commit, initrd provenance and workload source hashes. Guest command
+line evidence must match the expected image hash and backend. Inputs are checked
+again after completion.
+
+There are at most two diagnostic attempts before 2026-10-22 16:05 UTC. Each
+attempt is reserved in both this suite's local ledger and the shared
+`../xswap-structure/state-runtime-layout-v1/attempts.json`, whose total limit is
+96. Existing shared entries are preserved; new entries identify this suite.
+The common `benchmark/kernel/.runtime.lock` protects reservation and guest runtime.
+A shared reservation remains charged if writing the local ledger fails.
+
+Both global STOP and the protocol campaign STOP apply. The guest remains limited
+to 4 GiB RAM, two vCPUs, a private 8 GiB disk, no networking or host mounts,
+600 seconds and 16 MiB serial output. Admission requires at least 80 GiB free
+space. The deadline and STOP are checked during runtime. Failed attempts remain
+charged. Formal acceptance and automatic promotion are always false.
+
+For an authorized run, prepare with
+`python3 prepare-rootfs.py --rootfs-template /absolute/trusted/template`, then use
+`python3 run.py --build REVIEWED_BUILD --backend disk` or `--backend zswap`.
+The workload needs no external `usemem` utility. The frozen deadline is a hard
+stop, not a suggestion to change it when expired.

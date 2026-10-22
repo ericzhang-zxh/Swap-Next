@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-structure-2026-10-22",
+  "suite": "xswap-hole-probe",
+  "baseline_commit": "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4",
+  "config_sha256": "8fc3e1dcf7fe55ef89d93e7f04148f5f6c3bc8d345d91e1876a4d3ba6b937017",
+  "deadline_utc": "2026-10-22T16:05:00+00:00",
+  "max_guest_attempts": 2,
+  "global_max_guest_attempts": 96,
+  "min_free_gib": 80,
+  "performance_accepted": false,
+  "auto_promote": false
+}
