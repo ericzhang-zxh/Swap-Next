@@ -82,9 +82,9 @@ needed. Templates and generated binaries remain local artifacts.
 After creating and committing a candidate through `evolve/control/controller.py` from the superproject root:
 
 ```sh
-evolve/.venv/bin/python evolve/kernel/loop.py evaluate --candidate example-candidate
-evolve/.venv/bin/python evolve/kernel/loop.py status
-evolve/.venv/bin/python evolve/kernel/loop.py next
+evolve/.venv/bin/python evolve/loop.py kernel evaluate --candidate example-candidate
+evolve/.venv/bin/python evolve/loop.py kernel status
+evolve/.venv/bin/python evolve/loop.py kernel next
 ```
 
 `next` writes a proposal brief; it does not start a model. Evaluation runs fresh

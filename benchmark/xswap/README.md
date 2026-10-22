@@ -1,75 +1,70 @@
-# Separate xswap pilot harness
+# xswap suite
 
-This isolated harness is not the legacy swap metadata evaluator. It requires a
-controller-reviewed Phase I/II xswap build in the main project's
-benchmark/kernel/builds directory, with instrument_sha256 explicitly null.
-No candidate source executes on the host through this runner.
+Boots the imported xswap reference (Phase I v4 + Phase II v1, `37de636c`) and
+controller-checked candidates built on it, using the same config. No candidate
+code runs on the host.
 
-Prepare the guest only with an explicitly selected trusted template:
+## Guest
 
-    python3 prepare-rootfs.py --rootfs-template /absolute/trusted/template
-    python3 run.py --build xswap-reference --backend disk
-    python3 run.py --build xswap-reference --backend zswap
+- 4 GiB RAM, two vCPUs, a private 8 GiB virtio disk, no network, no host
+  mounts, 600 s timeout.
+- `guest-init` enables zswap and creates the xswap device through
+  `/sys/kernel/mm/xswap/create` with priority 32767 and `xswap.max=8G`,
+  then checks that exactly one `/sys/kernel/debug/xswap/typeN` exists.
+  Creation requires zswap. The disk backend disables zswap after creation,
+  before counters and workload start, and the run must then show disk I/O
+  with zero zswap activity.
 
-These commands are documentation, not evidence that packaging or runs occurred.
-The runner refuses changed image/config hashes, missing required configuration,
-legacy instrumentation, and stale initramfs/source provenance. It retains raw
-serial logs, a private sparse disk, command and hashes, counters, gates, and
-results. The copied parent-death preexec hook is identical to the reference.
+## Workload (`workload.c`)
 
-Each guest has 4 GiB RAM, two vCPUs, an 8 GiB private virtio disk, no network,
-no writable host mounts, and a 600-second timeout. Global evolve/control/state/STOP and
-evolve/control/state/xswap-2026-10-21/STOP stop execution. A frozen UTC deadline and a shared attempt ledger bound the campaign to at most 48 guest launches. The runner never needs host root, host
-swap, raw host devices, or host reboot.
+1. Fill 64 MiB: eight page-distinct 64-bit values repeated per page, so zswap
+   compresses it. Then `MADV_PAGEOUT`.
+2. Run `usemem -O 5G` from the trusted rootfs template.
+3. Fork 48 children. Each checks and COW-writes one page.
+4. Time the first access to every parent PTE that is still swapped, in
+   shuffled order. Every sampled PTE must carry the xswap type. At least
+   1,000 samples are required; a run normally gets 16,384.
+5. Verify every parent word. Page the data out again, destroy xswap with live
+   PTEs, verify; swapoff the disk, verify.
 
-Guest control paths were checked in Phase I/II mm/swapfile.c: sysfs
-/sys/kernel/mm/xswap/{create,destroy}, debugfs /sys/kernel/debug/xswap/typeN.
-Create uses priority 32767 after enabling the physical disk, and xswap.max=8G.
-Exactly one debugfs type is required. Creation requires zswap enabled; the disk case disables it after creation and before counters/workload, and verifies disk IO with zero zswap activity.
+The debugfs counters are snapshotted six times: before, after pressure,
+fork shared, after children, after reads, and after a 2 s settle.
 
-The workload holds 64 MiB, pages it out, runs usemem -O 5G, forks 48 children,
-checks one page per child with COW, and checks every parent word. Compared with
-the old pilot, data now repeats eight page-distinct 64-bit values in each page:
-this intentionally enables the same deterministic dataset for disk and zswap.
-It remains fully checked, including after destroying xswap with live swapped
-PTEs and after physical swapoff. Every timed swapped-PTE access must name the
-selected xswap type. At least 1,000 timed accesses are mandatory.
+## Metrics
 
-Metrics report mapped cluster counts, never fabricated RAM byte estimates:
-mapped_clusters_after_settle is primary, sampled_mapped_clusters_max is only
-the maximum observed across six snapshots, not a true temporal peak.
-swapped_first_access_p99_us, workload_wall_seconds and whole-guest wall_seconds
-expose latency and elapsed cost. Raw grows/shrinks and usage remain evidence.
-A lack of observed shrink is not fabricated into success or optimization.
+| Metric | Meaning |
+|---|---|
+| `mapped_clusters_after_settle` | mapped `cluster_info` clusters at the end; primary |
+| `sampled_mapped_clusters_max` | maximum over the six snapshots; misses the peak during `usemem` |
+| `swapped_first_access_p99_us` | p99 first access, including swap-cache and readahead hits |
+| `workload_wall_seconds` | workload elapsed time |
+| `grows_after_settle`, `shrinks_after_settle` | xswap grow/shrink counters |
 
-Caveats: child reads can warm shared swap cache; a swapped parent PTE does not
-prove a disk-major fault. Snapshots are not atomic across different phases,
-and mapped clusters do not measure all allocator overhead. usemem runtime and
-its allocation pattern depend on the explicitly supplied template. This is a
-pilot, not full correctness acceptance, calibrated performance acceptance, or
-permission to promote. Runtime behavior and sufficient samples still need
-separate smoke verification.
+The discovery score is the minimum across backends of baseline/candidate
+settled clusters, multiplied by `min(1, worst-backend p99 ratio)`.
+It only sorts candidates. In the 2026-10-21 campaign, the primary metric
+was decided by whether one tail shrink succeeded during `usemem`; see
+[DESIGN.md](../../DESIGN.md#what-the-first-campaign-showed).
+Read the snapshots, not the score.
 
-Run parser tests with python3 -m unittest -v. Test fixtures are synthetic;
-passing parser tests is not kernel runtime evidence.
+## Running
 
-Primary review limits each child integrity scan to one page; the parent verifies every target byte. This avoids warming the entire target before the timed readback. Swap-cache and readahead effects remain part of the measured first access.
+```sh
+python3 prepare-rootfs.py --rootfs-template /absolute/trusted/template
+python3 run.py --build xswap-reference --backend disk     # single smoke boot
+evolve/.venv/bin/python evolve/loop.py xswap calibrate    # A/A, from repo root
+evolve/.venv/bin/python evolve/loop.py xswap evaluate --candidate NAME
+```
 
-## Frozen discovery loop
+`evaluate` requires an A/A calibration report whose suite hashes match the
+current files. It then runs AB/BA on both backends. The runner refuses to
+start if the image, config, initramfs or source provenance has changed, and
+it keeps the serial log, disk, command, hashes, counters and gates of every run.
 
-Run evolve/xswap/loop.py calibrate from the repository root with the pinned OpenEvolve Python environment before
-evaluating a candidate. The evaluator requires that successful A/A report to
-match the frozen suite hashes. evolve/xswap/loop.py evaluate --candidate NAME builds an
-immutable controller candidate and collects fresh AB/BA guest pairs on both
-backends. evolve/xswap/loop.py next selects references and returns feedback; the active
-assistant proposes the next change. There is no unattended model worker or
-automatic promotion. All patches still use the same imported seed.
+The campaign is bounded by `protocol.json`: three candidates, at most 48
+guest launches, and a fixed UTC deadline. `evolve/control/state/STOP` or
+`evolve/control/state/<campaign>/STOP` halts it. The 2026-10-21 deadline
+has passed; a new campaign needs its own protocol and fresh calibration.
 
-The sorting score is settled-cluster ratio with a one-sided latency penalty.
-It is not statistical acceptance. The initial A/A experiment exposed large,
-bimodal mapped-cluster variation and substantial per-boot latency noise; its
-aggregate score hides that variation. Inspect every run, shrink counters and
-raw state. Do not interpret a high score alone as an optimization result.
-
-After the dated deadline, a new controller-approved campaign and recalibration
-are required. Do not edit a running campaign's protocol or suite.
+Parser tests: `python3 -m unittest -v` in this directory. They use synthetic
+fixtures, plus a real disk run when `XSWAP_EVIDENCE_FIXTURE` is set.

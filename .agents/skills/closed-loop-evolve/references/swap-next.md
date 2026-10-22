@@ -8,7 +8,7 @@ checkout clean. Project-authored artifacts are English.
 ## Ownership and authoritative inputs
 
 - evolve/control/: candidate controller, scope, formal analysis, campaign state.
-- evolve/kernel/ and evolve/xswap/: OpenEvolve selection and feedback adapters.
+- evolve/loop.py: the OpenEvolve selection and feedback adapter for every suite.
 - evolve/openevolve/: pinned upstream submodule; our controller is not an
   OpenEvolve fork. Inspect the gitlink and installed import path.
 - benchmark/: trusted build/guest/evaluation code, configs, workloads and protocols.
@@ -19,11 +19,10 @@ and results/xswap-2026-10-21/review.md for source provenance and measured limits
 then verify the relevant current upstream discussion or author branch. A historical
 Phase I/II snapshot does not establish what its authors still intend to complete.
 
-Read AGENTS.md, evolve/control/{PRINCIPLES,CODE_PATTERNS,RUNBOOK}.md,
-the selected control policy, benchmark/README.md, benchmark/settings.json,
-and benchmark/<suite>/protocol.json. For a new environment also read
-benchmark/SETUP.md. settings.json is a recorded inventory, not runtime overrides;
-validate_settings.py checks source fingerprints, not runtime correctness.
+Read DESIGN.md first: it owns the cost model, roadmap, current findings and
+ranked hypotheses. Then read AGENTS.md, evolve/control/{PRINCIPLES,CODE_PATTERNS,RUNBOOK}.md,
+the selected control policy, benchmark/README.md and benchmark/<suite>/protocol.json.
+For a new environment also read benchmark/SETUP.md.
 
 Base policy is evolve/control/config/policy.json. Named campaigns use
 evolve/control/campaigns/<campaign>/policy.json. Controller and adapter budgets
@@ -42,12 +41,11 @@ sequence; it uses the named xswap route. A placeholder is not a suggested campai
 ```sh
 python3 evolve/control/controller.py --campaign <campaign> status
 python3 evolve/control/controller.py --campaign <campaign> protocol
-python3 benchmark/validate_settings.py
 python3 evolve/control/controller.py --campaign <campaign> new <candidate> --hypothesis '<mechanism and test>'
 # Implement and commit only the allowed candidate worktree changes.
 python3 evolve/control/controller.py --campaign <campaign> check <candidate>
-evolve/.venv/bin/python evolve/xswap/loop.py evaluate --candidate <candidate>
-evolve/.venv/bin/python evolve/xswap/loop.py next
+evolve/.venv/bin/python evolve/loop.py xswap evaluate --candidate <candidate>
+evolve/.venv/bin/python evolve/loop.py xswap next
 python3 evolve/control/controller.py --campaign <campaign> close <candidate> --reason '<decision and evidence>'
 ```
 
@@ -56,12 +54,12 @@ selection belongs before the controller subcommand. The adapter has NO
 --campaign option: it reads benchmark/<suite>/protocol.json. Ensure its campaign
 and baseline match the controller before evaluation.
 
-xswap/loop.py calibrate performs real A/A builds/boots and writes a calibration
+`loop.py xswap calibrate` performs real A/A builds/boots and writes a calibration
 report; it is not a read-only check. It is required before xswap candidate
 evaluation with matching suite hashes. The kernel adapter has no calibrate
 command and lacks A/A support; do not invent that interface or claim equivalence.
-loop.py status creates its ignored state directory but launches no experiment.
-loop.py next writes a selection/task brief; it does not start a model worker.
+`loop.py <suite> status` creates its ignored state directory but launches no experiment.
+`loop.py <suite> next` writes a selection/task brief; it does not start a model worker.
 The active assistant proposes and executes the next authorized round.
 
 The dated xswap-2026-10-21 protocol is historical: it completed three candidate

@@ -31,7 +31,7 @@ On the Linux worker, ensure the public base object is present:
 
 ```sh
 git -C linux fetch origin 9a0542b19a541eda3f82934ee747c61ec3f18847
-python3 Evolve/xswap/import-reference.py
+python3 benchmark/xswap/import-reference.py
 ```
 
 The replay helper validates every patch hash, creates a separate import-only

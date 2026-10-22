@@ -1,102 +1,64 @@
-# Xswap discovery review
+# xswap candidate review
 
-Reference: 37de636c972a413f5c25e5b6c891fb4df2f53aed, imported Phase I v4
-and Phase II v1. This is a different source baseline and workload from the
-historical ordinary-swap pilots. Their results must not be pooled.
+Reference `37de636c` (Phase I v4 + Phase II v1). Each candidate is an
+independent patch on that reference and changes only `mm/swapfile.c`.
+The measured outcome is in [README.md](README.md). This file records why
+each change was safe to test and what it was expected to do.
 
-## First hypothesis: smaller minimum tail shrink
+## Shared safety argument
 
-Candidate e3c6ac74d117d5fe065cbc0c7a591347663430ce changes one constant in
-mm/swapfile.c: XSWAP_SHRINK_MIN from eight to four growth chunks. Initial smoke
-snapshots retained 429 free tail clusters on disk and 471 with zswap, with zero
-shrink operations. The candidate tests whether the minimum batch gate retains
-avoidable mapped clusters after pressure subsides. Timing benefits are not
-assumed. More frequent unmap, PCP flush and RCU waits can increase runtime or
-cause regrowth under alternating pressure.
+All three candidates change constants only. Every lock, publication order,
+lifetime rule and failure path stays the same; only how often existing paths
+run changes. The paths involved are:
 
-The resource owner remains swap_info_struct. xswap_map_clusters initializes
-cluster locks and publishes the mapped bound with release ordering. Shrink
-runs under xswap_lock, checks occupancy, scans the exact contiguous free tail,
-keeps one growth chunk as slack, then revalidates flags and cluster-lock
-availability under si->lock. It detaches only the free tail before unmapping.
-The unmap helper releases backing records, flushes PCP references, waits for RCU,
-and frees mapped pages, with a bounded fallback on allocation failure. Destroy
-cancels shrink work and follows the existing swapoff lifetime path. This patch
-changes none of those operations, folio references, backend ownership or memcg
-charge paths. It changes how often that existing path can be reached.
+- **Grow** (`cluster_alloc_swap_entry` → `xswap_map_clusters`) runs under
+  `xswap_lock`. It rejects stale ranges with `-EAGAIN`, allocates without
+  reclaim, rolls back partial mappings, and publishes the new bound with
+  release ordering. It drops and retakes the per-CPU cluster lock around
+  the mapping.
+- **Shrink** is deferred to `xswap_shrink_work` from `__free_cluster`. It runs
+  under `xswap_lock` and checks occupancy. It then takes the contiguous free
+  tail, keeps one chunk of slack, and revalidates flags and cluster locks
+  under `si->lock` before detaching. Unmapping releases backing records,
+  flushes per-CPU references, waits for RCU, and frees the pages.
+  Destroy and swapoff cancel the work first.
 
-Static diff and checkpatch passed. Source review supports proceeding to bounded
-experiments, not merging. Runtime observations and missing gates are recorded
-separately. No concurrency or allocator-failure proof is inferred from a one-line
-diff or a successful pilot. Original reference behavior remains experimental.
+Correctness risk: **low**. Performance risk: more frequent unmap/RCU
+waits (shrink) or larger allocation bursts (grow).
 
-## Baseline and measurement limits
+## 1. `XSWAP_SHRINK_MIN` 8 → 4 chunks
 
-The first disk smoke boot intentionally failed closed when xswap creation was
-attempted with zswap disabled. The reference requires zswap enabled at creation.
-The final harness enables it during creation and disables it afterward for the
-forced-disk scenario, before baseline activity counters and workload begin.
-This was corrected before candidate evaluation and A/A calibration. Both final
-smoke backends passed, including exact xswap PTE type checks and live teardown.
+The smoke boots kept 429 (disk) and 471 (zswap) free tail clusters with zero
+shrinks. The minimum batch looked like the gate. The `06.patch` commit
+message also says four chunks, while the code uses eight.
 
-The workload uses page-distinct compressible data so that the zswap case actually
-exercises compression; it is not a general incompressible workload. Children
-check one page each, including COW; the parent verifies all words. First-access
-latency includes swap-cache, readahead, scheduling and timer effects. Mapped
-cluster counts describe one metadata structure, not physical bytes or total RAM.
-Six snapshots give a sampled maximum, not a continuous peak. A/A observations
-are an initial noise diagnostic, not full statistical calibration.
+**Expected:** more shrinks, fewer retained clusters.
+**Observed:** shrinks rose slightly. Two zswap candidate boots shrank yet
+kept 2409/2482 clusters with only 82/121 free at the tail. The gate was the
+position of the highest in-use slot, not the batch size.
 
-A/A exposed a major measurement limitation: identical disk kernels retained
-either 219 or 1,898 mapped clusters; identical zswap kernels retained either
-219 or 2,774. The different retention regimes are consistent with asynchronous shrink
-and allocation-layout effects even with the same source and guest inputs. The low retained
-state coincides with shrink activity. Two pairs per backend cannot separate
-this variation from a candidate effect. All discovery rankings remain
-provisional; candidate-average reductions cannot establish causality.
+## 2. `XSWAP_GROW_CHUNKS` 4 → 8
 
-## Second hypothesis: larger growth cap
+Growth was capped at four chunks per episode, and there were 12–16 episodes
+per boot.
 
-The first round passed eight guest gates but did not justify selection: average
-settled mappings fell on disk and rose with zswap. Both zswap candidate runs
-performed a shrink yet retained 2,409/2,482 mapped clusters with only 82/121 free
-tail clusters. Lowering the shrink minimum again would not explain how to
-release a mapped range whose high clusters remain in use. This is a reason to
-change the hypothesis rather than keep tuning the same threshold blindly.
+**Expected:** fewer, larger grows.
+**Observed:** zswap grows fell from 15–16 to 13, so the mechanism works.
+Retained clusters and latency stayed within A/A spread.
 
-The second candidate changes only XSWAP_GROW_CHUNKS from four to eight.
-The source computes required growth from usage, rounds to a chunk, applies
-the cap, then clamps to the device maximum. The larger cap can reduce the
-12-16 observed growth episodes if the cap binds. It preserves xswap_lock,
-stale-range EAGAIN checks, no-reclaim allocation, rollback, release/acquire
-publication and cluster-list locking after the PCP lock is reacquired.
-It can increase allocation bursts and mapped-cluster retention. A change
-in runtime without a corresponding growth-counter change is weak mechanism
-evidence. The candidate remains independent and based on the frozen seed.
+## 3. Cap 8 and grow target 65% → 75%
 
-## Third hypothesis: tighter growth headroom
+This keeps the batching from (2) and requests less headroom. The target
+stays inside the 50%/85% trigger band.
 
-Round two's zswap candidate made 13 recorded growth operations in each run versus 16 and
-15 for its paired references. Disk candidate runs still made 12 calls.
-The cap change therefore has observable mechanism evidence on zswap, but
-its zswap p99 mean rose by about 4.7 percent and settled mapped clusters
-rose by about 10.8 percent. Both comparisons are exploratory and noisy.
+**Expected:** fewer retained clusters at the cost of more grows.
+**Observed:** grows rose to 18–23. Retained clusters did not fall.
 
-The third candidate retains the eight-chunk cap and raises the occupancy
-target from 65 to 75 percent. This mutates one parameter relative to the
-second candidate, while the complete two-constant patch is based on the
-frozen reference as required by the controller. The coherent hypothesis
-is to retain batching while asking for less spare mapping. The target
-remains strictly inside the 50/85 trigger band. Smaller requests can
-increase growth frequency; all clamps, lock ordering, publication and
-allocation failure paths remain unchanged. It is an experimental tradeoff,
-not an assertion that tighter headroom is universally better.
+## Review conclusion
 
-## AI assistance
+Rounds 2 and 3 tuned growth while the round-1 evidence already pointed at
+free-tail-only shrink. They were the wrong next step, and that is the main
+process lesson. See [DESIGN.md](../../DESIGN.md#hypotheses-ranked).
 
-Codex assisted source exploration, experiment design, harness/controller code,
-experimental patches, checks and this report in response to a request for a
-few bounded xswap evolution rounds. OpenEvolve stores and selects feedback;
-the active assistant makes proposal and acceptance decisions. No model API
-worker runs unattended, no patch is auto-promoted, and no new DCO sign-off was
-added. Human review and certification remain necessary for upstream work.
+Codex proposed and implemented these candidates. A later review (this
+revision) re-read the snapshots and replaced the original conclusions.

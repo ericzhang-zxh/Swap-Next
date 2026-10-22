@@ -3,7 +3,7 @@
 - Write all project-authored documentation, code comments, commit messages and repository review artifacts in English. This rule applies only to this repository; preserve upstream and third-party source text.
 - For bounded optimization campaigns and resume decisions, use `.agents/skills/closed-loop-evolve/SKILL.md`; this does not itself authorize running or publishing experiments.
 - For kernel patch reviews, use `.agents/skills/kernel-patch-review/SKILL.md` and `evolve/control/CODE_PATTERNS.md`.
-- Read README.md, evolve/control/PRINCIPLES.md, evolve/control/CODE_PATTERNS.md and evolve/control/config/policy.json first.
+- Read README.md, DESIGN.md, evolve/control/PRINCIPLES.md, evolve/control/CODE_PATTERNS.md and evolve/control/config/policy.json first.
 - Run all kernel and sparse work on the designated Linux worker, never the controller laptop.
 - Do not modify the linux submodule checkout. Create candidate worktrees through evolve/control/controller.py.
 - Read linux/Documentation/process/coding-assistants.rst and its required process documents before kernel work.
@@ -13,6 +13,16 @@
 - No host reboot, host swap changes, raw host disks, sudo, automatic merge or promotion.
 - Keep runtime state, secrets, machine paths and credentials out of commits.
 - AI tools must not add Signed-off-by. A human must review and certify any upstream contribution.
+
+## Writing
+
+- State each finding as a positive claim with its evidence and a confidence
+  (high / medium / low), and name the observation that would change it.
+- Do not append "this does not imply / establish / mean ..." to individual
+  sentences. Each document keeps its limitations in one Limitations section,
+  or links to DESIGN.md#limitations.
+- Say a thing once. Link to the document that owns it instead of restating it.
+- Prefer a short table of numbers to a paragraph of qualifiers.
 
 ## Kernel code taste
 

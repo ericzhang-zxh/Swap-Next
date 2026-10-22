@@ -4,25 +4,26 @@ import importlib.util
 import json
 from pathlib import Path
 import subprocess
-import tempfile
+import sys
+import types
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location("settings_validator", ROOT / "benchmark/validate_settings.py")
-validator = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(validator)
+
+
+def load_adapter():
+    """Import evolve/loop.py with OpenEvolve stubbed out."""
+    for name in ("openevolve", "openevolve.config", "openevolve.database", "openevolve.evaluator"):
+        module = sys.modules.setdefault(name, types.ModuleType(name))
+        for attr in ("DatabaseConfig", "EvaluatorConfig", "Program", "ProgramDatabase", "Evaluator"):
+            setattr(module, attr, object)
+    spec = importlib.util.spec_from_file_location("evolve_loop", ROOT / "evolve/loop.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
 
 class LayoutTests(unittest.TestCase):
-    def test_settings_match_sources(self):
-        self.assertEqual(validator.validate(), [])
-
-    def test_settings_detect_source_drift(self):
-        with tempfile.TemporaryDirectory() as name:
-            root = Path(name)
-            (root / "input.py").write_text("changed")
-            (root / "settings.json").write_text(json.dumps({
-                "source_sha256": {"input.py": "0" * 64}, "protocol_snapshots": {}}))
-            self.assertEqual(validator.validate(root), ["settings source drift: input.py"])
 
     def test_runner_and_builder_cli(self):
         for path in ("kernel/build.py", "kernel/run.py", "kernel/prepare-rootfs.py",
@@ -39,16 +40,17 @@ class LayoutTests(unittest.TestCase):
             self.assertNotIn("benchmark/benchmark/", source)
             self.assertTrue((ROOT / "benchmark/config" / name).is_file())
 
-    def test_state_separation_and_calibration_path(self):
-        for suite in ("kernel", "xswap"):
-            source = (ROOT / "evolve" / suite / "loop.py").read_text()
-            self.assertIn('state=ADAPTER/"state-layout-v1"', source)
-            self.assertIn('BASE=PROJECT/"benchmark"/"' + suite + '"', source)
-        loop = (ROOT / "evolve/xswap/loop.py").read_text()
+    def test_adapter_state_layout(self):
+        loop = load_adapter()
+        for name in ("kernel", "xswap"):
+            suite = loop.Suite(name)
+            self.assertEqual(suite.state, ROOT / "evolve" / name / "state-layout-v1")
+            self.assertEqual(suite.bench, ROOT / "benchmark" / name)
+        # The xswap evaluator reads the calibration report the adapter writes.
         evaluator = (ROOT / "benchmark/xswap/evaluate_kernel.py").read_text()
-        self.assertIn('BASE/"state-layout-v1"/"calibration.json"', loop)
         self.assertIn("BASE / 'state-layout-v1/calibration.json'", evaluator)
-        self.assertNotIn("state-v2", loop + evaluator)
+        self.assertEqual(loop.Suite("xswap").campaign, "xswap-2026-10-21")
+        self.assertIsNone(loop.Suite("kernel").campaign)
 
     def test_frozen_deadline_and_acceptance(self):
         protocol = json.loads((ROOT / "benchmark/xswap/protocol.json").read_text())

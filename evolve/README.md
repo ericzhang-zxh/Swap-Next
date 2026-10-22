@@ -1,41 +1,28 @@
 # Evolution workflow
 
-This directory owns candidate control, search adapters, and the pinned OpenEvolve
-source dependency. Builds, workloads, protocols, parsers and measurement evidence
-belong to [benchmark](../benchmark/README.md).
-
-- [control](control/README.md): our controller, policies, acceptance analysis and tests.
-- `kernel/` and `xswap/`: our proposal/feedback adapters.
-- `openevolve/`: unmodified upstream Git submodule at
-  `59dfe764b5ab4478ac00214432fcac33bbe2bf4b` (Apache-2.0).
-
-Previously the requirements snapshot fetched the same OpenEvolve revision through
-a Git URL. The submodule now makes that source visible in this checkout; the
-snapshot installs it locally in editable mode. No OpenEvolve version upgrade is
-implied. Run installation from the repository root after initializing the submodule.
-Our controller remains separate code and is not an upstream OpenEvolve modification.
-
-Install the snapshot into evolve/.venv as described in
-[benchmark setup](../benchmark/SETUP.md), then use:
+- `loop.py`: the OpenEvolve adapter for every suite. Benchmarks live in
+  [benchmark](../benchmark/README.md).
+- [control](control/README.md): candidate controller, scope policies,
+  formal acceptance analysis (disabled), and tests.
+- `openevolve/`: unmodified upstream submodule at `59dfe764` (Apache-2.0).
+  `requirements.snapshot.txt` installs it in editable mode.
 
 ```sh
-evolve/.venv/bin/python evolve/kernel/loop.py status
-evolve/.venv/bin/python evolve/kernel/loop.py next
-evolve/.venv/bin/python evolve/xswap/loop.py status
+evolve/.venv/bin/python evolve/loop.py <kernel|xswap> status
+evolve/.venv/bin/python evolve/loop.py <kernel|xswap> next        # write a proposal brief
+evolve/.venv/bin/python evolve/loop.py <kernel|xswap> evaluate --candidate <name>
+evolve/.venv/bin/python evolve/loop.py xswap calibrate             # A/A boots; xswap only
 ```
 
-Each adapter keeps its database, ledger, selection RNG and task briefs under
-evolve/<suite>/state-layout-v1. The xswap calibration report is explicitly
-written to benchmark/xswap/state-layout-v1/calibration.json for its evaluator.
-Archived Evolve runtime is never searched or imported. There is no unattended
-model worker, automatic merge, or promotion. The dated xswap deadline remains
-frozen; relocation does not authorize another campaign.
+State per suite lives in `evolve/<suite>/state-layout-v1/`: the database,
+ledger, selection RNG and task briefs. The xswap calibration report goes to
+`benchmark/xswap/state-layout-v1/calibration.json`, where its evaluator reads it.
 
-## Unified workflow
+`next` samples a reference and inspirations from the archive and writes a
+brief. The assistant in the session proposes and implements the candidate.
+No background model worker runs. All candidates are currently based on
+the frozen seed, so sampling does not yet shape lineage; see
+[DESIGN.md § Where OpenEvolve fits](../DESIGN.md#where-openevolve-fits).
 
-Use the repository [closed-loop-evolve skill](../.agents/skills/closed-loop-evolve/SKILL.md)
-for campaign preparation, recovery, candidate execution, benchmark feedback and
-stop decisions. Its [Swap Next binding](../.agents/skills/closed-loop-evolve/references/swap-next.md)
-maps the workflow to these commands and distinguishes historical campaigns from
-newly authorized experiments. The skill coordinates the existing components;
-it does not introduce another database, worker service or acceptance mechanism.
+For campaign preparation, recovery and stop decisions, use the
+[closed-loop-evolve skill](../.agents/skills/closed-loop-evolve/SKILL.md).
