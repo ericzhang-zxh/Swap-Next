@@ -95,6 +95,16 @@ A high sorting score does not establish a reliable improvement. Promotion requir
 the project's actual acceptance evidence and authority; never auto-merge from a
 pilot score. If nothing meets acceptance, say so.
 
+## Close the campaign
+
+When a campaign stops for any reason, closing it includes the project's review
+artifact, not only the written report. Update the report's status and findings
+first, then produce the review artifact the project defines (for Swap Next, the
+explainer page; see the binding) from the same evidence, and link it from the
+report. Do this even if nothing was accepted or the campaign ended early.
+Generating the artifact is part of closing; publishing it follows the project's
+publication authorization.
+
 ## Handoff
 
 Return the hypothesis and exact revision, work actually performed, passed/failed/

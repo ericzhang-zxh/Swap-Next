@@ -36,6 +36,15 @@ evolve/.venv/bin/python evolve/loop.py xswap next
 python3 evolve/control/controller.py --campaign <c> close <name> --reason '<decision and evidence>'
 ```
 
+When the campaign stops, close it with the review page:
+
+1. Update `results/<c>/README.md` (status, findings, limits) and its review notes.
+2. Follow [explaining-campaign-results](../../explaining-campaign-results/SKILL.md)
+   to generate `results/<c>/explainer.json` and `explainer.html` from the
+   evaluation reports, render both themes, and link the page from the README.
+3. Commit both on the campaign branch. Merging to `main` publishes the page
+   through GitHub Pages, so it waits for the owner.
+
 What each adapter action does:
 
 | Action | Effect |
