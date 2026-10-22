@@ -24,7 +24,7 @@ from openevolve.evaluator import Evaluator
 
 PROJECT = pathlib.Path(__file__).resolve().parents[1]
 # Suite name -> whether its evaluator implements an A/A calibration request.
-SUITES = {"kernel": False, "xswap": True}
+SUITES = {"kernel": False, "xswap": True, "xswap-structure": True}
 INSTRUCTION = ("Propose one hypothesis and create a new controller worktree. "
                "References are context; base the complete patch on the frozen seed. "
                "Do not edit the evaluator or thresholds. Never auto-merge.")

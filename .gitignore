@@ -49,3 +49,14 @@ evolve/xswap/state*/
 # Active controller state; retain system/state above for archived evidence.
 evolve/control/state/
 evolve/control/campaigns/xswap-reference-replay/
+
+# Independent structural xswap campaign runtime.
+benchmark/xswap-structure/builds/
+benchmark/xswap-structure/runs/
+benchmark/xswap-structure/evaluations/
+benchmark/xswap-structure/state*/
+benchmark/xswap-structure/rootfs/
+benchmark/xswap-structure/*.cpio.gz
+benchmark/xswap-structure/.runtime.lock
+benchmark/xswap-structure/initramfs.json
+evolve/xswap-structure/state*/

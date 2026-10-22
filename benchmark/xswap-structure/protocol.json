@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-structure-2026-10-22",
+  "baseline_commit": "REPLACE_BASELINE",
+  "baseline_build": "xs-structure-observe",
+  "backends": [
+    "disk",
+    "zswap"
+  ],
+  "order": [
+    "AB",
+    "BA",
+    "AB",
+    "BA",
+    "AB",
+    "BA",
+    "AB",
+    "BA",
+    "AB",
+    "BA"
+  ],
+  "max_candidates": 4,
+  "max_guest_attempts": 96,
+  "deadline_utc": "2026-10-22T16:05:00+00:00",
+  "primary_metric": "mapped_clusters_after_settle",
+  "score": "min across backends of baseline/candidate settled mapped clusters, multiplied by min(1, worst backend baseline/candidate p99)",
+  "performance_accepted": false,
+  "auto_promote": false,
+  "unimplemented_acceptance_gates": [
+    "independent confirmation",
+    "holdout",
+    "allocation and I/O failure injection",
+    "memcg limit matrix",
+    "large folios",
+    "lockdep",
+    "KASAN",
+    "KCSAN",
+    "fragmentation and multiple physical devices",
+    "oscillating pressure",
+    "full metadata physical RAM accounting",
+    "validated regime metric and calibrated performance thresholds"
+  ],
+  "aggregation": "Per-run metrics and high-regime frequency with descriptive 95% Wilson intervals; arithmetic means are exploratory.",
+  "calibration_order": [
+    "AB",
+    "BA"
+  ],
+  "regime_threshold_clusters": 219,
+  "diagnostic": "Second pressure occurs after the primary metric; no performance acceptance."
+}
