@@ -16,13 +16,14 @@ report in `results/`. This document holds what every campaign shares.
 | Fault latency | swap cache lookup, zswap decompression, block I/O on swap-in | yes: p99 first access to a swapped PTE |
 | Metadata RAM | per-slot swap table, `cluster_info`, zswap entries; for xswap the mapped part of `cluster_info` | yes: mapped clusters (xswap), requested bytes (kernel suite) |
 | Physical slot use | a zswap-resident page still holds a disk slot on ordinary swap | recorded (disk sectors), not scored |
-| Reclaim CPU | compression, cluster allocation, swap-out path | no |
-| Scalability | `si->lock`, cluster locks, per-CPU cluster cache | no: guests have two vCPUs |
+| Reclaim CPU | compression, cluster allocation, swap-out path | standard suite records cgroup system/user CPU, not reclaim-only CPU |
+| Scalability | `si->lock`, cluster locks, per-CPU cluster cache | historical guests have two vCPUs; standard suite uses eight, without a scaling study |
 
 A campaign picks one row as its primary metric and keeps the others as
 guardrails. The formal policy in `evolve/control/config/policy.json` names
-throughput, but no suite measures throughput yet. Until one does, only the
-measured rows above can serve as a primary metric.
+throughput. The new [standard suite](benchmark/swap-standard/README.md) records
+usemem throughput, kernel-build time and Valkey RPS. Its parameters still need
+repeated A/A calibration before they can define a candidate campaign.
 
 ## Upstream landscape
 
@@ -84,9 +85,11 @@ Until then, treat it as a ledger with a sampler.
 This section is the single list of what the harness cannot measure. Other
 documents link here instead of repeating it.
 
-- **One workload**: one synthetic anonymous workload (64 MiB target,
+- **Historical suites**: one synthetic anonymous workload (64 MiB target,
   `usemem -O 5G`, 4 GiB guest, two vCPUs). There is no file/anonymous mix,
-  fragmentation, oscillating pressure, memcg limits or multiple devices.
+  fragmentation, oscillating pressure, memcg limits or multiple devices in those
+  frozen suites. The standard suite adds usemem, kernel build and Valkey under
+  memcg pressure; its current limits are documented in its README.
 - **Latency includes cache effects**: first-access latency includes
   swap-cache hits, readahead, scheduling and timer cost. It is not device
   service time.

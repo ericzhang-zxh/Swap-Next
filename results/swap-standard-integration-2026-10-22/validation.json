@@ -1,0 +1,484 @@
+{
+  "runs": [
+    {
+      "run": "20261022T194130.173129Z-standard-upstream-v2-disk-usemem",
+      "status": "fail",
+      "build": "standard-upstream-v2",
+      "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "kernel_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+      "guest_image_sha256": "566fc50b51a8c2ef4dae2eb1b3689e812fc4af2d8f0257d1e494dcd20d8ea897",
+      "stop_reason": null,
+      "interruption_reason": null,
+      "backend": "disk",
+      "workload": "usemem",
+      "wall_seconds": 13.506466318969615,
+      "failed_gates": [
+        "usemem_output"
+      ],
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 75,
+          "pswpout": 1054446,
+          "pgmajfault": 91,
+          "swpin_zero": 2,
+          "swpout_zero": 1,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 4215976
+        },
+        "throughput_kbps_sum": 916757,
+        "throughput_kbps": [
+          117019,
+          119077,
+          123464,
+          118781,
+          112846,
+          112732,
+          106419,
+          106419
+        ],
+        "nproc": 8,
+        "free_count": 8,
+        "bytes": [
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552
+        ],
+        "free_usec_max": 36645,
+        "free_usec_mean": 34161.25,
+        "cg_system_usec": 13371631,
+        "cg_user_usec": 1196324
+      },
+      "serial_sha256": "a1c9a36bc59ffed6f0508b878d1a0ecbe46d0395358b9af7c96973448763453a",
+      "has_reanalysis": true,
+      "performance_accepted": false,
+      "reanalysis_gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "swap_activity": true,
+        "swap_routing": true,
+        "usemem_output": true
+      },
+      "reanalysis_note": "Parser-only correction: pinned usemem reports allocation bytes/8 plus one full pass. Original result retained."
+    },
+    {
+      "run": "20261022T194200.250701Z-standard-upstream-v2-zram-redis",
+      "status": "pass",
+      "build": "standard-upstream-v2",
+      "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "kernel_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+      "guest_image_sha256": "566fc50b51a8c2ef4dae2eb1b3689e812fc4af2d8f0257d1e494dcd20d8ea897",
+      "stop_reason": null,
+      "interruption_reason": null,
+      "backend": "zram",
+      "workload": "redis",
+      "wall_seconds": 44.52040970296366,
+      "failed_gates": [],
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 3825821,
+          "pswpout": 3431950,
+          "pgmajfault": 3834814,
+          "swpin_zero": 68,
+          "swpout_zero": 433,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/zram0": 2984612
+        },
+        "redis_fill_rps": 267642.09,
+        "redis_get_rps": 312109.84,
+        "redis_get_bgsave_rps": 139476.5,
+        "redis_get_vmstat_delta": {
+          "pswpin": 873802,
+          "pswpout": 873186,
+          "pgmajfault": 874567,
+          "swpin_zero": 4,
+          "swpout_zero": 118,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "redis_bgsave_vmstat_delta": {
+          "pswpin": 2299676,
+          "pswpout": 1778723,
+          "pgmajfault": 2307752,
+          "swpin_zero": 36,
+          "swpout_zero": 116,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        }
+      },
+      "serial_sha256": "3075b40d3f12e2c0693cb45fefb26f7f98a1f9ff30b8cface1b76a3c7c3881c1",
+      "has_reanalysis": false,
+      "performance_accepted": false
+    },
+    {
+      "run": "20261022T194318.425370Z-standard-upstream-v2-zswap-build",
+      "status": "pass",
+      "build": "standard-upstream-v2",
+      "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "kernel_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+      "guest_image_sha256": "566fc50b51a8c2ef4dae2eb1b3689e812fc4af2d8f0257d1e494dcd20d8ea897",
+      "stop_reason": null,
+      "interruption_reason": null,
+      "backend": "zswap",
+      "workload": "build",
+      "wall_seconds": 163.5893723819754,
+      "failed_gates": [],
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 0,
+          "pswpout": 0,
+          "pgmajfault": 145,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 4860,
+          "zswpout": 229990,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 903124
+        },
+        "build_real_usec": 158021856,
+        "build_system_usec": 120283001,
+        "build_user_usec": 1044786639,
+        "build_vmstat_delta": {
+          "pswpin": 0,
+          "pswpout": 0,
+          "pgmajfault": 73,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 4860,
+          "zswpout": 229960,
+          "zswpwb": 0
+        }
+      },
+      "serial_sha256": "ee8c286b3113cb4eabde30f7de524b84b4a0a73115551573f01c2a8eaf8212ae",
+      "has_reanalysis": false,
+      "performance_accepted": false
+    },
+    {
+      "run": "20261022T194701.448614Z-standard-upstream-v2-disk-usemem",
+      "status": "pass",
+      "build": "standard-upstream-v2",
+      "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "kernel_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+      "guest_image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+      "stop_reason": null,
+      "interruption_reason": null,
+      "backend": "disk",
+      "workload": "usemem",
+      "wall_seconds": 58.5250767559628,
+      "failed_gates": [],
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 78,
+          "pswpout": 1053140,
+          "pgmajfault": 94,
+          "swpin_zero": 2,
+          "swpout_zero": 1,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 4158248
+        },
+        "throughput_kbps_sum": 174522,
+        "throughput_kbps": [
+          22716,
+          22620,
+          22380,
+          22005,
+          21595,
+          21243,
+          20989,
+          20974
+        ],
+        "nproc": 8,
+        "free_count": 8,
+        "bytes": [
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552
+        ],
+        "free_usec_max": 59533,
+        "free_usec_mean": 57676.625,
+        "cg_system_usec": 108648562,
+        "cg_user_usec": 2398975
+      },
+      "serial_sha256": "a2a5c4fbc8a0cfa573602681062dd73a12baa27a685665f1fff7f8e297713820",
+      "has_reanalysis": false,
+      "performance_accepted": false
+    },
+    {
+      "run": "20261022T194801.948141Z-standard-upstream-v2-zswap-usemem-rand",
+      "status": "fail",
+      "build": "standard-upstream-v2",
+      "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "kernel_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+      "guest_image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+      "stop_reason": null,
+      "interruption_reason": "Observed guest memcg OOM kills; terminated this integration guest because usemem sync can wait for killed children.",
+      "backend": "zswap",
+      "workload": "usemem-rand",
+      "wall_seconds": 128.56438401702326,
+      "failed_gates": [
+        "workload_complete",
+        "kernel_log_present",
+        "no_kernel_warnings",
+        "swap_activity",
+        "backend_exercised",
+        "swap_routing",
+        "usemem_output"
+      ],
+      "metrics": {
+        "vmstat_delta": null,
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {},
+        "throughput_kbps_sum": 0,
+        "throughput_kbps": [],
+        "nproc": 0,
+        "free_count": 0,
+        "bytes": [],
+        "free_usec_max": null,
+        "free_usec_mean": null
+      },
+      "serial_sha256": "7f13b266cd35875d03c62421320f73b53b6e30097d66308616231ff12c007c42",
+      "has_reanalysis": false,
+      "performance_accepted": false
+    },
+    {
+      "run": "20261022T195012.400957Z-standard-upstream-v2-zram-redis",
+      "status": "pass",
+      "build": "standard-upstream-v2",
+      "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "kernel_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+      "guest_image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+      "stop_reason": null,
+      "interruption_reason": null,
+      "backend": "zram",
+      "workload": "redis",
+      "wall_seconds": 44.520503523002844,
+      "failed_gates": [],
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 3810259,
+          "pswpout": 3424521,
+          "pgmajfault": 3821371,
+          "swpin_zero": 102,
+          "swpout_zero": 475,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/zram0": 3013588
+        },
+        "redis_fill_rps": 272950.59,
+        "redis_get_rps": 315026.78,
+        "redis_get_bgsave_rps": 138850.31,
+        "redis_get_vmstat_delta": {
+          "pswpin": 869323,
+          "pswpout": 867986,
+          "pgmajfault": 870433,
+          "swpin_zero": 35,
+          "swpout_zero": 153,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "redis_bgsave_vmstat_delta": {
+          "pswpin": 2291129,
+          "pswpout": 1777960,
+          "pgmajfault": 2300981,
+          "swpin_zero": 38,
+          "swpout_zero": 125,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        }
+      },
+      "serial_sha256": "0408478bde371c669a644dfe486d891e08e3843d424d46e47a19c4132f04e3cf",
+      "has_reanalysis": false,
+      "performance_accepted": false
+    },
+    {
+      "run": "20261022T195058.820243Z-standard-upstream-v2-brd-metadata",
+      "status": "pass",
+      "build": "standard-upstream-v2",
+      "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "kernel_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+      "guest_image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+      "stop_reason": null,
+      "interruption_reason": null,
+      "backend": "brd",
+      "workload": "metadata",
+      "wall_seconds": 7.005777479964308,
+      "failed_gates": [],
+      "metrics": {
+        "vmstat_delta": null,
+        "kernel_diagnostics": [],
+        "metadata_delta_kib": {
+          "MemTotal": 0,
+          "MemFree": -54596,
+          "MemAvailable": -54052,
+          "SwapTotal": 1073741820,
+          "SwapFree": 1073741820,
+          "Zswap": 0,
+          "Zswapped": 0,
+          "Slab": 332,
+          "SUnreclaim": 332,
+          "PageTables": 4,
+          "VmallocUsed": 49296,
+          "Percpu": 0,
+          "used_kib": 54052
+        },
+        "metadata_delta_bytes_per_capacity_slot": 0.20619201736968762,
+        "swap_total_kib": 1073741820
+      },
+      "serial_sha256": "ce8f7ad32e04cca64c5ea93fd05ad93b54acb8f57f0381b90f37a145219a2023",
+      "has_reanalysis": false,
+      "performance_accepted": false
+    },
+    {
+      "run": "20261022T195107.722002Z-standard-upstream-v2-disk-swapin",
+      "status": "pass",
+      "build": "standard-upstream-v2",
+      "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "kernel_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+      "guest_image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+      "stop_reason": null,
+      "interruption_reason": null,
+      "backend": "disk",
+      "workload": "swapin",
+      "wall_seconds": 34.51894685899606,
+      "failed_gates": [],
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262160,
+          "pswpout": 262188,
+          "pgmajfault": 147171,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 1048744
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 24370.0,
+          "p50_ns": 521.0,
+          "p90_ns": 142369.0,
+          "p99_ns": 306958.0,
+          "p999_ns": 412812.0,
+          "max_ns": 4349552.0,
+          "total_ms": 3194.238
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 212568.0,
+          "p50_ns": 209069.0,
+          "p90_ns": 262678.0,
+          "p99_ns": 345972.0,
+          "p999_ns": 736408.0,
+          "max_ns": 1295720.0,
+          "total_ms": 27861.656
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        }
+      },
+      "serial_sha256": "0efd012901d675cd723f3ba84a1b95d8175f080620b5ac5437967ec90fc43ac5",
+      "has_reanalysis": false,
+      "performance_accepted": false
+    },
+    {
+      "run": "20261022T195144.169353Z-standard-upstream-v2-zswap-build",
+      "status": "pass",
+      "build": "standard-upstream-v2",
+      "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "kernel_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+      "guest_image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+      "stop_reason": null,
+      "interruption_reason": null,
+      "backend": "zswap",
+      "workload": "build",
+      "wall_seconds": 164.62518842204008,
+      "failed_gates": [],
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 0,
+          "pswpout": 0,
+          "pgmajfault": 142,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 5898,
+          "zswpout": 234404,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 924188
+        },
+        "build_real_usec": 159024823,
+        "build_system_usec": 120689747,
+        "build_user_usec": 1052288197,
+        "build_vmstat_delta": {
+          "pswpin": 0,
+          "pswpout": 0,
+          "pgmajfault": 70,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 5898,
+          "zswpout": 234374,
+          "zswpwb": 0
+        }
+      },
+      "serial_sha256": "d911b90036d28e530442e9acb117114c475438ec5c489e6cbff4af8c720308bf",
+      "has_reanalysis": false,
+      "performance_accepted": false
+    }
+  ],
+  "count": 9,
+  "calibrated": false,
+  "performance_accepted": false,
+  "validation_tests": {
+    "parser_tests": 14,
+    "layout_tests": 4,
+    "passed": true
+  },
+  "kernel_build": "standard-upstream-v2",
+  "current_guest_image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955"
+}

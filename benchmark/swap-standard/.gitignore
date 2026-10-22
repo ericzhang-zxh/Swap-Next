@@ -1,0 +1,8 @@
+bench.img
+initramfs.cpio.gz
+image.json
+stage/
+initramfs-root/
+runs/
+state/
+*.log

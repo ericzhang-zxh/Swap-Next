@@ -15,7 +15,8 @@ Each exploration direction runs as a campaign and reports in
 ```text
 linux/            upstream Linux submodule, pinned at 744e5400 (never modified)
 benchmark/        builds, KVM runner, guest workloads, parsers, frozen protocols
-  kernel/         ordinary swap suite
+  swap-standard/  usemem, kernel build and Valkey performance integration
+  kernel/         historical ordinary swap suite
   xswap/          xswap suite (imported Phase I/II reference)
 evolve/
   loop.py         OpenEvolve adapter: `loop.py <suite> status|next|evaluate|calibrate`
@@ -29,6 +30,12 @@ Clone with `git clone --recurse-submodules`, or run
 `git submodule update --init linux evolve/openevolve`.
 
 ## Workflow
+
+New performance work starts with [the standard suite](benchmark/swap-standard/README.md)
+(usemem, kernel build and Valkey), followed by repeated A/A calibration and a
+frozen campaign protocol. The historical evolve adapters below retain their
+original workloads and scores for reproducibility. They have not been admitted
+as evaluators for the new suite.
 
 Kernel builds and guests run on a Linux KVM worker; see
 [benchmark/SETUP.md](benchmark/SETUP.md).
