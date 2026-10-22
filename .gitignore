@@ -60,3 +60,7 @@ benchmark/xswap-structure/*.cpio.gz
 benchmark/xswap-structure/.runtime.lock
 benchmark/xswap-structure/initramfs.json
 evolve/xswap-structure/state*/
+
+# Standard suite evaluation state.
+evolve/swap-standard/state*/
+benchmark/swap-standard/evaluations/

@@ -88,3 +88,56 @@ historical suites until a separately frozen campaign admits this suite.
 - xswap execution is held pending resolution of the descriptor lifetime review.
 - These workloads provide performance coverage; they do not certify data
   integrity, concurrency, swapoff, sanitizers or upstream readiness.
+
+## Evolve tiers
+
+Use `evolve/.venv/bin/python evolve/loop.py swap-standard <action>`.
+Actions are `plan`, `status`, `next`, `calibrate`, `reference-check`, and
+`evaluate --candidate NAME --correctness PATH`. `--tier fast|slow|auto`
+selects the tier; auto evaluates fast before slow. Reference checks are fast only.
+
+| Tier | Cases | A/A pairs per case | Candidate AB/BA pairs per case |
+|---|---|---:|---:|
+| fast | usemem/disk, Valkey/zram, swapin/disk | 2 | 2 |
+| slow | fast cases plus build/zswap and metadata/brd | 4 | 10 |
+
+Each pair uses fresh boots in alternating AB then BA order. One primary metric
+per scored workload contributes equally to the geometric mean of direction-correct
+ratios; all secondary metrics retain regression guards. Metadata is descriptive.
+The protocol excludes the random-usemem case after its integration OOM/hang.
+This matrix covers representative combinations rather than every backend/workload.
+
+A/A sets a per-metric envelope with a 3% floor. Any metric varying by more than
+20% blocks its tier. Fast admits candidates without median regressions beyond
+those envelopes. Slow requires the exact fast-pass commit and fingerprint, its
+own calibration, ten pairs, and paired-vector bootstrap intervals. A slow result
+enters the OpenEvolve reference database only when the aggregate lower bound
+exceeds the largest primary noise envelope and every guard passes. It remains
+`NEEDS_REVIEW`; no result auto-promotes. `next` samples measured references and
+emits a task with the frozen patch base. The baseline is never assigned a fake
+measured score. A same-kernel `reference-check` exercises scoring and is excluded
+from candidate admission and the database.
+
+`--correctness` names a trusted JSON report with `candidate_commit` and boolean
+`gates` for the protocol-required data/COW/concurrent-fault/swapoff/no-warning
+checks. The controller separately verifies scope, parent, clean worktree,
+checkpatch and immutable commit identity. Full project promotion gates remain
+in the controller policy. Historical xswap candidates are held by the descriptor
+lifetime review before builds or boots, including requests supplied as commit IDs.
+
+The ignored `evolve/swap-standard/state-layout-v1/` stores the shared ledger,
+budget, per-tier calibration and OpenEvolve database. Every request and resource
+attempt is reserved before execution. Interrupted detailed reports are reconciled
+into the ledger; attempted candidate/tier identities cannot silently rerun.
+Calibration attempts cannot be repeated under the same fingerprint to pick a
+better result. Both tiers share the 240-guest/4-build/8-hour campaign cap and the
+runner lock; a tier needs enough remaining boots to finish before it can start.
+The two-candidate limit is a ceiling, not a guarantee that both fit the boot cap.
+
+The adapter supervises owned subprocesses directly because the OpenEvolve
+thread timeout cannot terminate a synchronous guest evaluator. Parent-death,
+per-process deadlines and both global/campaign STOP files stop owned execution.
+The runner verifies actual image/config hashes; the adapter binds source,
+protocol, build recipe and image manifests into a fingerprint checked before
+each guest and analysis. Changing those inputs requires fresh calibration.
+Runtime failures, diagnostics, budgets and stale/missing evidence fail closed.

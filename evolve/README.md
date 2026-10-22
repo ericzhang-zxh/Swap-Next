@@ -26,3 +26,9 @@ the frozen seed, so sampling does not yet shape lineage; see
 
 For campaign preparation, recovery and stop decisions, use the
 [closed-loop-evolve skill](../.agents/skills/closed-loop-evolve/SKILL.md).
+
+The `swap-standard` suite adds `--tier fast|slow|auto`, `plan`, and a fast-only
+`reference-check`. See [the tier contract](../benchmark/swap-standard/README.md#evolve-tiers).
+It reuses the controller and OpenEvolve reference database, with a directly
+supervised evaluator to enforce subprocess lifetime and preserve interrupted
+attempts. Only measured slow results eligible for human review become references.

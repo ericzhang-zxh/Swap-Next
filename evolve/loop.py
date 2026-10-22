@@ -158,6 +158,9 @@ def next_task(suite, db, ledger):
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "swap-standard":
+        from standard_workflow import main as standard_main
+        return standard_main(sys.argv[2:])
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("suite", choices=sorted(SUITES))
     parser.add_argument("action", choices=["status", "next", "evaluate", "calibrate"])

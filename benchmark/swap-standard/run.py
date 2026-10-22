@@ -23,6 +23,31 @@ from evidence import parse, DIAGNOSTIC
 STOP = PROJECT / "evolve/control/state/STOP"
 
 
+def run_id(value):
+    """Accept a single explicit run directory name, never a path."""
+    if not re.fullmatch(r"[a-zA-Z0-9_-]{1,96}", value):
+        raise argparse.ArgumentTypeError("run ID must be 1..96 ASCII letters, digits, underscores or hyphens")
+    return value
+
+
+def absolute_stop_file(value):
+    path = Path(value)
+    if not path.is_absolute():
+        raise argparse.ArgumentTypeError("stop file must be an absolute path")
+    return path
+
+
+def stop_requested(extra_stop=None):
+    return STOP.exists() or (extra_stop is not None and extra_stop.exists())
+
+
+def create_run_directory(root, name):
+    root.mkdir(parents=True, exist_ok=True)
+    dest = root / name
+    dest.mkdir()  # Exclusive creation preserves earlier evidence, including symlinks.
+    return dest
+
+
 def sha(path):
     h = hashlib.sha256()
     with path.open("rb") as stream:
@@ -71,6 +96,9 @@ def main():
     parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata"], required=True)
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--run-id", type=run_id, help="explicit unique run directory name")
+    parser.add_argument("--stop-file", type=absolute_stop_file,
+                        help="additional absolute STOP path checked before and during the run")
     args = parser.parse_args()
     if os.geteuid() == 0:
         parser.error("host root execution forbidden")
@@ -80,7 +108,7 @@ def main():
         parser.error("timeout must be 30..3600 seconds")
     if (args.workload == "metadata") != (args.backend == "brd"):
         parser.error("metadata uses brd exclusively; brd is reserved for metadata")
-    if STOP.exists():
+    if stop_requested(args.stop_file):
         raise SystemExit("STOP")
     with (PROJECT / "benchmark/kernel/.runtime.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -95,8 +123,8 @@ def main():
         if available < 10 * 1024**2:
             raise SystemExit("need 10 GiB available host RAM")
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
-        dest = BASE / "runs" / (stamp + "-" + args.build + "-" + args.backend + "-" + args.workload)
-        dest.mkdir(parents=True)
+        name = args.run_id or (stamp + "-" + args.build + "-" + args.backend + "-" + args.workload)
+        dest = create_run_directory(BASE / "runs", name)
         disk = dest / "swap.raw"
         with disk.open("wb") as stream:
             stream.truncate(16 * 1024**3)
@@ -112,7 +140,8 @@ def main():
                    "-kernel", str(image), "-initrd", str(BASE / "initramfs.cpio.gz"), "-append", append,
                    "-drive", f"file={disk},format=raw,if=virtio,cache=none",
                    "-drive", f"file={BASE / 'bench.img'},format=raw,if=virtio,readonly=on"]
-        result = dict(build=args.build, backend=args.backend, mode=args.mode, workload=args.workload,
+        result = dict(run_id=dest.name, stop_file=str(args.stop_file) if args.stop_file else None,
+                      build=args.build, backend=args.backend, mode=args.mode, workload=args.workload,
                       source_commit=manifest["commit"], image_sha256=image_sha,
                       config_sha256=sha(config), guest_provenance=provenance, command=command,
                       performance_accepted=False, calibrated=False, auto_promote=False,
@@ -125,11 +154,13 @@ def main():
         start = time.monotonic()
         reason = None
         with (dest / "serial.log").open("w") as log:
+            if stop_requested(args.stop_file):
+                raise SystemExit("STOP")
             proc = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
                                     start_new_session=True, preexec_fn=bind_child_to_parent)
             try:
                 while proc.poll() is None:
-                    if STOP.exists():
+                    if stop_requested(args.stop_file):
                         reason = "STOP"
                     elif time.monotonic() - start > args.timeout:
                         reason = "timeout"

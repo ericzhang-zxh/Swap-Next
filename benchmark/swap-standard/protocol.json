@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "campaign": "swap-standard-2026-10-22",
+  "baseline_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "baseline_build": "standard-upstream-v2",
+  "max_candidates": 2,
+  "budget": {
+    "guest_attempts": 240,
+    "build_attempts": 4,
+    "wall_seconds": 28800,
+    "guest_timeout": 600
+  },
+  "cases": {
+    "usemem-disk": {
+      "workload": "usemem",
+      "backend": "disk",
+      "metrics": {
+        "throughput_kbps_sum": "higher",
+        "free_usec_max": "lower"
+      },
+      "primary": "throughput_kbps_sum"
+    },
+    "redis-zram": {
+      "workload": "redis",
+      "backend": "zram",
+      "metrics": {
+        "redis_get_rps": "higher",
+        "redis_get_bgsave_rps": "higher"
+      },
+      "primary": "redis_get_bgsave_rps"
+    },
+    "swapin-disk": {
+      "workload": "swapin",
+      "backend": "disk",
+      "metrics": {
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower",
+        "swapin_seq.p99_ns": "lower"
+      },
+      "primary": "swapin_rand.mean_ns"
+    },
+    "build-zswap": {
+      "workload": "build",
+      "backend": "zswap",
+      "metrics": {
+        "build_real_usec": "lower",
+        "build_system_usec": "lower"
+      },
+      "primary": "build_real_usec"
+    },
+    "metadata-brd": {
+      "workload": "metadata",
+      "backend": "brd",
+      "metrics": {},
+      "primary": null
+    }
+  },
+  "tiers": {
+    "fast": {
+      "cases": [
+        "usemem-disk",
+        "redis-zram",
+        "swapin-disk"
+      ],
+      "calibration_pairs": 2,
+      "comparison_pairs": 2
+    },
+    "slow": {
+      "cases": [
+        "usemem-disk",
+        "redis-zram",
+        "swapin-disk",
+        "build-zswap",
+        "metadata-brd"
+      ],
+      "calibration_pairs": 4,
+      "comparison_pairs": 10
+    }
+  },
+  "order": "alternating AB then BA; same order in calibration",
+  "calibration_max_age_seconds": 86400,
+  "noise_floor": 0.03,
+  "noise_ceiling": 0.2,
+  "bootstrap_resamples": 10000,
+  "promotion": "human_review_only",
+  "excluded": {
+    "usemem-rand": "OOM and synchronization hang in integration"
+  },
+  "blocked_commits": {
+    "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4": "Unresolved descriptor lifetime review; dependent experiment held",
+    "157c4a178c587add1d22f4b483629b49a6ff0eca": "Unresolved descriptor lifetime review; dependent experiment held",
+    "b674f0d1e90c5b158f0a31d4ea877c4876535c2a": "Unresolved descriptor lifetime review; dependent experiment held",
+    "8f02472031fb71b9791a5199872701c645afd276": "Unresolved descriptor lifetime review; dependent experiment held",
+    "615f839bb6653ffd56dbb66ebdc855dea0823d54": "Unresolved descriptor lifetime review; dependent experiment held"
+  },
+  "required_correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings"
+  ]
+}
