@@ -1,0 +1,102 @@
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 4f69ec37d..a34f24abf 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -839,8 +839,9 @@ static void __free_cluster(struct swap_info_struct *si, struct swap_cluster_info
+ 	move_cluster(si, ci, &si->free_clusters, CLUSTER_FLAG_FREE);
+ 	ci->order = 0;
+ #ifdef CONFIG_XSWAP
+-	/* Only xswap devices, and not while the device is being torn down. */
+-	if ((si->flags & SWP_XSWAP) && (si->flags & SWP_WRITEOK))
++	/* The running shrink already examines clusters it frees itself. */
++	if ((si->flags & SWP_XSWAP) && (si->flags & SWP_WRITEOK) &&
++	    current_work() != &si->xswap_shrink_work)
+ 		schedule_work(&si->xswap_shrink_work);
+ #endif
+ }
+@@ -4997,6 +4998,74 @@ static int xswap_mapped_end(pte_t *pte, unsigned long addr, void *data)
+ #define XSWAP_SHRINK_SLACK	XSWAP_GROW_CLUSTERS
+ #define XSWAP_SHRINK_MIN	(XSWAP_GROW_CLUSTERS * 8)
+ 
++/*
++ * Try cache-only blockers in a bounded tail window. A referenced or busy
++ * cluster ends this pass; the ordinary shrink still decides what to unmap.
++ */
++static void xswap_reclaim_tail_cache(struct swap_info_struct *si,
++				     unsigned long mapped)
++{
++	unsigned long nr_scan = min(mapped - 1,
++				    XSWAP_SHRINK_MIN + XSWAP_SHRINK_SLACK);
++	struct swap_cluster_info *ci;
++	unsigned int off;
++	unsigned long entry;
++	int ret;
++
++	lockdep_assert_held(&si->xswap_lock);
++	while (nr_scan--) {
++		if (!(READ_ONCE(si->flags) & SWP_WRITEOK))
++			return;
++		ci = &si->cluster_info[--mapped];
++		spin_lock(&ci->lock);
++		if (!ci->count && ci->flags == CLUSTER_FLAG_FREE)
++			goto next_cluster;
++		if (!ci->count || !cluster_table_is_alloced(ci))
++			goto out_unlock;
++
++		/* Leave clusters with live swap references alone. */
++		for (off = 0; off < SWAPFILE_CLUSTER; off++) {
++			entry = __swap_table_get(ci, off);
++			if (!swp_tb_is_null(entry) &&
++			    (!swp_tb_is_folio(entry) || swp_tb_get_count(entry)))
++				goto out_unlock;
++		}
++
++		for (off = 0; off < SWAPFILE_CLUSTER; off++) {
++			entry = __swap_table_get(ci, off);
++			if (swp_tb_is_null(entry))
++				continue;
++			if (!swp_tb_is_folio(entry) || swp_tb_get_count(entry))
++				goto out_unlock;
++
++			/* The helper takes its own folio and cluster locks. */
++			rcu_read_lock();
++			spin_unlock(&ci->lock);
++			ret = __try_to_reclaim_swap(si,
++					mapped * SWAPFILE_CLUSTER + off, TTRS_ANYWAY);
++			spin_lock(&ci->lock);
++			rcu_read_unlock();
++			if (!ci->count && ci->flags == CLUSTER_FLAG_FREE)
++				goto next_cluster;
++			if (!ci->count || !cluster_table_is_alloced(ci))
++				goto out_unlock;
++			/* A failed attempt may have raced a successful free. */
++			if (ret <= 0 && !swp_tb_is_null(__swap_table_get(ci, off)))
++				goto out_unlock;
++		}
++		/* A concurrent allocation may have filled an earlier slot. */
++		if (ci->count || ci->flags != CLUSTER_FLAG_FREE)
++			goto out_unlock;
++next_cluster:
++		spin_unlock(&ci->lock);
++		cond_resched();
++	}
++	return;
++
++out_unlock:
++	spin_unlock(&ci->lock);
++}
++
+ static void xswap_shrink_work_fn(struct work_struct *work)
+ {
+ 	struct swap_info_struct *si = container_of(work,
+@@ -5039,6 +5108,10 @@ static void xswap_try_shrink(struct swap_info_struct *si)
+ 	    nr_mapped * SWAPFILE_CLUSTER * XSWAP_SHRINK_WHEN)
+ 		goto out_unlock;
+ 
++	xswap_reclaim_tail_cache(si, nr_mapped);
++	if (!(READ_ONCE(si->flags) & SWP_WRITEOK))
++		goto out_unlock;
++
+ 	/*
+ 	 * Count the free clusters at the tail of the mapped range.  Scanned,
+ 	 * not tracked: the count must be exact to size the unmap, and an

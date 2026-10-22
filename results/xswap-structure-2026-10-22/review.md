@@ -78,3 +78,62 @@ The workload is synthetic; these are discovery observations. Missing correctness
 sanitizer, confirmation, and holdout coverage remains recorded in the protocol.
 Instrumentation changes timing and is present in every compared kernel.
 See [DESIGN.md](../../DESIGN.md#limitations).
+
+## Bounded cache-only tail candidate
+
+Candidate xs-tailcache-v1 is commit b674f0d1e90c5b158f0a31d4ea877c4876535c2a,
+independently based on observation baseline. Primary reviewed the actual 77-line
+diff and controller scope/diff/checkpatch all pass. The observation function is
+unchanged. The scan pins descriptor mappings with xswap_lock, checks cluster
+contents under ci lock, and drops that lock for each RCU-protected existing
+reclamation helper. It revalidates occupancy/table after each attempt and does
+not dereference a speculative folio pointer. Existing tail isolation/unmap remains
+the final authority. Only same-worker requeue is suppressed.
+
+The outer window includes free clusters and stops at a persistent blocker.
+The reused helper has an internal identity retry, so the outer loop bound is
+not a strict runtime bound. No completion trigger or delayed retry exists; a
+negative result cannot rule out a broader cache-only reclamation mechanism.
+Confidence: medium pending runtime/lockdep; large-folio and writeback timing
+remain coverage gaps. A lockdep build has started; no runtime pass is claimed yet.
+
+## Lockdep interruption and isolated repair
+
+Tailcache v1 lockdep disk smoke failed only the no-kernel-warning gate;
+all data/lifecycle gates passed. A same-config observation-baseline disk control
+reproduced the xswap_grow assertion warning. Failed runs remain charged as
+attempts 51 and 52; no normal tailcache comparison was launched.
+
+Source audit found that local_lock translates its per-CPU symbol, whereas
+lockdep_assert_held checks the supplied address directly. xswap_grow used the
+untranslated address. The isolated candidate xs-lockassert-v1 at
+8f02472031fb71b9791a5199872701c645afd276 uses the current-CPU lock, matching
+swap_cluster_populate. No acquisition/release behavior or warning gate changes.
+Scope, diff and checkpatch passed; same-config build and disk control are running.
+This source explanation has high confidence; runtime repair confirmation remains
+pending. Tailcache v1 is closed, and a revised candidate requires new checks.
+
+Budget allocation changed in response to this discovered warning: reserve one
+extra isolated-repair control. If that and two revised-candidate lockdep boots
+pass, 55 attempts will have been spent; a 40-boot comparison leaves one attempt
+for the high-anchor disk diagnostic. The planned zswap high-anchor diagnostic
+will remain unrun within the fixed 96-attempt cap. No old attempts are erased.
+
+The isolated repair control subsequently passed all gates with the same normalized
+lockdep configuration hash b0335fc99be930268729ad1c158e5c0a672f58ffb2d4ef9195b809b8734bed3b.
+The original baseline and tailcache-v1 controls failed only the warning gate.
+This supports the diagnosed assertion-address defect; it is not proof that all
+locking paths are correct. Candidate xs-lockassert-v1 is closed with this result.
+
+Revised tailcache candidate xs-tailcache-v2 is
+615f839bb6653ffd56dbb66ebdc855dea0823d54. Primary checked its exact difference
+from v1: only the independently verified assertion repair. Controller static
+gates pass. Disk and zswap lockdep smoke checks are in progress. Normal comparison
+remains blocked until both pass.
+
+Both revised-candidate lockdep boots subsequently passed all pilot gates, disk
+and zswap, without kernel diagnostics. Together with the isolated-repair control
+this brings the shared ledger to 55 attempts: 53 pass and two retained warning
+failures. Full normal-config comparison of xs-tailcache-v2 has now started;
+its results remain pending. These lockdep boots do not establish large-folio,
+failure-injection or general concurrency coverage.
