@@ -1,18 +1,36 @@
 # Swap Next contributor contract
 
-- Write all project-authored documentation, code comments, commit messages and repository review artifacts in English. This rule applies only to this repository; preserve upstream and third-party source text.
-- For bounded optimization campaigns and resume decisions, use `.agents/skills/closed-loop-evolve/SKILL.md`; this does not itself authorize running or publishing experiments.
-- For kernel patch reviews, use `.agents/skills/kernel-patch-review/SKILL.md` and `evolve/control/CODE_PATTERNS.md`.
-- Read README.md, DESIGN.md, evolve/control/PRINCIPLES.md, evolve/control/CODE_PATTERNS.md and evolve/control/config/policy.json first.
-- Run all kernel and sparse work on the designated Linux worker, never the controller laptop.
-- Do not modify the linux submodule checkout. Create candidate worktrees through evolve/control/controller.py.
-- Read linux/Documentation/process/coding-assistants.rst and its required process documents before kernel work.
-- Workers execute one assigned hypothesis; no further delegation, scope changes, evaluator changes or publishing.
-- Preserve locks, reference ownership, warnings, accounting and failure handling.
-- Never weaken correctness gates or treat missing evidence as PASS.
-- No host reboot, host swap changes, raw host disks, sudo, automatic merge or promotion.
-- Keep runtime state, secrets, machine paths and credentials out of commits.
-- AI tools must not add Signed-off-by. A human must review and certify any upstream contribution.
+## Read first
+
+1. [README.md](README.md) and [DESIGN.md](DESIGN.md): purpose, findings, next hypotheses.
+2. [evolve/control/PRINCIPLES.md](evolve/control/PRINCIPLES.md): scope, invariants,
+   trust boundary, permissions.
+3. [evolve/control/CODE_PATTERNS.md](evolve/control/CODE_PATTERNS.md): kernel code
+   taste. Use [kernel-patch-review](.agents/skills/kernel-patch-review/SKILL.md)
+   to review patches.
+4. The active policy (`evolve/control/config/policy.json` or `campaigns/<c>/policy.json`).
+5. `linux/Documentation/process/coding-assistants.rst` before kernel work.
+
+Run campaigns with [closed-loop-evolve](.agents/skills/closed-loop-evolve/SKILL.md).
+Loading that skill does not authorize running or publishing experiments.
+
+## Rules
+
+- **Where work runs**: kernel builds, sparse and guests run on the Linux worker,
+  never the controller laptop.
+- **Source trees**: never modify the `linux/` submodule. Create candidate
+  worktrees with `evolve/control/controller.py`.
+- **Workers**: a worker executes one assigned hypothesis. It does not delegate,
+  change scope or the evaluator, or publish.
+- **Evidence**: missing evidence is a failure, never a pass. Correctness gates
+  are not weakened.
+- **Host**: no host reboot, host swap changes, raw host disks or sudo.
+- **Merging**: nothing is merged or promoted automatically.
+- **Commits**: keep runtime state, secrets, machine paths and credentials out
+  of commits. AI tools add no `Signed-off-by`; a human certifies upstream
+  submissions.
+- **Language**: project-authored text (docs, comments, commit messages,
+  reviews) is English. Upstream and third-party text is preserved as is.
 
 ## Writing
 
@@ -20,23 +38,6 @@
   (high / medium / low), and name the observation that would change it.
 - Do not append "this does not imply / establish / mean ..." to individual
   sentences. Each document keeps its limitations in one Limitations section,
-  or links to DESIGN.md#limitations.
+  or links to [DESIGN.md#limitations](DESIGN.md#limitations).
 - Say a thing once. Link to the document that owns it instead of restating it.
 - Prefer a short table of numbers to a paragraph of qualifiers.
-
-## Kernel code taste
-
-These core rules apply when authoring or reviewing kernel changes. See
-`evolve/control/CODE_PATTERNS.md` for detailed rationale and review guidance.
-
-- Express one coherent intent per patch. Keep unrelated renaming, formatting and refactoring separate; preserve valid intermediate commits.
-- Follow the target subsystem's conventions and existing APIs. Prefer a clear state representation to accumulating special cases, but do not redesign beyond the task's scope.
-- Introduce helpers that name meaningful operations or invariants. Avoid speculative frameworks and abstractions without a concrete use.
-- Reduce the state readers must remember: avoid redundant flags and deep nesting when a simpler flow preserves semantics. Fewer lines alone are not an improvement.
-- Make ownership, publication and final release explicit. Trace every relevant writer and free path before changing synchronization; a lock held at one lookup is not a lifetime proof.
-- Preserve reference acquisition, lock ordering and revalidation after dropped locks. RCU and READ_ONCE/WRITE_ONCE do not replace the synchronization or ownership guarantees the path requires.
-- Treat failure paths as part of the design. Preserve error returns, partial-success rollback, accounting and reclaim allocation constraints; use cleanup labels when they clarify resource ownership.
-- Explain why subtle code is safe, rather than narrating its statements. Keep assertions and defensive checks unless a justified change establishes their replacement invariant.
-- Connect each optimization to an exercised path and measurable mechanism. A removed load or branch is a hypothesis, not proof of overall improvement; report costs and regressions.
-- Separate correctness defects, unresolved assumptions, maintainability suggestions and performance claims. Support findings with concrete execution paths; do not present stylistic preference as a bug.
-- Use proportionate validation and state its limits. Checkpatch, compilation and a passing pilot do not establish complete correctness or performance acceptance.

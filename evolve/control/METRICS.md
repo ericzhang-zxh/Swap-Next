@@ -1,70 +1,162 @@
-# Metrics and Acceptance Protocol v1
+# Formal acceptance protocol v1
 
-## No Single Composite Score
+This protocol is implemented by `analysis.py` (`controller.py analyze`) and is
+**disabled**: `policy.json` has `runtime_enabled: false`, null thresholds, and
+no collector that produces this format. The discovery suites in `benchmark/`
+use their own narrower protocols. Their reports do not satisfy this one.
+Test fixtures exercise only the analyzer.
 
-Each campaign freezes one primary objective; other metrics serve as regression
-constraints for each workload. The initial primary objective is **valid operation
-throughput in ops/s**. Latency-oriented tasks require a new frozen protocol;
-never choose the most favorable metric after the run. Current thresholds are
-null, intentionally preventing an uncalibrated ACCEPT.
+## Metrics
 
-| Metric | Definition | Direction |
+Each campaign freezes one primary metric before running; the others are
+guardrails checked per workload. Policy v1 makes throughput primary.
+
+| Metric | Definition | Better |
 |---|---|---|
-| throughput_ops_s | Successfully completed operations that pass data validation / steady-state elapsed_s | Higher |
-| latency_p99_us | Nearest-rank p99 of all operation latencies, in µs | Lower |
-| cpu_ns_per_op | CPU core-seconds × 1e9 / completed operations | Lower |
-| io_bytes_per_op | Backend read+write bytes / completed operations | Lower |
-| metadata_bytes_per_slot_peak | Maximum attributable bytes / occupied slots from simultaneous samples | Lower |
+| `throughput_ops_s` | validated completed operations / steady-state `elapsed_s` | higher |
+| `latency_p99_us` | nearest-rank p99 over every operation latency | lower |
+| `cpu_ns_per_op` | CPU core-seconds × 1e9 / completed operations | lower |
+| `io_bytes_per_op` | backend read + write bytes / completed operations | lower |
+| `metadata_bytes_per_slot_peak` | max attributable bytes / occupied slots, from simultaneous samples | lower |
 
-In v1, latency samples must cover every completed operation; per-run p99 values
-are not raw latency samples. Metadata must be attributable to swap; total guest
-RSS is not a substitute. Also record swap-in/out page counts, logical data
-volume, compression ratio, occupancy, PSI, and p50/p95. Metrics absent from the
-current raw schema may be retained in supplementary logs; they must not replace
-existing fields without authorization.
+Latency uses every operation's sample, not per-run p99 values. Metadata
+must be attributable to swap; guest RSS does not count. Also record:
 
-## Workload Coverage
+- swap-in/out pages
+- logical data volume
+- compression ratio
+- occupancy
+- PSI
+- p50 and p95
 
-The discovery and independent confirmation partitions each cover:
+## Workloads and partitions
 
-1. anon_disk: anonymous-page reclaim/swap-in without zswap;
-2. anon_zswap: compression hits and controlled writeback;
-3. fragmented_swap: a fixed, preconfigured fragmentation state;
-4. mixed_file_anon: competition between file and anonymous pages, to prevent shifting costs to the page cache.
+Each of the two partitions, discovery and confirmation, runs four workloads:
 
-Once an xswap implementation baseline exists, establish a new campaign with
-dedicated tests for logical identity, backend ownership, and accounting. The
-current mainline baseline has no xswap; xswap paths cannot be reported as passing.
-Freeze each workload’s operations, inputs, duration, load intensity, and warmup
-in the suite.
+- `anon_disk`
+- `anon_zswap` (compression hits and controlled writeback)
+- `fragmented_swap` (a fixed preconditioned state)
+- `mixed_file_anon` (catches costs shifted into the page cache)
+
+A final holdout is run by the controller only and is never shown to proposers.
 
 ## Statistics
 
-- At least 10 independent paired runs per workload per partition, with at least 5 pairs each in AB and BA order.
-- Baseline and candidate use the same environment hashes, config/rootfs/compiler/suite, inputs, and seeds.
-- Each measurement run uses an independent boot ID; repeated measurements from one boot do not count as independent repetitions.
-- Use a fixed, predeclared sample size; do not stop early because interim results are significant.
-- Bootstrap paired relative effects with a fixed seed to obtain 95% CIs. Apply Bonferroni adjustment across all workloads/metrics/partitions. Require at least 30 expected bootstrap tail samples at each end (64,000 resamples by default). Percentile-bootstrap coverage is approximate, not a formal guarantee; calibrate its actual behavior with A/A runs.
-- The primary metric’s adjusted CI lower bound must exceed the frozen practical-gain threshold. Every guardrail’s adjusted CI lower bound must be no lower than the negative allowed regression.
-- Report each workload; do not hide individual regressions behind averages.
-- These CIs do not resolve selection bias from adaptive search over multiple candidates. Preserve independent confirmation and a final controller-only holdout; do not expose the holdout to proposers for repeated tuning.
-- Virtualized results describe only that controlled environment; do not extrapolate them to bare-metal hardware.
+- **Pairs**: at least 10 independent pairs per workload and partition, with at
+  least 5 in AB order and 5 in BA. Each run gets its own boot, and
+  measurement intervals do not overlap.
+- **Identical inputs**: within a pair, the environment hashes, config, rootfs,
+  compiler, suite, seed and amount of work are identical. Seeds are unique
+  within a partition, and confirmation does not reuse discovery seeds.
+- **Fixed sample size**: no early stopping.
+- **Intervals**: paired relative effects with a fixed-seed percentile
+  bootstrap (64,000 resamples, at least 30 expected tail samples per end),
+  at 95% after Bonferroni correction across workloads, metrics and partitions.
+- **Accept** only when the primary metric's adjusted lower bound exceeds the
+  frozen minimum gain and every guardrail's lower bound stays above its
+  maximum regression.
+- **Report per workload.** An average does not hide a regression.
 
-## Calibration Procedure
+The bootstrap does not correct for selection across many searched candidates.
+Confirmation and the holdout do.
 
-First deploy a trusted runner and collect baseline-vs-baseline A/A measurements
-to estimate noise and reproducibility. The owner/controller freezes
-min_gain/max_regression based on noise and practical requirements, versions the
-policy, and only then sets thresholds_calibrated=true. Do not reuse old data
-across protocols. Missing calibration values produce NEEDS_CALIBRATION, rather
-than applying arbitrary 3%/5% “universal standards.”
+## Calibration
 
-## Correctness Gates
+Run baseline-vs-baseline A/A on the deployed runner, set `min_gain` and
+`max_regression` from the observed noise and practical need, version the
+policy, then set `thresholds_calibrated: true`. Until then the analyzer returns
+`NEEDS_CALIBRATION`. Calibration data is never carried across protocols.
 
-config/policy.json lists the GCC build matrix, sparse, checkpatch, boot identity,
-data roundtrip, fork/COW, concurrent fault, swapoff, fault injection, memcg,
-large folio, LOCKDEP/KASAN/KCSAN, and new-warning checks. Run each sanitizer with
-its own configuration; do not claim that all are measured in the same benchmark
-kernel. A missing, skipped, timed-out, or unsupported-by-evidence gate does not
-pass. Investigate existing baseline failures separately; the same failure in
-baseline and candidate does not make the candidate pass.
+## Gates
+
+Every gate in `policy.json` `required_gates` must report `pass` for the exact
+candidate commit, with the hash of a non-empty log. Skipped, timed-out,
+missing and unsupported gates fail. Each sanitizer runs with its own config.
+A failure shared with the baseline still fails the candidate; investigate it
+separately.
+
+## Result format
+
+`manifest.json`, with every evidence path relative and inside the evidence
+directory (no symlinks, `..`, empty or reused files):
+
+```json
+{
+  "schema_version": 1,
+  "experiment_id": "trial-001-eval-001",
+  "execution_kind": "isolated_guest",
+  "protocol_sha256": "<controller protocol output>",
+  "baseline_commit": "<pinned upstream commit>",
+  "candidate_commit": "<full candidate SHA>",
+  "environment": {
+    "compiler_sha256": "<sha256>",
+    "config_sha256": "<sha256>",
+    "rootfs_sha256": "<sha256>",
+    "suite_sha256": "<sha256>",
+    "machine_profile_sha256": "<sha256>"
+  },
+  "gates": {
+    "<every gate in the policy>": {
+      "status": "pass",
+      "candidate_commit": "<full candidate SHA>",
+      "evidence": {"path": "gates/example.log", "sha256": "<sha256>"}
+    }
+  },
+  "planned_run_ids": ["<all run IDs frozen before execution, including every attempt>"],
+  "runs": [{"path": "runs/example.json", "sha256": "<sha256>"}]
+}
+```
+
+Each raw run:
+
+```json
+{
+  "schema_version": 1,
+  "status": "completed",
+  "experiment_id": "trial-001-eval-001",
+  "run_id": "unique-run-001",
+  "boot_id": "unique-boot-001",
+  "variant": "baseline",
+  "kernel_commit": "<full SHA>",
+  "booted_commit": "<independently verified actual boot SHA>",
+  "environment": {"compiler_sha256": "...", "config_sha256": "...", "rootfs_sha256": "...", "suite_sha256": "...", "machine_profile_sha256": "..."},
+  "partition": "discovery",
+  "workload": "anon_disk",
+  "pair_id": "pair-001",
+  "order": "AB",
+  "seed": 123,
+  "started_unix": 1000000,
+  "finished_unix": 1000030,
+  "attempted_operations": 1000,
+  "completed_operations": 1000,
+  "elapsed_s": 20,
+  "cpu_core_seconds": 10,
+  "latency_us": ["one positive value per completed operation"],
+  "backend_read_bytes": 4096000,
+  "backend_write_bytes": 4096000,
+  "metadata_samples": [{"attributable_bytes": 8192, "occupied_slots": 1024}],
+  "swapout_pages": 1024,
+  "swapin_pages": 1024,
+  "data_mismatches": 0,
+  "timeouts": 0,
+  "kernel_warnings": 0
+}
+```
+
+The analyzer rejects the following:
+
+- **Bad values**: NaN/Infinity, booleans used as numbers, duplicate JSON keys,
+  missing fields, malformed SHAs.
+- **Inconsistent runs**: stale gates, runs whose order contradicts their
+  timestamps, incomplete work, and runs with no swap activity.
+
+## Trust boundary
+
+Hashes detect changed files; they do not make the contents true.
+`booted_commit`, gates and counters are claims made by the collector.
+The analyzer therefore always reports `provenance_verified=false`,
+`holdout_verified=false` and `auto_promote=false`. Its verdicts are:
+
+- `NEEDS_CALIBRATION`: thresholds are not frozen.
+- `REJECT_OR_NO_GAIN`: the effects miss the calibrated bounds.
+- `REVIEW_REQUIRED`: the bounds are met. A human reviews before any merge.

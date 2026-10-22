@@ -1,17 +1,25 @@
-# Candidate control system
+# Candidate controller
 
-This directory is separate from the pinned `linux/` submodule. Run commands from the superproject root.
+`controller.py` creates candidate worktrees from the frozen seed, keeps them
+inside the allowed files and line budget, and runs static checks. It never
+executes candidate code. Run it from the repository root on the Linux worker.
 
 ```sh
-python3 evolve/control/controller.py doctor
-python3 evolve/control/controller.py status
-python3 evolve/control/controller.py protocol
+python3 evolve/control/controller.py [--campaign <c>] doctor | status | protocol
+python3 evolve/control/controller.py [--campaign <c>] new <name> --hypothesis '<...>'
+python3 evolve/control/controller.py [--campaign <c>] check <name>     # scope, git diff --check, checkpatch
+python3 evolve/control/controller.py [--campaign <c>] close <name> --reason '<decision>'
 python3 -m unittest discover -s evolve/control/tests -v
-python3 evolve/control/controller.py new trial-001 --hypothesis "A concrete optimization hypothesis"
 ```
 
-The controller creates `worktrees/trial-001` from the public upstream SHA in `config/policy.json`. Implement one allowed change and commit it in that worktree, then run `python3 evolve/control/controller.py check trial-001`. Check runs only scope checks, `git diff --check`, and upstream checkpatch. It does not execute candidate code. Candidate creation expects the pinned Linux checkout to be clean.
+- **Policy**: `config/policy.json` is the base policy. A named campaign uses
+  `campaigns/<c>/policy.json`. Each candidate's worktree is
+  `worktrees/[<c>/]<name>`.
+- **State**: runtime state lives in the ignored `state/[<c>/]`.
+  `touch evolve/control/state/STOP` halts new controller stages and the
+  runners' owned builds and guests.
+- **Acceptance**: `analyze` implements the [formal acceptance protocol](METRICS.md).
+  It is disabled until that protocol's gates and calibration exist.
 
-[../../benchmark/SETUP.md](../../benchmark/SETUP.md) describes the separate isolated-build/KVM pilot. Full statistical acceptance is disabled; all findings require review. Runtime state lives under ignored `evolve/control/state/`. `touch evolve/control/state/STOP` blocks new controller stages and tells the pilot runner to stop its owned build/guest processes. Close a completed candidate with `python3 evolve/control/controller.py close trial-001 --reason 'archived; not promoted'`; its worktree and evidence remain.
-
-See [PRINCIPLES.md](PRINCIPLES.md), [METRICS.md](METRICS.md), [CODE_PATTERNS.md](CODE_PATTERNS.md), [RESULT_FORMAT.md](RESULT_FORMAT.md), and [RUNBOOK.md](RUNBOOK.md). Policy v1 and the benchmark pilot have different scopes: a successful pilot is never full v1 acceptance.
+Rules: [PRINCIPLES.md](PRINCIPLES.md) (boundaries and invariants) and
+[CODE_PATTERNS.md](CODE_PATTERNS.md) (kernel code taste and review).

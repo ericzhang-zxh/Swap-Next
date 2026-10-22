@@ -1,56 +1,54 @@
-# Principles and Hard Boundaries
+# Principles
 
-## Correctness First, Performance Second
+## Correctness gates performance
 
-Data integrity, consistent references, no use-after-free, no double free, no lock
-inversion, and symmetric charge/uncharge are mandatory gates. Throughput gains
-cannot compensate for any failure. Do not describe “no crash,” “successful exit,”
-or “successful build” as proof of correctness.
-
-## Three Distinct Boundaries
-
-- **Instruction boundary**: AGENTS instructions and task contracts require workers to stay within scope.
-- **Mechanical gates**: diff allowlists, size budgets, input validation, and frozen configuration hashes reject noncompliant results.
-- **Security boundary**: independent VMs/containers/permission principals, no credentials, no writable host mounts, and network and resource isolation.
-
-The controller provides the first two layers. The benchmark pilot additionally
-provides namespace-isolated builds and KVM guest isolation, which still require
-verification in the deployment environment. The same Unix user can alter rules
-and evidence, so worktrees, JSON, and hashes neither isolate a malicious agent
-nor prove authenticity. Never let the host runner execute candidate-provided
-Makefiles, scripts, model commands, or arbitrary shell commands.
+Data integrity, reference consistency, no use-after-free or double free, no
+lock inversion, and symmetric charge/uncharge are hard gates. No speedup
+compensates for a failure. A clean build, a clean exit or the absence of a
+crash proves none of them.
 
 ## Scope
 
-By default, changes are limited to a small set of designated swap-core files;
-the exact list in config/policy.json is authoritative. mm/memory.c, mm/vmscan.c,
-memcontrol, architecture code, Kconfig, Makefiles, UAPI, and global VM policy are
-outside the initial automated search scope. If needed, the controller initiates
-a task with a new scope; candidates cannot relax the allowlist themselves.
-New regression-test source files with constrained names are allowed, but they do
-not replace the immutable golden acceptance suite.
+Candidates may modify only the swap-core files listed in
+`config/policy.json` and add `tools/testing/selftests/mm/swap_next_*.c`
+tests. `mm/memory.c`, `mm/vmscan.c`, memcg, arch code, Kconfig, Makefiles, UAPI
+and global VM policy are out of scope. Only the controller widens scope, by
+creating a new campaign policy.
 
-## Invariants
+## Invariants every candidate preserves
 
-- Ownership of entries, slots, folios, and compressed objects must be explicit.
-- Resources still usable by PTEs, caches, or in-flight I/O must not be freed early.
-- Initialize fully before publishing a mapping; after teardown, follow the target code’s lifetime protocol.
-- Every failure exit must undo completed allocations, reference acquisitions, and accounting charges.
-- RCU does not replace object-state validation, folio locking, or correct reference acquisition.
-- Allocation contexts in reclaim paths must not introduce reclaim recursion.
-- Include large folios, partial failure, swapoff, memcg, and concurrent faults in the impact analysis.
+- Each entry, slot, folio and compressed object has an explicit owner.
+- Nothing still reachable from a PTE, a cache or in-flight I/O is freed.
+- An object is fully initialized before it is published, and teardown follows
+  the target code's lifetime protocol.
+- Every failure exit undoes allocations, references and charges.
+- RCU does not replace state validation, the folio lock or reference acquisition.
+- Reclaim-path allocations do not recurse into reclaim.
+- The impact analysis covers large folios, partial failure, swapoff, memcg and
+  concurrent faults.
 
-## Do Not Change the Task to Improve the Score
+## The task is fixed
 
-Do not remove work, terminate early, reduce actual reclaim, hide errors, change
-the seed set, or tamper with statistics, thresholds, baselines, timing intervals,
-or holdouts. Agent-written score summaries cannot replace raw measurements.
-Preserve failures and timeouts; never select only faster samples.
+The workload, seeds, statistics, thresholds, baselines, timing windows and holdout
+stay as frozen. Candidates do not remove work, exit early, reduce reclaim
+or hide errors. Every failure and timeout is kept in the results, and slow
+samples are never dropped. Raw measurements outrank any summary an agent
+writes.
 
-## Permissions and Actions
+## Trust boundary
 
-Only the controller/owner may change policies and baselines. Host root access,
-credentials, publishing, email, pushing, rebooting, and modifying host swap or
-the host kernel are not authorized. Automatic merging is disabled by default.
-Candidates may express a complete change as a small local commit; do not add
-DCO sign-offs automatically.
+There are three layers:
+
+- **Instructions**: AGENTS.md and the task contract.
+- **Mechanical gates**: the controller's diff allowlist, size budget and frozen hashes.
+- **Isolation**: namespace-isolated builds and KVM guests.
+
+The host never runs candidate-provided Makefiles, scripts or commands. The
+same Unix user can rewrite rules and evidence, so hashes detect accidental
+drift. They do not stop a malicious agent.
+
+## Permissions
+
+Only the owner changes policies and baselines. Agents get no host root, no
+credentials, and may not publish, email, push, reboot, or change host swap or
+the host kernel. Nothing merges automatically, and no agent adds a DCO sign-off.
