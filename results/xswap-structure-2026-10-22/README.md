@@ -63,3 +63,5 @@ Nothing is published, merged into main, or promoted automatically.
   controller records in `evolve/control/state/xswap-structure-2026-10-22`;
   OpenEvolve records in `evolve/xswap-structure/state-layout-v1`.
 - Detailed local logs and machine-specific paths remain ignored runtime artifacts.
+
+- [Review page](https://ericzhang-zxh.github.io/Swap-Next/xswap-structure-2026-10-22/): visual explainer, built from [explainer.json](explainer.json).
