@@ -1,0 +1,41 @@
+name: Experiment pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "results/**/explainer.*"
+      - ".agents/skills/explaining-campaign-results/scripts/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Sparse checkout: the linux and openevolve submodules are never fetched.
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          sparse-checkout: |
+            results
+            .agents/skills/explaining-campaign-results/scripts
+      - run: python3 .agents/skills/explaining-campaign-results/scripts/build_site.py results _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

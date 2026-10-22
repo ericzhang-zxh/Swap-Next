@@ -7,7 +7,8 @@ OpenEvolve records the outcome and selects references for the next proposal.
 [DESIGN.md](DESIGN.md) covers the shared design: the swap cost model, the
 upstream landscape, measurement principles and the role of OpenEvolve.
 Each exploration direction runs as a campaign and reports in
-[results/](results/).
+[results/](results/); review pages are published at
+<https://ericzhang-zxh.github.io/Swap-Next/>.
 
 ## Layout
 

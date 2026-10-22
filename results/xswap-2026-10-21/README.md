@@ -115,7 +115,7 @@ Hypotheses, ranked:
 
 ## Evidence
 
-- [explainer.html](explainer.html): visual review page (open locally; built from [explainer.json](explainer.json)).
+- [Review page](https://ericzhang-zxh.github.io/Swap-Next/xswap-2026-10-21/): visual explainer, built from [explainer.json](explainer.json).
 - [summary.json](summary.json): per-run metrics, snapshots, counters, gates,
   and source/image/raw-log hashes.
 - [review.md](review.md): per-candidate source review.

@@ -38,7 +38,10 @@ budget.
 5. Render the page in both themes with a headless browser, take
    screenshots, and fix label collisions, overflow and empty charts.
 6. Save `explainer.json` and `explainer.html` next to the campaign report,
-   and link the page from that report.
+   and link the published page from that report. A push to `main` publishes
+   every `results/<campaign>/explainer.html` to
+   `https://ericzhang-zxh.github.io/Swap-Next/<campaign>/` through
+   `.github/workflows/pages.yml` (`scripts/build_site.py` builds the index).
 
 ## Spec reference
 
