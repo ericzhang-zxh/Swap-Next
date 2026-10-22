@@ -1,0 +1,18 @@
+{
+  "renderer": "Playwright Chromium headless",
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "viewport": {
+    "width": 1100,
+    "height": 900
+  },
+  "document_width": 1100,
+  "horizontal_overflow": false,
+  "javascript_errors": [],
+  "svg_count": 10,
+  "sections": 7,
+  "full_page_screenshots": "retained on worker outside repository",
+  "visual_review": "Top and data panels inspected; no collisions or empty charts observed"
+}

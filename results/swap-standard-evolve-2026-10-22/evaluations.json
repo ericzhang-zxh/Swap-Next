@@ -1,0 +1,4382 @@
+{
+  "ledger": [
+    {
+      "id": "8b0579940b604f43b32648310f6beda5",
+      "action": "calibrate",
+      "tier": "fast",
+      "candidate": null,
+      "status": "CALIBRATION_NOISY",
+      "started": 1792701738.7808943,
+      "runs": [
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-a",
+          "pair": 0,
+          "case": "usemem-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-usemem-disk-a/result.json",
+          "result_sha256": "7bacb682bd5628a44acfcb7130174711dd47339d9d5ca9e12732e139e5ebcf92",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 78,
+              "pswpout": 1074238,
+              "pgmajfault": 103,
+              "swpin_zero": 2,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4185188
+            },
+            "throughput_kbps_sum": 1638870,
+            "throughput_kbps": [
+              272643,
+              235982,
+              213902,
+              191430,
+              184336,
+              180579,
+              180579,
+              179419
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 29388,
+            "free_usec_mean": 23761.0,
+            "cg_system_usec": 7878104,
+            "cg_user_usec": 1267695
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-b",
+          "pair": 0,
+          "case": "usemem-disk",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-usemem-disk-b/result.json",
+          "result_sha256": "7a7130507cf9c471a5929080aac5ffe2c34a0cf7688004d221cbaa669ac2c077",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 73,
+              "pswpout": 1053225,
+              "pgmajfault": 83,
+              "swpin_zero": 1,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4189932
+            },
+            "throughput_kbps_sum": 1004283,
+            "throughput_kbps": [
+              129452,
+              127518,
+              129453,
+              123975,
+              123972,
+              123958,
+              123517,
+              122438
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 42151,
+            "free_usec_mean": 40217.25,
+            "cg_system_usec": 11461510,
+            "cg_user_usec": 1241663
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-redis-zram-a",
+          "pair": 0,
+          "case": "redis-zram",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-redis-zram-a/result.json",
+          "result_sha256": "d21813ded303a3f1367c938b86a032d651adb8efcd2dd6cbafb43be68e773a97",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 3875332,
+              "pswpout": 3521101,
+              "pgmajfault": 3882852,
+              "swpin_zero": 121,
+              "swpout_zero": 496,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/zram0": 3260700
+            },
+            "redis_fill_rps": 275684.62,
+            "redis_get_rps": 329887.84,
+            "redis_get_bgsave_rps": 135269.19,
+            "redis_get_vmstat_delta": {
+              "pswpin": 877030,
+              "pswpout": 878231,
+              "pgmajfault": 877168,
+              "swpin_zero": 3,
+              "swpout_zero": 119,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "redis_bgsave_vmstat_delta": {
+              "pswpin": 2352752,
+              "pswpout": 1870114,
+              "pgmajfault": 2359945,
+              "swpin_zero": 56,
+              "swpout_zero": 146,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-redis-zram-b",
+          "pair": 0,
+          "case": "redis-zram",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-redis-zram-b/result.json",
+          "result_sha256": "e94521caa39c97042b7887900d998a872cead72b3e0afeec73f94df958ee4e0d",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 3846255,
+              "pswpout": 3495149,
+              "pgmajfault": 3860858,
+              "swpin_zero": 93,
+              "swpout_zero": 456,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/zram0": 3239752
+            },
+            "redis_fill_rps": 275128.38,
+            "redis_get_rps": 294927.25,
+            "redis_get_bgsave_rps": 129595.23,
+            "redis_get_vmstat_delta": {
+              "pswpin": 864027,
+              "pswpout": 862647,
+              "pgmajfault": 868343,
+              "swpin_zero": 3,
+              "swpout_zero": 115,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "redis_bgsave_vmstat_delta": {
+              "pswpin": 2333176,
+              "pswpout": 1854932,
+              "pgmajfault": 2343300,
+              "swpin_zero": 54,
+              "swpout_zero": 139,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-a",
+          "pair": 0,
+          "case": "swapin-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-swapin-disk-a/result.json",
+          "result_sha256": "8d12ae41db0868a153932be5eda41e40064616e212d971f08c33348d3f04e1a5",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 262176,
+              "pswpout": 262189,
+              "pgmajfault": 147256,
+              "swpin_zero": 0,
+              "swpout_zero": 0,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 1048748
+            },
+            "swapin_seq": {
+              "samples": 131072.0,
+              "mean_ns": 24297.0,
+              "p50_ns": 522.0,
+              "p90_ns": 141583.0,
+              "p99_ns": 313224.0,
+              "p999_ns": 406881.0,
+              "max_ns": 1939036.0,
+              "total_ms": 3184.668
+            },
+            "swapin_rand": {
+              "samples": 131072.0,
+              "mean_ns": 237143.0,
+              "p50_ns": 229727.0,
+              "p90_ns": 287580.0,
+              "p99_ns": 400260.0,
+              "p999_ns": 808426.0,
+              "max_ns": 2222839.0,
+              "total_ms": 31082.867
+            },
+            "swapin_swapped": {
+              "pages": 262144.0,
+              "swapped": 262144.0,
+              "reclaim_rounds": 1.0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-b",
+          "pair": 0,
+          "case": "swapin-disk",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-swapin-disk-b/result.json",
+          "result_sha256": "5297f2aaaebae3daf61dc0f3cc7351e0180ba1e0f5f58e8eae6571708c782059",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 262171,
+              "pswpout": 262185,
+              "pgmajfault": 147253,
+              "swpin_zero": 0,
+              "swpout_zero": 0,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 1048740
+            },
+            "swapin_seq": {
+              "samples": 131072.0,
+              "mean_ns": 23884.0,
+              "p50_ns": 518.0,
+              "p90_ns": 141880.0,
+              "p99_ns": 295463.0,
+              "p999_ns": 388866.0,
+              "max_ns": 1066551.0,
+              "total_ms": 3130.564
+            },
+            "swapin_rand": {
+              "samples": 131072.0,
+              "mean_ns": 208657.0,
+              "p50_ns": 202314.0,
+              "p90_ns": 260885.0,
+              "p99_ns": 349680.0,
+              "p999_ns": 716190.0,
+              "max_ns": 1586221.0,
+              "total_ms": 27349.037
+            },
+            "swapin_swapped": {
+              "pages": 262144.0,
+              "swapped": 262144.0,
+              "reclaim_rounds": 1.0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-b",
+          "pair": 1,
+          "case": "usemem-disk",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-usemem-disk-b/result.json",
+          "result_sha256": "e3ff9d840492dd848ca4e9a2006289a5ddd30577371f6bc486d1ea57a95648cf",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 71,
+              "pswpout": 1056134,
+              "pgmajfault": 88,
+              "swpin_zero": 2,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4185204
+            },
+            "throughput_kbps_sum": 1276776,
+            "throughput_kbps": [
+              186140,
+              165589,
+              160711,
+              157280,
+              151967,
+              151967,
+              151968,
+              151154
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 37051,
+            "free_usec_mean": 32502.25,
+            "cg_system_usec": 9346773,
+            "cg_user_usec": 1232893
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-a",
+          "pair": 1,
+          "case": "usemem-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-usemem-disk-a/result.json",
+          "result_sha256": "6a034dc84957ba5bfb7d8a3132b59679075e7bd6ddbf0a2543d35ebb21cfb9ba",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 63,
+              "pswpout": 1055989,
+              "pgmajfault": 88,
+              "swpin_zero": 2,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4170720
+            },
+            "throughput_kbps_sum": 830064,
+            "throughput_kbps": [
+              109807,
+              109808,
+              106845,
+              109809,
+              98508,
+              98508,
+              98271,
+              98508
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 40366,
+            "free_usec_mean": 38213.875,
+            "cg_system_usec": 14152721,
+            "cg_user_usec": 1296371
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-redis-zram-b",
+          "pair": 1,
+          "case": "redis-zram",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-redis-zram-b/result.json",
+          "result_sha256": "11419ccab4b9930f958c52c867edf8de07f7ed0ddc2581e499ea04e0ee8bbcb6",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 3831066,
+              "pswpout": 3433761,
+              "pgmajfault": 3841178,
+              "swpin_zero": 79,
+              "swpout_zero": 450,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/zram0": 2967296
+            },
+            "redis_fill_rps": 257356.11,
+            "redis_get_rps": 297265.16,
+            "redis_get_bgsave_rps": 141582.91,
+            "redis_get_vmstat_delta": {
+              "pswpin": 863627,
+              "pswpout": 861612,
+              "pgmajfault": 866798,
+              "swpin_zero": 4,
+              "swpout_zero": 120,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "redis_bgsave_vmstat_delta": {
+              "pswpin": 2313274,
+              "pswpout": 1790122,
+              "pgmajfault": 2320107,
+              "swpin_zero": 36,
+              "swpout_zero": 125,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-redis-zram-a",
+          "pair": 1,
+          "case": "redis-zram",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-redis-zram-a/result.json",
+          "result_sha256": "5cf63ff7ca7ef3d6ad06191bac53065c0e8a4e2c23df1e91abecc675ba315f5b",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 3826541,
+              "pswpout": 3471174,
+              "pgmajfault": 3841205,
+              "swpin_zero": 84,
+              "swpout_zero": 453,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/zram0": 3115128
+            },
+            "redis_fill_rps": 270440.81,
+            "redis_get_rps": 300932.91,
+            "redis_get_bgsave_rps": 132778.61,
+            "redis_get_vmstat_delta": {
+              "pswpin": 861928,
+              "pswpout": 860079,
+              "pgmajfault": 865676,
+              "swpin_zero": 3,
+              "swpout_zero": 115,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "redis_bgsave_vmstat_delta": {
+              "pswpin": 2317325,
+              "pswpout": 1835869,
+              "pgmajfault": 2328072,
+              "swpin_zero": 31,
+              "swpout_zero": 119,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-b",
+          "pair": 1,
+          "case": "swapin-disk",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-swapin-disk-b/result.json",
+          "result_sha256": "00ed02e8e9f1aa346ea73dc54b0e3af2cf682ac29692fa50453e6fd41dcb7190",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 262154,
+              "pswpout": 262169,
+              "pgmajfault": 147250,
+              "swpin_zero": 0,
+              "swpout_zero": 0,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 1048672
+            },
+            "swapin_seq": {
+              "samples": 131072.0,
+              "mean_ns": 24421.0,
+              "p50_ns": 523.0,
+              "p90_ns": 142315.0,
+              "p99_ns": 297411.0,
+              "p999_ns": 415982.0,
+              "max_ns": 1082811.0,
+              "total_ms": 3200.895
+            },
+            "swapin_rand": {
+              "samples": 131072.0,
+              "mean_ns": 217488.0,
+              "p50_ns": 215455.0,
+              "p90_ns": 267060.0,
+              "p99_ns": 352016.0,
+              "p999_ns": 734303.0,
+              "max_ns": 4094138.0,
+              "total_ms": 28506.538
+            },
+            "swapin_swapped": {
+              "pages": 262144.0,
+              "swapped": 262144.0,
+              "reclaim_rounds": 1.0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-a",
+          "pair": 1,
+          "case": "swapin-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-swapin-disk-a/result.json",
+          "result_sha256": "4393b83a478210441e3266001b98c191c361d08c6c2f68f20508c8317ca84533",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 262156,
+              "pswpout": 262169,
+              "pgmajfault": 147251,
+              "swpin_zero": 0,
+              "swpout_zero": 0,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 1048672
+            },
+            "swapin_seq": {
+              "samples": 131072.0,
+              "mean_ns": 21764.0,
+              "p50_ns": 519.0,
+              "p90_ns": 127475.0,
+              "p99_ns": 277339.0,
+              "p999_ns": 379723.0,
+              "max_ns": 1207266.0,
+              "total_ms": 2852.604
+            },
+            "swapin_rand": {
+              "samples": 131072.0,
+              "mean_ns": 196235.0,
+              "p50_ns": 180790.0,
+              "p90_ns": 253609.0,
+              "p99_ns": 369427.0,
+              "p999_ns": 681165.0,
+              "max_ns": 2357692.0,
+              "total_ms": 25720.86
+            },
+            "swapin_swapped": {
+              "pages": 262144.0,
+              "swapped": 262144.0,
+              "reclaim_rounds": 1.0
+            }
+          }
+        }
+      ],
+      "pairs": [
+        {
+          "a": {
+            "usemem-disk.throughput_kbps_sum": 1638870,
+            "usemem-disk.free_usec_max": 29388,
+            "redis-zram.redis_get_rps": 329887.84,
+            "redis-zram.redis_get_bgsave_rps": 135269.19,
+            "swapin-disk.swapin_rand.mean_ns": 237143.0,
+            "swapin-disk.swapin_rand.p99_ns": 400260.0,
+            "swapin-disk.swapin_seq.p99_ns": 313224.0
+          },
+          "b": {
+            "usemem-disk.throughput_kbps_sum": 1004283,
+            "usemem-disk.free_usec_max": 42151,
+            "redis-zram.redis_get_rps": 294927.25,
+            "redis-zram.redis_get_bgsave_rps": 129595.23,
+            "swapin-disk.swapin_rand.mean_ns": 208657.0,
+            "swapin-disk.swapin_rand.p99_ns": 349680.0,
+            "swapin-disk.swapin_seq.p99_ns": 295463.0
+          },
+          "order": "AB"
+        },
+        {
+          "a": {
+            "usemem-disk.throughput_kbps_sum": 830064,
+            "usemem-disk.free_usec_max": 40366,
+            "redis-zram.redis_get_rps": 300932.91,
+            "redis-zram.redis_get_bgsave_rps": 132778.61,
+            "swapin-disk.swapin_rand.mean_ns": 196235.0,
+            "swapin-disk.swapin_rand.p99_ns": 369427.0,
+            "swapin-disk.swapin_seq.p99_ns": 277339.0
+          },
+          "b": {
+            "usemem-disk.throughput_kbps_sum": 1276776,
+            "usemem-disk.free_usec_max": 37051,
+            "redis-zram.redis_get_rps": 297265.16,
+            "redis-zram.redis_get_bgsave_rps": 141582.91,
+            "swapin-disk.swapin_rand.mean_ns": 217488.0,
+            "swapin-disk.swapin_rand.p99_ns": 352016.0,
+            "swapin-disk.swapin_seq.p99_ns": 297411.0
+          },
+          "order": "BA"
+        }
+      ],
+      "performance_accepted": false,
+      "auto_promote": false,
+      "fingerprint": "ee6a0bd7780fae71150aa40c2775114e4ec8909b66bcc6e7203433e9cfaed4db",
+      "candidate_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "execution_started": true,
+      "analysis": {
+        "schema_version": 1,
+        "status": "CALIBRATION_NOISY",
+        "passed": false,
+        "directions": {
+          "usemem-disk.throughput_kbps_sum": "higher",
+          "usemem-disk.free_usec_max": "lower",
+          "redis-zram.redis_get_rps": "higher",
+          "redis-zram.redis_get_bgsave_rps": "higher",
+          "swapin-disk.swapin_rand.mean_ns": "lower",
+          "swapin-disk.swapin_rand.p99_ns": "lower",
+          "swapin-disk.swapin_seq.p99_ns": "lower"
+        },
+        "primary": [
+          "redis-zram.redis_get_bgsave_rps",
+          "swapin-disk.swapin_rand.mean_ns",
+          "usemem-disk.throughput_kbps_sum"
+        ],
+        "pair_count": 2,
+        "noise_log": {
+          "usemem-disk.throughput_kbps_sum": 0.48973312589855844,
+          "usemem-disk.free_usec_max": 0.360671981200813,
+          "redis-zram.redis_get_rps": 0.11202400214372155,
+          "redis-zram.redis_get_bgsave_rps": 0.06420232709317197,
+          "swapin-disk.swapin_rand.mean_ns": 0.1279715792244147,
+          "swapin-disk.swapin_rand.p99_ns": 0.13509588539441886,
+          "swapin-disk.swapin_seq.p99_ns": 0.0698744359279786
+        },
+        "noise_relative": {
+          "usemem-disk.throughput_kbps_sum": 0.6318806551539775,
+          "usemem-disk.free_usec_max": 0.4342929086702054,
+          "redis-zram.redis_get_rps": 0.11853970767367272,
+          "redis-zram.redis_get_bgsave_rps": 0.06630811995998509,
+          "swapin-disk.swapin_rand.mean_ns": 0.13652070143824546,
+          "swapin-disk.swapin_rand.p99_ns": 0.1446465339739178,
+          "swapin-disk.swapin_seq.p99_ns": 0.07237352121411034
+        },
+        "rejected_metrics": [
+          "usemem-disk.throughput_kbps_sum",
+          "usemem-disk.free_usec_max"
+        ],
+        "performance_accepted": false,
+        "auto_promote": false
+      },
+      "finished": 1792702131.6793683
+    },
+    {
+      "id": "2aae1d7b6bf041b981317ebd833ed850",
+      "action": "calibrate",
+      "tier": "slow",
+      "candidate": null,
+      "status": "INCOMPLETE",
+      "started": 1792702131.6881316,
+      "runs": [
+        {
+          "id": "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-a",
+          "pair": 0,
+          "case": "usemem-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-a/result.json",
+          "result_sha256": "f0cb1f577fe5faa96be844e347d2c1783c111becac3648047ab64a83eb07946a",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 87,
+              "pswpout": 1054185,
+              "pgmajfault": 109,
+              "swpin_zero": 2,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4163712
+            },
+            "throughput_kbps_sum": 1101079,
+            "throughput_kbps": [
+              160470,
+              169398,
+              146254,
+              128791,
+              127205,
+              125652,
+              122339,
+              120970
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 36592,
+            "free_usec_mean": 34650.375,
+            "cg_system_usec": 11611202,
+            "cg_user_usec": 1158706
+          }
+        },
+        {
+          "id": "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-b",
+          "pair": 0,
+          "case": "usemem-disk",
+          "arm": "b",
+          "status": "STARTED"
+        }
+      ],
+      "pairs": [
+        {
+          "a": {
+            "usemem-disk.throughput_kbps_sum": 1101079,
+            "usemem-disk.free_usec_max": 36592
+          },
+          "b": {},
+          "order": "AB"
+        }
+      ],
+      "performance_accepted": false,
+      "auto_promote": false,
+      "fingerprint": "ee6a0bd7780fae71150aa40c2775114e4ec8909b66bcc6e7203433e9cfaed4db",
+      "candidate_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "execution_started": true,
+      "reason": "STOP",
+      "finished": 1792702156.7322495
+    },
+    {
+      "id": "26fe4dd5f27e497c90655b2d597713bf",
+      "action": "reference-check",
+      "tier": "fast",
+      "candidate": null,
+      "status": "INCOMPLETE",
+      "started": 1792702174.3821113,
+      "runs": [],
+      "pairs": [],
+      "performance_accepted": false,
+      "auto_promote": false,
+      "fingerprint": "ee6a0bd7780fae71150aa40c2775114e4ec8909b66bcc6e7203433e9cfaed4db",
+      "reason": "calibration noisy; stabilize baseline before comparison",
+      "finished": 1792702174.395917
+    },
+    {
+      "id": "b4c8f2489f5744639eaa0603628dcefc",
+      "action": "evaluate",
+      "tier": "fast",
+      "candidate": "xs-tailcache-v2",
+      "status": "BLOCKED",
+      "started": 1792702174.867857,
+      "runs": [],
+      "pairs": [],
+      "performance_accepted": false,
+      "auto_promote": false,
+      "fingerprint": "ee6a0bd7780fae71150aa40c2775114e4ec8909b66bcc6e7203433e9cfaed4db",
+      "reason": "BLOCKED: historical xswap candidate; unresolved descriptor lifetime",
+      "finished": 1792702174.8817248
+    }
+  ],
+  "reports": [
+    {
+      "id": "8b0579940b604f43b32648310f6beda5",
+      "action": "calibrate",
+      "tier": "fast",
+      "candidate": null,
+      "status": "CALIBRATION_NOISY",
+      "started": 1792701738.7808943,
+      "runs": [
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-a",
+          "pair": 0,
+          "case": "usemem-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-usemem-disk-a/result.json",
+          "result_sha256": "7bacb682bd5628a44acfcb7130174711dd47339d9d5ca9e12732e139e5ebcf92",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 78,
+              "pswpout": 1074238,
+              "pgmajfault": 103,
+              "swpin_zero": 2,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4185188
+            },
+            "throughput_kbps_sum": 1638870,
+            "throughput_kbps": [
+              272643,
+              235982,
+              213902,
+              191430,
+              184336,
+              180579,
+              180579,
+              179419
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 29388,
+            "free_usec_mean": 23761.0,
+            "cg_system_usec": 7878104,
+            "cg_user_usec": 1267695
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-b",
+          "pair": 0,
+          "case": "usemem-disk",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-usemem-disk-b/result.json",
+          "result_sha256": "7a7130507cf9c471a5929080aac5ffe2c34a0cf7688004d221cbaa669ac2c077",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 73,
+              "pswpout": 1053225,
+              "pgmajfault": 83,
+              "swpin_zero": 1,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4189932
+            },
+            "throughput_kbps_sum": 1004283,
+            "throughput_kbps": [
+              129452,
+              127518,
+              129453,
+              123975,
+              123972,
+              123958,
+              123517,
+              122438
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 42151,
+            "free_usec_mean": 40217.25,
+            "cg_system_usec": 11461510,
+            "cg_user_usec": 1241663
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-redis-zram-a",
+          "pair": 0,
+          "case": "redis-zram",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-redis-zram-a/result.json",
+          "result_sha256": "d21813ded303a3f1367c938b86a032d651adb8efcd2dd6cbafb43be68e773a97",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 3875332,
+              "pswpout": 3521101,
+              "pgmajfault": 3882852,
+              "swpin_zero": 121,
+              "swpout_zero": 496,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/zram0": 3260700
+            },
+            "redis_fill_rps": 275684.62,
+            "redis_get_rps": 329887.84,
+            "redis_get_bgsave_rps": 135269.19,
+            "redis_get_vmstat_delta": {
+              "pswpin": 877030,
+              "pswpout": 878231,
+              "pgmajfault": 877168,
+              "swpin_zero": 3,
+              "swpout_zero": 119,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "redis_bgsave_vmstat_delta": {
+              "pswpin": 2352752,
+              "pswpout": 1870114,
+              "pgmajfault": 2359945,
+              "swpin_zero": 56,
+              "swpout_zero": 146,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-redis-zram-b",
+          "pair": 0,
+          "case": "redis-zram",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-redis-zram-b/result.json",
+          "result_sha256": "e94521caa39c97042b7887900d998a872cead72b3e0afeec73f94df958ee4e0d",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 3846255,
+              "pswpout": 3495149,
+              "pgmajfault": 3860858,
+              "swpin_zero": 93,
+              "swpout_zero": 456,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/zram0": 3239752
+            },
+            "redis_fill_rps": 275128.38,
+            "redis_get_rps": 294927.25,
+            "redis_get_bgsave_rps": 129595.23,
+            "redis_get_vmstat_delta": {
+              "pswpin": 864027,
+              "pswpout": 862647,
+              "pgmajfault": 868343,
+              "swpin_zero": 3,
+              "swpout_zero": 115,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "redis_bgsave_vmstat_delta": {
+              "pswpin": 2333176,
+              "pswpout": 1854932,
+              "pgmajfault": 2343300,
+              "swpin_zero": 54,
+              "swpout_zero": 139,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-a",
+          "pair": 0,
+          "case": "swapin-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-swapin-disk-a/result.json",
+          "result_sha256": "8d12ae41db0868a153932be5eda41e40064616e212d971f08c33348d3f04e1a5",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 262176,
+              "pswpout": 262189,
+              "pgmajfault": 147256,
+              "swpin_zero": 0,
+              "swpout_zero": 0,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 1048748
+            },
+            "swapin_seq": {
+              "samples": 131072.0,
+              "mean_ns": 24297.0,
+              "p50_ns": 522.0,
+              "p90_ns": 141583.0,
+              "p99_ns": 313224.0,
+              "p999_ns": 406881.0,
+              "max_ns": 1939036.0,
+              "total_ms": 3184.668
+            },
+            "swapin_rand": {
+              "samples": 131072.0,
+              "mean_ns": 237143.0,
+              "p50_ns": 229727.0,
+              "p90_ns": 287580.0,
+              "p99_ns": 400260.0,
+              "p999_ns": 808426.0,
+              "max_ns": 2222839.0,
+              "total_ms": 31082.867
+            },
+            "swapin_swapped": {
+              "pages": 262144.0,
+              "swapped": 262144.0,
+              "reclaim_rounds": 1.0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-b",
+          "pair": 0,
+          "case": "swapin-disk",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-swapin-disk-b/result.json",
+          "result_sha256": "5297f2aaaebae3daf61dc0f3cc7351e0180ba1e0f5f58e8eae6571708c782059",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 262171,
+              "pswpout": 262185,
+              "pgmajfault": 147253,
+              "swpin_zero": 0,
+              "swpout_zero": 0,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 1048740
+            },
+            "swapin_seq": {
+              "samples": 131072.0,
+              "mean_ns": 23884.0,
+              "p50_ns": 518.0,
+              "p90_ns": 141880.0,
+              "p99_ns": 295463.0,
+              "p999_ns": 388866.0,
+              "max_ns": 1066551.0,
+              "total_ms": 3130.564
+            },
+            "swapin_rand": {
+              "samples": 131072.0,
+              "mean_ns": 208657.0,
+              "p50_ns": 202314.0,
+              "p90_ns": 260885.0,
+              "p99_ns": 349680.0,
+              "p999_ns": 716190.0,
+              "max_ns": 1586221.0,
+              "total_ms": 27349.037
+            },
+            "swapin_swapped": {
+              "pages": 262144.0,
+              "swapped": 262144.0,
+              "reclaim_rounds": 1.0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-b",
+          "pair": 1,
+          "case": "usemem-disk",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-usemem-disk-b/result.json",
+          "result_sha256": "e3ff9d840492dd848ca4e9a2006289a5ddd30577371f6bc486d1ea57a95648cf",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 71,
+              "pswpout": 1056134,
+              "pgmajfault": 88,
+              "swpin_zero": 2,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4185204
+            },
+            "throughput_kbps_sum": 1276776,
+            "throughput_kbps": [
+              186140,
+              165589,
+              160711,
+              157280,
+              151967,
+              151967,
+              151968,
+              151154
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 37051,
+            "free_usec_mean": 32502.25,
+            "cg_system_usec": 9346773,
+            "cg_user_usec": 1232893
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-a",
+          "pair": 1,
+          "case": "usemem-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-usemem-disk-a/result.json",
+          "result_sha256": "6a034dc84957ba5bfb7d8a3132b59679075e7bd6ddbf0a2543d35ebb21cfb9ba",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 63,
+              "pswpout": 1055989,
+              "pgmajfault": 88,
+              "swpin_zero": 2,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4170720
+            },
+            "throughput_kbps_sum": 830064,
+            "throughput_kbps": [
+              109807,
+              109808,
+              106845,
+              109809,
+              98508,
+              98508,
+              98271,
+              98508
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 40366,
+            "free_usec_mean": 38213.875,
+            "cg_system_usec": 14152721,
+            "cg_user_usec": 1296371
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-redis-zram-b",
+          "pair": 1,
+          "case": "redis-zram",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-redis-zram-b/result.json",
+          "result_sha256": "11419ccab4b9930f958c52c867edf8de07f7ed0ddc2581e499ea04e0ee8bbcb6",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 3831066,
+              "pswpout": 3433761,
+              "pgmajfault": 3841178,
+              "swpin_zero": 79,
+              "swpout_zero": 450,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/zram0": 2967296
+            },
+            "redis_fill_rps": 257356.11,
+            "redis_get_rps": 297265.16,
+            "redis_get_bgsave_rps": 141582.91,
+            "redis_get_vmstat_delta": {
+              "pswpin": 863627,
+              "pswpout": 861612,
+              "pgmajfault": 866798,
+              "swpin_zero": 4,
+              "swpout_zero": 120,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "redis_bgsave_vmstat_delta": {
+              "pswpin": 2313274,
+              "pswpout": 1790122,
+              "pgmajfault": 2320107,
+              "swpin_zero": 36,
+              "swpout_zero": 125,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-redis-zram-a",
+          "pair": 1,
+          "case": "redis-zram",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-redis-zram-a/result.json",
+          "result_sha256": "5cf63ff7ca7ef3d6ad06191bac53065c0e8a4e2c23df1e91abecc675ba315f5b",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 3826541,
+              "pswpout": 3471174,
+              "pgmajfault": 3841205,
+              "swpin_zero": 84,
+              "swpout_zero": 453,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/zram0": 3115128
+            },
+            "redis_fill_rps": 270440.81,
+            "redis_get_rps": 300932.91,
+            "redis_get_bgsave_rps": 132778.61,
+            "redis_get_vmstat_delta": {
+              "pswpin": 861928,
+              "pswpout": 860079,
+              "pgmajfault": 865676,
+              "swpin_zero": 3,
+              "swpout_zero": 115,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "redis_bgsave_vmstat_delta": {
+              "pswpin": 2317325,
+              "pswpout": 1835869,
+              "pgmajfault": 2328072,
+              "swpin_zero": 31,
+              "swpout_zero": 119,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-b",
+          "pair": 1,
+          "case": "swapin-disk",
+          "arm": "b",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-swapin-disk-b/result.json",
+          "result_sha256": "00ed02e8e9f1aa346ea73dc54b0e3af2cf682ac29692fa50453e6fd41dcb7190",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 262154,
+              "pswpout": 262169,
+              "pgmajfault": 147250,
+              "swpin_zero": 0,
+              "swpout_zero": 0,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 1048672
+            },
+            "swapin_seq": {
+              "samples": 131072.0,
+              "mean_ns": 24421.0,
+              "p50_ns": 523.0,
+              "p90_ns": 142315.0,
+              "p99_ns": 297411.0,
+              "p999_ns": 415982.0,
+              "max_ns": 1082811.0,
+              "total_ms": 3200.895
+            },
+            "swapin_rand": {
+              "samples": 131072.0,
+              "mean_ns": 217488.0,
+              "p50_ns": 215455.0,
+              "p90_ns": 267060.0,
+              "p99_ns": 352016.0,
+              "p999_ns": 734303.0,
+              "max_ns": 4094138.0,
+              "total_ms": 28506.538
+            },
+            "swapin_swapped": {
+              "pages": 262144.0,
+              "swapped": 262144.0,
+              "reclaim_rounds": 1.0
+            }
+          }
+        },
+        {
+          "id": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-a",
+          "pair": 1,
+          "case": "swapin-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-swapin-disk-a/result.json",
+          "result_sha256": "4393b83a478210441e3266001b98c191c361d08c6c2f68f20508c8317ca84533",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 262156,
+              "pswpout": 262169,
+              "pgmajfault": 147251,
+              "swpin_zero": 0,
+              "swpout_zero": 0,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 1048672
+            },
+            "swapin_seq": {
+              "samples": 131072.0,
+              "mean_ns": 21764.0,
+              "p50_ns": 519.0,
+              "p90_ns": 127475.0,
+              "p99_ns": 277339.0,
+              "p999_ns": 379723.0,
+              "max_ns": 1207266.0,
+              "total_ms": 2852.604
+            },
+            "swapin_rand": {
+              "samples": 131072.0,
+              "mean_ns": 196235.0,
+              "p50_ns": 180790.0,
+              "p90_ns": 253609.0,
+              "p99_ns": 369427.0,
+              "p999_ns": 681165.0,
+              "max_ns": 2357692.0,
+              "total_ms": 25720.86
+            },
+            "swapin_swapped": {
+              "pages": 262144.0,
+              "swapped": 262144.0,
+              "reclaim_rounds": 1.0
+            }
+          }
+        }
+      ],
+      "pairs": [
+        {
+          "a": {
+            "usemem-disk.throughput_kbps_sum": 1638870,
+            "usemem-disk.free_usec_max": 29388,
+            "redis-zram.redis_get_rps": 329887.84,
+            "redis-zram.redis_get_bgsave_rps": 135269.19,
+            "swapin-disk.swapin_rand.mean_ns": 237143.0,
+            "swapin-disk.swapin_rand.p99_ns": 400260.0,
+            "swapin-disk.swapin_seq.p99_ns": 313224.0
+          },
+          "b": {
+            "usemem-disk.throughput_kbps_sum": 1004283,
+            "usemem-disk.free_usec_max": 42151,
+            "redis-zram.redis_get_rps": 294927.25,
+            "redis-zram.redis_get_bgsave_rps": 129595.23,
+            "swapin-disk.swapin_rand.mean_ns": 208657.0,
+            "swapin-disk.swapin_rand.p99_ns": 349680.0,
+            "swapin-disk.swapin_seq.p99_ns": 295463.0
+          },
+          "order": "AB"
+        },
+        {
+          "a": {
+            "usemem-disk.throughput_kbps_sum": 830064,
+            "usemem-disk.free_usec_max": 40366,
+            "redis-zram.redis_get_rps": 300932.91,
+            "redis-zram.redis_get_bgsave_rps": 132778.61,
+            "swapin-disk.swapin_rand.mean_ns": 196235.0,
+            "swapin-disk.swapin_rand.p99_ns": 369427.0,
+            "swapin-disk.swapin_seq.p99_ns": 277339.0
+          },
+          "b": {
+            "usemem-disk.throughput_kbps_sum": 1276776,
+            "usemem-disk.free_usec_max": 37051,
+            "redis-zram.redis_get_rps": 297265.16,
+            "redis-zram.redis_get_bgsave_rps": 141582.91,
+            "swapin-disk.swapin_rand.mean_ns": 217488.0,
+            "swapin-disk.swapin_rand.p99_ns": 352016.0,
+            "swapin-disk.swapin_seq.p99_ns": 297411.0
+          },
+          "order": "BA"
+        }
+      ],
+      "performance_accepted": false,
+      "auto_promote": false,
+      "fingerprint": "ee6a0bd7780fae71150aa40c2775114e4ec8909b66bcc6e7203433e9cfaed4db",
+      "candidate_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "execution_started": true,
+      "analysis": {
+        "schema_version": 1,
+        "status": "CALIBRATION_NOISY",
+        "passed": false,
+        "directions": {
+          "usemem-disk.throughput_kbps_sum": "higher",
+          "usemem-disk.free_usec_max": "lower",
+          "redis-zram.redis_get_rps": "higher",
+          "redis-zram.redis_get_bgsave_rps": "higher",
+          "swapin-disk.swapin_rand.mean_ns": "lower",
+          "swapin-disk.swapin_rand.p99_ns": "lower",
+          "swapin-disk.swapin_seq.p99_ns": "lower"
+        },
+        "primary": [
+          "redis-zram.redis_get_bgsave_rps",
+          "swapin-disk.swapin_rand.mean_ns",
+          "usemem-disk.throughput_kbps_sum"
+        ],
+        "pair_count": 2,
+        "noise_log": {
+          "usemem-disk.throughput_kbps_sum": 0.48973312589855844,
+          "usemem-disk.free_usec_max": 0.360671981200813,
+          "redis-zram.redis_get_rps": 0.11202400214372155,
+          "redis-zram.redis_get_bgsave_rps": 0.06420232709317197,
+          "swapin-disk.swapin_rand.mean_ns": 0.1279715792244147,
+          "swapin-disk.swapin_rand.p99_ns": 0.13509588539441886,
+          "swapin-disk.swapin_seq.p99_ns": 0.0698744359279786
+        },
+        "noise_relative": {
+          "usemem-disk.throughput_kbps_sum": 0.6318806551539775,
+          "usemem-disk.free_usec_max": 0.4342929086702054,
+          "redis-zram.redis_get_rps": 0.11853970767367272,
+          "redis-zram.redis_get_bgsave_rps": 0.06630811995998509,
+          "swapin-disk.swapin_rand.mean_ns": 0.13652070143824546,
+          "swapin-disk.swapin_rand.p99_ns": 0.1446465339739178,
+          "swapin-disk.swapin_seq.p99_ns": 0.07237352121411034
+        },
+        "rejected_metrics": [
+          "usemem-disk.throughput_kbps_sum",
+          "usemem-disk.free_usec_max"
+        ],
+        "performance_accepted": false,
+        "auto_promote": false
+      },
+      "finished": 1792702131.6793683
+    },
+    {
+      "id": "2aae1d7b6bf041b981317ebd833ed850",
+      "action": "calibrate",
+      "tier": "slow",
+      "candidate": null,
+      "status": "INCOMPLETE",
+      "started": 1792702131.6881316,
+      "runs": [
+        {
+          "id": "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-a",
+          "pair": 0,
+          "case": "usemem-disk",
+          "arm": "a",
+          "status": "PASS",
+          "result": "benchmark/swap-standard/runs/2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-a/result.json",
+          "result_sha256": "f0cb1f577fe5faa96be844e347d2c1783c111becac3648047ab64a83eb07946a",
+          "metrics": {
+            "vmstat_delta": {
+              "pswpin": 87,
+              "pswpout": 1054185,
+              "pgmajfault": 109,
+              "swpin_zero": 2,
+              "swpout_zero": 1,
+              "zswpin": 0,
+              "zswpout": 0,
+              "zswpwb": 0
+            },
+            "kernel_diagnostics": [],
+            "swap_peak_kib": {
+              "/dev/vda": 4163712
+            },
+            "throughput_kbps_sum": 1101079,
+            "throughput_kbps": [
+              160470,
+              169398,
+              146254,
+              128791,
+              127205,
+              125652,
+              122339,
+              120970
+            ],
+            "nproc": 8,
+            "free_count": 8,
+            "bytes": [
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552,
+              1207959552
+            ],
+            "free_usec_max": 36592,
+            "free_usec_mean": 34650.375,
+            "cg_system_usec": 11611202,
+            "cg_user_usec": 1158706
+          }
+        },
+        {
+          "id": "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-b",
+          "pair": 0,
+          "case": "usemem-disk",
+          "arm": "b",
+          "status": "STARTED"
+        }
+      ],
+      "pairs": [
+        {
+          "a": {
+            "usemem-disk.throughput_kbps_sum": 1101079,
+            "usemem-disk.free_usec_max": 36592
+          },
+          "b": {},
+          "order": "AB"
+        }
+      ],
+      "performance_accepted": false,
+      "auto_promote": false,
+      "fingerprint": "ee6a0bd7780fae71150aa40c2775114e4ec8909b66bcc6e7203433e9cfaed4db",
+      "candidate_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "execution_started": true,
+      "reason": "STOP",
+      "finished": 1792702156.7322495
+    },
+    {
+      "id": "26fe4dd5f27e497c90655b2d597713bf",
+      "action": "reference-check",
+      "tier": "fast",
+      "candidate": null,
+      "status": "INCOMPLETE",
+      "started": 1792702174.3821113,
+      "runs": [],
+      "pairs": [],
+      "performance_accepted": false,
+      "auto_promote": false,
+      "fingerprint": "ee6a0bd7780fae71150aa40c2775114e4ec8909b66bcc6e7203433e9cfaed4db",
+      "reason": "calibration noisy; stabilize baseline before comparison",
+      "finished": 1792702174.395917
+    },
+    {
+      "id": "b4c8f2489f5744639eaa0603628dcefc",
+      "action": "evaluate",
+      "tier": "fast",
+      "candidate": "xs-tailcache-v2",
+      "status": "BLOCKED",
+      "started": 1792702174.867857,
+      "runs": [],
+      "pairs": [],
+      "performance_accepted": false,
+      "auto_promote": false,
+      "fingerprint": "ee6a0bd7780fae71150aa40c2775114e4ec8909b66bcc6e7203433e9cfaed4db",
+      "reason": "BLOCKED: historical xswap candidate; unresolved descriptor lifetime",
+      "finished": 1792702174.8817248
+    }
+  ],
+  "runs": [
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-a",
+      "pair": 0,
+      "case": "usemem-disk",
+      "arm": "a",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-usemem-disk-a/result.json",
+      "result_sha256": "7bacb682bd5628a44acfcb7130174711dd47339d9d5ca9e12732e139e5ebcf92",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 78,
+          "pswpout": 1074238,
+          "pgmajfault": 103,
+          "swpin_zero": 2,
+          "swpout_zero": 1,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 4185188
+        },
+        "throughput_kbps_sum": 1638870,
+        "throughput_kbps": [
+          272643,
+          235982,
+          213902,
+          191430,
+          184336,
+          180579,
+          180579,
+          179419
+        ],
+        "nproc": 8,
+        "free_count": 8,
+        "bytes": [
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552
+        ],
+        "free_usec_max": 29388,
+        "free_usec_mean": 23761.0,
+        "cg_system_usec": 7878104,
+        "cg_user_usec": 1267695
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-a",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "usemem",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 9.006757953029592,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 78,
+            "pswpout": 1074238,
+            "pgmajfault": 103,
+            "swpin_zero": 2,
+            "swpout_zero": 1,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 4185188
+          },
+          "throughput_kbps_sum": 1638870,
+          "throughput_kbps": [
+            272643,
+            235982,
+            213902,
+            191430,
+            184336,
+            180579,
+            180579,
+            179419
+          ],
+          "nproc": 8,
+          "free_count": 8,
+          "bytes": [
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552
+          ],
+          "free_usec_max": 29388,
+          "free_usec_mean": 23761.0,
+          "cg_system_usec": 7878104,
+          "cg_user_usec": 1267695
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "usemem_output": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "e1095793776050652537814c323e5199fcecb7b72b5b9517aa60d618286593ba"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-b",
+      "pair": 0,
+      "case": "usemem-disk",
+      "arm": "b",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-usemem-disk-b/result.json",
+      "result_sha256": "7a7130507cf9c471a5929080aac5ffe2c34a0cf7688004d221cbaa669ac2c077",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 73,
+          "pswpout": 1053225,
+          "pgmajfault": 83,
+          "swpin_zero": 1,
+          "swpout_zero": 1,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 4189932
+        },
+        "throughput_kbps_sum": 1004283,
+        "throughput_kbps": [
+          129452,
+          127518,
+          129453,
+          123975,
+          123972,
+          123958,
+          123517,
+          122438
+        ],
+        "nproc": 8,
+        "free_count": 8,
+        "bytes": [
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552
+        ],
+        "free_usec_max": 42151,
+        "free_usec_mean": 40217.25,
+        "cg_system_usec": 11461510,
+        "cg_user_usec": 1241663
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-b",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "usemem",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 12.007677902001888,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 73,
+            "pswpout": 1053225,
+            "pgmajfault": 83,
+            "swpin_zero": 1,
+            "swpout_zero": 1,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 4189932
+          },
+          "throughput_kbps_sum": 1004283,
+          "throughput_kbps": [
+            129452,
+            127518,
+            129453,
+            123975,
+            123972,
+            123958,
+            123517,
+            122438
+          ],
+          "nproc": 8,
+          "free_count": 8,
+          "bytes": [
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552
+          ],
+          "free_usec_max": 42151,
+          "free_usec_mean": 40217.25,
+          "cg_system_usec": 11461510,
+          "cg_user_usec": 1241663
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "usemem_output": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "dc01d45c423fd784f7538ce07e68734848d573875cfeb3f8e2620dab28c15f72"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-0-redis-zram-a",
+      "pair": 0,
+      "case": "redis-zram",
+      "arm": "a",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-redis-zram-a/result.json",
+      "result_sha256": "d21813ded303a3f1367c938b86a032d651adb8efcd2dd6cbafb43be68e773a97",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 3875332,
+          "pswpout": 3521101,
+          "pgmajfault": 3882852,
+          "swpin_zero": 121,
+          "swpout_zero": 496,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/zram0": 3260700
+        },
+        "redis_fill_rps": 275684.62,
+        "redis_get_rps": 329887.84,
+        "redis_get_bgsave_rps": 135269.19,
+        "redis_get_vmstat_delta": {
+          "pswpin": 877030,
+          "pswpout": 878231,
+          "pgmajfault": 877168,
+          "swpin_zero": 3,
+          "swpout_zero": 119,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "redis_bgsave_vmstat_delta": {
+          "pswpin": 2352752,
+          "pswpout": 1870114,
+          "pgmajfault": 2359945,
+          "swpin_zero": 56,
+          "swpout_zero": 146,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        }
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-0-redis-zram-a",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "zram",
+        "mode": "plain",
+        "workload": "redis",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 44.52647146600066,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 3875332,
+            "pswpout": 3521101,
+            "pgmajfault": 3882852,
+            "swpin_zero": 121,
+            "swpout_zero": 496,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/zram0": 3260700
+          },
+          "redis_fill_rps": 275684.62,
+          "redis_get_rps": 329887.84,
+          "redis_get_bgsave_rps": 135269.19,
+          "redis_get_vmstat_delta": {
+            "pswpin": 877030,
+            "pswpout": 878231,
+            "pgmajfault": 877168,
+            "swpin_zero": 3,
+            "swpout_zero": 119,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "redis_bgsave_vmstat_delta": {
+            "pswpin": 2352752,
+            "pswpout": 1870114,
+            "pgmajfault": 2359945,
+            "swpin_zero": 56,
+            "swpout_zero": 146,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          }
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "redis_output": true,
+          "redis_bgsave_ok": true,
+          "redis_fill": true,
+          "redis_get_swap_activity": true,
+          "redis_bgsave_swap_activity": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "a94952907db32ac5141689ab6a358be3ec3676a8688f6ecafb6ae845b7248fec"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 14,
+        "passed": 14,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-0-redis-zram-b",
+      "pair": 0,
+      "case": "redis-zram",
+      "arm": "b",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-redis-zram-b/result.json",
+      "result_sha256": "e94521caa39c97042b7887900d998a872cead72b3e0afeec73f94df958ee4e0d",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 3846255,
+          "pswpout": 3495149,
+          "pgmajfault": 3860858,
+          "swpin_zero": 93,
+          "swpout_zero": 456,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/zram0": 3239752
+        },
+        "redis_fill_rps": 275128.38,
+        "redis_get_rps": 294927.25,
+        "redis_get_bgsave_rps": 129595.23,
+        "redis_get_vmstat_delta": {
+          "pswpin": 864027,
+          "pswpout": 862647,
+          "pgmajfault": 868343,
+          "swpin_zero": 3,
+          "swpout_zero": 115,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "redis_bgsave_vmstat_delta": {
+          "pswpin": 2333176,
+          "pswpout": 1854932,
+          "pgmajfault": 2343300,
+          "swpin_zero": 54,
+          "swpout_zero": 139,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        }
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-0-redis-zram-b",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "zram",
+        "mode": "plain",
+        "workload": "redis",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 46.528341021970846,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 3846255,
+            "pswpout": 3495149,
+            "pgmajfault": 3860858,
+            "swpin_zero": 93,
+            "swpout_zero": 456,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/zram0": 3239752
+          },
+          "redis_fill_rps": 275128.38,
+          "redis_get_rps": 294927.25,
+          "redis_get_bgsave_rps": 129595.23,
+          "redis_get_vmstat_delta": {
+            "pswpin": 864027,
+            "pswpout": 862647,
+            "pgmajfault": 868343,
+            "swpin_zero": 3,
+            "swpout_zero": 115,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "redis_bgsave_vmstat_delta": {
+            "pswpin": 2333176,
+            "pswpout": 1854932,
+            "pgmajfault": 2343300,
+            "swpin_zero": 54,
+            "swpout_zero": 139,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          }
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "redis_output": true,
+          "redis_bgsave_ok": true,
+          "redis_fill": true,
+          "redis_get_swap_activity": true,
+          "redis_bgsave_swap_activity": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "1d99f41ad3f588ae082bd90ab28622b21411812bf1d4f0ea0aef70da20cce4da"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 14,
+        "passed": 14,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-a",
+      "pair": 0,
+      "case": "swapin-disk",
+      "arm": "a",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-swapin-disk-a/result.json",
+      "result_sha256": "8d12ae41db0868a153932be5eda41e40064616e212d971f08c33348d3f04e1a5",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262176,
+          "pswpout": 262189,
+          "pgmajfault": 147256,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 1048748
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 24297.0,
+          "p50_ns": 522.0,
+          "p90_ns": 141583.0,
+          "p99_ns": 313224.0,
+          "p999_ns": 406881.0,
+          "max_ns": 1939036.0,
+          "total_ms": 3184.668
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 237143.0,
+          "p50_ns": 229727.0,
+          "p90_ns": 287580.0,
+          "p99_ns": 400260.0,
+          "p999_ns": 808426.0,
+          "max_ns": 2222839.0,
+          "total_ms": 31082.867
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        }
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-a",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "swapin",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 38.02109809202375,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262176,
+            "pswpout": 262189,
+            "pgmajfault": 147256,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048748
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 24297.0,
+            "p50_ns": 522.0,
+            "p90_ns": 141583.0,
+            "p99_ns": 313224.0,
+            "p999_ns": 406881.0,
+            "max_ns": 1939036.0,
+            "total_ms": 3184.668
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 237143.0,
+            "p50_ns": 229727.0,
+            "p90_ns": 287580.0,
+            "p99_ns": 400260.0,
+            "p999_ns": 808426.0,
+            "max_ns": 2222839.0,
+            "total_ms": 31082.867
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          }
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "swapin_data": true,
+          "swapin_output": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "6e42b25de1139202568a3a74616fbba226227871ba25dca609985369811226ea"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 11,
+        "passed": 11,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-b",
+      "pair": 0,
+      "case": "swapin-disk",
+      "arm": "b",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-0-swapin-disk-b/result.json",
+      "result_sha256": "5297f2aaaebae3daf61dc0f3cc7351e0180ba1e0f5f58e8eae6571708c782059",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262171,
+          "pswpout": 262185,
+          "pgmajfault": 147253,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 1048740
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 23884.0,
+          "p50_ns": 518.0,
+          "p90_ns": 141880.0,
+          "p99_ns": 295463.0,
+          "p999_ns": 388866.0,
+          "max_ns": 1066551.0,
+          "total_ms": 3130.564
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 208657.0,
+          "p50_ns": 202314.0,
+          "p90_ns": 260885.0,
+          "p99_ns": 349680.0,
+          "p999_ns": 716190.0,
+          "max_ns": 1586221.0,
+          "total_ms": 27349.037
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        }
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-b",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "swapin",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 34.01810307998676,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262171,
+            "pswpout": 262185,
+            "pgmajfault": 147253,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048740
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 23884.0,
+            "p50_ns": 518.0,
+            "p90_ns": 141880.0,
+            "p99_ns": 295463.0,
+            "p999_ns": 388866.0,
+            "max_ns": 1066551.0,
+            "total_ms": 3130.564
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 208657.0,
+            "p50_ns": 202314.0,
+            "p90_ns": 260885.0,
+            "p99_ns": 349680.0,
+            "p999_ns": 716190.0,
+            "max_ns": 1586221.0,
+            "total_ms": 27349.037
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          }
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "swapin_data": true,
+          "swapin_output": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "ac186443449058f2bbc4041582bce6fb2fd03f42013ae14f6782fd1a917f61fd"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 11,
+        "passed": 11,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-b",
+      "pair": 1,
+      "case": "usemem-disk",
+      "arm": "b",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-usemem-disk-b/result.json",
+      "result_sha256": "e3ff9d840492dd848ca4e9a2006289a5ddd30577371f6bc486d1ea57a95648cf",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 71,
+          "pswpout": 1056134,
+          "pgmajfault": 88,
+          "swpin_zero": 2,
+          "swpout_zero": 1,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 4185204
+        },
+        "throughput_kbps_sum": 1276776,
+        "throughput_kbps": [
+          186140,
+          165589,
+          160711,
+          157280,
+          151967,
+          151967,
+          151968,
+          151154
+        ],
+        "nproc": 8,
+        "free_count": 8,
+        "bytes": [
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552
+        ],
+        "free_usec_max": 37051,
+        "free_usec_mean": 32502.25,
+        "cg_system_usec": 9346773,
+        "cg_user_usec": 1232893
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-b",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "usemem",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 10.007538100995589,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 71,
+            "pswpout": 1056134,
+            "pgmajfault": 88,
+            "swpin_zero": 2,
+            "swpout_zero": 1,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 4185204
+          },
+          "throughput_kbps_sum": 1276776,
+          "throughput_kbps": [
+            186140,
+            165589,
+            160711,
+            157280,
+            151967,
+            151967,
+            151968,
+            151154
+          ],
+          "nproc": 8,
+          "free_count": 8,
+          "bytes": [
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552
+          ],
+          "free_usec_max": 37051,
+          "free_usec_mean": 32502.25,
+          "cg_system_usec": 9346773,
+          "cg_user_usec": 1232893
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "usemem_output": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "0139d2d6e3a7c92c09a539b60a34f954620e18544b147cd9d435dfdcb5211766"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-a",
+      "pair": 1,
+      "case": "usemem-disk",
+      "arm": "a",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-usemem-disk-a/result.json",
+      "result_sha256": "6a034dc84957ba5bfb7d8a3132b59679075e7bd6ddbf0a2543d35ebb21cfb9ba",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 63,
+          "pswpout": 1055989,
+          "pgmajfault": 88,
+          "swpin_zero": 2,
+          "swpout_zero": 1,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 4170720
+        },
+        "throughput_kbps_sum": 830064,
+        "throughput_kbps": [
+          109807,
+          109808,
+          106845,
+          109809,
+          98508,
+          98508,
+          98271,
+          98508
+        ],
+        "nproc": 8,
+        "free_count": 8,
+        "bytes": [
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552
+        ],
+        "free_usec_max": 40366,
+        "free_usec_mean": 38213.875,
+        "cg_system_usec": 14152721,
+        "cg_user_usec": 1296371
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-a",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "usemem",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 14.008474208007101,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 63,
+            "pswpout": 1055989,
+            "pgmajfault": 88,
+            "swpin_zero": 2,
+            "swpout_zero": 1,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 4170720
+          },
+          "throughput_kbps_sum": 830064,
+          "throughput_kbps": [
+            109807,
+            109808,
+            106845,
+            109809,
+            98508,
+            98508,
+            98271,
+            98508
+          ],
+          "nproc": 8,
+          "free_count": 8,
+          "bytes": [
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552
+          ],
+          "free_usec_max": 40366,
+          "free_usec_mean": 38213.875,
+          "cg_system_usec": 14152721,
+          "cg_user_usec": 1296371
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "usemem_output": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "0334fe4f2ca467c83ce112edd86dd0452a5da0018f271c76d6271ac9c94f991c"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-1-redis-zram-b",
+      "pair": 1,
+      "case": "redis-zram",
+      "arm": "b",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-redis-zram-b/result.json",
+      "result_sha256": "11419ccab4b9930f958c52c867edf8de07f7ed0ddc2581e499ea04e0ee8bbcb6",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 3831066,
+          "pswpout": 3433761,
+          "pgmajfault": 3841178,
+          "swpin_zero": 79,
+          "swpout_zero": 450,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/zram0": 2967296
+        },
+        "redis_fill_rps": 257356.11,
+        "redis_get_rps": 297265.16,
+        "redis_get_bgsave_rps": 141582.91,
+        "redis_get_vmstat_delta": {
+          "pswpin": 863627,
+          "pswpout": 861612,
+          "pgmajfault": 866798,
+          "swpin_zero": 4,
+          "swpout_zero": 120,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "redis_bgsave_vmstat_delta": {
+          "pswpin": 2313274,
+          "pswpout": 1790122,
+          "pgmajfault": 2320107,
+          "swpin_zero": 36,
+          "swpout_zero": 125,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        }
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-1-redis-zram-b",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "zram",
+        "mode": "plain",
+        "workload": "redis",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 45.52766609401442,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 3831066,
+            "pswpout": 3433761,
+            "pgmajfault": 3841178,
+            "swpin_zero": 79,
+            "swpout_zero": 450,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/zram0": 2967296
+          },
+          "redis_fill_rps": 257356.11,
+          "redis_get_rps": 297265.16,
+          "redis_get_bgsave_rps": 141582.91,
+          "redis_get_vmstat_delta": {
+            "pswpin": 863627,
+            "pswpout": 861612,
+            "pgmajfault": 866798,
+            "swpin_zero": 4,
+            "swpout_zero": 120,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "redis_bgsave_vmstat_delta": {
+            "pswpin": 2313274,
+            "pswpout": 1790122,
+            "pgmajfault": 2320107,
+            "swpin_zero": 36,
+            "swpout_zero": 125,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          }
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "redis_output": true,
+          "redis_bgsave_ok": true,
+          "redis_fill": true,
+          "redis_get_swap_activity": true,
+          "redis_bgsave_swap_activity": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "b4a0591a7c8a6955091b181d8970712354e67df280e13502257da3406fa4e656"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 14,
+        "passed": 14,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-1-redis-zram-a",
+      "pair": 1,
+      "case": "redis-zram",
+      "arm": "a",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-redis-zram-a/result.json",
+      "result_sha256": "5cf63ff7ca7ef3d6ad06191bac53065c0e8a4e2c23df1e91abecc675ba315f5b",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 3826541,
+          "pswpout": 3471174,
+          "pgmajfault": 3841205,
+          "swpin_zero": 84,
+          "swpout_zero": 453,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/zram0": 3115128
+        },
+        "redis_fill_rps": 270440.81,
+        "redis_get_rps": 300932.91,
+        "redis_get_bgsave_rps": 132778.61,
+        "redis_get_vmstat_delta": {
+          "pswpin": 861928,
+          "pswpout": 860079,
+          "pgmajfault": 865676,
+          "swpin_zero": 3,
+          "swpout_zero": 115,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "redis_bgsave_vmstat_delta": {
+          "pswpin": 2317325,
+          "pswpout": 1835869,
+          "pgmajfault": 2328072,
+          "swpin_zero": 31,
+          "swpout_zero": 119,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        }
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-1-redis-zram-a",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "zram",
+        "mode": "plain",
+        "workload": "redis",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 46.02742484497139,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 3826541,
+            "pswpout": 3471174,
+            "pgmajfault": 3841205,
+            "swpin_zero": 84,
+            "swpout_zero": 453,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/zram0": 3115128
+          },
+          "redis_fill_rps": 270440.81,
+          "redis_get_rps": 300932.91,
+          "redis_get_bgsave_rps": 132778.61,
+          "redis_get_vmstat_delta": {
+            "pswpin": 861928,
+            "pswpout": 860079,
+            "pgmajfault": 865676,
+            "swpin_zero": 3,
+            "swpout_zero": 115,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "redis_bgsave_vmstat_delta": {
+            "pswpin": 2317325,
+            "pswpout": 1835869,
+            "pgmajfault": 2328072,
+            "swpin_zero": 31,
+            "swpout_zero": 119,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          }
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "redis_output": true,
+          "redis_bgsave_ok": true,
+          "redis_fill": true,
+          "redis_get_swap_activity": true,
+          "redis_bgsave_swap_activity": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "3b4eb1c9d61c116623e74ce34d6437946c1ea80cf8905208d487bf065ca280d5"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 14,
+        "passed": 14,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-b",
+      "pair": 1,
+      "case": "swapin-disk",
+      "arm": "b",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-swapin-disk-b/result.json",
+      "result_sha256": "00ed02e8e9f1aa346ea73dc54b0e3af2cf682ac29692fa50453e6fd41dcb7190",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262154,
+          "pswpout": 262169,
+          "pgmajfault": 147250,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 1048672
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 24421.0,
+          "p50_ns": 523.0,
+          "p90_ns": 142315.0,
+          "p99_ns": 297411.0,
+          "p999_ns": 415982.0,
+          "max_ns": 1082811.0,
+          "total_ms": 3200.895
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 217488.0,
+          "p50_ns": 215455.0,
+          "p90_ns": 267060.0,
+          "p99_ns": 352016.0,
+          "p999_ns": 734303.0,
+          "max_ns": 4094138.0,
+          "total_ms": 28506.538
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        }
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-b",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "swapin",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 35.01945721101947,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262154,
+            "pswpout": 262169,
+            "pgmajfault": 147250,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048672
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 24421.0,
+            "p50_ns": 523.0,
+            "p90_ns": 142315.0,
+            "p99_ns": 297411.0,
+            "p999_ns": 415982.0,
+            "max_ns": 1082811.0,
+            "total_ms": 3200.895
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 217488.0,
+            "p50_ns": 215455.0,
+            "p90_ns": 267060.0,
+            "p99_ns": 352016.0,
+            "p999_ns": 734303.0,
+            "max_ns": 4094138.0,
+            "total_ms": 28506.538
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          }
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "swapin_data": true,
+          "swapin_output": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "f3abaac3b58a8f404ce54bbd97ab9ec12ff41408d13840f1aaf14f30c8385799"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 11,
+        "passed": 11,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "8b0579940b604f43b32648310f6beda5",
+      "id": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-a",
+      "pair": 1,
+      "case": "swapin-disk",
+      "arm": "a",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/8b0579940b604f43b32648310f6beda5-1-swapin-disk-a/result.json",
+      "result_sha256": "4393b83a478210441e3266001b98c191c361d08c6c2f68f20508c8317ca84533",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262156,
+          "pswpout": 262169,
+          "pgmajfault": 147251,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 1048672
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 21764.0,
+          "p50_ns": 519.0,
+          "p90_ns": 127475.0,
+          "p99_ns": 277339.0,
+          "p999_ns": 379723.0,
+          "max_ns": 1207266.0,
+          "total_ms": 2852.604
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 196235.0,
+          "p50_ns": 180790.0,
+          "p90_ns": 253609.0,
+          "p99_ns": 369427.0,
+          "p999_ns": 681165.0,
+          "max_ns": 2357692.0,
+          "total_ms": 25720.86
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        }
+      },
+      "raw_result": {
+        "run_id": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-a",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "swapin",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 32.51833702705335,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262156,
+            "pswpout": 262169,
+            "pgmajfault": 147251,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048672
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 21764.0,
+            "p50_ns": 519.0,
+            "p90_ns": 127475.0,
+            "p99_ns": 277339.0,
+            "p999_ns": 379723.0,
+            "max_ns": 1207266.0,
+            "total_ms": 2852.604
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 196235.0,
+            "p50_ns": 180790.0,
+            "p90_ns": 253609.0,
+            "p99_ns": 369427.0,
+            "p999_ns": 681165.0,
+            "max_ns": 2357692.0,
+            "total_ms": 25720.86
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          }
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "swapin_data": true,
+          "swapin_output": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "1dd7b4d84e53d28342f3496a2a4f3fe11b4a40b0a77361366c6a9ab125d5b900"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 11,
+        "passed": 11,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "2aae1d7b6bf041b981317ebd833ed850",
+      "id": "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-a",
+      "pair": 0,
+      "case": "usemem-disk",
+      "arm": "a",
+      "status": "PASS",
+      "result": "benchmark/swap-standard/runs/2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-a/result.json",
+      "result_sha256": "f0cb1f577fe5faa96be844e347d2c1783c111becac3648047ab64a83eb07946a",
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 87,
+          "pswpout": 1054185,
+          "pgmajfault": 109,
+          "swpin_zero": 2,
+          "swpout_zero": 1,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 4163712
+        },
+        "throughput_kbps_sum": 1101079,
+        "throughput_kbps": [
+          160470,
+          169398,
+          146254,
+          128791,
+          127205,
+          125652,
+          122339,
+          120970
+        ],
+        "nproc": 8,
+        "free_count": 8,
+        "bytes": [
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552
+        ],
+        "free_usec_max": 36592,
+        "free_usec_mean": 34650.375,
+        "cg_system_usec": 11611202,
+        "cg_user_usec": 1158706
+      },
+      "raw_result": {
+        "run_id": "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-a",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "usemem",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        },
+        "exit_code": 0,
+        "stop_reason": null,
+        "wall_seconds": 12.007636962051038,
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 87,
+            "pswpout": 1054185,
+            "pgmajfault": 109,
+            "swpin_zero": 2,
+            "swpout_zero": 1,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 4163712
+          },
+          "throughput_kbps_sum": 1101079,
+          "throughput_kbps": [
+            160470,
+            169398,
+            146254,
+            128791,
+            127205,
+            125652,
+            122339,
+            120970
+          ],
+          "nproc": 8,
+          "free_count": 8,
+          "bytes": [
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552,
+            1207959552
+          ],
+          "free_usec_max": 36592,
+          "free_usec_mean": 34650.375,
+          "cg_system_usec": 11611202,
+          "cg_user_usec": 1158706
+        },
+        "gates": {
+          "boot": true,
+          "cmdline_identity": true,
+          "workload_complete": true,
+          "kernel_log_present": true,
+          "no_kernel_warnings": true,
+          "swap_activity": true,
+          "backend_exercised": true,
+          "swap_routing": true,
+          "usemem_output": true,
+          "qemu_exit": true
+        },
+        "integration_pass": true,
+        "serial_sha256": "930862d23d4335faeace598ba1a411cee8ed0d8dafa4633281097dc61a23f23e"
+      },
+      "result_sha256_verified": true,
+      "gate_counts": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0
+      },
+      "serial_sha256_verified": true
+    },
+    {
+      "evaluation": "2aae1d7b6bf041b981317ebd833ed850",
+      "id": "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-b",
+      "pair": 0,
+      "case": "usemem-disk",
+      "arm": "b",
+      "status": "STARTED",
+      "completion_evidence_missing": true,
+      "started_snapshot": {
+        "run_id": "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-b",
+        "stop_file": "evolve/control/state/swap-standard-2026-10-22/STOP",
+        "build": "standard-upstream-v2",
+        "backend": "disk",
+        "mode": "plain",
+        "workload": "usemem",
+        "source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "image_sha256": "b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb",
+        "config_sha256": "71917e657923cdecf629e91af5c99ef6721eacf8b41a2b8a0155dbe4bd0f0201",
+        "guest_provenance": {
+          "image_sha256": "96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955",
+          "image_mib": 3742,
+          "initrd_sha256": "a3a2846a76fefd4f59756eaa217510146d92380e9b49bfea06d9245734d8439e",
+          "sources": {
+            "guest-init": "754a8f4bbdc071ab12a610e2688eff9169fce5254ff50d914de6822ae800f52f",
+            "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+            "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+            "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+            "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c",
+            "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+          },
+          "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+          "tools": {
+            "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+            "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+          },
+          "calibrated": false,
+          "host_dirs": [
+            "etc/alternatives",
+            "usr/bin",
+            "usr/sbin",
+            "usr/include",
+            "usr/lib/x86_64-linux-gnu",
+            "usr/lib/gcc",
+            "usr/libexec",
+            "usr/lib/bfd-plugins",
+            "usr/lib/locale",
+            "usr/share/perl",
+            "usr/share/perl5",
+            "usr/share/misc",
+            "usr/share/bison"
+          ],
+          "binary_sha256": {
+            "usemem": "889e7c027108d0c4ca1ecf369c8b36f4c988558f1d2ea1200fc7a73eb579021e",
+            "valkey-server": "16a6a5bb5e11e9f150a0e919a51e4a5cd72caefa5d3dbb67a5ab9a93a53dad71",
+            "valkey-benchmark": "bf6822fd504268242330ca228b9623fc8b7aa7164cdecf0db173c0ec61d89ea5",
+            "valkey-cli": "b4031b0e9b0c61e843dbf99dbfd9a3c44a595ac327e19c1c75c498a37869f230"
+          },
+          "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+        },
+        "performance_accepted": false,
+        "calibrated": false,
+        "auto_promote": false,
+        "harness_sha256": {
+          "evidence.py": "dcf2bf7c4e0a4e03b7924d8f0f184b5d460967a4ec5b84917f277a9b30931b36",
+          "run.py": "3b29a289d9e2a3a92ff8813f248e4ce75580c4932ea864a8e3903d7adfbacda0",
+          "test_evidence.py": "622eb6b28b90c6cc2338491cf0ab04e936d625c2ea3a2c45e0c01ed05ef5b06a",
+          "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+          "params.sh": "3711519fa9259377e41ebb7a6d0bc5df68aadb46c47314555aa19f5717a691e6",
+          "test_runner.py": "46a9731ed3ebb509fa2d463a4d7c3f6a27ad177f19309fa0f47d6a98a1ba2627",
+          "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+          "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+          "bench.sh": "0701284100d3a2f7be4886c1a3ca6862f04b31483d8f65801fe078ae1245dc68",
+          "prepare-image.py": "b721bc97daacbb40d8a557bf8692763d04f7a96a9334ba98583972339bedaf2c"
+        }
+      },
+      "started_sha256": "3dec06ceb2a94a40a1d70f0e84140e18a1662ebc62dfc190f6e6d7a27f8bf697",
+      "retained_partial_serial_sha256": "b4be0ede8c7b5e384452d61b662612b9c723e572e4c02c62624ee350e599f3ab",
+      "retained_partial_serial_bytes": 3121
+    }
+  ],
+  "protocol": {
+    "schema_version": 1,
+    "campaign": "swap-standard-2026-10-22",
+    "baseline_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+    "baseline_build": "standard-upstream-v2",
+    "max_candidates": 2,
+    "budget": {
+      "guest_attempts": 240,
+      "build_attempts": 4,
+      "wall_seconds": 28800,
+      "guest_timeout": 600
+    },
+    "cases": {
+      "usemem-disk": {
+        "workload": "usemem",
+        "backend": "disk",
+        "metrics": {
+          "throughput_kbps_sum": "higher",
+          "free_usec_max": "lower"
+        },
+        "primary": "throughput_kbps_sum"
+      },
+      "redis-zram": {
+        "workload": "redis",
+        "backend": "zram",
+        "metrics": {
+          "redis_get_rps": "higher",
+          "redis_get_bgsave_rps": "higher"
+        },
+        "primary": "redis_get_bgsave_rps"
+      },
+      "swapin-disk": {
+        "workload": "swapin",
+        "backend": "disk",
+        "metrics": {
+          "swapin_rand.mean_ns": "lower",
+          "swapin_rand.p99_ns": "lower",
+          "swapin_seq.p99_ns": "lower"
+        },
+        "primary": "swapin_rand.mean_ns"
+      },
+      "build-zswap": {
+        "workload": "build",
+        "backend": "zswap",
+        "metrics": {
+          "build_real_usec": "lower",
+          "build_system_usec": "lower"
+        },
+        "primary": "build_real_usec"
+      },
+      "metadata-brd": {
+        "workload": "metadata",
+        "backend": "brd",
+        "metrics": {},
+        "primary": null
+      }
+    },
+    "tiers": {
+      "fast": {
+        "cases": [
+          "usemem-disk",
+          "redis-zram",
+          "swapin-disk"
+        ],
+        "calibration_pairs": 2,
+        "comparison_pairs": 2
+      },
+      "slow": {
+        "cases": [
+          "usemem-disk",
+          "redis-zram",
+          "swapin-disk",
+          "build-zswap",
+          "metadata-brd"
+        ],
+        "calibration_pairs": 4,
+        "comparison_pairs": 10
+      }
+    },
+    "order": "alternating AB then BA; same order in calibration",
+    "calibration_max_age_seconds": 86400,
+    "noise_floor": 0.03,
+    "noise_ceiling": 0.2,
+    "bootstrap_resamples": 10000,
+    "promotion": "human_review_only",
+    "excluded": {
+      "usemem-rand": "OOM and synchronization hang in integration"
+    },
+    "blocked_commits": {
+      "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4": "Unresolved descriptor lifetime review; dependent experiment held",
+      "157c4a178c587add1d22f4b483629b49a6ff0eca": "Unresolved descriptor lifetime review; dependent experiment held",
+      "b674f0d1e90c5b158f0a31d4ea877c4876535c2a": "Unresolved descriptor lifetime review; dependent experiment held",
+      "8f02472031fb71b9791a5199872701c645afd276": "Unresolved descriptor lifetime review; dependent experiment held",
+      "615f839bb6653ffd56dbb66ebdc855dea0823d54": "Unresolved descriptor lifetime review; dependent experiment held"
+    },
+    "required_correctness_gates": [
+      "data_roundtrip",
+      "fork_cow",
+      "concurrent_fault",
+      "swapoff_live_pages",
+      "no_new_kernel_warnings"
+    ]
+  },
+  "policy": {
+    "schema_version": 1,
+    "project": "swap-next",
+    "phase": "standard workload tiered comparison",
+    "runtime_enabled": true,
+    "thresholds_calibrated": false,
+    "upstream_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+    "seed_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+    "allowed_modify": [
+      "mm/swapfile.c",
+      "mm/swap.h",
+      "include/linux/swap.h",
+      "mm/swap_state.c",
+      "mm/page_io.c",
+      "mm/zswap.c"
+    ],
+    "allowed_add": [
+      "tools/testing/selftests/mm/swap_next_*.c"
+    ],
+    "max_changed_files": 7,
+    "max_changed_lines": 1800,
+    "budget": {
+      "max_candidates": 2,
+      "max_active_candidates": 1,
+      "worker_wall_seconds": 2400,
+      "build_jobs": 4,
+      "guest_vcpus": 8,
+      "guest_memory_mib": 8192,
+      "guest_disk_gib": 16,
+      "run_wall_seconds": 600,
+      "max_total_campaign_seconds": 28800,
+      "max_build_attempts": 4
+    },
+    "measurement": {
+      "min_pairs": 10,
+      "min_operations": 1000,
+      "min_swapout_pages": 1,
+      "min_swapin_pages": 1,
+      "bootstrap_resamples": 64000,
+      "confidence": 0.95,
+      "required_workloads": [
+        "anon_disk",
+        "anon_zswap",
+        "fragmented_swap",
+        "mixed_file_anon"
+      ],
+      "required_partitions": [
+        "discovery",
+        "confirmation"
+      ],
+      "holdout_required_for_promotion": true,
+      "min_bootstrap_tail_samples": 30
+    },
+    "metrics": {
+      "throughput_ops_s": {
+        "direction": "higher",
+        "role": "primary",
+        "min_gain": null,
+        "max_regression": null
+      },
+      "latency_p99_us": {
+        "direction": "lower",
+        "role": "guardrail",
+        "max_regression": null
+      },
+      "cpu_ns_per_op": {
+        "direction": "lower",
+        "role": "guardrail",
+        "max_regression": null
+      },
+      "io_bytes_per_op": {
+        "direction": "lower",
+        "role": "guardrail",
+        "max_regression": null
+      },
+      "metadata_bytes_per_slot_peak": {
+        "direction": "lower",
+        "role": "guardrail",
+        "max_regression": null
+      }
+    },
+    "required_gates": [
+      "gcc_swap_on",
+      "gcc_swap_off",
+      "gcc_zswap_on",
+      "sparse_no_new_diagnostics",
+      "checkpatch",
+      "guest_boot_identity",
+      "data_roundtrip",
+      "fork_cow",
+      "concurrent_fault",
+      "swapoff_live_pages",
+      "allocation_failure",
+      "io_failure",
+      "memcg_limits",
+      "large_folio",
+      "lockdep",
+      "kasan",
+      "kcsan",
+      "no_new_kernel_warnings"
+    ],
+    "promotion": "human_review_only",
+    "session_pilot_adapter": "benchmark/swap-standard",
+    "checkout_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+    "scope_note": "Bounded standard benchmark integration; old xswap commits are held. No automatic promotion.",
+    "primary_metric": "paired geometric mean of per-workload primary ratios"
+  }
+}

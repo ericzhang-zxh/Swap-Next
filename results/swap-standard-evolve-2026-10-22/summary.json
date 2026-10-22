@@ -1,0 +1,153 @@
+{
+  "campaign": "swap-standard-2026-10-22",
+  "baseline_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "evaluations": [
+    {
+      "id": "8b0579940b604f43b32648310f6beda5",
+      "action": "calibrate",
+      "tier": "fast",
+      "candidate": null,
+      "candidate_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "status": "CALIBRATION_NOISY",
+      "runs": 12,
+      "analysis": {
+        "schema_version": 1,
+        "status": "CALIBRATION_NOISY",
+        "passed": false,
+        "directions": {
+          "usemem-disk.throughput_kbps_sum": "higher",
+          "usemem-disk.free_usec_max": "lower",
+          "redis-zram.redis_get_rps": "higher",
+          "redis-zram.redis_get_bgsave_rps": "higher",
+          "swapin-disk.swapin_rand.mean_ns": "lower",
+          "swapin-disk.swapin_rand.p99_ns": "lower",
+          "swapin-disk.swapin_seq.p99_ns": "lower"
+        },
+        "primary": [
+          "redis-zram.redis_get_bgsave_rps",
+          "swapin-disk.swapin_rand.mean_ns",
+          "usemem-disk.throughput_kbps_sum"
+        ],
+        "pair_count": 2,
+        "noise_log": {
+          "usemem-disk.throughput_kbps_sum": 0.48973312589855844,
+          "usemem-disk.free_usec_max": 0.360671981200813,
+          "redis-zram.redis_get_rps": 0.11202400214372155,
+          "redis-zram.redis_get_bgsave_rps": 0.06420232709317197,
+          "swapin-disk.swapin_rand.mean_ns": 0.1279715792244147,
+          "swapin-disk.swapin_rand.p99_ns": 0.13509588539441886,
+          "swapin-disk.swapin_seq.p99_ns": 0.0698744359279786
+        },
+        "noise_relative": {
+          "usemem-disk.throughput_kbps_sum": 0.6318806551539775,
+          "usemem-disk.free_usec_max": 0.4342929086702054,
+          "redis-zram.redis_get_rps": 0.11853970767367272,
+          "redis-zram.redis_get_bgsave_rps": 0.06630811995998509,
+          "swapin-disk.swapin_rand.mean_ns": 0.13652070143824546,
+          "swapin-disk.swapin_rand.p99_ns": 0.1446465339739178,
+          "swapin-disk.swapin_seq.p99_ns": 0.07237352121411034
+        },
+        "rejected_metrics": [
+          "usemem-disk.throughput_kbps_sum",
+          "usemem-disk.free_usec_max"
+        ],
+        "performance_accepted": false,
+        "auto_promote": false
+      },
+      "reason": null
+    },
+    {
+      "id": "2aae1d7b6bf041b981317ebd833ed850",
+      "action": "calibrate",
+      "tier": "slow",
+      "candidate": null,
+      "candidate_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+      "status": "INCOMPLETE",
+      "runs": 2,
+      "analysis": null,
+      "reason": "STOP"
+    },
+    {
+      "id": "26fe4dd5f27e497c90655b2d597713bf",
+      "action": "reference-check",
+      "tier": "fast",
+      "candidate": null,
+      "candidate_commit": null,
+      "status": "INCOMPLETE",
+      "runs": 0,
+      "analysis": null,
+      "reason": "calibration noisy; stabilize baseline before comparison"
+    },
+    {
+      "id": "b4c8f2489f5744639eaa0603628dcefc",
+      "action": "evaluate",
+      "tier": "fast",
+      "candidate": "xs-tailcache-v2",
+      "candidate_commit": null,
+      "status": "BLOCKED",
+      "runs": 0,
+      "analysis": null,
+      "reason": "BLOCKED: historical xswap candidate; unresolved descriptor lifetime"
+    }
+  ],
+  "status_counts": {
+    "CALIBRATION_NOISY": 1,
+    "INCOMPLETE": 2,
+    "BLOCKED": 1
+  },
+  "run_attempts": 14,
+  "complete_runs": 13,
+  "incomplete_runs": 1,
+  "gate_observations": {
+    "passed": 150,
+    "failed": 0,
+    "total": 150
+  },
+  "metadata_measurements": [],
+  "tests": {
+    "count": 83,
+    "verified": true,
+    "note": "Final count supplied by primary",
+    "breakdown": {
+      "suite": 32,
+      "workflow": 6,
+      "controller": 41,
+      "layout": 4
+    }
+  },
+  "performance_accepted": false,
+  "auto_promote": false,
+  "candidate_kernel_patch": null,
+  "required_candidate_gates_missing": [
+    "gcc_swap_on",
+    "gcc_swap_off",
+    "gcc_zswap_on",
+    "sparse_no_new_diagnostics",
+    "checkpatch",
+    "guest_boot_identity",
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "allocation_failure",
+    "io_failure",
+    "memcg_limits",
+    "large_folio",
+    "lockdep",
+    "kasan",
+    "kcsan",
+    "no_new_kernel_warnings"
+  ],
+  "claims": [
+    {
+      "claim": "This delivery changes benchmark orchestration; no candidate winner is established.",
+      "confidence": "high",
+      "falsifier": "A verified candidate comparison and complete correctness evidence establish a winner."
+    },
+    {
+      "claim": "The exported statuses preserve every recorded attempt.",
+      "confidence": "high",
+      "falsifier": "Ledger/report reconciliation finds a missing attempt or mismatched evidence hash."
+    }
+  ]
+}
