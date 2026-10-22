@@ -12,7 +12,8 @@
 4. The active policy (`evolve/control/config/policy.json` or `campaigns/<c>/policy.json`).
 5. `linux/Documentation/process/coding-assistants.rst` before kernel work.
 
-Run campaigns with [closed-loop-evolve](.agents/skills/closed-loop-evolve/SKILL.md).
+Run campaigns with [closed-loop-evolve](.agents/skills/closed-loop-evolve/SKILL.md), and explain
+finished ones for review with [explaining-campaign-results](.agents/skills/explaining-campaign-results/SKILL.md).
 Loading that skill does not authorize running or publishing experiments.
 
 ## Rules

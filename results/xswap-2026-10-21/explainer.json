@@ -1,0 +1,2006 @@
+{
+ "title": "xswap campaign 2026-10-21",
+ "subtitle": "Baseline 37de636c (xswap Phase I v4 + II v1) · 35 guest boots · 3 candidates",
+ "verdict": {
+  "status": "rejected",
+  "headline": "No candidate changed retained metadata. One shrink event during pressure decides it.",
+  "tiles": [
+   {
+    "label": "Guest boots passing gates",
+    "value": "34 / 35",
+    "note": "1 setup failure, fixed before A/A"
+   },
+   {
+    "label": "Disk boots where a shrink ran",
+    "value": "9 → 219",
+    "note": "all 9 kept exactly 219 clusters"
+   },
+   {
+    "label": "Disk boots without a shrink",
+    "value": "7 → 1679+",
+    "note": "1679–1898 clusters"
+   },
+   {
+    "label": "Occupancy in the high regime",
+    "value": "≤1.2%",
+    "note": "of the mapped metadata range"
+   }
+  ]
+ },
+ "sections": [
+  {
+   "id": "changed",
+   "title": "What changed",
+   "lead": "Three one-constant patches to the xswap grow/shrink policy in mm/swapfile.c.",
+   "blocks": [
+    {
+     "type": "flow",
+     "takeaway": "Each candidate tuned one knob on the grow or shrink path",
+     "nodes": [
+      {
+       "id": "alloc",
+       "label": "Allocate cluster",
+       "sub": "swap-out",
+       "col": 0,
+       "row": 0
+      },
+      {
+       "id": "g85",
+       "label": "Usage ≥ 85%?",
+       "sub": "XSWAP_GROW_WHEN",
+       "col": 1,
+       "row": 0
+      },
+      {
+       "id": "grow",
+       "label": "Grow mapping",
+       "sub": "cap: GROW_CHUNKS",
+       "col": 2,
+       "row": 0,
+       "tone": "focus"
+      },
+      {
+       "id": "target",
+       "label": "Until 65% used",
+       "sub": "GROW_UNTIL",
+       "col": 3,
+       "row": 0,
+       "tone": "focus"
+      },
+      {
+       "id": "free",
+       "label": "Free cluster",
+       "sub": "swap-in / exit",
+       "col": 0,
+       "row": 1
+      },
+      {
+       "id": "work",
+       "label": "Shrink work",
+       "sub": "workqueue",
+       "col": 1,
+       "row": 1
+      },
+      {
+       "id": "tail",
+       "label": "Free tail ≥ min?",
+       "sub": "SHRINK_MIN",
+       "col": 2,
+       "row": 1,
+       "tone": "focus"
+      },
+      {
+       "id": "unmap",
+       "label": "Unmap tail",
+       "sub": "down to 70%",
+       "col": 3,
+       "row": 1
+      }
+     ],
+     "edges": [
+      {
+       "from": "alloc",
+       "to": "g85"
+      },
+      {
+       "from": "g85",
+       "to": "grow",
+       "label": "yes"
+      },
+      {
+       "from": "grow",
+       "to": "target"
+      },
+      {
+       "from": "free",
+       "to": "work"
+      },
+      {
+       "from": "work",
+       "to": "tail"
+      },
+      {
+       "from": "tail",
+       "to": "unmap",
+       "label": "yes"
+      }
+     ]
+    },
+    {
+     "type": "diff",
+     "takeaway": "shrink-min4: minimum shrink 8 → 4 chunks",
+     "patch": "diff --git a/mm/swapfile.c b/mm/swapfile.c\nindex 180cf538f..225c86db5 100644\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -4995,7 +4995,7 @@ static int xswap_mapped_end(pte_t *pte, unsigned long addr, void *data)\n  * costs.\n  */\n #define XSWAP_SHRINK_SLACK\tXSWAP_GROW_CLUSTERS\n-#define XSWAP_SHRINK_MIN\t(XSWAP_GROW_CLUSTERS * 8)\n+#define XSWAP_SHRINK_MIN\t(XSWAP_GROW_CLUSTERS * 4)\n \n static void xswap_shrink_work_fn(struct work_struct *work)\n {\n"
+    },
+    {
+     "type": "diff",
+     "takeaway": "grow-cap8: growth cap 4 → 8 chunks",
+     "patch": "diff --git a/mm/swapfile.c b/mm/swapfile.c\nindex 180cf538f..70c075cd2 100644\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -83,7 +83,7 @@\n #define XSWAP_SHRINK_UNTIL\t70\n #define XSWAP_GROW_UNTIL\t65\n #define XSWAP_GROW_WHEN\t\t85\n-#define XSWAP_GROW_CHUNKS\t4\n+#define XSWAP_GROW_CHUNKS\t8\n \n static bool xswap_should_grow(struct swap_info_struct *si);\n static unsigned long xswap_grow(struct swap_info_struct *si);\n"
+    },
+    {
+     "type": "diff",
+     "takeaway": "grow-target75: cap 8 and grow target 65% → 75%",
+     "patch": "diff --git a/mm/swapfile.c b/mm/swapfile.c\nindex 180cf538f..12cb01f29 100644\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -81,9 +81,9 @@\n  */\n #define XSWAP_SHRINK_WHEN\t50\n #define XSWAP_SHRINK_UNTIL\t70\n-#define XSWAP_GROW_UNTIL\t65\n+#define XSWAP_GROW_UNTIL\t75\n #define XSWAP_GROW_WHEN\t\t85\n-#define XSWAP_GROW_CHUNKS\t4\n+#define XSWAP_GROW_CHUNKS\t8\n \n static bool xswap_should_grow(struct swap_info_struct *si);\n static unsigned long xswap_grow(struct swap_info_struct *si);\n"
+    }
+   ]
+  },
+  {
+   "id": "measured",
+   "title": "How it was measured",
+   "lead": "AB/BA pairs on disk and zswap, two pairs per backend, plus one A/A calibration.",
+   "blocks": [
+    {
+     "type": "flow",
+     "takeaway": "The score is read at settle, but the state is fixed at the end of pressure",
+     "nodes": [
+      {
+       "id": "boot",
+       "label": "Boot guest",
+       "sub": "4 GiB · 2 vCPU",
+       "col": 0,
+       "row": 0
+      },
+      {
+       "id": "fill",
+       "label": "Fill 64 MiB",
+       "sub": "MADV_PAGEOUT",
+       "col": 1,
+       "row": 0
+      },
+      {
+       "id": "press",
+       "label": "usemem -O 5G",
+       "sub": "state fixed here",
+       "col": 2,
+       "row": 0,
+       "tone": "bad"
+      },
+      {
+       "id": "fork",
+       "label": "Fork 48 children",
+       "sub": "COW checks",
+       "col": 3,
+       "row": 0
+      },
+      {
+       "id": "reads",
+       "label": "Timed reads",
+       "sub": "16,384 first accesses",
+       "col": 3,
+       "row": 1
+      },
+      {
+       "id": "settle",
+       "label": "Settle 2 s",
+       "sub": "score read here",
+       "col": 2,
+       "row": 1,
+       "tone": "focus"
+      },
+      {
+       "id": "destroy",
+       "label": "Destroy + swapoff",
+       "sub": "data verified",
+       "col": 1,
+       "row": 1
+      },
+      {
+       "id": "score",
+       "label": "Score",
+       "sub": "clusters × p99 penalty",
+       "col": 0,
+       "row": 1
+      }
+     ],
+     "edges": [
+      {
+       "from": "boot",
+       "to": "fill"
+      },
+      {
+       "from": "fill",
+       "to": "press"
+      },
+      {
+       "from": "press",
+       "to": "fork"
+      },
+      {
+       "from": "fork",
+       "to": "reads"
+      },
+      {
+       "from": "reads",
+       "to": "settle"
+      },
+      {
+       "from": "settle",
+       "to": "destroy"
+      },
+      {
+       "from": "destroy",
+       "to": "score"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "title": "What the data shows",
+   "lead": "One dot per boot. A/A runs the identical kernel on both sides.",
+   "blocks": [
+    {
+     "type": "strip",
+     "takeaway": "Identical kernels already land at 219 or ~1,900–2,800 clusters",
+     "x_label": "mapped clusters after settle",
+     "groups": [
+      "disk · A/A",
+      "disk · shrink-min4",
+      "disk · grow-cap8",
+      "disk · grow-target75",
+      "zswap · A/A",
+      "zswap · shrink-min4",
+      "zswap · grow-cap8",
+      "zswap · grow-target75"
+     ],
+     "series": [
+      "side A (reference)",
+      "side B (candidate)"
+     ],
+     "points": [
+      {
+       "group": "disk · A/A",
+       "series": "side A (reference)",
+       "value": 1898,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "disk · A/A",
+       "series": "side B (candidate)",
+       "value": 219,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "disk · A/A",
+       "series": "side B (candidate)",
+       "value": 219,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "disk · A/A",
+       "series": "side A (reference)",
+       "value": 1898,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "zswap · A/A",
+       "series": "side A (reference)",
+       "value": 2774,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "zswap · A/A",
+       "series": "side B (candidate)",
+       "value": 219,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "zswap · A/A",
+       "series": "side B (candidate)",
+       "value": 2774,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "zswap · A/A",
+       "series": "side A (reference)",
+       "value": 219,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "disk · shrink-min4",
+       "series": "side A (reference)",
+       "value": 219,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "disk · shrink-min4",
+       "series": "side B (candidate)",
+       "value": 219,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "disk · shrink-min4",
+       "series": "side B (candidate)",
+       "value": 219,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "disk · shrink-min4",
+       "series": "side A (reference)",
+       "value": 1898,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "zswap · shrink-min4",
+       "series": "side A (reference)",
+       "value": 3066,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "zswap · shrink-min4",
+       "series": "side B (candidate)",
+       "value": 2409,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "zswap · shrink-min4",
+       "series": "side B (candidate)",
+       "value": 2482,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "zswap · shrink-min4",
+       "series": "side A (reference)",
+       "value": 219,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "disk · grow-cap8",
+       "series": "side A (reference)",
+       "value": 1898,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "disk · grow-cap8",
+       "series": "side B (candidate)",
+       "value": 219,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "disk · grow-cap8",
+       "series": "side B (candidate)",
+       "value": 219,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "disk · grow-cap8",
+       "series": "side A (reference)",
+       "value": 219,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "zswap · grow-cap8",
+       "series": "side A (reference)",
+       "value": 2482,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "zswap · grow-cap8",
+       "series": "side B (candidate)",
+       "value": 219,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "zswap · grow-cap8",
+       "series": "side B (candidate)",
+       "value": 2774,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "zswap · grow-cap8",
+       "series": "side A (reference)",
+       "value": 219,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "disk · grow-target75",
+       "series": "side A (reference)",
+       "value": 1898,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "disk · grow-target75",
+       "series": "side B (candidate)",
+       "value": 219,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "disk · grow-target75",
+       "series": "side B (candidate)",
+       "value": 1679,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "disk · grow-target75",
+       "series": "side A (reference)",
+       "value": 1898,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "zswap · grow-target75",
+       "series": "side A (reference)",
+       "value": 2774,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "zswap · grow-target75",
+       "series": "side B (candidate)",
+       "value": 2920,
+       "tip": "pair 0 · mapped clusters"
+      },
+      {
+       "group": "zswap · grow-target75",
+       "series": "side B (candidate)",
+       "value": 2920,
+       "tip": "pair 1 · mapped clusters"
+      },
+      {
+       "group": "zswap · grow-target75",
+       "series": "side A (reference)",
+       "value": 2774,
+       "tip": "pair 1 · mapped clusters"
+      }
+     ]
+    },
+    {
+     "type": "strip",
+     "takeaway": "On disk, a shrink during pressure gives 219 clusters in 9/9 boots",
+     "x_label": "mapped clusters after settle",
+     "groups": [
+      "disk · shrink ran",
+      "disk · no shrink",
+      "zswap · shrink ran",
+      "zswap · no shrink"
+     ],
+     "series": [
+      "boot"
+     ],
+     "points": [
+      {
+       "group": "disk · no shrink",
+       "series": "boot",
+       "value": 1898,
+       "tip": "A/A"
+      },
+      {
+       "group": "disk · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "A/A"
+      },
+      {
+       "group": "disk · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "A/A"
+      },
+      {
+       "group": "disk · no shrink",
+       "series": "boot",
+       "value": 1898,
+       "tip": "A/A"
+      },
+      {
+       "group": "zswap · no shrink",
+       "series": "boot",
+       "value": 2774,
+       "tip": "A/A"
+      },
+      {
+       "group": "zswap · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "A/A"
+      },
+      {
+       "group": "zswap · no shrink",
+       "series": "boot",
+       "value": 2774,
+       "tip": "A/A"
+      },
+      {
+       "group": "zswap · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "A/A"
+      },
+      {
+       "group": "disk · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "shrink-min4"
+      },
+      {
+       "group": "disk · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "shrink-min4"
+      },
+      {
+       "group": "disk · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "shrink-min4"
+      },
+      {
+       "group": "disk · no shrink",
+       "series": "boot",
+       "value": 1898,
+       "tip": "shrink-min4"
+      },
+      {
+       "group": "zswap · no shrink",
+       "series": "boot",
+       "value": 3066,
+       "tip": "shrink-min4"
+      },
+      {
+       "group": "zswap · shrink ran",
+       "series": "boot",
+       "value": 2409,
+       "tip": "shrink-min4"
+      },
+      {
+       "group": "zswap · shrink ran",
+       "series": "boot",
+       "value": 2482,
+       "tip": "shrink-min4"
+      },
+      {
+       "group": "zswap · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "shrink-min4"
+      },
+      {
+       "group": "disk · no shrink",
+       "series": "boot",
+       "value": 1898,
+       "tip": "grow-cap8"
+      },
+      {
+       "group": "disk · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "grow-cap8"
+      },
+      {
+       "group": "disk · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "grow-cap8"
+      },
+      {
+       "group": "disk · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "grow-cap8"
+      },
+      {
+       "group": "zswap · shrink ran",
+       "series": "boot",
+       "value": 2482,
+       "tip": "grow-cap8"
+      },
+      {
+       "group": "zswap · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "grow-cap8"
+      },
+      {
+       "group": "zswap · no shrink",
+       "series": "boot",
+       "value": 2774,
+       "tip": "grow-cap8"
+      },
+      {
+       "group": "zswap · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "grow-cap8"
+      },
+      {
+       "group": "disk · no shrink",
+       "series": "boot",
+       "value": 1898,
+       "tip": "grow-target75"
+      },
+      {
+       "group": "disk · shrink ran",
+       "series": "boot",
+       "value": 219,
+       "tip": "grow-target75"
+      },
+      {
+       "group": "disk · no shrink",
+       "series": "boot",
+       "value": 1679,
+       "tip": "grow-target75"
+      },
+      {
+       "group": "disk · no shrink",
+       "series": "boot",
+       "value": 1898,
+       "tip": "grow-target75"
+      },
+      {
+       "group": "zswap · no shrink",
+       "series": "boot",
+       "value": 2774,
+       "tip": "grow-target75"
+      },
+      {
+       "group": "zswap · no shrink",
+       "series": "boot",
+       "value": 2920,
+       "tip": "grow-target75"
+      },
+      {
+       "group": "zswap · no shrink",
+       "series": "boot",
+       "value": 2920,
+       "tip": "grow-target75"
+      },
+      {
+       "group": "zswap · no shrink",
+       "series": "boot",
+       "value": 2774,
+       "tip": "grow-target75"
+      }
+     ]
+    },
+    {
+     "type": "lines",
+     "takeaway": "Mapped clusters never move after pressure, in any of the 32 boots",
+     "x": [
+      "before",
+      "pressure",
+      "fork",
+      "children",
+      "reads",
+      "settle"
+     ],
+     "y_label": "mapped clusters",
+     "series": [
+      "shrink ran",
+      "no shrink"
+     ],
+     "lines": [
+      {
+       "series": "no shrink",
+       "label": "A/A disk A0",
+       "values": [
+        73,
+        1898,
+        1898,
+        1898,
+        1898,
+        1898
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "A/A disk B0",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "A/A disk B1",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "A/A disk A1",
+       "values": [
+        73,
+        1898,
+        1898,
+        1898,
+        1898,
+        1898
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "A/A zswap A0",
+       "values": [
+        73,
+        2774,
+        2774,
+        2774,
+        2774,
+        2774
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "A/A zswap B0",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "A/A zswap B1",
+       "values": [
+        73,
+        2774,
+        2774,
+        2774,
+        2774,
+        2774
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "A/A zswap A1",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 disk A0",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 disk B0",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 disk B1",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "shrink-min4 disk A1",
+       "values": [
+        73,
+        1898,
+        1898,
+        1898,
+        1898,
+        1898
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "shrink-min4 zswap A0",
+       "values": [
+        73,
+        3066,
+        3066,
+        3066,
+        3066,
+        3066
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 zswap B0",
+       "values": [
+        73,
+        2409,
+        2409,
+        2409,
+        2409,
+        2409
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 zswap B1",
+       "values": [
+        73,
+        2482,
+        2482,
+        2482,
+        2482,
+        2482
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 zswap A1",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-cap8 disk A0",
+       "values": [
+        73,
+        1898,
+        1898,
+        1898,
+        1898,
+        1898
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 disk B0",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 disk B1",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 disk A1",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 zswap A0",
+       "values": [
+        73,
+        2482,
+        2482,
+        2482,
+        2482,
+        2482
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 zswap B0",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-cap8 zswap B1",
+       "values": [
+        73,
+        2774,
+        2774,
+        2774,
+        2774,
+        2774
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 zswap A1",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 disk A0",
+       "values": [
+        73,
+        1898,
+        1898,
+        1898,
+        1898,
+        1898
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-target75 disk B0",
+       "values": [
+        73,
+        219,
+        219,
+        219,
+        219,
+        219
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 disk B1",
+       "values": [
+        73,
+        1679,
+        1679,
+        1679,
+        1679,
+        1679
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 disk A1",
+       "values": [
+        73,
+        1898,
+        1898,
+        1898,
+        1898,
+        1898
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 zswap A0",
+       "values": [
+        73,
+        2774,
+        2774,
+        2774,
+        2774,
+        2774
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 zswap B0",
+       "values": [
+        73,
+        2920,
+        2920,
+        2920,
+        2920,
+        2920
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 zswap B1",
+       "values": [
+        73,
+        2920,
+        2920,
+        2920,
+        2920,
+        2920
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 zswap A1",
+       "values": [
+        73,
+        2774,
+        2774,
+        2774,
+        2774,
+        2774
+       ]
+      }
+     ]
+    },
+    {
+     "type": "lines",
+     "takeaway": "Meanwhile usage falls by 16,000 pages, which never forms a free tail",
+     "x": [
+      "before",
+      "pressure",
+      "fork",
+      "children",
+      "reads",
+      "settle"
+     ],
+     "y_label": "swap slots in use (pages)",
+     "series": [
+      "shrink ran",
+      "no shrink"
+     ],
+     "lines": [
+      {
+       "series": "no shrink",
+       "label": "A/A disk A0",
+       "values": [
+        0,
+        26911,
+        26911,
+        26911,
+        10462,
+        10462
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "A/A disk B0",
+       "values": [
+        0,
+        25311,
+        25311,
+        25311,
+        8862,
+        8862
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "A/A disk B1",
+       "values": [
+        0,
+        25321,
+        25321,
+        25321,
+        8872,
+        8872
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "A/A disk A1",
+       "values": [
+        0,
+        25925,
+        25925,
+        25925,
+        9476,
+        9476
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "A/A zswap A0",
+       "values": [
+        0,
+        25329,
+        25329,
+        25329,
+        8880,
+        8880
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "A/A zswap B0",
+       "values": [
+        0,
+        25346,
+        25346,
+        25346,
+        8897,
+        8897
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "A/A zswap B1",
+       "values": [
+        0,
+        25833,
+        25833,
+        25833,
+        9384,
+        9384
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "A/A zswap A1",
+       "values": [
+        0,
+        25300,
+        25300,
+        25300,
+        8851,
+        8851
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 disk A0",
+       "values": [
+        0,
+        25470,
+        25470,
+        25470,
+        9021,
+        9021
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 disk B0",
+       "values": [
+        0,
+        25323,
+        25323,
+        25323,
+        8874,
+        8874
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 disk B1",
+       "values": [
+        0,
+        25312,
+        25312,
+        25312,
+        8863,
+        8863
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "shrink-min4 disk A1",
+       "values": [
+        0,
+        25499,
+        25499,
+        25499,
+        9050,
+        9050
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "shrink-min4 zswap A0",
+       "values": [
+        0,
+        33713,
+        33713,
+        33713,
+        17264,
+        17264
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 zswap B0",
+       "values": [
+        0,
+        25321,
+        25321,
+        25321,
+        8872,
+        8872
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 zswap B1",
+       "values": [
+        0,
+        25521,
+        25521,
+        25521,
+        9072,
+        9072
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "shrink-min4 zswap A1",
+       "values": [
+        0,
+        25312,
+        25312,
+        25312,
+        8863,
+        8863
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-cap8 disk A0",
+       "values": [
+        0,
+        26815,
+        26815,
+        26815,
+        10366,
+        10366
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 disk B0",
+       "values": [
+        0,
+        25312,
+        25312,
+        25312,
+        8863,
+        8863
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 disk B1",
+       "values": [
+        0,
+        25347,
+        25347,
+        25347,
+        8898,
+        8898
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 disk A1",
+       "values": [
+        0,
+        25320,
+        25320,
+        25320,
+        8871,
+        8871
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 zswap A0",
+       "values": [
+        0,
+        25423,
+        25423,
+        25423,
+        8974,
+        8974
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 zswap B0",
+       "values": [
+        0,
+        25304,
+        25304,
+        25304,
+        8855,
+        8855
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-cap8 zswap B1",
+       "values": [
+        0,
+        25433,
+        25433,
+        25433,
+        8984,
+        8984
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-cap8 zswap A1",
+       "values": [
+        0,
+        25321,
+        25321,
+        25321,
+        8872,
+        8872
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 disk A0",
+       "values": [
+        0,
+        26426,
+        26425,
+        26425,
+        9976,
+        9976
+       ]
+      },
+      {
+       "series": "shrink ran",
+       "label": "grow-target75 disk B0",
+       "values": [
+        0,
+        25301,
+        25301,
+        25301,
+        8852,
+        8852
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 disk B1",
+       "values": [
+        0,
+        27008,
+        27008,
+        27008,
+        10559,
+        10559
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 disk A1",
+       "values": [
+        0,
+        26511,
+        26511,
+        26511,
+        10062,
+        10062
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 zswap A0",
+       "values": [
+        0,
+        25304,
+        25304,
+        25304,
+        8855,
+        8855
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 zswap B0",
+       "values": [
+        0,
+        25871,
+        25871,
+        25871,
+        9422,
+        9422
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 zswap B1",
+       "values": [
+        0,
+        25382,
+        25382,
+        25382,
+        8933,
+        8933
+       ]
+      },
+      {
+       "series": "no shrink",
+       "label": "grow-target75 zswap A1",
+       "values": [
+        0,
+        25327,
+        25327,
+        25327,
+        8878,
+        8878
+       ]
+      }
+     ]
+    },
+    {
+     "type": "bars",
+     "takeaway": "The grow knobs do move their own counter (mean grow operations)",
+     "y_label": "grow operations per boot",
+     "categories": [
+      "reference",
+      "shrink-min4",
+      "grow-cap8",
+      "grow-target75"
+     ],
+     "series": [
+      "disk",
+      "zswap"
+     ],
+     "values": {
+      "disk": [
+       12.1,
+       12.0,
+       12.0,
+       18.5
+      ],
+      "zswap": [
+       15.4,
+       15.5,
+       13.0,
+       23.0
+      ]
+     }
+    },
+    {
+     "type": "strip",
+     "takeaway": "Latency: A/A disk p99 alone spans 300–458 µs",
+     "x_label": "first-access p99 (µs)",
+     "groups": [
+      "disk · A/A",
+      "disk · shrink-min4",
+      "disk · grow-cap8",
+      "disk · grow-target75",
+      "zswap · A/A",
+      "zswap · shrink-min4",
+      "zswap · grow-cap8",
+      "zswap · grow-target75"
+     ],
+     "series": [
+      "side A (reference)",
+      "side B (candidate)"
+     ],
+     "points": [
+      {
+       "group": "disk · A/A",
+       "series": "side A (reference)",
+       "value": 398.9,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "disk · A/A",
+       "series": "side B (candidate)",
+       "value": 300.2,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "disk · A/A",
+       "series": "side B (candidate)",
+       "value": 354.1,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "disk · A/A",
+       "series": "side A (reference)",
+       "value": 458.0,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "zswap · A/A",
+       "series": "side A (reference)",
+       "value": 220.1,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "zswap · A/A",
+       "series": "side B (candidate)",
+       "value": 254.6,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "zswap · A/A",
+       "series": "side B (candidate)",
+       "value": 238.6,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "zswap · A/A",
+       "series": "side A (reference)",
+       "value": 255.8,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "disk · shrink-min4",
+       "series": "side A (reference)",
+       "value": 384.6,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "disk · shrink-min4",
+       "series": "side B (candidate)",
+       "value": 334.2,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "disk · shrink-min4",
+       "series": "side B (candidate)",
+       "value": 339.0,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "disk · shrink-min4",
+       "series": "side A (reference)",
+       "value": 352.9,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "zswap · shrink-min4",
+       "series": "side A (reference)",
+       "value": 253.3,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "zswap · shrink-min4",
+       "series": "side B (candidate)",
+       "value": 267.6,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "zswap · shrink-min4",
+       "series": "side B (candidate)",
+       "value": 235.4,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "zswap · shrink-min4",
+       "series": "side A (reference)",
+       "value": 265.3,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "disk · grow-cap8",
+       "series": "side A (reference)",
+       "value": 348.0,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "disk · grow-cap8",
+       "series": "side B (candidate)",
+       "value": 337.5,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "disk · grow-cap8",
+       "series": "side B (candidate)",
+       "value": 328.4,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "disk · grow-cap8",
+       "series": "side A (reference)",
+       "value": 323.6,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "zswap · grow-cap8",
+       "series": "side A (reference)",
+       "value": 192.6,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "zswap · grow-cap8",
+       "series": "side B (candidate)",
+       "value": 199.2,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "zswap · grow-cap8",
+       "series": "side B (candidate)",
+       "value": 267.8,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "zswap · grow-cap8",
+       "series": "side A (reference)",
+       "value": 253.5,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "disk · grow-target75",
+       "series": "side A (reference)",
+       "value": 381.8,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "disk · grow-target75",
+       "series": "side B (candidate)",
+       "value": 423.0,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "disk · grow-target75",
+       "series": "side B (candidate)",
+       "value": 346.8,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "disk · grow-target75",
+       "series": "side A (reference)",
+       "value": 344.8,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "zswap · grow-target75",
+       "series": "side A (reference)",
+       "value": 257.4,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "zswap · grow-target75",
+       "series": "side B (candidate)",
+       "value": 253.1,
+       "tip": "pair 0 · p99 µs"
+      },
+      {
+       "group": "zswap · grow-target75",
+       "series": "side B (candidate)",
+       "value": 183.0,
+       "tip": "pair 1 · p99 µs"
+      },
+      {
+       "group": "zswap · grow-target75",
+       "series": "side A (reference)",
+       "value": 258.0,
+       "tip": "pair 1 · p99 µs"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "why",
+   "title": "Why",
+   "lead": "Shrink only unmaps a contiguous free tail.",
+   "blocks": [
+    {
+     "type": "flow",
+     "takeaway": "One long-lived slot high in the range keeps ~99% of the mapping alive",
+     "nodes": [
+      {
+       "id": "u",
+       "label": "usemem fills",
+       "sub": "range grows high",
+       "col": 0,
+       "row": 0
+      },
+      {
+       "id": "x",
+       "label": "usemem exits",
+       "sub": "most slots freed",
+       "col": 1,
+       "row": 0
+      },
+      {
+       "id": "pin",
+       "label": "A high slot survives",
+       "sub": "cache-only? untested",
+       "col": 2,
+       "row": 0,
+       "tone": "bad"
+      },
+      {
+       "id": "hi",
+       "label": "Tail blocked",
+       "sub": "1,679–3,066 kept",
+       "col": 3,
+       "row": 0,
+       "tone": "bad"
+      },
+      {
+       "id": "none",
+       "label": "No high slot",
+       "sub": "tail is free",
+       "col": 2,
+       "row": 1,
+       "tone": "good"
+      },
+      {
+       "id": "lo",
+       "label": "Shrink unmaps",
+       "sub": "219 kept",
+       "col": 3,
+       "row": 1,
+       "tone": "good"
+      }
+     ],
+     "edges": [
+      {
+       "from": "u",
+       "to": "x"
+      },
+      {
+       "from": "x",
+       "to": "pin"
+      },
+      {
+       "from": "pin",
+       "to": "hi"
+      },
+      {
+       "from": "x",
+       "to": "none"
+      },
+      {
+       "from": "none",
+       "to": "lo"
+      }
+     ]
+    },
+    {
+     "type": "note",
+     "text": "The 64 MiB target is allocated first, so its slots sit low. Reading it back frees them without creating a tail."
+    }
+   ]
+  },
+  {
+   "id": "review",
+   "title": "Review checklist",
+   "blocks": [
+    {
+     "type": "checklist",
+     "takeaway": "Guest gates passed; the acceptance gates do not exist yet",
+     "items": [
+      {
+       "status": "pass",
+       "label": "All 20 guest gates on all 34 completed boots",
+       "evidence": "backend_exercised, boot_identity, completed, cow, data_roundtrip, destroy_live_data, destroy_live_xswap_ptes, disk_activity, empty_swaps, every_sample_xswap, evidence_complete, fork_shared, kernel_log_complete, no_kernel_warnings, qemu_exit, runtime_xswap, sample_count, swap_activity, swapoff_live_data, workload_duration"
+      },
+      {
+       "status": "pass",
+       "label": "Exact replay of the 26 reference commits",
+       "evidence": "patches/xswap-reference/manifest.json"
+      },
+      {
+       "status": "pass",
+       "label": "Scope, diff --check and checkpatch for every candidate",
+       "evidence": "controller check output per candidate"
+      },
+      {
+       "status": "fail",
+       "label": "Primary metric stable under A/A",
+       "evidence": "A/A disk 219 vs 1,898; zswap 219 vs 2,774"
+      },
+      {
+       "status": "missing",
+       "label": "ten pairs per backend",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "independent confirmation",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "holdout",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "allocation and I/O failure injection",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "memcg limit matrix",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "large folios",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "lockdep",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "KASAN",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "KCSAN",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "fragmentation and multiple physical devices",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "oscillating pressure",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "missing",
+       "label": "full metadata physical RAM accounting",
+       "evidence": "benchmark/xswap/protocol.json"
+      },
+      {
+       "status": "warn",
+       "label": "Does a cache-only slot pin the high cluster?",
+       "evidence": "hypothesis; needs a counter for cache-only slots"
+      },
+      {
+       "status": "warn",
+       "label": "SHRINK_MIN: commit message says 4 chunks, code says 8",
+       "evidence": "patches/xswap-reference/06.patch"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "next",
+   "title": "Next",
+   "lead": "Fix the measurement first, then test structure, not constants.",
+   "blocks": [
+    {
+     "type": "flow",
+     "takeaway": "Diagnostic first; each hypothesis has a falsifier",
+     "nodes": [
+      {
+       "id": "c",
+       "label": "Add counters",
+       "sub": "highest used, non-empty",
+       "col": 0,
+       "row": 0,
+       "tone": "focus"
+      },
+      {
+       "id": "d",
+       "label": "Re-pressure test",
+       "sub": "do pinned slots free?",
+       "col": 1,
+       "row": 0,
+       "tone": "focus"
+      },
+      {
+       "id": "h1",
+       "label": "1 · Interior unmap",
+       "sub": "mapped bitmap",
+       "col": 2,
+       "row": 0
+      },
+      {
+       "id": "h2",
+       "label": "2 · Low-first alloc",
+       "sub": "high-regime rate ↓?",
+       "col": 3,
+       "row": 0
+      },
+      {
+       "id": "h3",
+       "label": "3 · Cache-only reclaim",
+       "sub": "if diagnostic says so",
+       "col": 2,
+       "row": 1
+      }
+     ],
+     "edges": [
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "h1"
+      },
+      {
+       "from": "h1",
+       "to": "h2"
+      },
+      {
+       "from": "d",
+       "to": "h3",
+       "label": "pinned by cache"
+      }
+     ]
+    },
+    {
+     "type": "table",
+     "takeaway": "Hypotheses and what would falsify them",
+     "columns": [
+      "Hypothesis",
+      "Expected",
+      "Falsified if"
+     ],
+     "rows": [
+      [
+       "Interior unmap",
+       "retained ≈ non-empty clusters",
+       "retained stays at the high slot"
+      ],
+      [
+       "Low-first allocation",
+       "fewer high-regime boots",
+       "high-regime rate unchanged over ≥10 boots/side"
+      ],
+      [
+       "Eager cache-only reclaim",
+       "shrink fires after exit",
+       "diagnostic shows no cache-only pinning"
+      ]
+     ]
+    }
+   ]
+  }
+ ]
+}
