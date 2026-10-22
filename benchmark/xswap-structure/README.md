@@ -32,9 +32,9 @@ baseline's observed low state; it is not an acceptance threshold. Reports retain
 individual runs and failed attempts alongside high-regime frequency and
 95% Wilson intervals. Means and the discovery score only assist inspection.
 
-The preparation commit leaves `baseline_commit=REPLACE_BASELINE`. Both runner and
-evaluator reject this placeholder. Freeze the reviewed observation commit before
-preparing runtime evidence or launching any guest.
+The frozen observation baseline is `4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4`.
+It adds read-only topology counters to the imported Phase I/II reference.
+Both runner and evaluator require a full baseline commit identity.
 
 ## Bounds and execution
 

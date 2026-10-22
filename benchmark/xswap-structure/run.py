@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-only
 """Controller-owned KVM pilot runner. No performance acceptance is implied."""
-import argparse,datetime,fcntl,hashlib,json,math,os,pathlib,re,signal,subprocess,time
+import argparse,datetime,fcntl,hashlib,json,math,os,pathlib,re,signal,subprocess,time,shutil
 from lifetime import bind_child_to_parent
 BASE=pathlib.Path(__file__).resolve().parent
 PROJECT=BASE.parents[1]
@@ -25,6 +25,7 @@ def main():
       fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
       protocol=json.loads((BASE/"protocol.json").read_text())
       if expired(protocol):raise SystemExit("campaign deadline")
+      if shutil.disk_usage(BASE).free < protocol["min_free_disk_gib"]*1024**3:raise SystemExit("free storage budget")
       state=BASE/"state-runtime-layout-v1";state.mkdir(exist_ok=True)
       ledger=state/"attempts.json"
       attempts=json.loads(ledger.read_text()) if ledger.exists() else []

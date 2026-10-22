@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "xswap-structure-2026-10-22",
-  "baseline_commit": "REPLACE_BASELINE",
+  "baseline_commit": "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4",
   "baseline_build": "xs-structure-observe",
   "backends": [
     "disk",
@@ -46,5 +46,8 @@
     "BA"
   ],
   "regime_threshold_clusters": 219,
-  "diagnostic": "Second pressure occurs after the primary metric; no performance acceptance."
+  "diagnostic": "Second pressure occurs after the primary metric; no performance acceptance.",
+  "started_utc": "2026-10-22T08:05:00+00:00",
+  "min_free_disk_gib": 80,
+  "max_build_attempts": 8
 }

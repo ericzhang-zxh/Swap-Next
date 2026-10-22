@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "project": "swap-next",
+  "phase": "bounded structural xswap discovery",
+  "runtime_enabled": false,
+  "thresholds_calibrated": false,
+  "upstream_commit": "9a0542b19a541eda3f82934ee747c61ec3f18847",
+  "seed_ref": "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4",
+  "allowed_modify": [
+    "mm/swapfile.c",
+    "mm/swap.h",
+    "include/linux/swap.h",
+    "mm/swap_state.c",
+    "mm/page_io.c",
+    "mm/zswap.c"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "max_changed_files": 7,
+  "max_changed_lines": 1800,
+  "budget": {
+    "max_candidates": 4,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 2,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 8,
+    "run_wall_seconds": 600,
+    "max_total_campaign_seconds": 28800,
+    "max_build_attempts": 8
+  },
+  "measurement": {
+    "min_pairs": 10,
+    "min_operations": 1000,
+    "min_swapout_pages": 1,
+    "min_swapin_pages": 1,
+    "bootstrap_resamples": 64000,
+    "confidence": 0.95,
+    "required_workloads": [
+      "anon_disk",
+      "anon_zswap",
+      "fragmented_swap",
+      "mixed_file_anon"
+    ],
+    "required_partitions": [
+      "discovery",
+      "confirmation"
+    ],
+    "holdout_required_for_promotion": true,
+    "min_bootstrap_tail_samples": 30
+  },
+  "metrics": {
+    "throughput_ops_s": {
+      "direction": "higher",
+      "role": "primary",
+      "min_gain": null,
+      "max_regression": null
+    },
+    "latency_p99_us": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "cpu_ns_per_op": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "io_bytes_per_op": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "metadata_bytes_per_slot_peak": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    }
+  },
+  "required_gates": [
+    "gcc_swap_on",
+    "gcc_swap_off",
+    "gcc_zswap_on",
+    "sparse_no_new_diagnostics",
+    "checkpatch",
+    "guest_boot_identity",
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "allocation_failure",
+    "io_failure",
+    "memcg_limits",
+    "large_folio",
+    "lockdep",
+    "kasan",
+    "kcsan",
+    "no_new_kernel_warnings"
+  ],
+  "promotion": "human_review_only",
+  "session_pilot_adapter": "benchmark/xswap-structure",
+  "checkout_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "scope_note": "Owner authorized multiple autonomous structural rounds on 2026-10-22. Preserve the imported Phase I/II behavior outside explicit xswap metadata hypotheses; instrumented reference is frozen. No automatic promotion, publication, host changes, policy relaxation or Phase III integration in this campaign.",
+  "primary_metric": "mapped_clusters_after_settle"
+}
