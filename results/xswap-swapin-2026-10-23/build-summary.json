@@ -1,0 +1,110 @@
+[
+  {
+    "build": "xs-desc-v1",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "passed": true,
+    "wall_seconds": 97.73354129696963,
+    "config_sha256": "9652dbf3b072394660f801f684cc9faa7689b70d3d31ed7f65bbf094329e006a",
+    "image_sha256": "b2cfd7e14faaa17fbb2ab73c14b411cd05c736f2915380d71ec6ec5bb8211342",
+    "effective": {
+      "SWAP": true,
+      "XSWAP": true,
+      "KASAN": false,
+      "KASAN_VMALLOC": false,
+      "PROVE_LOCKING": false,
+      "PROVE_RCU": false,
+      "KCSAN": false,
+      "SLUB_TINY": true
+    }
+  },
+  {
+    "build": "xs-desc-v1-kasan",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "passed": true,
+    "wall_seconds": 139.802344026044,
+    "config_sha256": "8a452b2670d59a4e970e9aba6ae4a7d12b3948dbc689b0da0adaa9fc826374fb",
+    "image_sha256": "a83e32769e0a8850ade24ddd5c7aabf45fe7b893e8e9785205e91a70d8d86859",
+    "effective": {
+      "SWAP": true,
+      "XSWAP": true,
+      "KASAN": true,
+      "KASAN_VMALLOC": true,
+      "PROVE_LOCKING": true,
+      "PROVE_RCU": true,
+      "KCSAN": false,
+      "SLUB_TINY": false
+    }
+  },
+  {
+    "build": "std-e401f1314",
+    "commit": "e401f1314d81d3990de62af0ba37fc5df79193f6",
+    "passed": true,
+    "wall_seconds": 97.75576565100346,
+    "config_sha256": "9652dbf3b072394660f801f684cc9faa7689b70d3d31ed7f65bbf094329e006a",
+    "image_sha256": "84bb6cea2dc9890145ca99866b127bafc373a32a948dfe42b57e010b4f3940be",
+    "effective": {
+      "SWAP": true,
+      "XSWAP": true,
+      "KASAN": false,
+      "KASAN_VMALLOC": false,
+      "PROVE_LOCKING": false,
+      "PROVE_RCU": false,
+      "KCSAN": false,
+      "SLUB_TINY": true
+    }
+  },
+  {
+    "build": "xs-ra-phys-v1-debug",
+    "commit": "e401f1314d81d3990de62af0ba37fc5df79193f6",
+    "passed": true,
+    "wall_seconds": 110.10132863599574,
+    "config_sha256": "b25aa8bd60d5164a9a7e1e84720d81ffbd49eb8d38445f790d8af1c2f016e290",
+    "image_sha256": "b77dcc3ee082789364ba1112321fd5b7868ee8e115294538aa6793b8a40d8570",
+    "effective": {
+      "SWAP": true,
+      "XSWAP": true,
+      "KASAN": false,
+      "KASAN_VMALLOC": false,
+      "PROVE_LOCKING": true,
+      "PROVE_RCU": true,
+      "KCSAN": false,
+      "SLUB_TINY": true
+    }
+  },
+  {
+    "build": "xs-ra-phys-v1-kasan",
+    "commit": "e401f1314d81d3990de62af0ba37fc5df79193f6",
+    "passed": true,
+    "wall_seconds": 146.04200092097744,
+    "config_sha256": "8a452b2670d59a4e970e9aba6ae4a7d12b3948dbc689b0da0adaa9fc826374fb",
+    "image_sha256": "45ceaa9d6240ea02673cb4151a8673096942bfd27b3cb52f08d1817ffbda4811",
+    "effective": {
+      "SWAP": true,
+      "XSWAP": true,
+      "KASAN": true,
+      "KASAN_VMALLOC": true,
+      "PROVE_LOCKING": true,
+      "PROVE_RCU": true,
+      "KCSAN": false,
+      "SLUB_TINY": false
+    }
+  },
+  {
+    "build": "xs-ra-phys-v1-noxswap",
+    "commit": "e401f1314d81d3990de62af0ba37fc5df79193f6",
+    "passed": true,
+    "wall_seconds": 97.76914890401531,
+    "config_sha256": "2942dea36940bd34225ea273215498ee77e46848f9782f2a3efbc143c85233af",
+    "image_sha256": "00518945ba0af1c65b17b6a4cd5e96a7428fd0c98f0685cbfdedf6da57931975",
+    "effective": {
+      "SWAP": true,
+      "XSWAP": false,
+      "KASAN": false,
+      "KASAN_VMALLOC": false,
+      "PROVE_LOCKING": false,
+      "PROVE_RCU": false,
+      "KCSAN": false,
+      "SLUB_TINY": true
+    }
+  }
+]

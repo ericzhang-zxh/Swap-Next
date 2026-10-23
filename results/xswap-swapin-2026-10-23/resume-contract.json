@@ -1,6 +1,6 @@
 {
   "campaign": "xswap-swapin-2026-10-23",
-  "phase": "PREPARATION",
+  "phase": "CORRECTNESS_VALIDATION",
   "resumed_utc": "2026-10-23T18:43:19.972607+00:00",
   "deadline_utc": "2026-10-24T04:43:19.972607+00:00",
   "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
