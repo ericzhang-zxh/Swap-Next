@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <string.h>
 #define PAGES 16384
 static uint64_t samples[PAGES], order[PAGES], types[PAGES];
@@ -56,7 +57,12 @@ int main(int argc, char **argv) {
  metadata("before");
  size_t bytes=PAGES*4096UL; uint64_t *data=mmap(0,bytes,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
  if(data==MAP_FAILED)return 1;
- if(sysconf(_SC_PAGESIZE)!=4096||madvise(data,bytes,MADV_NOHUGEPAGE))return 36;
+ if(sysconf(_SC_PAGESIZE)!=4096)return 36;
+ /* The guest disables THP globally; EINVAL is expected without CONFIG_THP. */
+ if(madvise(data,bytes,MADV_NOHUGEPAGE)){
+  if(errno!=EINVAL){perror("MADV_NOHUGEPAGE");return 36;}
+  puts("NOHUGEPAGE_UNAVAILABLE");
+ }
  for(size_t i=0;i<bytes/8;i++)data[i]=pattern(i);
  for(size_t i=0;i<PAGES;i++){order[i]=i;samples[i]=0;}
  uint64_t seed=0x51a9;

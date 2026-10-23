@@ -190,7 +190,7 @@ run_correctness() {
 	[ "$#" -eq 1 ] && [ -f "$1" ] || fail correctness_type
 	path=$1 type=${1##*/type}
 	vmstat correctness_start
-	correctness "$type"
+	correctness "$type" || { local status=$?; echo "CORRECTNESS_EXIT $status"; return "$status"; }
 	vmstat correctness_end
 	[ ! -e "$path" ] || fail correctness_destroy
 	[ "$(wc -l < /proc/swaps)" -eq 1 ] || fail correctness_swapoff
