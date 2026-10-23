@@ -1,0 +1,14 @@
+{
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "document_scroll_width": 1440,
+  "svg_overflows": 0,
+  "status": "PASS",
+  "inspection": "Observed charts, labels and tables; shortened group labels after initial clipping; exact patches are collapsed and retained."
+}

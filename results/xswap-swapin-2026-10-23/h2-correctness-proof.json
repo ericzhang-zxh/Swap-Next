@@ -1,0 +1,45 @@
+{
+  "candidate": "xs-ra-zswap-v1",
+  "candidate_commit": "f7093a0732ae9b46e31a9ceb90c2b14eb8038c16",
+  "integration_pass": true,
+  "gates": {
+    "data_roundtrip": true,
+    "fork_cow": true,
+    "concurrent_fault": true,
+    "swapoff_live_pages": true,
+    "no_new_kernel_warnings": true
+  },
+  "evidence": [
+    {
+      "path": "benchmark/swap-standard/runs/resume-h2-std-correctness-disk-v10/result.json",
+      "sha256": "fd7240e7a44fc269c163589dafa32703d60bc619ac0a582d5f31c76492b846ba",
+      "serial_sha256": "b63acee7cbc8e6baa8af354fb717b87b116d0ba8920dcee5172b724490d8083d"
+    },
+    {
+      "path": "benchmark/swap-standard/runs/resume-h2-std-correctness-zswap-v10/result.json",
+      "sha256": "9cf6b5838fe5adfc39044d68ca0ee63c0f4eae141db0d6972bc70128adbeb209",
+      "serial_sha256": "1a786e37937fef691f4e370e286c31d9da3b9f89ab219d4baede095c2d12749e"
+    },
+    {
+      "path": "benchmark/swap-standard/runs/resume-h2-kasan-correctness-disk-v10/result.json",
+      "sha256": "2a0b92e2372a2e46d1f744df8520912e4d16f19c769a243e07d2b195a025c08d",
+      "serial_sha256": "2ae21ae78fe642cf2a7b92c5cc8546aae5b12ed9ab8ae3a30775bb955d32b964"
+    },
+    {
+      "path": "benchmark/swap-standard/runs/resume-h2-kasan-correctness-zswap-v10/result.json",
+      "sha256": "d299948d17c85c404df569688ee45192dc542bce4a2a77cb92834d4dc31ffbd1",
+      "serial_sha256": "eebe25864f9ca8e00f639cf0abc5052dd8751488d7b44a778f0303a7173ce4a0"
+    },
+    {
+      "path": "benchmark/swap-standard/runs/resume-base-kasan-lifetime-v10/result.json",
+      "sha256": "c86e9e7b60f0f22e455f51ecd0a1c73256eb321869bc176c6dc79a3e8fd9cd0c",
+      "serial_sha256": "325076f3331d9316ca1af149276c30d678a042d3aeb8a7091b002f4df6054b13"
+    },
+    {
+      "path": "benchmark/swap-standard/runs/resume-h2-kasan-lifetime-v10/result.json",
+      "sha256": "fbfee9132a0dc40e1584b0710fd4b1d66fec07b334f1bbcb00c0050303360f1f",
+      "serial_sha256": "0c68e292777e9a4f1742bbb033c5987b976b5c09d3f529a168840ef7f4542c6f"
+    }
+  ],
+  "scope": "4 KiB discovery: standard and KASAN disk/zswap correctness plus baseline/candidate KASAN lifetime; not formal promotion acceptance"
+}

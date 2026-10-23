@@ -1,6 +1,6 @@
 {
   "campaign": "xswap-swapin-2026-10-23",
-  "phase": "CORRECTNESS_VALIDATION",
+  "phase": "COMPLETE_SCREENED_OUT",
   "resumed_utc": "2026-10-23T18:43:19.972607+00:00",
   "deadline_utc": "2026-10-24T04:43:19.972607+00:00",
   "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
@@ -17,5 +17,7 @@
   "protocol": "benchmark/swap-standard/protocol-xswap-swapin-2026-10-23.json",
   "formal_acceptance": false,
   "publication": false,
-  "promotion": false
+  "promotion": false,
+  "completed_utc": "2026-10-23T20:14:43.333038+00:00",
+  "outcome": "Both authorized candidates fail calibrated fast guardrails; slow tier not eligible."
 }

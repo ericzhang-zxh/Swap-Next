@@ -1,0 +1,2435 @@
+{
+  "title": "xswap swap-in campaign",
+  "subtitle": "xswap-swapin-2026-10-23 \u00b7 5e84ca928dee",
+  "verdict": {
+    "status": "rejected",
+    "headline": "2 candidates screened out; none eligible for slow confirmation",
+    "tiles": [
+      {
+        "label": "Guest attempts observed",
+        "value": 46
+      },
+      {
+        "label": "Integration passes",
+        "value": 42
+      },
+      {
+        "label": "Failed / running / incomplete / stopped",
+        "value": "4 / 0 / 0 / 0"
+      },
+      {
+        "label": "Effective KASAN passes",
+        "value": 9
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "changes",
+      "title": "What changed",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Fault routing is tested against the repaired baseline",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Fault",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Residency check",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "2",
+              "label": "Readahead",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "3",
+              "label": "Swap cache",
+              "col": 3,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            },
+            {
+              "from": "2",
+              "to": "3"
+            }
+          ]
+        },
+        {
+          "type": "diff",
+          "takeaway": "xs-ra-phys-v1",
+          "patch": "diff --git a/mm/memory.c b/mm/memory.c\nindex 6fd925877..300515fb8 100644\n--- a/mm/memory.c\n+++ b/mm/memory.c\n@@ -4995,8 +4995,12 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)\n \tif (folio)\n \t\tswap_update_readahead(folio, vma, vmf->address);\n \tif (!folio) {\n-\t\t/* Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices */\n-\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO))\n+\t\t/*\n+\t\t * Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices,\n+\t\t * except an xswap slot written back to a physical backend.\n+\t\t */\n+\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO) &&\n+\t\t    !xswap_readahead_wanted(si, entry))\n \t\t\tfolio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,\n \t\t\t\t\t    thp_swapin_suitable_orders(vmf) | BIT(0),\n \t\t\t\t\t    vmf, NULL, 0);\ndiff --git a/mm/swap.h b/mm/swap.h\nindex b9e7c8a4c..fd9452dd2 100644\n--- a/mm/swap.h\n+++ b/mm/swap.h\n@@ -397,6 +397,7 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t flag,\n \t\tstruct mempolicy *mpol, pgoff_t ilx);\n struct folio *swapin_readahead(swp_entry_t entry, gfp_t flag,\n \t\tstruct vm_fault *vmf);\n+bool xswap_readahead_wanted(struct swap_info_struct *si, swp_entry_t entry);\n struct folio *swapin_sync(swp_entry_t entry, gfp_t flag, unsigned long orders,\n \t\t\t   struct vm_fault *vmf, struct mempolicy *mpol, pgoff_t ilx);\n void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\n@@ -477,6 +478,12 @@ static inline struct folio *swapin_readahead(swp_entry_t swp, gfp_t gfp_mask,\n \treturn NULL;\n }\n \n+static inline bool xswap_readahead_wanted(struct swap_info_struct *si,\n+\t\t\t\t\t  swp_entry_t entry)\n+{\n+\treturn false;\n+}\n+\n static inline struct folio *swapin_sync(\n \tswp_entry_t entry, gfp_t flag, unsigned long orders,\n \tstruct vm_fault *vmf, struct mempolicy *mpol, pgoff_t ilx)\ndiff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..99672718b 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -753,6 +753,34 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\n \treturn folio;\n }\n \n+/**\n+ * xswap_readahead_wanted - Check whether an xswap slot has a physical backend.\n+ * @si: the swap device of @entry.\n+ * @entry: the swap entry, which need not be pinned.\n+ *\n+ * This is a readahead hint, not a pin on the slot or its backend. The swap\n+ * cache allocation and read paths must revalidate the entry after this\n+ * returns. No cluster pointer or physical entry escapes the lock.\n+ *\n+ * Context: Caller must protect @si with a reference count or locks.\n+ * Return: true if an xswap slot has a physical backend, false otherwise.\n+ */\n+bool xswap_readahead_wanted(struct swap_info_struct *si, swp_entry_t entry)\n+{\n+\tstruct swap_cluster_info *ci;\n+\tbool backed;\n+\n+\tif (!(si->flags & SWP_XSWAP))\n+\t\treturn false;\n+\tci = swap_cluster_lock_unpinned(si, swp_offset(entry));\n+\tif (!ci)\n+\t\treturn false;\n+\tbacked = xswap_slot_backend(ci, swp_cluster_offset(entry)).val;\n+\tswap_cluster_unlock(ci);\n+\n+\treturn backed;\n+}\n+\n /**\n  * swapin_sync - swap-in one or multiple entries skipping readahead.\n  * @entry: swap entry indicating the target slot\n@@ -920,8 +948,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tstruct blk_plug plug;\n \tswp_entry_t ra_entry;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n+\t/* Keep compressed xswap targets on the single-folio path. */\n+\tif ((si->flags & SWP_XSWAP) && !xswap_readahead_wanted(si, entry))\n \t\tgoto skip;\n \n \tmask = swapin_nr_pages(offset) - 1;\n@@ -940,6 +968,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tfor (offset = start_offset; offset <= end_offset ; offset++) {\n \t\t/* Ok, do the async read-ahead now */\n \t\tra_entry = swp_entry(swp_type(entry), offset);\n+\t\tif ((si->flags & SWP_XSWAP) && offset != entry_offset &&\n+\t\t    !xswap_readahead_wanted(si, ra_entry))\n+\t\t\tcontinue;\n \t\tfolio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,\n \t\t\t\tilx, offset != entry_offset);\n \t\tif (!folio)\n@@ -1009,7 +1040,6 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\tstruct mempolicy *mpol, pgoff_t targ_ilx, struct vm_fault *vmf)\n {\n-\tstruct swap_info_struct *si = __swap_entry_to_info(targ_entry);\n \tstruct swap_io_ctx ctx = {};\n \tstruct blk_plug plug;\n \tstruct folio *folio;\n@@ -1018,10 +1048,6 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \tunsigned long start, end, addr;\n \tpgoff_t ilx = targ_ilx;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n-\n \twin = swap_vma_ra_win(vmf, &start, &end);\n \tif (win == 1)\n \t\tgoto skip;\n@@ -1054,8 +1080,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\t\tif (IS_ERR_OR_NULL(si))\n \t\t\t\tcontinue;\n \t\t}\n-\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,\n-\t\t\t\t\t      addr != vmf->address);\n+\t\tif (addr != vmf->address &&\n+\t\t    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&\n+\t\t    !xswap_readahead_wanted(__swap_entry_to_info(entry), entry))\n+\t\t\tfolio = NULL;\n+\t\telse\n+\t\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,\n+\t\t\t\t\t\t      ilx, addr != vmf->address);\n \t\tif (si)\n \t\t\tput_swap_device(si);\n \t\tif (!folio)\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "xs-ra-zswap-v1",
+          "patch": "diff --git a/mm/memory.c b/mm/memory.c\nindex 6fd925877..b24a1be83 100644\n--- a/mm/memory.c\n+++ b/mm/memory.c\n@@ -4995,8 +4995,9 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)\n \tif (folio)\n \t\tswap_update_readahead(folio, vma, vmf->address);\n \tif (!folio) {\n-\t\t/* Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices */\n-\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO))\n+\t\t/* Prefetch compressed xswap neighbors into the swap cache. */\n+\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO) &&\n+\t\t    !((si->flags & SWP_XSWAP) && zswap_entry_present(entry)))\n \t\t\tfolio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,\n \t\t\t\t\t    thp_swapin_suitable_orders(vmf) | BIT(0),\n \t\t\t\t\t    vmf, NULL, 0);\ndiff --git a/mm/swap.h b/mm/swap.h\nindex b9e7c8a4c..fa84319a1 100644\n--- a/mm/swap.h\n+++ b/mm/swap.h\n@@ -530,6 +530,15 @@ static inline void __swap_cache_replace_folio(struct swap_cluster_info *ci,\n }\n #endif /* CONFIG_SWAP */\n \n+#ifdef CONFIG_ZSWAP\n+bool zswap_entry_present(swp_entry_t entry);\n+#else\n+static inline bool zswap_entry_present(swp_entry_t entry)\n+{\n+\treturn false;\n+}\n+#endif\n+\n extern const struct swap_ops swap_bdev_ops;\n \n int shmem_writeout(struct swap_io_ctx *ctx, struct folio *folio,\ndiff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..a3787f6ed 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -920,8 +920,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tstruct blk_plug plug;\n \tswp_entry_t ra_entry;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n+\t/* Only compressed xswap targets initiate speculative reads. */\n+\tif ((si->flags & SWP_XSWAP) && !zswap_entry_present(entry))\n \t\tgoto skip;\n \n \tmask = swapin_nr_pages(offset) - 1;\n@@ -940,6 +940,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tfor (offset = start_offset; offset <= end_offset ; offset++) {\n \t\t/* Ok, do the async read-ahead now */\n \t\tra_entry = swp_entry(swp_type(entry), offset);\n+\t\tif ((si->flags & SWP_XSWAP) && offset != entry_offset &&\n+\t\t    !zswap_entry_present(ra_entry))\n+\t\t\tcontinue;\n \t\tfolio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,\n \t\t\t\tilx, offset != entry_offset);\n \t\tif (!folio)\n@@ -1018,8 +1021,8 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \tunsigned long start, end, addr;\n \tpgoff_t ilx = targ_ilx;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n+\t/* Only compressed xswap targets initiate speculative reads. */\n+\tif ((si->flags & SWP_XSWAP) && !zswap_entry_present(targ_entry))\n \t\tgoto skip;\n \n \twin = swap_vma_ra_win(vmf, &start, &end);\n@@ -1054,8 +1057,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\t\tif (IS_ERR_OR_NULL(si))\n \t\t\t\tcontinue;\n \t\t}\n-\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,\n-\t\t\t\t\t      addr != vmf->address);\n+\t\tif (addr != vmf->address &&\n+\t\t    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&\n+\t\t    !zswap_entry_present(entry))\n+\t\t\tfolio = NULL;\n+\t\telse\n+\t\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,\n+\t\t\t\t\t\t      ilx, addr != vmf->address);\n \t\tif (si)\n \t\t\tput_swap_device(si);\n \t\tif (!folio)\ndiff --git a/mm/zswap.c b/mm/zswap.c\nindex 789730c22..fc92e00af 100644\n--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -1632,6 +1632,26 @@ bool zswap_store(struct folio *folio, bool may_enter_fs)\n \treturn ret;\n }\n \n+/**\n+ * zswap_entry_present - Check whether a slot currently has a zswap entry.\n+ * @entry: valid swap entry to query, which need not be pinned.\n+ *\n+ * This is only a readahead hint. A concurrent store or invalidation can\n+ * change the result, so the read path must resolve residency again after\n+ * acquiring a locked swap-cache folio. Never dereference the entry returned\n+ * by the XArray lookup here: only the tree lifetime is protected.\n+ *\n+ * Context: Caller must hold a reference to the swap device.\n+ * Return: true if the slot has a zswap entry at the time of the lookup.\n+ */\n+bool zswap_entry_present(swp_entry_t entry)\n+{\n+\tif (zswap_never_enabled())\n+\t\treturn false;\n+\n+\treturn xa_load(swap_zswap_tree(entry), swp_offset(entry));\n+}\n+\n /**\n  * zswap_is_present() - is any slot in [entry, entry + nr) in zswap?\n  * @entry: base swap entry of the range\n"
+        }
+      ]
+    },
+    {
+      "id": "method",
+      "title": "How it was measured",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Fresh boots preserve paired order",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Baseline/build",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Correctness",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "2",
+              "label": "AB / BA",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "3",
+              "label": "Noise / guards",
+              "col": 3,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            },
+            {
+              "from": "2",
+              "to": "3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "What the data shows",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Observed latency changes and guard outcomes",
+          "columns": [
+            "Candidate",
+            "Tier",
+            "Pairs",
+            "Metric",
+            "Baseline/candidate",
+            "Latency change %",
+            "Noise %",
+            "Guard"
+          ],
+          "rows": [
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              2,
+              "swapin-disk.swapin_seq.mean_ns",
+              6.533107,
+              -84.69,
+              4.48,
+              "PASS"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              2,
+              "swapin-disk.swapin_seq.p99_ns",
+              1.113266,
+              -10.17,
+              3.06,
+              "PASS"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              2,
+              "swapin-disk.swapin_rand.mean_ns",
+              0.987356,
+              1.28,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              2,
+              "swapin-disk.swapin_rand.p99_ns",
+              0.904953,
+              10.5,
+              3.0,
+              "FAIL"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              2,
+              "swapin-zswap.swapin_seq.mean_ns",
+              1.006231,
+              -0.62,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              2,
+              "swapin-zswap.swapin_seq.p99_ns",
+              1.05638,
+              -5.34,
+              7.73,
+              "PASS"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              2,
+              "swapin-zswap.swapin_rand.mean_ns",
+              1.162207,
+              -13.96,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              2,
+              "swapin-zswap.swapin_rand.p99_ns",
+              2.665868,
+              -62.49,
+              10.88,
+              "PASS"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              2,
+              "swapin-disk.swapin_seq.mean_ns",
+              1.015766,
+              -1.55,
+              4.48,
+              "PASS"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              2,
+              "swapin-disk.swapin_seq.p99_ns",
+              1.048207,
+              -4.6,
+              3.06,
+              "PASS"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              2,
+              "swapin-disk.swapin_rand.mean_ns",
+              1.091175,
+              -8.36,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              2,
+              "swapin-disk.swapin_rand.p99_ns",
+              1.053169,
+              -5.05,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              2,
+              "swapin-zswap.swapin_seq.mean_ns",
+              1.004084,
+              -0.41,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              2,
+              "swapin-zswap.swapin_seq.p99_ns",
+              0.262609,
+              280.79,
+              7.73,
+              "FAIL"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              2,
+              "swapin-zswap.swapin_rand.mean_ns",
+              1.005972,
+              -0.59,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              2,
+              "swapin-zswap.swapin_rand.p99_ns",
+              1.006824,
+              -0.68,
+              10.88,
+              "PASS"
+            ]
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Fast screening uses few pairs; failed guards block confirmation. Observed differences do not establish persistent causal effects. Unchanged-path outliers are not mechanism evidence."
+        },
+        {
+          "type": "strip",
+          "takeaway": "Observed disk random mean: H1 +1.28%, H2 -8.36%",
+          "x_label": "Latency (ns)",
+          "groups": [
+            "A/A fast",
+            "H1 fast",
+            "H2 fast"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 217749.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 215626.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+            },
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 220694.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 216541.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 185325.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 184528.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 216153.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 222682.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 226277.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 185421.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 217999.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 223433.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Observed disk random p99: H1 +10.50%, H2 -5.05%",
+          "x_label": "Latency (ns)",
+          "groups": [
+            "A/A fast",
+            "H1 fast",
+            "H2 fast"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 354513.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 354040.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+            },
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 355172.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 348412.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 325870.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 329470.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 351938.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 425053.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 361453.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 312546.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 376841.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 392916.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Observed disk sequential mean: H1 -84.69%, H2 -1.55%",
+          "x_label": "Latency (ns)",
+          "groups": [
+            "A/A fast",
+            "H1 fast",
+            "H2 fast"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 150930.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 155493.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+            },
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 150091.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 156811.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 146156.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 21780.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 152731.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 24013.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 154554.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 152173.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 158672.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 156191.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Observed disk sequential p99: H1 -10.17%, H2 -4.60%",
+          "x_label": "Latency (ns)",
+          "groups": [
+            "A/A fast",
+            "H1 fast",
+            "H2 fast"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 309639.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 312129.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+            },
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 302480.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 311738.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 306596.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 259617.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 307410.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 292923.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 307145.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 300174.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 327694.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 305172.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Observed zswap random mean: H1 -13.96%, H2 -0.59%",
+          "x_label": "Latency (ns)",
+          "groups": [
+            "A/A fast",
+            "H1 fast",
+            "H2 fast"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 13583.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 13749.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+            },
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 13592.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 13648.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 13822.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 13614.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 18289.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 13747.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 13697.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 13718.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 13783.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 13599.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Observed zswap random p99: H1 -62.49%, H2 -0.68%",
+          "x_label": "Latency (ns)",
+          "groups": [
+            "A/A fast",
+            "H1 fast",
+            "H2 fast"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 26640.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 29538.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+            },
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 26200.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 27299.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 33776.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 27020.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 162509.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 28584.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 26498.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 26010.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 26405.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 26537.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Observed zswap sequential mean: H1 -0.62%, H2 -0.41%",
+          "x_label": "Latency (ns)",
+          "groups": [
+            "A/A fast",
+            "H1 fast",
+            "H2 fast"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 11687.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 11872.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+            },
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 11654.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 11781.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 11819.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 11680.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 11791.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 11784.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 11683.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 11633.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 11674.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 11629.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Observed zswap sequential p99: H1 -5.34%, H2 +280.79%",
+          "x_label": "Latency (ns)",
+          "groups": [
+            "A/A fast",
+            "H1 fast",
+            "H2 fast"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 26530.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 28581.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+            },
+            {
+              "group": "A/A fast",
+              "series": "A",
+              "value": 25591.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+            },
+            {
+              "group": "A/A fast",
+              "series": "B",
+              "value": 25619.0,
+              "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 27322.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 25828.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+            },
+            {
+              "group": "H1 fast",
+              "series": "A",
+              "value": 28180.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+            },
+            {
+              "group": "H1 fast",
+              "series": "B",
+              "value": 26713.0,
+              "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 25374.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 97538.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+            },
+            {
+              "group": "H2 fast",
+              "series": "A",
+              "value": 26051.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+            },
+            {
+              "group": "H2 fast",
+              "series": "B",
+              "value": 98270.0,
+              "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "why",
+      "title": "Why",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Mechanism claims require counters and calibrated latency",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Residency",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Backend reads",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "2",
+              "label": "First touch",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "3",
+              "label": "Noise check",
+              "col": 3,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            },
+            {
+              "from": "2",
+              "to": "3"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "H2 compressed latency distribution, microseconds",
+          "columns": [
+            "Candidate",
+            "Pair",
+            "Arm",
+            "p50",
+            "p90",
+            "Mean",
+            "p99"
+          ],
+          "rows": [
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "a",
+              13.509,
+              13.932,
+              11.683,
+              25.374
+            ],
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "b",
+              0.528,
+              82.369,
+              11.633,
+              97.538
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "b",
+              0.528,
+              82.68,
+              11.629,
+              98.27
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "a",
+              13.535,
+              13.941,
+              11.674,
+              26.051
+            ]
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Inference: compressed prefetch shifts synchronous decompression into fewer, longer fault bursts. Source paths, counters and latency distributions support this interpretation; independent profiling has not established causality."
+        },
+        {
+          "type": "table",
+          "takeaway": "Every run retains mechanism counters",
+          "columns": [
+            "Candidate/action",
+            "Tier",
+            "Pair",
+            "Case",
+            "Arm",
+            "swap_ra",
+            "swap_ra_hit",
+            "pswpin",
+            "zswpin"
+          ],
+          "rows": [
+            [
+              "calibrate",
+              "fast",
+              0,
+              "swapin-disk",
+              "a",
+              0,
+              0,
+              262140,
+              0
+            ],
+            [
+              "calibrate",
+              "fast",
+              0,
+              "swapin-disk",
+              "b",
+              0,
+              1,
+              262167,
+              0
+            ],
+            [
+              "calibrate",
+              "fast",
+              0,
+              "swapin-zswap",
+              "a",
+              0,
+              0,
+              0,
+              262166
+            ],
+            [
+              "calibrate",
+              "fast",
+              0,
+              "swapin-zswap",
+              "b",
+              0,
+              0,
+              0,
+              262160
+            ],
+            [
+              "calibrate",
+              "fast",
+              1,
+              "swapin-disk",
+              "b",
+              0,
+              0,
+              262155,
+              0
+            ],
+            [
+              "calibrate",
+              "fast",
+              1,
+              "swapin-disk",
+              "a",
+              0,
+              0,
+              262152,
+              0
+            ],
+            [
+              "calibrate",
+              "fast",
+              1,
+              "swapin-zswap",
+              "b",
+              0,
+              0,
+              0,
+              262160
+            ],
+            [
+              "calibrate",
+              "fast",
+              1,
+              "swapin-zswap",
+              "a",
+              0,
+              0,
+              0,
+              262167
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              0,
+              "swapin-disk",
+              "a",
+              0,
+              0,
+              262170,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              0,
+              "swapin-disk",
+              "b",
+              114943,
+              114936,
+              262176,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              0,
+              "swapin-zswap",
+              "a",
+              0,
+              0,
+              0,
+              262160
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              0,
+              "swapin-zswap",
+              "b",
+              0,
+              0,
+              0,
+              262160
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              1,
+              "swapin-disk",
+              "b",
+              114832,
+              114827,
+              262152,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              1,
+              "swapin-disk",
+              "a",
+              0,
+              0,
+              262163,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              1,
+              "swapin-zswap",
+              "b",
+              0,
+              0,
+              0,
+              262166
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fast",
+              1,
+              "swapin-zswap",
+              "a",
+              0,
+              0,
+              0,
+              262160
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              0,
+              "swapin-disk",
+              "a",
+              0,
+              0,
+              262132,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              0,
+              "swapin-disk",
+              "b",
+              0,
+              2,
+              262146,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              0,
+              "swapin-zswap",
+              "a",
+              0,
+              0,
+              0,
+              262166
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              0,
+              "swapin-zswap",
+              "b",
+              114780,
+              114773,
+              0,
+              262170
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              1,
+              "swapin-disk",
+              "b",
+              0,
+              2,
+              262145,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              1,
+              "swapin-disk",
+              "a",
+              0,
+              2,
+              262146,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              1,
+              "swapin-zswap",
+              "b",
+              114736,
+              114729,
+              0,
+              262166
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fast",
+              1,
+              "swapin-zswap",
+              "a",
+              0,
+              0,
+              0,
+              262163
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Occupancy snapshots accompany each observed phase",
+          "columns": [
+            "Candidate/action",
+            "Pair",
+            "Case",
+            "Arm",
+            "Phase",
+            "Mapped",
+            "Usage",
+            "Grows",
+            "Shrinks"
+          ],
+          "rows": [
+            [
+              "calibrate",
+              0,
+              "swapin-disk",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "calibrate",
+              0,
+              "swapin-disk",
+              "a",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "calibrate",
+              0,
+              "swapin-disk",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "calibrate",
+              0,
+              "swapin-disk",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "calibrate",
+              0,
+              "swapin-zswap",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "calibrate",
+              0,
+              "swapin-zswap",
+              "a",
+              "swapin_end",
+              657,
+              1,
+              10,
+              1
+            ],
+            [
+              "calibrate",
+              0,
+              "swapin-zswap",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "calibrate",
+              0,
+              "swapin-zswap",
+              "b",
+              "swapin_end",
+              657,
+              1,
+              10,
+              1
+            ],
+            [
+              "calibrate",
+              1,
+              "swapin-disk",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "calibrate",
+              1,
+              "swapin-disk",
+              "b",
+              "swapin_end",
+              146,
+              0,
+              10,
+              1
+            ],
+            [
+              "calibrate",
+              1,
+              "swapin-disk",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "calibrate",
+              1,
+              "swapin-disk",
+              "a",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "calibrate",
+              1,
+              "swapin-zswap",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "calibrate",
+              1,
+              "swapin-zswap",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "calibrate",
+              1,
+              "swapin-zswap",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "calibrate",
+              1,
+              "swapin-zswap",
+              "a",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-phys-v1",
+              0,
+              "swapin-disk",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              0,
+              "swapin-disk",
+              "a",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-phys-v1",
+              0,
+              "swapin-disk",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              0,
+              "swapin-disk",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-phys-v1",
+              0,
+              "swapin-zswap",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              0,
+              "swapin-zswap",
+              "a",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-phys-v1",
+              0,
+              "swapin-zswap",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              0,
+              "swapin-zswap",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-phys-v1",
+              1,
+              "swapin-disk",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              1,
+              "swapin-disk",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-phys-v1",
+              1,
+              "swapin-disk",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              1,
+              "swapin-disk",
+              "a",
+              "swapin_end",
+              146,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-phys-v1",
+              1,
+              "swapin-zswap",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              1,
+              "swapin-zswap",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-phys-v1",
+              1,
+              "swapin-zswap",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-phys-v1",
+              1,
+              "swapin-zswap",
+              "a",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "swapin-disk",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "swapin-disk",
+              "a",
+              "swapin_end",
+              657,
+              1,
+              10,
+              1
+            ],
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "swapin-disk",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "swapin-disk",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "swapin-zswap",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "swapin-zswap",
+              "a",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "swapin-zswap",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              0,
+              "swapin-zswap",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "swapin-disk",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "swapin-disk",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "swapin-disk",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "swapin-disk",
+              "a",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "swapin-zswap",
+              "b",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "swapin-zswap",
+              "b",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "swapin-zswap",
+              "a",
+              "swapin_start",
+              73,
+              0,
+              0,
+              0
+            ],
+            [
+              "xs-ra-zswap-v1",
+              1,
+              "swapin-zswap",
+              "a",
+              "swapin_end",
+              657,
+              0,
+              10,
+              1
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Every retained performance attempt",
+          "columns": [
+            "Action",
+            "Tier",
+            "Candidate",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "calibrate",
+              "fast",
+              null,
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "evaluate",
+              "fast",
+              "xs-ra-phys-v1",
+              "REGRESSION",
+              ""
+            ],
+            [
+              "evaluate",
+              "fast",
+              "xs-ra-zswap-v1",
+              "REGRESSION",
+              ""
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gates",
+      "title": "Review checklist",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every policy gate remains visible",
+          "columns": [
+            "Candidate",
+            "Gate",
+            "Status",
+            "Evidence"
+          ],
+          "rows": [
+            [
+              "baseline",
+              "gcc_swap_on",
+              "pass",
+              "xs-desc-v1/result.json + 1 more; summary.json"
+            ],
+            [
+              "baseline",
+              "gcc_swap_off",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "baseline",
+              "gcc_zswap_on",
+              "pass",
+              "xs-desc-v1/result.json + 1 more; summary.json"
+            ],
+            [
+              "baseline",
+              "sparse_no_new_diagnostics",
+              "pass",
+              "xswap-swapin-2026-10-23/h1-sparse.json + 1 more; summary.json"
+            ],
+            [
+              "baseline",
+              "checkpatch",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "baseline",
+              "guest_boot_identity",
+              "pass",
+              "31cced4875f8470dbdde1dd557fca236-0-swapin-disk-a/result.json + 23 more; summary.json"
+            ],
+            [
+              "baseline",
+              "data_roundtrip",
+              "pass",
+              "resume-base-kasan-correctness-disk-v10/result.json + 6 more; summary.json"
+            ],
+            [
+              "baseline",
+              "fork_cow",
+              "pass",
+              "resume-base-kasan-correctness-disk-v10/result.json + 6 more; summary.json"
+            ],
+            [
+              "baseline",
+              "concurrent_fault",
+              "pass",
+              "resume-base-kasan-correctness-disk-v10/result.json + 6 more; summary.json"
+            ],
+            [
+              "baseline",
+              "swapoff_live_pages",
+              "pass",
+              "resume-base-kasan-correctness-disk-v10/result.json + 6 more; summary.json"
+            ],
+            [
+              "baseline",
+              "allocation_failure",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "baseline",
+              "io_failure",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "baseline",
+              "memcg_limits",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "baseline",
+              "large_folio",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "baseline",
+              "lockdep",
+              "pass",
+              "resume-base-kasan-correctness-disk-v10/result.json + 2 more; summary.json"
+            ],
+            [
+              "baseline",
+              "kasan",
+              "pass",
+              "resume-base-kasan-correctness-disk-v10/result.json + 2 more; summary.json"
+            ],
+            [
+              "baseline",
+              "kcsan",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "baseline",
+              "no_new_kernel_warnings",
+              "pass",
+              "resume-base-kasan-correctness-disk-v10/result.json + 6 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "gcc_swap_on",
+              "pass",
+              "std-e401f1314/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "gcc_swap_off",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "gcc_zswap_on",
+              "pass",
+              "std-e401f1314/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "sparse_no_new_diagnostics",
+              "pass",
+              "xswap-swapin-2026-10-23/h1-sparse.json; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "checkpatch",
+              "pass",
+              "xs-ra-phys-v1/static.json; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "guest_boot_identity",
+              "pass",
+              "8a4b89fc0c8e44dd80c7675ef9c8c0fb-0-swapin-disk-b/result.json + 8 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "data_roundtrip",
+              "pass",
+              "resume-h1-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "fork_cow",
+              "pass",
+              "resume-h1-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "concurrent_fault",
+              "pass",
+              "resume-h1-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "swapoff_live_pages",
+              "pass",
+              "resume-h1-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "allocation_failure",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "io_failure",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "memcg_limits",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "large_folio",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "lockdep",
+              "pass",
+              "resume-h1-kasan-correctness-disk-v10/result.json + 2 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "kasan",
+              "pass",
+              "resume-h1-kasan-correctness-disk-v10/result.json + 2 more; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "kcsan",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-phys-v1",
+              "no_new_kernel_warnings",
+              "pass",
+              "resume-h1-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "gcc_swap_on",
+              "pass",
+              "xs-ra-zswap-v1/result.json + 2 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "gcc_swap_off",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "gcc_zswap_on",
+              "pass",
+              "xs-ra-zswap-v1/result.json + 2 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "sparse_no_new_diagnostics",
+              "pass",
+              "xswap-swapin-2026-10-23/h2-sparse.json; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "checkpatch",
+              "pass",
+              "xs-ra-zswap-v1/static.json; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "guest_boot_identity",
+              "pass",
+              "31cced4875f8470dbdde1dd557fca236-0-swapin-disk-b/result.json + 8 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "data_roundtrip",
+              "pass",
+              "resume-h2-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "fork_cow",
+              "pass",
+              "resume-h2-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "concurrent_fault",
+              "pass",
+              "resume-h2-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "swapoff_live_pages",
+              "pass",
+              "resume-h2-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "allocation_failure",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "io_failure",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "memcg_limits",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "large_folio",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "lockdep",
+              "pass",
+              "resume-h2-kasan-correctness-disk-v10/result.json + 2 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "kasan",
+              "pass",
+              "resume-h2-kasan-correctness-disk-v10/result.json + 2 more; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "kcsan",
+              "missing",
+              "Missing; summary.json"
+            ],
+            [
+              "xs-ra-zswap-v1",
+              "no_new_kernel_warnings",
+              "pass",
+              "resume-h2-kasan-correctness-disk-v10/result.json + 3 more; summary.json"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Sparse diagnostics retain the baseline gap",
+          "columns": [
+            "Evidence",
+            "No new diagnostics",
+            "Full tool success"
+          ],
+          "rows": [
+            [
+              "results/xswap-swapin-2026-10-23/h1-sparse.json",
+              true,
+              false
+            ],
+            [
+              "results/xswap-swapin-2026-10-23/h2-sparse.json",
+              true,
+              false
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Nonpassing and active attempts remain separate",
+          "columns": [
+            "Run",
+            "State",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "resume-base-kasan-correctness-disk-v9",
+              "COMPLETED_FAILED",
+              "['workload_complete', 'kernel_log_present', 'no_kernel_warnings', 'no_new_kernel_warnings']"
+            ],
+            [
+              "resume-base-std-correctness-disk-v6",
+              "COMPLETED_FAILED",
+              "['workload_complete', 'swap_activity', 'swap_routing', 'correctness_evidence', 'data_roundtrip', 'fork_cow', 'concurrent_fault', 'destroy_live_pages', 'swapoff_live_pages']"
+            ],
+            [
+              "resume-base-std-correctness-disk-v7",
+              "COMPLETED_FAILED",
+              "['correctness_evidence', 'data_roundtrip', 'fork_cow', 'concurrent_fault', 'destroy_live_pages', 'swapoff_live_pages']"
+            ],
+            [
+              "resume-base-std-correctness-zswap-v8",
+              "COMPLETED_FAILED",
+              "not enough values to unpack (expected 2, got 1)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Next",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Ranked next hypotheses require falsifiers",
+          "columns": [
+            "Rank",
+            "Hypothesis",
+            "Falsifier"
+          ],
+          "rows": [
+            [
+              "1",
+              "H1 adaptive readahead window with a tail guard",
+              "Reject a new candidate if random p99 exceeds its calibrated envelope."
+            ],
+            [
+              "2",
+              "H2 bound synchronous decompression work",
+              "Reject unbounded prefetch or added demand-fault latency."
+            ],
+            [
+              "3",
+              "Further validation only for a new candidate",
+              "Require fresh correctness evidence and a fast pass before slow confirmation."
+            ]
+          ]
+        },
+        {
+          "type": "note",
+          "text": "No formal acceptance, automatic promotion, or publication. Missing evidence remains missing."
+        }
+      ]
+    }
+  ]
+}
