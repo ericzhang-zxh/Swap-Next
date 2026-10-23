@@ -38,7 +38,7 @@ repeated A/A calibration before they can define a candidate campaign.
   each xswap slot an optional physical backend. Pages that zswap refuses are
   written to disk, the backend can be swapped off, cache-only physical slots
   are reclaimed, and THP swap-in is enabled.
-- **Phase III** is not imported and has not been reviewed.
+- **xswap Phase III** (6 patches; Baoquan He, Nhat Pham). This charges memcg only when an xswap entry gains a physical backend, instead of at slot allocation. Imported as [patches/xswap-phase3](patches/xswap-phase3/README.md) on top of Phase II (`b2beda7f`); not yet measured.
 - **vswap** (Nhat Pham) is a competing virtual-swap design. Attribution is
   disputed upstream ([thread](https://lists.openwall.net/linux-kernel/2026/10/12/779)).
   We take no side.

@@ -1,0 +1,138 @@
+From 69d3780c1e468c1f8e2edb3120315b754368bba1 Mon Sep 17 00:00:00 2001
+From: Nhat Pham <nphamcs@gmail.com>
+Date: Sat, 3 Oct 2026 09:11:09 +0800
+Subject: [PATCH] mm, swap: don't gate xswap on the physical swap free count
+
+An xswap entry is charged only when it gets physical backing, so a
+zswap-capable memcg can keep swapping out through xswap even when its
+physical swap margin is zero.  mem_cgroup_get_nr_swap_pages() would
+otherwise starve anon reclaim with memory.swap.max set to 0.
+
+Return PAGE_COUNTER_MAX when an xswap device is active, zswap is on,
+and the memcg allows zswap.  Track active xswap devices in nr_xswap_files,
+mirroring nr_real_swapfiles.
+
+Suggested-by: Johannes Weiner <hannes@cmpxchg.org>
+Signed-off-by: Nhat Pham <nphamcs@gmail.com>
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ include/linux/memcontrol.h |  4 ++--
+ include/linux/swap.h       |  6 ++++++
+ mm/memcontrol.c            | 31 ++++++++++++++++++++++++-------
+ mm/swapfile.c              |  2 +-
+ 4 files changed, 33 insertions(+), 10 deletions(-)
+
+diff --git a/include/linux/memcontrol.h b/include/linux/memcontrol.h
+index b9072a3c9..be3351288 100644
+--- a/include/linux/memcontrol.h
++++ b/include/linux/memcontrol.h
+@@ -1944,7 +1944,7 @@ static inline void mem_cgroup_calculate_protection_path(struct mem_cgroup *root,
+ 
+ #if defined(CONFIG_MEMCG) && defined(CONFIG_ZSWAP)
+ bool obj_cgroup_may_zswap(struct obj_cgroup *objcg);
+-bool mem_cgroup_may_zswap(struct mem_cgroup *memcg, bool may_flush);
++bool mem_cgroup_may_zswap(const struct mem_cgroup *memcg, bool may_flush);
+ void obj_cgroup_charge_zswap(struct obj_cgroup *objcg, size_t size);
+ void obj_cgroup_uncharge_zswap(struct obj_cgroup *objcg, size_t size);
+ bool mem_cgroup_zswap_writeback_enabled(const struct mem_cgroup *memcg);
+@@ -1954,7 +1954,7 @@ static inline bool obj_cgroup_may_zswap(struct obj_cgroup *objcg)
+ 	return true;
+ }
+ 
+-static inline bool mem_cgroup_may_zswap(struct mem_cgroup *memcg, bool may_flush)
++static inline bool mem_cgroup_may_zswap(const struct mem_cgroup *memcg, bool may_flush)
+ {
+ 	return true;
+ }
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index 745606f23..ebcbb9284 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -390,6 +390,12 @@ void free_pages_and_swap_cache(struct encoded_page **, int);
+ /* linux/mm/swapfile.c */
+ extern atomic_long_t nr_swap_pages;
+ extern atomic_t nr_real_swapfiles;
++extern atomic_t nr_xswap_files;
++
++static inline bool xswap_enabled(void)
++{
++	return atomic_read(&nr_xswap_files) > 0;
++}
+ extern long total_swap_pages;
+ extern atomic_t nr_rotate_swap;
+ 
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index ba13d2a1e..2ca39f64c 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -6126,8 +6126,20 @@ void __mem_cgroup_swap_put(unsigned short id, unsigned int nr_pages)
+ 
+ long mem_cgroup_get_nr_swap_pages(const struct mem_cgroup *memcg)
+ {
+-	long nr_swap_pages = get_nr_swap_pages();
++	long nr_swap_pages;
+ 
++	/*
++	 * xswap charges physical backing, not allocation, so virtual swap is
++	 * unbounded for a zswap-capable memcg and the swap.max walk below
++	 * would starve anon reclaim.  swap.max is still enforced when the
++	 * backing is charged.
++	 */
++	if (xswap_enabled() && zswap_is_enabled() &&
++	    (mem_cgroup_disabled() || do_memsw_account() ||
++	     mem_cgroup_may_zswap(memcg, false)))
++		return PAGE_COUNTER_MAX;
++
++	nr_swap_pages = get_nr_swap_pages();
+ 	if (!mem_cgroup_disabled() && !do_memsw_account())
+ 		nr_swap_pages = min(nr_swap_pages, page_counter_margin(&memcg->swap));
+ 
+@@ -6333,13 +6345,15 @@ static struct cftype swap_files[] = {
+  * spending cycles on compression when there is already no room left
+  * or zswap is disabled altogether somewhere in the hierarchy.
+  */
+-bool mem_cgroup_may_zswap(struct mem_cgroup *memcg, bool may_flush)
++bool mem_cgroup_may_zswap(const struct mem_cgroup *memcg, bool may_flush)
+ {
++	const struct mem_cgroup *pos;
++
+ 	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
+ 		return true;
+ 
+-	for (; !mem_cgroup_is_root(memcg); memcg = parent_mem_cgroup(memcg)) {
+-		unsigned long max = READ_ONCE(memcg->zswap_max);
++	for (pos = memcg; !mem_cgroup_is_root(pos); pos = parent_mem_cgroup(pos)) {
++		unsigned long max = READ_ONCE(pos->zswap_max);
+ 		unsigned long pages;
+ 
+ 		if (max == PAGE_COUNTER_MAX)
+@@ -6347,10 +6361,13 @@ bool mem_cgroup_may_zswap(struct mem_cgroup *memcg, bool may_flush)
+ 		if (max == 0)
+ 			return false;
+ 
+-		/* Force flush to get accurate stats for charging */
++		/*
++		 * Force flush to get accurate stats for charging. The flush
++		 * only reads the counters, but takes the memcg mutable.
++		 */
+ 		if (may_flush)
+-			__mem_cgroup_flush_stats(memcg, true);
+-		pages = memcg_page_state(memcg, MEMCG_ZSWAP_B) / PAGE_SIZE;
++			__mem_cgroup_flush_stats((struct mem_cgroup *)pos, true);
++		pages = memcg_page_state(pos, MEMCG_ZSWAP_B) / PAGE_SIZE;
+ 		if (pages >= max)
+ 			return false;
+ 	}
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 86ab4a868..a3d456156 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -284,7 +284,7 @@ static unsigned int nr_swapfiles;
+ atomic_long_t nr_swap_pages;
+ atomic_t nr_real_swapfiles;
+ /* Active xswap devices, as in nr_real_swapfiles. */
+-static atomic_t nr_xswap_files;
++atomic_t nr_xswap_files;
+ /*
+  * Some modules use swappable objects and may try to swap them out under
+  * memory pressure (via the shrinker). Before doing so, they may wish to

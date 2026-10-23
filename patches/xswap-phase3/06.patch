@@ -1,0 +1,75 @@
+From b2beda7fe460f911b88d27890993347588d70748 Mon Sep 17 00:00:00 2001
+From: Baoquan He <hebaoquan@kylinos.cn>
+Date: Sat, 3 Oct 2026 09:11:11 +0800
+Subject: [PATCH] mm, swap: drop a refused xswap backend run directly
+
+On a refused charge, xswap_backend_alloc() gave the physical run back
+with __xswap_backend_unlink(), which finds the run through the reverse
+mapping. That mapping is not installed yet at this point, so it
+recognised nothing and freed nothing: every refused charge leaked the
+run and tripped a VM_WARN_ON_ONCE().
+
+Drop the run directly instead; the caller holds it and nothing points
+at it yet.
+
+Seen with a cgroup at memory.swap.max: the backend held 48663 pages
+while memory.swap.current was 0.
+
+Signed-off-by: Baoquan He <hebaoquan@kylinos.cn>
+---
+ mm/swapfile.c | 35 ++++++++++++++++++++++++++++++++++-
+ 1 file changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 419d19f3b..0f841616d 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -3302,6 +3302,39 @@ static void xswap_free_phys_slot(struct swap_info_struct *si,
+ 	swap_cluster_unlock(ci);
+ }
+ 
++/*
++ * Give a run of backend slots back. Nothing points at them yet, so there is
++ * no reverse mapping to look up and no record to clear.
++ */
++static void xswap_drop_phys_slots(swp_entry_t phys, unsigned int nr)
++{
++	struct swap_info_struct *psi = swap_type_to_info(swp_type(phys));
++	unsigned long poff = swp_offset(phys);
++	struct swap_cluster_info *pci;
++	unsigned int i;
++
++	if (!psi)
++		return;
++
++	pci = swap_cluster_lock(psi, poff);
++	if (!pci)
++		return;
++
++	VM_WARN_ON(pci->count < nr);
++	pci->count -= nr;
++	for (i = 0; i < nr; i++)
++		__swap_table_set(pci, (poff + i) % SWAPFILE_CLUSTER,
++				 null_to_swp_tb());
++
++	if (!pci->count)
++		free_cluster(psi, pci);
++	else
++		partial_free_cluster(psi, pci);
++	swap_cluster_unlock(pci);
++
++	swap_range_free(psi, poff, nr);
++}
++
+ /*
+  * An xswap slot being freed may still own a physical slot. Drop it, or the
+  * physical space and its reverse mapping leak. Caller holds the xswap
+@@ -4697,7 +4730,7 @@ swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order,
+ 		swap_cluster_unlock(ci);
+ 	}
+ 	if (mem_cgroup_swap_charge(id, nr)) {
+-		__xswap_backend_unlink(entry, phys, order);
++		xswap_drop_phys_slots(phys, nr);
+ 		return (swp_entry_t){};
+ 	}
+ 

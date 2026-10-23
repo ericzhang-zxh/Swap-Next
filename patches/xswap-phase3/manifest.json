@@ -1,0 +1,64 @@
+{
+  "base_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "base_description": "xswap Phase I v4 + Phase II v1 imported reference (patches/xswap-reference)",
+  "reference_commit": "b2beda7fe460f911b88d27890993347588d70748",
+  "reference_tree": "187cfe495c1c182d6bdc364b8429efa6d84dce12",
+  "phase_iii_source": "https://patchew.org/linux/20261003011111.1003090-1-hebaoquan@kylinos.cn/mbox",
+  "phase_iii_subject": "[PATCH 0/6] mm, swap: charge xswap for physical backing (xswap phase III)",
+  "patches": [
+    {
+      "file": "01.patch",
+      "sha256": "f4ee3991bffc48bc9a27dd018be8b5f1e0bebc720011a0c0d45b80754b4ba693",
+      "commit": "c5109ee3964723104690d85803b82d9b63a0e8fa",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-23T01:11:35-07:00",
+      "subject": "mm, swap: split the swap memcg charge helpers"
+    },
+    {
+      "file": "02.patch",
+      "sha256": "3cf6706519ad9adaf19a3e497e5c4ca0e4b3207686597ff59f463f54c09845ee",
+      "commit": "7eab83ec79fa2265d5ea59644d7c925e5245da71",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-23T01:11:35-07:00",
+      "subject": "mm, swap: do not charge zswap-backed xswap entries"
+    },
+    {
+      "file": "03.patch",
+      "sha256": "62a5d8d7681e2b231cec07a5ba03dbbb97e7730fb8faa6fe7d47f17f08840cf8",
+      "commit": "6a2ba13c286b57c50a3aeb3d9bbb24880aded3ce",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-23T01:11:35-07:00",
+      "subject": "mm, swap: charge an xswap entry when it gets physical backing"
+    },
+    {
+      "file": "04.patch",
+      "sha256": "822545cca44d31b65251cebc63a2dace30d1ade94bd2f541421ffa2d6030747f",
+      "commit": "69d3780c1e468c1f8e2edb3120315b754368bba1",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-23T01:11:36-07:00",
+      "subject": "mm, swap: don't gate xswap on the physical swap free count"
+    },
+    {
+      "file": "05.patch",
+      "sha256": "dc98a1c6926d13f24f18e4aa1ff6f4343cf6a91136bc6ee2fd17806ca349e7a4",
+      "commit": "e1be0c08da25983f964448bb36ef9f48bff2f44a",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-23T01:11:36-07:00",
+      "subject": "mm, swap: do not retake the cluster lock when uncharging an xswap slot"
+    },
+    {
+      "file": "06.patch",
+      "sha256": "ec9d7edc24cebe144f7c307cd7993f243d1f28a7e746ed3cbb1946322416be86",
+      "commit": "b2beda7fe460f911b88d27890993347588d70748",
+      "committer_name": "Eric Zhang",
+      "committer_email": "zxh@xh-zhang.com",
+      "committer_date": "2026-10-23T01:11:36-07:00",
+      "subject": "mm, swap: drop a refused xswap backend run directly"
+    }
+  ]
+}
