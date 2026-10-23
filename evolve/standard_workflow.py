@@ -63,7 +63,7 @@ def fingerprint(p):
              ROOT / "evolve/control/campaigns" / p["campaign"] / "policy.json",
              ROOT / "benchmark/config/swap-standard.config"]
     paths += list(BENCH.glob("*.py")) + list(BENCH.glob("*.sh"))
-    paths += [BENCH / name for name in ["guest-init", "tools.json", "swapin.c", "correctness.c"]]
+    paths += [BENCH / name for name in ["guest-init", "tools.json", "swapin.c", "correctness.c", "console-drain.c"]]
     paths += [ROOT / "benchmark/kernel" / name for name in ["build.py", "lifetime.py", "build_namespace.sh"]]
     paths += [ROOT / "benchmark/kernel/builds" / p["baseline_build"] / "result.json"]
     return hashlib.sha256(json.dumps({str(f.relative_to(ROOT)): sha(f) for f in paths}, sort_keys=True).encode()).hexdigest()

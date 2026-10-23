@@ -16,7 +16,7 @@ PROJECT = BASE.parents[1]
 HOST_DIRS = ('etc/alternatives', 'usr/bin', 'usr/sbin', 'usr/include', 'usr/lib/x86_64-linux-gnu',
              'usr/lib/gcc', 'usr/libexec', 'usr/lib/bfd-plugins', 'usr/lib/locale',
              'usr/share/perl', 'usr/share/perl5', 'usr/share/misc', 'usr/share/bison')
-SOURCES = ('guest-init', 'bench.sh', 'params.sh', 'swapin.c', 'churn.c', 'correctness.c', 'prepare-image.py', 'tools.json')
+SOURCES = ('guest-init', 'bench.sh', 'params.sh', 'swapin.c', 'churn.c', 'correctness.c', 'console-drain.c', 'prepare-image.py', 'tools.json')
 
 
 def sha(path):
@@ -91,7 +91,7 @@ def main():
                 target = opt / 'bin' / pathlib.Path(relative).name
                 shutil.copy2(source / relative, target)
                 binary_hashes[target.name] = sha(target)
-    for probe in ('swapin', 'churn', 'correctness'):
+    for probe in ('swapin', 'churn', 'correctness', 'console-drain'):
         subprocess.run(['gcc', '-O2', '-Wall', '-Wextra', '-Werror', str(BASE / (probe + '.c')),
                         '-o', str(opt / 'bin' / probe)], check=True)
         binary_hashes[probe] = sha(opt / 'bin' / probe)
