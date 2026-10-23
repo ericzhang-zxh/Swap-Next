@@ -33,4 +33,4 @@ LIFETIME_SIZE=512M
 LIFETIME_SEC=600
 LIFETIME_ZSWAP_POOL_PERCENT=4
 # Only instrumented kernels expose this; it widens the writeback race window.
-LIFETIME_WB_DELAY_MS=200
+LIFETIME_WB_DELAY_MS=2000

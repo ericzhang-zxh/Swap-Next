@@ -8,14 +8,15 @@
  #include <linux/cpu.h>
  #include <linux/highmem.h>
  #include <linux/slab.h>
-@@ -123,6 +124,15 @@
+@@ -123,6 +124,16 @@
  		CONFIG_ZSWAP_SHRINKER_DEFAULT_ON);
  module_param_named(shrinker_enabled, zswap_shrinker_enabled, bool, 0644);
  
 +/*
-+ * Swap Next instrumentation only: hold one in every 64 xswap writebacks
-+ * between taking the device and looking up the slot, so a racing free
-+ * and shrink can land in between without stalling reclaim.
++ * Swap Next instrumentation only: in the async shrink worker, hold one
++ * in every 16 xswap writebacks between taking the device and looking up
++ * the slot, so a racing free and shrink can land in between.  Direct
++ * reclaim is never delayed.
 + */
 +static unsigned int zswap_debug_wb_delay_ms;
 +module_param_named(debug_wb_delay_ms, zswap_debug_wb_delay_ms, uint, 0644);
@@ -24,12 +25,13 @@
  bool zswap_is_enabled(void)
  {
  	return zswap_enabled;
-@@ -1021,6 +1031,9 @@
+@@ -1021,6 +1032,10 @@
  		return -ENOENT;
  
  	is_xswap = !!(si->flags & SWP_XSWAP);
-+	if (is_xswap && READ_ONCE(zswap_debug_wb_delay_ms) &&
-+	    !(atomic_inc_return(&zswap_debug_wb_count) % 64))
++	if (is_xswap && (current->flags & PF_WQ_WORKER) &&
++	    READ_ONCE(zswap_debug_wb_delay_ms) &&
++	    !(atomic_inc_return(&zswap_debug_wb_count) % 16))
 +		msleep(READ_ONCE(zswap_debug_wb_delay_ms));
  
  	mpol = get_task_policy(current);
