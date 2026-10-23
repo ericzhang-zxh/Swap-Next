@@ -128,6 +128,18 @@ def parse(text, image_sha, backend, mode, workload):
         metrics['swapin_swapped'] = stats(m.group(1)) if m else None
         gates['swapin_data'] = 'SWAPIN_DATA_PASS' in text
         gates['swapin_output'] = all(metrics[k] and metrics[k].get('samples', 0) > 0 for k in ('swapin_seq', 'swapin_rand'))
+    elif workload == 'lifetime':
+        churn = re.search(r'^CHURN_PASS rounds=(\d+) workers=(\d+) bytes=(\d+) verified_workers=(\d+)$', text, re.M)
+        xs = delta(kv_block(text, 'XSWAP', 'lifetime_end'), kv_block(text, 'XSWAP', 'lifetime_start'), ('grows', 'shrinks'))
+        wb = delta(kv_block(text, 'VMSTAT', 'lifetime_end'), kv_block(text, 'VMSTAT', 'lifetime_start'), ('zswpwb', 'pswpout', 'zswpout'))
+        delay = re.search(r'^WB_DELAY_MS (\S+)$', text, re.M)
+        metrics.update(lifetime_rounds=int(churn[1]) if churn else None,
+                       lifetime_verified_workers=int(churn[4]) if churn else None,
+                       lifetime_xswap_delta=xs, lifetime_vmstat_delta=wb,
+                       wb_delay_ms=delay[1] if delay else None)
+        gates['lifetime_data'] = bool(churn) and int(churn[1]) >= 3 and 'CHURN_MISMATCH' not in text and 'CHURN_FAIL' not in text
+        gates['lifetime_shrink'] = bool(xs) and xs['shrinks'] > 0 and xs['grows'] > 0
+        gates['lifetime_writeback'] = bool(wb) and wb['zswpwb'] > 0
     else:
         gates['known_workload'] = False
     phases = ['build'] if workload == 'build' else ['redis_get', 'redis_bgsave'] if workload == 'redis' else []

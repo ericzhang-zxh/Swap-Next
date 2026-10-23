@@ -96,3 +96,40 @@ class EvidenceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def lifetime(rounds=5, shrinks=3, zswpwb=500):
+    log = (fixture("lifetime", "zswap")
+           .replace("bench.mode=plain", "bench.mode=xswap")
+           .replace("ZSWAP_ENABLED N", "ZSWAP_ENABLED Y")
+           .replace("pswpout 100", "pswpout 100\nzswpout 900")
+           .replace("/dev/vda 1024", "/dev/vda 1024\n/dev/xswap0 4096"))
+    return (log + "WB_DELAY_MS none\n"
+            + block("XSWAP", "lifetime_start", "grows 1\nshrinks 0")
+            + block("XSWAP", "lifetime_end", f"grows 9\nshrinks {shrinks}")
+            + block("VMSTAT", "lifetime_start", "zswpwb 0\npswpout 0\nzswpout 0")
+            + block("VMSTAT", "lifetime_end", f"zswpwb {zswpwb}\npswpout 10\nzswpout 900")
+            + f"CHURN_PASS rounds={rounds} workers=4 bytes=536870912 verified_workers={2 * rounds}\n")
+
+
+class LifetimeTests(unittest.TestCase):
+    def test_complete_lifetime(self):
+        r = parse(lifetime(), "abc", "zswap", "xswap", "lifetime")
+        self.assertTrue(all(r["gates"].values()), r)
+        self.assertEqual(r["metrics"]["lifetime_xswap_delta"], {"grows": 8, "shrinks": 3})
+
+    def test_no_shrink_fails(self):
+        r = parse(lifetime(shrinks=0), "abc", "zswap", "xswap", "lifetime")
+        self.assertFalse(r["gates"]["lifetime_shrink"])
+
+    def test_no_writeback_fails(self):
+        r = parse(lifetime(zswpwb=0), "abc", "zswap", "xswap", "lifetime")
+        self.assertFalse(r["gates"]["lifetime_writeback"])
+
+    def test_mismatch_fails(self):
+        r = parse(lifetime() + "CHURN_MISMATCH salt=1 page=2 word=3\n", "abc", "zswap", "xswap", "lifetime")
+        self.assertFalse(r["gates"]["lifetime_data"])
+
+    def test_too_few_rounds_fail(self):
+        r = parse(lifetime(rounds=2), "abc", "zswap", "xswap", "lifetime")
+        self.assertFalse(r["gates"]["lifetime_data"])

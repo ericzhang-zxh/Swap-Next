@@ -155,6 +155,32 @@ run_redis() {
 	valkey-cli shutdown nosave >/dev/null 2>&1 || true
 }
 
+xswap_counters() {
+	echo "XSWAP_BEGIN $1"
+	cat /sys/kernel/debug/xswap/type*
+	echo "XSWAP_END $1"
+}
+
+run_lifetime() {
+	[ "$mode" = xswap ] && [ "$backend" = zswap ] || fail lifetime_mode
+	local delay=/sys/module/zswap/parameters/debug_wb_delay_ms
+	echo "$LIFETIME_ZSWAP_POOL_PERCENT" > /sys/module/zswap/parameters/max_pool_percent
+	echo Y > /sys/module/zswap/parameters/shrinker_enabled
+	if [ -f $delay ]; then
+		echo "$LIFETIME_WB_DELAY_MS" > $delay
+		echo "WB_DELAY_MS $(cat $delay)"
+	else
+		echo "WB_DELAY_MS none"
+	fi
+	enter_cgroup "$LIFETIME_MEMCG"
+	xswap_counters lifetime_start
+	vmstat lifetime_start
+	churn "$LIFETIME_SIZE" "$LIFETIME_WORKERS" "$LIFETIME_SEC"
+	sleep "$SETTLE_SEC"
+	vmstat lifetime_end
+	xswap_counters lifetime_end
+}
+
 run_swapin() {
 	enter_cgroup max
 	swapin "$SWAPIN_SIZE" "$cg/memory.reclaim"
@@ -193,6 +219,7 @@ usemem-rand) run_usemem -R ;;
 build)       run_build ;;
 redis)       run_redis ;;
 swapin)      run_swapin ;;
+lifetime)    run_lifetime ;;
 *)           fail workload ;;
 esac
 sleep 1

@@ -56,7 +56,7 @@ def sha(path):
     return h.hexdigest()
 
 
-def validate(build, backend, mode):
+def validate(build, backend, mode, workload):
     manifest = json.loads((build / "result.json").read_text())
     image = build / "output/arch/x86/boot/bzImage"
     config = build / "output/.config"
@@ -71,8 +71,8 @@ def validate(build, backend, mode):
     if backend == "brd":
         required += ["BLK_DEV_RAM"]
     required += ["ZSWAP"]
-    if mode == "xswap":
-        raise ValueError("xswap runs held pending descriptor lifetime review resolution")
+    if mode == "xswap" and workload != "lifetime":
+        raise ValueError("xswap performance runs held pending descriptor lifetime review resolution")
     lines = set(config.read_text().splitlines())
     for option in required:
         if f"CONFIG_{option}=y" not in lines:
@@ -93,7 +93,7 @@ def main():
     parser.add_argument("--build", required=True)
     parser.add_argument("--backend", choices=["disk", "zswap", "zram", "brd"], required=True)
     parser.add_argument("--mode", choices=["plain", "xswap"], default="plain")
-    parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata"], required=True)
+    parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime"], required=True)
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--run-id", type=run_id, help="explicit unique run directory name")
@@ -113,7 +113,7 @@ def main():
     with (PROJECT / "benchmark/kernel/.runtime.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         build = PROJECT / "benchmark/kernel/builds" / args.build
-        manifest, provenance, image, config = validate(build, args.backend, args.mode)
+        manifest, provenance, image, config = validate(build, args.backend, args.mode, args.workload)
         if args.check_only:
             print("INPUTS_VERIFIED; no guest started")
             return

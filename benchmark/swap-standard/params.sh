@@ -24,3 +24,13 @@ REDIS_VALUE=1024
 
 # Swap-in latency, the zswapin_perf method: fill, reclaim through memory.reclaim, read back.
 SWAPIN_SIZE=1G
+
+# Slot lifetime churn (xswap correctness): workers fill past the memcg limit
+# and exit together while zswap writes back to the physical backend.
+LIFETIME_MEMCG=768M
+LIFETIME_WORKERS=4
+LIFETIME_SIZE=512M
+LIFETIME_SEC=150
+LIFETIME_ZSWAP_POOL_PERCENT=4
+# Only instrumented kernels expose this; it widens the writeback race window.
+LIFETIME_WB_DELAY_MS=50
