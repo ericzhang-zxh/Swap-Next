@@ -171,7 +171,7 @@ def main():
         with (dest / "serial.log").open("w") as log:
             if stop_requested(args.stop_file):
                 raise SystemExit("STOP")
-            proc = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
+            proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                                     start_new_session=True, preexec_fn=bind_child_to_parent)
             try:
                 while proc.poll() is None:
