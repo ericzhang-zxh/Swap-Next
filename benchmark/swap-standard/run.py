@@ -56,6 +56,15 @@ def sha(path):
     return h.hexdigest()
 
 
+# xs-desc-lifetime-v1: unpinned cluster lookups survive an xswap shrink.
+LIFETIME_FIX = "5e84ca928deeacb4eee656806a003f27d1eca82f"
+
+
+def has_lifetime_fix(commit):
+    return subprocess.run(["git", "-C", str(PROJECT / "linux"), "merge-base", "--is-ancestor",
+                           LIFETIME_FIX, commit], capture_output=True).returncode == 0
+
+
 def validate(build, backend, mode, workload):
     manifest = json.loads((build / "result.json").read_text())
     image = build / "output/arch/x86/boot/bzImage"
@@ -71,8 +80,8 @@ def validate(build, backend, mode, workload):
     if backend == "brd":
         required += ["BLK_DEV_RAM"]
     required += ["ZSWAP"]
-    if mode == "xswap" and workload != "lifetime":
-        raise ValueError("xswap performance runs held pending descriptor lifetime review resolution")
+    if mode == "xswap" and workload != "lifetime" and not has_lifetime_fix(manifest["commit"]):
+        raise ValueError("xswap performance runs need the descriptor lifetime fix")
     lines = set(config.read_text().splitlines())
     for option in required:
         if f"CONFIG_{option}=y" not in lines:
@@ -88,12 +97,17 @@ def validate(build, backend, mode, workload):
     return manifest, provenance, image, config
 
 
+def validate_workload(backend, mode, workload):
+    if workload == "correctness" and (mode != "xswap" or backend not in ("disk", "zswap")):
+        raise ValueError("correctness requires xswap with disk or zswap")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build", required=True)
     parser.add_argument("--backend", choices=["disk", "zswap", "zram", "brd"], required=True)
     parser.add_argument("--mode", choices=["plain", "xswap"], default="plain")
-    parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime"], required=True)
+    parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime", "correctness"], required=True)
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--run-id", type=run_id, help="explicit unique run directory name")
@@ -108,6 +122,7 @@ def main():
         parser.error("timeout must be 30..3600 seconds")
     if (args.workload == "metadata") != (args.backend == "brd"):
         parser.error("metadata uses brd exclusively; brd is reserved for metadata")
+    validate_workload(args.backend, args.mode, args.workload)
     if stop_requested(args.stop_file):
         raise SystemExit("STOP")
     with (PROJECT / "benchmark/kernel/.runtime.lock").open("a") as lock:

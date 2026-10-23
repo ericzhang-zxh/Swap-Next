@@ -1,0 +1,21 @@
+{
+  "campaign": "xswap-swapin-2026-10-23",
+  "phase": "PREPARATION",
+  "resumed_utc": "2026-10-23T18:43:19.972607+00:00",
+  "deadline_utc": "2026-10-24T04:43:19.972607+00:00",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "budget": {
+    "guest_attempts": 160,
+    "build_attempts": 8,
+    "wall_seconds": 36000,
+    "guest_timeout": 900
+  },
+  "architecture_candidates": 2,
+  "candidate_registry_cap": 4,
+  "authorization": "Owner continued H1/H2 after Claude Code interruption; previous session explicitly authorized both experiments after lifetime repair.",
+  "prior_protocol_preserved": "results/xswap-p123-2026-10-23/overnight-contract.json",
+  "protocol": "benchmark/swap-standard/protocol-xswap-swapin-2026-10-23.json",
+  "formal_acceptance": false,
+  "publication": false,
+  "promotion": false
+}

@@ -7,6 +7,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -18,6 +19,14 @@ ROOT = Path(__file__).resolve().parents[1]
 BENCH = ROOT / "benchmark/swap-standard"
 STATE = ROOT / "evolve/swap-standard/state-layout-v1"
 PROTOCOL = BENCH / "protocol.json"
+
+
+def select_protocol(path):
+    """Use another frozen protocol with its own ledger, budget and calibration."""
+    global STATE, PROTOCOL
+    PROTOCOL = path.resolve()
+    if PROTOCOL != (BENCH / "protocol.json").resolve():
+        STATE = ROOT / "evolve/swap-standard" / ("state-" + read(PROTOCOL)["campaign"])
 sys.path.insert(0, str(ROOT / "benchmark/kernel"))
 from lifetime import bind_child_to_parent
 
@@ -54,7 +63,7 @@ def fingerprint(p):
              ROOT / "evolve/control/campaigns" / p["campaign"] / "policy.json",
              ROOT / "benchmark/config/swap-standard.config"]
     paths += list(BENCH.glob("*.py")) + list(BENCH.glob("*.sh"))
-    paths += [BENCH / name for name in ["guest-init", "tools.json", "swapin.c"]]
+    paths += [BENCH / name for name in ["guest-init", "tools.json", "swapin.c", "correctness.c"]]
     paths += [ROOT / "benchmark/kernel" / name for name in ["build.py", "lifetime.py", "build_namespace.sh"]]
     paths += [ROOT / "benchmark/kernel/builds" / p["baseline_build"] / "result.json"]
     return hashlib.sha256(json.dumps({str(f.relative_to(ROOT)): sha(f) for f in paths}, sort_keys=True).encode()).hexdigest()
@@ -170,7 +179,11 @@ class Workflow:
         if commit in self.p["blocked_commits"]:
             raise RuntimeError("BLOCKED: " + self.p["blocked_commits"][commit])
         proof = read(correctness) if correctness else {}
-        if proof.get("candidate_commit") != commit or not all(proof.get("gates", {}).get(k) is True for k in self.p["required_correctness_gates"]):
+        # A direct guest result must pass every runner gate, including exit and identity.
+        if "source_commit" in proof and proof.get("integration_pass") is not True:
+            raise RuntimeError("guest correctness evidence failed integration")
+        # A guest result.json names its kernel as source_commit.
+        if proof.get("candidate_commit", proof.get("source_commit")) != commit or not all(proof.get("gates", {}).get(k) is True for k in self.p["required_correctness_gates"]):
             raise RuntimeError("missing exact-commit correctness evidence")
         return commit, record, proof
 
@@ -217,7 +230,9 @@ class Workflow:
                     raise RuntimeError("controller scope check missing")
                 row["controller_check"] = checked
                 calibration = self.calibration(tier, fp)
-                build = "std-" + commit[:12]
+                build = self.p.get("candidate_builds", {}).get(candidate, "std-" + commit[:12])
+                if not re.fullmatch(r"[a-z0-9-]{1,48}", build):
+                    raise RuntimeError("invalid protocol candidate build name")
                 path = ROOT / "benchmark/kernel/builds" / build / "result.json"
                 if not path.exists():
                     self.reserve("build")
@@ -246,7 +261,7 @@ class Workflow:
                         attempt = {"id": run_id, "pair": pair_index, "case": case_name, "arm": arm, "status": "STARTED"}
                         row["runs"].append(attempt)
                         save(dest / "report.json", row)
-                        self.command([sys.executable, str(BENCH / "run.py"), "--build", chosen, "--backend", case["backend"], "--workload", case["workload"], "--run-id", run_id, "--stop-file", str(self.stop), "--timeout", str(self.p["budget"]["guest_timeout"])], dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60)
+                        self.command([sys.executable, str(BENCH / "run.py"), "--build", chosen, "--backend", case["backend"], "--mode", case.get("mode", "plain"), "--workload", case["workload"], "--run-id", run_id, "--stop-file", str(self.stop), "--timeout", str(self.p["budget"]["guest_timeout"])], dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60)
                         result_path = BENCH / "runs" / run_id / "result.json"
                         result = read(result_path)
                         expected = self.p["baseline_commit"] if arm == "a" else commit
@@ -297,7 +312,9 @@ def main(argv=None):
     parser.add_argument("--tier", choices=["fast", "slow", "auto"], default="auto")
     parser.add_argument("--candidate")
     parser.add_argument("--correctness", type=Path)
+    parser.add_argument("--protocol", type=Path, default=PROTOCOL)
     args = parser.parse_args(argv)
+    select_protocol(args.protocol)
     STATE.mkdir(parents=True, exist_ok=True)
     with (STATE / ".lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)

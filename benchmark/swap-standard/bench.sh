@@ -18,7 +18,7 @@ meminfo() {
 
 vmstat() {
 	echo "VMSTAT_BEGIN $1"
-	grep -E '^(pswpin|pswpout|zswpin|zswpout|zswpwb|pgmajfault|swpin_zero|swpout_zero) ' /proc/vmstat || true
+	grep -E '^(pswpin|pswpout|zswpin|zswpout|zswpwb|pgmajfault|swpin_zero|swpout_zero|swap_ra|swap_ra_hit) ' /proc/vmstat || true
 	echo "VMSTAT_END $1"
 }
 
@@ -181,9 +181,29 @@ run_lifetime() {
 	xswap_counters lifetime_end
 }
 
+run_correctness() {
+	[ "$mode" = xswap ] || fail correctness_mode
+	case $backend in disk|zswap) ;; *) fail correctness_backend ;; esac
+	enter_cgroup max
+	local path type
+	set -- /sys/kernel/debug/xswap/type*
+	[ "$#" -eq 1 ] && [ -f "$1" ] || fail correctness_type
+	path=$1 type=${1##*/type}
+	vmstat correctness_start
+	correctness "$type"
+	vmstat correctness_end
+	[ ! -e "$path" ] || fail correctness_destroy
+	[ "$(wc -l < /proc/swaps)" -eq 1 ] || fail correctness_swapoff
+	echo EMPTY_SWAPS_PASS
+}
+
 run_swapin() {
 	enter_cgroup max
+	vmstat swapin_start
+	[ "$mode" != xswap ] || xswap_counters swapin_start
 	swapin "$SWAPIN_SIZE" "$cg/memory.reclaim"
+	vmstat swapin_end
+	[ "$mode" != xswap ] || xswap_counters swapin_end
 }
 
 echo "BENCH_PARAMS backend=$backend mode=$mode workload=$workload ncpu=$(nproc)"
@@ -220,6 +240,7 @@ build)       run_build ;;
 redis)       run_redis ;;
 swapin)      run_swapin ;;
 lifetime)    run_lifetime ;;
+correctness) run_correctness ;;
 *)           fail workload ;;
 esac
 sleep 1

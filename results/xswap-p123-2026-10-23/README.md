@@ -1,6 +1,10 @@
-# xswap Phase I+II+III campaign — 2026-10-23 (preparation)
+# xswap Phase I+II+III campaign — 2026-10-23
 
-Status: PREPARED. No guest has been booted. No A/A or candidate evaluation exists.
+Status: preparation superseded by descriptor-lifetime repair `5e84ca92` and
+its retained stress checks. The owner authorized both swap-in experiments;
+the active [continuation](../xswap-swapin-2026-10-23/README.md) uses a separate
+protocol, budget and repaired baseline. The table and next steps below record
+the original preparation state, not current execution status.
 
 ## Decided
 
@@ -19,7 +23,7 @@ throughput across four runs was 1.64, 1.00, 1.28 and 0.83 GB/s, while pswpout st
 backing file. Confidence: medium; a disk-backed A/A with matched throughput on a quiet
 host page cache would change this. Swap-in and Valkey-zram were within 7–14%.
 
-## Next steps
+## Original preparation next steps
 
 1. Owner decision pending: `benchmark/swap-standard/run.py` refuses `--mode xswap`
    because of the descriptor-lifetime finding. Options: measure with the finding

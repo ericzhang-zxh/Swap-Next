@@ -1,0 +1,169 @@
+{
+  "baseline": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "rows": [
+    {
+      "id": "repro3-base-wbdelay-1",
+      "commit": "7d7fe2ec76901c0bf4cd84dba215be69c9d788aa",
+      "pass": true,
+      "failed_gates": [],
+      "rounds": 10,
+      "xswap_delta": {
+        "grows": 86,
+        "shrinks": 26
+      },
+      "vmstat_delta": {
+        "zswpwb": 4203706,
+        "pswpout": 4203706,
+        "zswpout": 5607569
+      },
+      "diagnostics": [],
+      "wall_seconds": 669.3519103199942,
+      "serial_sha256": "7980e13ff0710242504197740946ce5d8d4530ca17a5e3192c0af41c9da2c8c6",
+      "result": "benchmark/swap-standard/runs/repro3-base-wbdelay-1/result.json"
+    },
+    {
+      "id": "repro3-cand-wbdelay-1",
+      "commit": "bd96dc6da7ed924933133e85af5e94d9ef56a17c",
+      "pass": true,
+      "failed_gates": [],
+      "rounds": 9,
+      "xswap_delta": {
+        "grows": 78,
+        "shrinks": 26
+      },
+      "vmstat_delta": {
+        "zswpwb": 3794659,
+        "pswpout": 3799934,
+        "zswpout": 5038063
+      },
+      "diagnostics": [],
+      "wall_seconds": 617.3246574960067,
+      "serial_sha256": "f8301624aba17fb07b9242c24dcfe5427c71ecdacb7a6a125d319ca8064966d9",
+      "result": "benchmark/swap-standard/runs/repro3-cand-wbdelay-1/result.json"
+    },
+    {
+      "id": "repro3-base-wbdelay-2",
+      "commit": "7d7fe2ec76901c0bf4cd84dba215be69c9d788aa",
+      "pass": true,
+      "failed_gates": [],
+      "rounds": 9,
+      "xswap_delta": {
+        "grows": 79,
+        "shrinks": 22
+      },
+      "vmstat_delta": {
+        "zswpwb": 3749780,
+        "pswpout": 3749780,
+        "zswpout": 5045269
+      },
+      "diagnostics": [],
+      "wall_seconds": 614.3317314590095,
+      "serial_sha256": "74f7905261c126b8b19c7ab141d23ee5fc605f7d49b160a4238e548dfddfaaff",
+      "result": "benchmark/swap-standard/runs/repro3-base-wbdelay-2/result.json"
+    },
+    {
+      "id": "repro3-cand-wbdelay-2",
+      "commit": "bd96dc6da7ed924933133e85af5e94d9ef56a17c",
+      "pass": true,
+      "failed_gates": [],
+      "rounds": 9,
+      "xswap_delta": {
+        "grows": 91,
+        "shrinks": 25
+      },
+      "vmstat_delta": {
+        "zswpwb": 3768388,
+        "pswpout": 3770486,
+        "zswpout": 5032057
+      },
+      "diagnostics": [],
+      "wall_seconds": 635.8350159850088,
+      "serial_sha256": "c294be9671161af9632f07ee95ba13d1f2f68d111156c03a3d09758449333ddd",
+      "result": "benchmark/swap-standard/runs/repro3-cand-wbdelay-2/result.json"
+    },
+    {
+      "id": "base-debug-lifetime-1",
+      "commit": "b1eb429f257641dab45dd1633fda80c353d26250",
+      "pass": true,
+      "failed_gates": [],
+      "rounds": 9,
+      "xswap_delta": {
+        "grows": 75,
+        "shrinks": 22
+      },
+      "vmstat_delta": {
+        "zswpwb": 3745487,
+        "pswpout": 3747303,
+        "zswpout": 5028657
+      },
+      "diagnostics": [],
+      "wall_seconds": 619.3239075049642,
+      "serial_sha256": "c60716d1ee282cf08fa1b4360a8a8b66f2c2329e0009b277c8b31cfc20919ce9",
+      "result": "benchmark/swap-standard/runs/base-debug-lifetime-1/result.json"
+    },
+    {
+      "id": "cand-debug-lifetime-2",
+      "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "pass": true,
+      "failed_gates": [],
+      "rounds": 9,
+      "xswap_delta": {
+        "grows": 74,
+        "shrinks": 23
+      },
+      "vmstat_delta": {
+        "zswpwb": 3737426,
+        "pswpout": 3737426,
+        "zswpout": 5049266
+      },
+      "diagnostics": [],
+      "wall_seconds": 617.3296875350061,
+      "serial_sha256": "68281bfd5711626b84ed118659b5606a5bf0f5d13fe4175f1d1b009110dfaab0",
+      "result": "benchmark/swap-standard/runs/cand-debug-lifetime-2/result.json"
+    },
+    {
+      "id": "cand-std-lifetime-1",
+      "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "pass": true,
+      "failed_gates": [],
+      "rounds": 10,
+      "xswap_delta": {
+        "grows": 36,
+        "shrinks": 11
+      },
+      "vmstat_delta": {
+        "zswpwb": 4166837,
+        "pswpout": 4166837,
+        "zswpout": 5552741
+      },
+      "diagnostics": [],
+      "wall_seconds": 611.8197183469892,
+      "serial_sha256": "c404bc266ade450f229b95c9e9b2102cb228106819cec55022eed1a537f8d725",
+      "result": "benchmark/swap-standard/runs/cand-std-lifetime-1/result.json"
+    },
+    {
+      "id": "desc-v1-debug-lifetime-1",
+      "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "pass": false,
+      "failed_gates": [
+        "lifetime_data"
+      ],
+      "rounds": 2,
+      "xswap_delta": {
+        "grows": 26,
+        "shrinks": 5
+      },
+      "vmstat_delta": {
+        "zswpwb": 836029,
+        "pswpout": 836029,
+        "zswpout": 1112476
+      },
+      "diagnostics": [],
+      "wall_seconds": 167.59610716201132,
+      "serial_sha256": "1b256f3984cad7e412cf3659bb4b100836203fd5440a19f8b35eb2e8af6381c5",
+      "result": "benchmark/swap-standard/runs/desc-v1-debug-lifetime-1/result.json"
+    }
+  ],
+  "runtime_reproducer": false,
+  "sparse_status": "diagnostic-set comparison only; retained tool error and missing original make status"
+}

@@ -16,6 +16,13 @@ spec.loader.exec_module(runner)
 
 
 class RunnerValidationTests(unittest.TestCase):
+    def test_correctness_routes(self):
+        for backend in ('disk', 'zswap'):
+            runner.validate_workload(backend, 'xswap', 'correctness')
+        for backend, mode in (('disk', 'plain'), ('zram', 'xswap'), ('brd', 'xswap')):
+            with self.assertRaises(ValueError):
+                runner.validate_workload(backend, mode, 'correctness')
+
     def test_run_id_valid(self):
         for value in ("a", "A0_zz-9", "x" * 96):
             with self.subTest(value=value):

@@ -1,0 +1,13 @@
+{
+  "input_config": "benchmark/config/swap-standard-debug.config",
+  "output_config": "benchmark/kernel/builds/xs-ra-phys-v1-debug/output/.config",
+  "observed": {
+    "SLUB_TINY": true,
+    "KASAN": false,
+    "PROVE_LOCKING": true,
+    "PROVE_RCU": true
+  },
+  "reason": "KASAN depends on !SLUB_TINY",
+  "replacement": "benchmark/config/swap-standard-kasan.config",
+  "prior_artifacts_retained": true
+}
