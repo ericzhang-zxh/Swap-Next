@@ -16,6 +16,7 @@
 static uint64_t samples[PAGES], order[PAGES], types[PAGES];
 static int xswap_type;
 static char debugpath[128];
+static const char *reclaim_path;
 static uint64_t pattern(size_t i) { return ((i/512)*8+i%8)*UINT64_C(0x9e3779b97f4a7c15)^UINT64_C(0xa5a5a5a5a5a5a5a5); }
 /* Explicit pageout works without relying on host-sized global pressure. */
 static size_t swapped_pages(uint64_t *data, int require_targets) {
@@ -36,6 +37,13 @@ static size_t pageout_verified(uint64_t *data, size_t bytes, int targets) {
  size_t count=0;
  for(int attempt=0;attempt<16;attempt++){
   if(madvise(data,bytes,MADV_PAGEOUT))exit(34);
+  /* Reclaim swap-cache folios too, so later accesses exercise the backend. */
+  int fd=open(reclaim_path,O_WRONLY);if(fd<0){perror("memory.reclaim open");exit(42);}
+  char amount[32];int len=snprintf(amount,sizeof amount,"%zu",bytes);
+  ssize_t written=write(fd,amount,len);int saved_errno=errno;close(fd);
+  if(written!=len&&!(written<0&&saved_errno==EAGAIN)){
+   errno=saved_errno;perror("memory.reclaim write");exit(43);
+  }
   usleep(125000);
   count=swapped_pages(data,targets);
   if(count>=1000)return count;
@@ -50,7 +58,8 @@ static void metadata(const char *phase) {
 }
 int main(int argc, char **argv) {
  uint64_t workload_start=clock_ns();
- if(argc!=2)return 20;
+ if(argc!=3)return 20;
+ reclaim_path=argv[2];
  char *end;long type=strtol(argv[1],&end,10);if(*end||type<0||type>31)return 21;
  xswap_type=(int)type;
  snprintf(debugpath,sizeof debugpath,"/sys/kernel/debug/xswap/type%d",xswap_type);
