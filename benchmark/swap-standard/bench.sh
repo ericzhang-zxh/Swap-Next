@@ -77,7 +77,7 @@ sample_swaps() {
 
 report_swap_peaks() {
 	echo SWAP_PEAK_BEGIN
-	awk '{if ($2 > m[$1]) m[$1] = $2} END {for (d in m) print d, m[d]}' /tmp/swaps.samples | sort
+	awk '{if ($2 > m[$1]) m[$1] = $2} END {for (d in m) printf "%s %d\n", d, m[d]}' /tmp/swaps.samples | sort
 	echo SWAP_PEAK_END
 }
 

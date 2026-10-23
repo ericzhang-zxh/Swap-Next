@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 """Runner validation tests; no guest launches."""
 import argparse
+import re
+import subprocess
+import shlex
 import importlib.util
 from pathlib import Path
 import sys
@@ -22,6 +25,16 @@ class RunnerValidationTests(unittest.TestCase):
         for backend, mode in (('disk', 'plain'), ('zram', 'xswap'), ('brd', 'xswap')):
             with self.assertRaises(ValueError):
                 runner.validate_workload(backend, mode, 'correctness')
+
+    def test_swap_peak_output_retains_zero_usage(self):
+        script = (BASE / "bench.sh").read_text()
+        function = re.search(r"^report_swap_peaks\(\) \{.*?^\}", script, re.M | re.S).group(0)
+        with tempfile.TemporaryDirectory() as directory:
+            samples = Path(directory) / "samples"
+            samples.write_text("/dev/vda 0\nxswap1 64\n/dev/vda 0\nxswap1 32\n")
+            function = function.replace("/tmp/swaps.samples", shlex.quote(str(samples)))
+            output = subprocess.check_output(["bash", "-c", function + "\nreport_swap_peaks"], text=True)
+        self.assertEqual(output, "SWAP_PEAK_BEGIN\n/dev/vda 0\nxswap1 64\nSWAP_PEAK_END\n")
 
     def test_run_id_valid(self):
         for value in ("a", "A0_zz-9", "x" * 96):
