@@ -1,0 +1,1727 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-swapin-2026-10-23",
+  "run_counts": {
+    "PASS": 42,
+    "COMPLETED_FAILED": 4,
+    "running": 0,
+    "completed_failed": 4,
+    "stopped": 0,
+    "incomplete": 0
+  },
+  "candidate_findings": [
+    {
+      "candidate": "xs-ra-phys-v1",
+      "tier": "fast",
+      "status": "REGRESSION",
+      "pair_count": 2,
+      "failed_guards": [
+        "swapin-disk.swapin_rand.p99_ns"
+      ],
+      "report": "benchmark/swap-standard/evaluations/8a4b89fc0c8e44dd80c7675ef9c8c0fb/report.json"
+    },
+    {
+      "candidate": "xs-ra-zswap-v1",
+      "tier": "fast",
+      "status": "REGRESSION",
+      "pair_count": 2,
+      "failed_guards": [
+        "swapin-zswap.swapin_seq.p99_ns"
+      ],
+      "report": "benchmark/swap-standard/evaluations/31cced4875f8470dbdde1dd557fca236/report.json"
+    }
+  ],
+  "metric_ratios": [
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      2,
+      "swapin-disk.swapin_seq.mean_ns",
+      6.533107,
+      -84.69,
+      4.48,
+      "PASS"
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      2,
+      "swapin-disk.swapin_seq.p99_ns",
+      1.113266,
+      -10.17,
+      3.06,
+      "PASS"
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      2,
+      "swapin-disk.swapin_rand.mean_ns",
+      0.987356,
+      1.28,
+      3.0,
+      "PASS"
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      2,
+      "swapin-disk.swapin_rand.p99_ns",
+      0.904953,
+      10.5,
+      3.0,
+      "FAIL"
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      2,
+      "swapin-zswap.swapin_seq.mean_ns",
+      1.006231,
+      -0.62,
+      3.0,
+      "PASS"
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      2,
+      "swapin-zswap.swapin_seq.p99_ns",
+      1.05638,
+      -5.34,
+      7.73,
+      "PASS"
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      2,
+      "swapin-zswap.swapin_rand.mean_ns",
+      1.162207,
+      -13.96,
+      3.0,
+      "PASS"
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      2,
+      "swapin-zswap.swapin_rand.p99_ns",
+      2.665868,
+      -62.49,
+      10.88,
+      "PASS"
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      2,
+      "swapin-disk.swapin_seq.mean_ns",
+      1.015766,
+      -1.55,
+      4.48,
+      "PASS"
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      2,
+      "swapin-disk.swapin_seq.p99_ns",
+      1.048207,
+      -4.6,
+      3.06,
+      "PASS"
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      2,
+      "swapin-disk.swapin_rand.mean_ns",
+      1.091175,
+      -8.36,
+      3.0,
+      "PASS"
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      2,
+      "swapin-disk.swapin_rand.p99_ns",
+      1.053169,
+      -5.05,
+      3.0,
+      "PASS"
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      2,
+      "swapin-zswap.swapin_seq.mean_ns",
+      1.004084,
+      -0.41,
+      3.0,
+      "PASS"
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      2,
+      "swapin-zswap.swapin_seq.p99_ns",
+      0.262609,
+      280.79,
+      7.73,
+      "FAIL"
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      2,
+      "swapin-zswap.swapin_rand.mean_ns",
+      1.005972,
+      -0.59,
+      3.0,
+      "PASS"
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      2,
+      "swapin-zswap.swapin_rand.p99_ns",
+      1.006824,
+      -0.68,
+      10.88,
+      "PASS"
+    ]
+  ],
+  "compressed_latency_rows": [
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "a",
+      13.509,
+      13.932,
+      11.683,
+      25.374
+    ],
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "b",
+      0.528,
+      82.369,
+      11.633,
+      97.538
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "b",
+      0.528,
+      82.68,
+      11.629,
+      98.27
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "a",
+      13.535,
+      13.941,
+      11.674,
+      26.051
+    ]
+  ],
+  "mechanism_rows": [
+    [
+      "calibrate",
+      "fast",
+      0,
+      "swapin-disk",
+      "a",
+      0,
+      0,
+      262140,
+      0
+    ],
+    [
+      "calibrate",
+      "fast",
+      0,
+      "swapin-disk",
+      "b",
+      0,
+      1,
+      262167,
+      0
+    ],
+    [
+      "calibrate",
+      "fast",
+      0,
+      "swapin-zswap",
+      "a",
+      0,
+      0,
+      0,
+      262166
+    ],
+    [
+      "calibrate",
+      "fast",
+      0,
+      "swapin-zswap",
+      "b",
+      0,
+      0,
+      0,
+      262160
+    ],
+    [
+      "calibrate",
+      "fast",
+      1,
+      "swapin-disk",
+      "b",
+      0,
+      0,
+      262155,
+      0
+    ],
+    [
+      "calibrate",
+      "fast",
+      1,
+      "swapin-disk",
+      "a",
+      0,
+      0,
+      262152,
+      0
+    ],
+    [
+      "calibrate",
+      "fast",
+      1,
+      "swapin-zswap",
+      "b",
+      0,
+      0,
+      0,
+      262160
+    ],
+    [
+      "calibrate",
+      "fast",
+      1,
+      "swapin-zswap",
+      "a",
+      0,
+      0,
+      0,
+      262167
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      0,
+      "swapin-disk",
+      "a",
+      0,
+      0,
+      262170,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      0,
+      "swapin-disk",
+      "b",
+      114943,
+      114936,
+      262176,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      0,
+      "swapin-zswap",
+      "a",
+      0,
+      0,
+      0,
+      262160
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      0,
+      "swapin-zswap",
+      "b",
+      0,
+      0,
+      0,
+      262160
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      1,
+      "swapin-disk",
+      "b",
+      114832,
+      114827,
+      262152,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      1,
+      "swapin-disk",
+      "a",
+      0,
+      0,
+      262163,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      1,
+      "swapin-zswap",
+      "b",
+      0,
+      0,
+      0,
+      262166
+    ],
+    [
+      "xs-ra-phys-v1",
+      "fast",
+      1,
+      "swapin-zswap",
+      "a",
+      0,
+      0,
+      0,
+      262160
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      0,
+      "swapin-disk",
+      "a",
+      0,
+      0,
+      262132,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      0,
+      "swapin-disk",
+      "b",
+      0,
+      2,
+      262146,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      0,
+      "swapin-zswap",
+      "a",
+      0,
+      0,
+      0,
+      262166
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      0,
+      "swapin-zswap",
+      "b",
+      114780,
+      114773,
+      0,
+      262170
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      1,
+      "swapin-disk",
+      "b",
+      0,
+      2,
+      262145,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      1,
+      "swapin-disk",
+      "a",
+      0,
+      2,
+      262146,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      1,
+      "swapin-zswap",
+      "b",
+      114736,
+      114729,
+      0,
+      262166
+    ],
+    [
+      "xs-ra-zswap-v1",
+      "fast",
+      1,
+      "swapin-zswap",
+      "a",
+      0,
+      0,
+      0,
+      262163
+    ]
+  ],
+  "xswap_snapshot_rows": [
+    [
+      "calibrate",
+      0,
+      "swapin-disk",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "calibrate",
+      0,
+      "swapin-disk",
+      "a",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "calibrate",
+      0,
+      "swapin-disk",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "calibrate",
+      0,
+      "swapin-disk",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "calibrate",
+      0,
+      "swapin-zswap",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "calibrate",
+      0,
+      "swapin-zswap",
+      "a",
+      "swapin_end",
+      657,
+      1,
+      10,
+      1
+    ],
+    [
+      "calibrate",
+      0,
+      "swapin-zswap",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "calibrate",
+      0,
+      "swapin-zswap",
+      "b",
+      "swapin_end",
+      657,
+      1,
+      10,
+      1
+    ],
+    [
+      "calibrate",
+      1,
+      "swapin-disk",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "calibrate",
+      1,
+      "swapin-disk",
+      "b",
+      "swapin_end",
+      146,
+      0,
+      10,
+      1
+    ],
+    [
+      "calibrate",
+      1,
+      "swapin-disk",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "calibrate",
+      1,
+      "swapin-disk",
+      "a",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "calibrate",
+      1,
+      "swapin-zswap",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "calibrate",
+      1,
+      "swapin-zswap",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "calibrate",
+      1,
+      "swapin-zswap",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "calibrate",
+      1,
+      "swapin-zswap",
+      "a",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-phys-v1",
+      0,
+      "swapin-disk",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      0,
+      "swapin-disk",
+      "a",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-phys-v1",
+      0,
+      "swapin-disk",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      0,
+      "swapin-disk",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-phys-v1",
+      0,
+      "swapin-zswap",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      0,
+      "swapin-zswap",
+      "a",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-phys-v1",
+      0,
+      "swapin-zswap",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      0,
+      "swapin-zswap",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-phys-v1",
+      1,
+      "swapin-disk",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      1,
+      "swapin-disk",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-phys-v1",
+      1,
+      "swapin-disk",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      1,
+      "swapin-disk",
+      "a",
+      "swapin_end",
+      146,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-phys-v1",
+      1,
+      "swapin-zswap",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      1,
+      "swapin-zswap",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-phys-v1",
+      1,
+      "swapin-zswap",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-phys-v1",
+      1,
+      "swapin-zswap",
+      "a",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "swapin-disk",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "swapin-disk",
+      "a",
+      "swapin_end",
+      657,
+      1,
+      10,
+      1
+    ],
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "swapin-disk",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "swapin-disk",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "swapin-zswap",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "swapin-zswap",
+      "a",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "swapin-zswap",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      0,
+      "swapin-zswap",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "swapin-disk",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "swapin-disk",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "swapin-disk",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "swapin-disk",
+      "a",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "swapin-zswap",
+      "b",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "swapin-zswap",
+      "b",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "swapin-zswap",
+      "a",
+      "swapin_start",
+      73,
+      0,
+      0,
+      0
+    ],
+    [
+      "xs-ra-zswap-v1",
+      1,
+      "swapin-zswap",
+      "a",
+      "swapin_end",
+      657,
+      0,
+      10,
+      1
+    ]
+  ],
+  "metric_points": {
+    "swapin-disk.swapin_seq.mean_ns": [
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 150930.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 155493.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+      },
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 150091.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 156811.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 146156.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 21780.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 152731.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 24013.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 154554.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 152173.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 158672.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 156191.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+      }
+    ],
+    "swapin-disk.swapin_seq.p99_ns": [
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 309639.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 312129.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+      },
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 302480.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 311738.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 306596.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 259617.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 307410.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 292923.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 307145.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 300174.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 327694.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 305172.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+      }
+    ],
+    "swapin-disk.swapin_rand.mean_ns": [
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 217749.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 215626.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+      },
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 220694.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 216541.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 185325.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 184528.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 216153.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 222682.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 226277.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 185421.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 217999.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 223433.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+      }
+    ],
+    "swapin-disk.swapin_rand.p99_ns": [
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 354513.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 354040.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+      },
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 355172.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 348412.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 325870.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 329470.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 351938.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 425053.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 361453.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 312546.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 376841.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 392916.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+      }
+    ],
+    "swapin-zswap.swapin_seq.mean_ns": [
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 11687.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 11872.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+      },
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 11654.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 11781.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 11819.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 11680.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 11791.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 11784.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 11683.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 11633.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 11674.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 11629.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+      }
+    ],
+    "swapin-zswap.swapin_seq.p99_ns": [
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 26530.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 28581.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+      },
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 25591.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 25619.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 27322.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 25828.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 28180.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 26713.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 25374.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 97538.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 26051.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 98270.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+      }
+    ],
+    "swapin-zswap.swapin_rand.mean_ns": [
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 13583.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 13749.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+      },
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 13592.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 13648.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 13822.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 13614.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 18289.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 13747.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 13697.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 13718.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 13783.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 13599.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+      }
+    ],
+    "swapin-zswap.swapin_rand.p99_ns": [
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 26640.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 29538.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 0 AB arm b"
+      },
+      {
+        "group": "A/A fast",
+        "series": "A",
+        "value": 26200.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm a"
+      },
+      {
+        "group": "A/A fast",
+        "series": "B",
+        "value": 27299.0,
+        "tip": "ea868d13979340a780fc5c28fee161da pair 1 BA arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 33776.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 27020.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 0 AB arm b"
+      },
+      {
+        "group": "H1 fast",
+        "series": "A",
+        "value": 162509.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm a"
+      },
+      {
+        "group": "H1 fast",
+        "series": "B",
+        "value": 28584.0,
+        "tip": "8a4b89fc0c8e44dd80c7675ef9c8c0fb pair 1 BA arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 26498.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 26010.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 0 AB arm b"
+      },
+      {
+        "group": "H2 fast",
+        "series": "A",
+        "value": 26405.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm a"
+      },
+      {
+        "group": "H2 fast",
+        "series": "B",
+        "value": 26537.0,
+        "tip": "31cced4875f8470dbdde1dd557fca236 pair 1 BA arm b"
+      }
+    ]
+  },
+  "missing_gates": [
+    {
+      "candidate": "baseline",
+      "gate": "gcc_swap_off"
+    },
+    {
+      "candidate": "baseline",
+      "gate": "checkpatch"
+    },
+    {
+      "candidate": "baseline",
+      "gate": "allocation_failure"
+    },
+    {
+      "candidate": "baseline",
+      "gate": "io_failure"
+    },
+    {
+      "candidate": "baseline",
+      "gate": "memcg_limits"
+    },
+    {
+      "candidate": "baseline",
+      "gate": "large_folio"
+    },
+    {
+      "candidate": "baseline",
+      "gate": "kcsan"
+    },
+    {
+      "candidate": "xs-ra-phys-v1",
+      "gate": "gcc_swap_off"
+    },
+    {
+      "candidate": "xs-ra-phys-v1",
+      "gate": "allocation_failure"
+    },
+    {
+      "candidate": "xs-ra-phys-v1",
+      "gate": "io_failure"
+    },
+    {
+      "candidate": "xs-ra-phys-v1",
+      "gate": "memcg_limits"
+    },
+    {
+      "candidate": "xs-ra-phys-v1",
+      "gate": "large_folio"
+    },
+    {
+      "candidate": "xs-ra-phys-v1",
+      "gate": "kcsan"
+    },
+    {
+      "candidate": "xs-ra-zswap-v1",
+      "gate": "gcc_swap_off"
+    },
+    {
+      "candidate": "xs-ra-zswap-v1",
+      "gate": "allocation_failure"
+    },
+    {
+      "candidate": "xs-ra-zswap-v1",
+      "gate": "io_failure"
+    },
+    {
+      "candidate": "xs-ra-zswap-v1",
+      "gate": "memcg_limits"
+    },
+    {
+      "candidate": "xs-ra-zswap-v1",
+      "gate": "large_folio"
+    },
+    {
+      "candidate": "xs-ra-zswap-v1",
+      "gate": "kcsan"
+    }
+  ],
+  "next_hypotheses": [
+    [
+      "1",
+      "H1 adaptive readahead window with a tail guard",
+      "Reject a new candidate if random p99 exceeds its calibrated envelope."
+    ],
+    [
+      "2",
+      "H2 bound synchronous decompression work",
+      "Reject unbounded prefetch or added demand-fault latency."
+    ],
+    [
+      "3",
+      "Further validation only for a new candidate",
+      "Require fresh correctness evidence and a fast pass before slow confirmation."
+    ]
+  ],
+  "source_commit": "23f13a766e4df884ffee2ef5e1379c45e80e54c8",
+  "source_url": "https://github.com/ericzhang-zxh/Swap-Next/tree/23f13a766e4df884ffee2ef5e1379c45e80e54c8/results/xswap-swapin-2026-10-23",
+  "publication_scope": "Report only; candidate code remains on experiment branches.",
+  "limitations": [
+    "Two-pair fast screening; neither candidate eligible for slow confirmation.",
+    "Sparse baseline diagnostic, CONFIG_SWAP=n, KCSAN, fault injection and large-folio coverage remain incomplete.",
+    "Full raw evidence and runtime state are retained separately."
+  ]
+}

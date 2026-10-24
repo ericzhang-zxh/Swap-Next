@@ -42,8 +42,14 @@ When the campaign stops, close it with the review page:
 2. Follow [explaining-campaign-results](../../explaining-campaign-results/SKILL.md)
    to generate `results/<c>/explainer.json` and `explainer.html` from the
    evaluation reports, render both themes, and link the page from the README.
-3. Commit both on the campaign branch. Merging to `main` publishes the page
-   through GitHub Pages, so it waits for the owner.
+3. Retain the complete evidence on the campaign branch. Under AGENTS.md's standing
+   report-publication policy, use an isolated worktree from current `origin/main`
+   to copy only reviewed report artifacts into `results/<c>/`. Keep candidate
+   code, benchmark changes, gitlinks and raw runtime state off main.
+4. Inspect the diff and build the Pages index, then push the report-only commit
+   to main. Verify that commit's Pages deployment, live campaign URL and index.
+   Preserve failed or inconclusive verdicts; report publication is not promotion.
+   If the user explicitly withholds publication, retain the local report instead.
 
 What each adapter action does:
 

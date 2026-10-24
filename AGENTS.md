@@ -27,7 +27,8 @@ Loading that skill does not authorize running or publishing experiments.
 - **Evidence**: missing evidence is a failure, never a pass. Correctness gates
   are not weakened.
 - **Host**: no host reboot, host swap changes, raw host disks or sudo.
-- **Merging**: nothing is merged or promoted automatically.
+- **Merging**: candidate code is never merged or promoted automatically. Report-only
+  publication follows the standing policy below.
 - **Commits**: keep runtime state, secrets, machine paths and credentials out
   of commits. AI tools add no `Signed-off-by`; a human certifies upstream
   submissions.
@@ -43,3 +44,22 @@ Loading that skill does not authorize running or publishing experiments.
   or links to [DESIGN.md#limitations](DESIGN.md#limitations).
 - Say a thing once. Link to the document that owns it instead of restating it.
 - Prefer a short table of numbers to a paragraph of qualifiers.
+
+## Report publication
+
+- Closing an authorized campaign includes publishing its completed review report
+  to Pages, including rejected and inconclusive outcomes, unless the user asks
+  to keep that report private or local.
+- Keep candidate code, benchmark changes, submodule updates and live runtime
+  state on the experiment branch. Publish reviewed `results/<campaign>/` report
+  artifacts in a separate commit based on current `origin/main`; never merge the
+  experiment branch merely to expose its report.
+- Include `explainer.html`, `explainer.json`, the written report and a public data
+  summary. Preserve failed gates, uncertainty and pinned source/evidence links;
+  omit credentials, host-specific paths and raw private runtime data.
+- Use an isolated worktree, inspect the complete diff, build the Pages index and
+  push the report-only commit to `main`. Pages collects the checked-out main
+  tree, not reports across all branches.
+- Verify the deployment for that commit and the live campaign page and index
+  before reporting publication complete. Publishing a report grants no approval
+  to promote its candidate code or launch another experiment.

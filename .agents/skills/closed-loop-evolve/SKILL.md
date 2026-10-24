@@ -102,8 +102,10 @@ artifact, not only the written report. Update the report's status and findings
 first, then produce the review artifact the project defines (for Swap Next, the
 explainer page; see the binding) from the same evidence, and link it from the
 report. Do this even if nothing was accepted or the campaign ended early.
-Generating the artifact is part of closing; publishing it follows the project's
-publication authorization.
+Generating the artifact is part of closing. Follow the project's standing
+report-publication policy when authorized, independently of candidate promotion.
+For Swap Next, publish report artifacts separately to main as described in the
+binding and AGENTS.md, then verify the Pages deployment and live URL.
 
 ## Handoff
 
