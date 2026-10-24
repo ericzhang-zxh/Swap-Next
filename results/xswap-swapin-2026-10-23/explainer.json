@@ -1,31 +1,206 @@
 {
-  "title": "xswap swap-in campaign",
-  "subtitle": "xswap-swapin-2026-10-23 \u00b7 5e84ca928dee",
+  "title": "Why neither prefetch change advanced",
+  "subtitle": "Swap-in experiments \u00b7 23 October 2026 \u00b7 completed fast screening",
   "verdict": {
     "status": "rejected",
-    "headline": "2 candidates screened out; none eligible for slow confirmation",
+    "headline": "Neither candidate is ready to advance",
     "tiles": [
       {
-        "label": "Guest attempts observed",
-        "value": 46
+        "label": "Disk: sequential average",
+        "value": "-84.7%",
+        "note": "Sequential average; random p99 +10.5%."
       },
       {
-        "label": "Integration passes",
-        "value": 42
-      },
-      {
-        "label": "Failed / running / incomplete / stopped",
-        "value": "4 / 0 / 0 / 0"
-      },
-      {
-        "label": "Effective KASAN passes",
-        "value": 9
+        "label": "Compressed: sequential p99",
+        "value": "+280.8%",
+        "note": "Sequential p99; average -0.4%."
       }
     ]
   },
   "sections": [
     {
-      "id": "changes",
+      "id": "physical",
+      "title": "1. Read disk-backed pages ahead",
+      "lead": "Idea: fetch nearby disk pages before they are needed. Sequential reads become much cheaper, but random-access tail latency fails the screening guard.",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Sequential average -84.7%; random p99 +10.5%",
+          "x_label": "Latency relative to original (100) \u2014 lower is better",
+          "groups": [
+            "Sequential mean",
+            "Random p99"
+          ],
+          "series": [
+            "Original",
+            "With prefetch"
+          ],
+          "points": [
+            {
+              "group": "Sequential mean",
+              "series": "Original",
+              "value": 100,
+              "tip": "Pair 1: original 146156 ns"
+            },
+            {
+              "group": "Sequential mean",
+              "series": "With prefetch",
+              "value": 14.901885656421905,
+              "tip": "Pair 1: prefetch 21780 ns; original 146156 ns"
+            },
+            {
+              "group": "Sequential mean",
+              "series": "Original",
+              "value": 100,
+              "tip": "Pair 2: original 152731 ns"
+            },
+            {
+              "group": "Sequential mean",
+              "series": "With prefetch",
+              "value": 15.7224139172794,
+              "tip": "Pair 2: prefetch 24013 ns; original 152731 ns"
+            },
+            {
+              "group": "Random p99",
+              "series": "Original",
+              "value": 100,
+              "tip": "Pair 1: original 325870 ns"
+            },
+            {
+              "group": "Random p99",
+              "series": "With prefetch",
+              "value": 101.10473501703133,
+              "tip": "Pair 1: prefetch 329470 ns; original 325870 ns"
+            },
+            {
+              "group": "Random p99",
+              "series": "Original",
+              "value": 100,
+              "tip": "Pair 2: original 351938 ns"
+            },
+            {
+              "group": "Random p99",
+              "series": "With prefetch",
+              "value": 120.77496604515568,
+              "tip": "Pair 2: prefetch 425053 ns; original 351938 ns"
+            }
+          ],
+          "note": "Each dot is one paired run. Original latency = 100. The two rows measure different parts of the workload."
+        },
+        {
+          "type": "note",
+          "text": "Decision: stop this candidate. Random p99 increased beyond its 3% allowance. The sequential benefit is promising, but needs a new design that protects the tail."
+        }
+      ]
+    },
+    {
+      "id": "compressed",
+      "title": "2. Decompress nearby pages ahead",
+      "lead": "Idea: put neighboring compressed pages into the swap cache before demand. This makes many reads cheap, while some faults pay for several pages at once.",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Average -0.4%: effectively unchanged; p99 +280.8%",
+          "x_label": "Latency relative to original (100) \u2014 lower is better",
+          "groups": [
+            "Sequential mean",
+            "Sequential p99"
+          ],
+          "series": [
+            "Original",
+            "With prefetch"
+          ],
+          "points": [
+            {
+              "group": "Sequential mean",
+              "series": "Original",
+              "value": 100,
+              "tip": "Pair 1: original 11683 ns"
+            },
+            {
+              "group": "Sequential mean",
+              "series": "With prefetch",
+              "value": 99.57202773260293,
+              "tip": "Pair 1: prefetch 11633 ns; original 11683 ns"
+            },
+            {
+              "group": "Sequential mean",
+              "series": "Original",
+              "value": 100,
+              "tip": "Pair 2: original 11674 ns"
+            },
+            {
+              "group": "Sequential mean",
+              "series": "With prefetch",
+              "value": 99.61452801096453,
+              "tip": "Pair 2: prefetch 11629 ns; original 11674 ns"
+            },
+            {
+              "group": "Sequential p99",
+              "series": "Original",
+              "value": 100,
+              "tip": "Pair 1: original 25374 ns"
+            },
+            {
+              "group": "Sequential p99",
+              "series": "With prefetch",
+              "value": 384.40135571845195,
+              "tip": "Pair 1: prefetch 97538 ns; original 25374 ns"
+            },
+            {
+              "group": "Sequential p99",
+              "series": "Original",
+              "value": 100,
+              "tip": "Pair 2: original 26051 ns"
+            },
+            {
+              "group": "Sequential p99",
+              "series": "With prefetch",
+              "value": 377.22160377720627,
+              "tip": "Pair 2: prefetch 98270 ns; original 26051 ns"
+            }
+          ],
+          "note": "Each dot is one paired run. Original latency = 100. The two rows measure different parts of the workload."
+        },
+        {
+          "type": "note",
+          "text": "Decision: stop this candidate. Its average change is inside 3% noise; p99 exceeds the 7.73% allowance. Inference: synchronous decompression concentrates work into fewer, longer faults, rather than reducing total work."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "What we learned \u2014 and what to try next",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Keep the useful mechanism; address its cost",
+          "columns": [
+            "Direction",
+            "Next hypothesis",
+            "What must improve"
+          ],
+          "rows": [
+            [
+              "Disk prefetch",
+              "Adapt the prefetch window to access behavior",
+              "Keep the sequential gain without a random-tail regression."
+            ],
+            [
+              "Compressed prefetch",
+              "Bound the work performed on a demand fault",
+              "Reduce total latency without concentrating decompression into long stalls."
+            ]
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Evidence strength: two independent pairs per workload, after baseline noise calibration. Both candidates passed correctness checks but failed fast performance screening. No slow confirmation was run; new hypotheses require a new experiment."
+        }
+      ]
+    },
+    {
+      "id": "audit-changes",
       "title": "What changed",
       "blocks": [
         {
@@ -89,7 +264,7 @@
       ]
     },
     {
-      "id": "method",
+      "id": "audit-method",
       "title": "How it was measured",
       "blocks": [
         {
@@ -143,7 +318,7 @@
       ]
     },
     {
-      "id": "data",
+      "id": "audit-data",
       "title": "What the data shows",
       "blocks": [
         {
@@ -1033,7 +1208,7 @@
       ]
     },
     {
-      "id": "why",
+      "id": "audit-why",
       "title": "Why",
       "blocks": [
         {
@@ -2002,7 +2177,7 @@
       ]
     },
     {
-      "id": "gates",
+      "id": "audit-gates",
       "title": "Review checklist",
       "blocks": [
         {
@@ -2396,7 +2571,7 @@
       ]
     },
     {
-      "id": "next",
+      "id": "audit-next",
       "title": "Next",
       "blocks": [
         {
