@@ -51,6 +51,9 @@ as evaluators for the new suite.
 
 Kernel builds and guests run on a Linux KVM worker; see
 [benchmark/SETUP.md](benchmark/SETUP.md).
+Experiments launched by Grok Bot run on its cloud box under QEMU TCG (no KVM)
+as a separate protocol revision; see
+[AGENTS.md § Grok Bot runs](AGENTS.md#grok-bot-runs-cloud-box-qemu-tcg).
 
 ```sh
 python3 evolve/control/controller.py --campaign <c> new <name> --hypothesis '<mechanism, expected effect, falsifier>'

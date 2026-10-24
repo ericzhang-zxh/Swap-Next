@@ -95,3 +95,74 @@ Loading that skill does not authorize running or publishing experiments.
   explicit owner request keeps a report private or withholds a push. For an
   older checkout, reconcile delivery instructions against current `origin/main`
   before closeout.
+
+## Grok Bot runs (cloud box, QEMU TCG)
+
+This section applies only to experiments initiated by Grok Bot or its Swap bot
+group (Swap Coordinator, Hypothesis, Experiment, Review, Report). Human runs and
+runs on hurricpc-wsl keep the rules above unchanged. Where this section is
+silent, the rules above still apply.
+
+### Where it runs
+
+- Builds and guests for Grok Bot runs execute on Grok Bot's own cloud box, not
+  on hurricpc-wsl. The box is the Linux worker for these runs.
+- **KVM is forbidden on the box.** `/dev/kvm` exists, but starting a KVM guest
+  crashes the host kernel (KVM is built in with `enable_virt_at_load=Y` and the
+  instance is snapshot-forked). Never pass `-enable-kvm` or `-accel kvm`.
+- Never offline or online host CPUs.
+- The host rules above (no reboot, host swap changes, raw disks or sudo) apply.
+
+### TCG protocol revision
+
+- All guests run under QEMU TCG (pure software emulation). TCG is a separate
+  protocol revision with its own `protocol.json`, budgets and calibration;
+  KVM evidence stays historical.
+- Compare each candidate only against a baseline measured in the same TCG
+  environment. Never compare TCG numbers with hurricpc-wsl KVM numbers.
+- Run TCG A/A noise calibration for each tier before any accept or reject
+  decision. Uncalibrated TCG results are diagnostics only.
+- The standard guest is 8 vCPU, 8 GiB RAM and a 16 GiB swap image. If a TCG run
+  scales the guest down, record the vCPU count, RAM, swap size and QEMU
+  accelerator options in the protocol revision and in every result.
+- Tag every result in `results/<campaign>/` with the TCG protocol revision.
+
+### Baseline ancestry
+
+A TCG baseline must be built from a commit with a verified lineage. The xswap
+baseline `5e84ca92` is proven by replaying the xswap patch series on base
+`9a0542b1`: every resulting commit hash matches, provided the last two patches
+are committed with commit date equal to author date. Record the replay command,
+base and resulting hashes with the campaign (example layout:
+`/workspace/xswap-replay` on the box; do not commit that path).
+
+### Closed loop
+
+1. **Coordinator** opens the campaign: objective, frozen TCG protocol revision,
+   baseline, budgets, STOP state and evidence destination.
+2. **Hypothesis** proposes candidates, each with a mechanism, expected effect,
+   parent lineage (baseline or prior candidate) and kill criteria.
+3. The most promising candidates run automatically. When the owner triggers a
+   round (for example "run 3 experiments"), that is the authorization; do not
+   ask again per candidate.
+4. **Experiment** creates each candidate with `evolve/control/controller.py`
+   (scope and line budget enforced by `check`) and evaluates it through
+   `evolve/loop.py` with the TCG protocol. It stops after the fast tier.
+5. **Review** independently checks the diff, scope, evidence binding and
+   statistics before a decision is recorded.
+6. **Report** writes the audit and an HTML report (`explainer.html`), then
+   follows [Report publication](#report-publication).
+
+### Owner gates that still apply
+
+- The slow tier and any protocol change (including a new TCG revision or guest
+  size) need the owner's explicit approval.
+- The `linux/` submodule stays frozen at its pinned commit.
+- Commits and report publication follow [Report publication](#report-publication).
+
+### Open items (TBD)
+
+- TCG protocol revision identifier and its `protocol.json`: TBD.
+- Scaled-down guest size for TCG (vCPU, RAM, swap): TBD; record when frozen.
+- TCG A/A calibration envelopes per tier: TBD (not yet measured).
+- TCG guest wall time per case and resulting budgets: TBD.
