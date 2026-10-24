@@ -55,9 +55,12 @@ When the campaign stops, close it with the review page:
    If the owner explicitly withholds a push or asks to keep the report private,
    honor that request. Otherwise finish delivery without asking again. An
    agent-authored publication flag does not override this rule.
-4. Inspect the diff, build the Pages index and fast-forward `main`. Verify that
-   commit's Pages deployment, live campaign URL and index. Never force-push
-   `main`.
+4. Inspect the diff, build the Pages index and bring the branch onto `main`
+   as [Campaign lifecycle](../../../../AGENTS.md#campaign-lifecycle) requires.
+   Verify that commit's Pages deployment, live campaign URL and index. Never
+   force-push `main`.
+5. Delete the experiment branch locally and on `origin` and remove its
+   worktrees.
 
 For an older experiment checkout, inspect current `origin/main:AGENTS.md` and
 this binding on origin/main before closeout. Reconcile delivery rules without

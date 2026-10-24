@@ -1,5 +1,11 @@
 # Swap Next contributor contract
 
+This contract binds every agent that works in this repository, whatever its
+vendor or harness (Claude Code, Codex, Cursor, Grok Bot or any other), and
+every human who runs a campaign. Vendor entry files such as `CLAUDE.md` and
+`GEMINI.md` only point here. A section scoped to one runner adds to these
+rules and never relaxes them.
+
 ## Read first
 
 1. [README.md](README.md) and [DESIGN.md](DESIGN.md): purpose, cost model, measurement principles.
@@ -78,13 +84,8 @@ Loading that skill does not authorize running or publishing experiments.
   review. The handoff includes rejected and inconclusive outcomes. Do not wait
   for another approval before publishing, unless the owner explicitly asks to
   keep that report private or local.
-- Experiment work is committed directly to `main` without a pull request. Do
-  the work on a branch, rebase onto `main` if it moved, and fast-forward
-  `main`. Never force-push `main`.
-- Closing a campaign leaves nothing on its branch. Reports and evidence go to
-  `results/<campaign>/`, candidate patches to `patches/<campaign>/`, and
-  harness and policy changes to their usual paths on `main`. Then delete the
-  experiment branch locally and on `origin` and remove its worktrees.
+- Experiment work is committed directly to `main` without a pull request,
+  following [Campaign lifecycle](#campaign-lifecycle). Never force-push `main`.
 - Candidate code is never promoted automatically. Publishing the report or
   committing the experiment record is not acceptance, and it does not authorize
   another experiment.
@@ -100,6 +101,35 @@ Loading that skill does not authorize running or publishing experiments.
   explicit owner request keeps a report private or withholds a push. For an
   older checkout, reconcile delivery instructions against current `origin/main`
   before closeout.
+
+## Campaign lifecycle
+
+Every campaign, whoever runs it, follows the same branch lifecycle.
+
+1. **Open**: work on one branch named `experiments/<campaign>`, created from
+   current `origin/main`. Scratch and publication worktrees belong to that
+   campaign and live outside the main checkout.
+2. **Run**: commit harness, policy, protocol and evidence changes on that
+   branch as they happen. Keep runtime state, ledgers and images uncommitted.
+3. **Close**: bring everything worth keeping onto `main`.
+   - Reports and evidence go to `results/<campaign>/`.
+   - Candidate patches go to `patches/<campaign>/`.
+   - Harness, policy and protocol changes go to their usual paths.
+   - Merge the branch into `main` with `--no-ff`. Do not rebase or squash
+     commits that a report or evidence manifest cites, because their hashes
+     must stay valid. A branch with no cited commits may instead be rebased
+     and fast-forwarded.
+   - When rules, skills or published reports conflict, keep the `main` side
+     unless the campaign deliberately changes them.
+   - Run the project tests before pushing `main`.
+4. **Clean up**: once `main` contains the branch, delete it locally and on
+   `origin` and remove its worktrees. No finished campaign leaves a branch,
+   a worktree or uncommitted work behind. If a worktree holds changes that
+   are not on `main`, commit them to `main` or report them to the owner;
+   never discard them silently.
+
+An agent that finds stale experiment branches or worktrees from an earlier
+campaign applies steps 3 and 4 to them before starting new work.
 
 ## Grok Bot runs (cloud box, QEMU TCG)
 
@@ -156,7 +186,8 @@ base and resulting hashes with the campaign (example layout:
 5. **Review** independently checks the diff, scope, evidence binding and
    statistics before a decision is recorded.
 6. **Report** writes the audit and an HTML report (`explainer.html`), then
-   follows [Report publication](#report-publication).
+   follows [Report publication](#report-publication) and
+   [Campaign lifecycle](#campaign-lifecycle).
 
 ### Owner gates that still apply
 
