@@ -40,6 +40,16 @@ Loading that skill does not authorize running or publishing experiments.
 - **Language**: project-authored text (docs, comments, commit messages,
   reviews) is English. Upstream and third-party text is preserved as is.
 
+### Rules and scaffolding
+
+Changes to project rules or scaffolding go through a pull request for the owner's
+review and are not merged by agents. That covers `AGENTS.md`, `README.md`,
+`DESIGN.md`, [PRINCIPLES.md](evolve/control/PRINCIPLES.md), skills under
+`.agents/`, policy and protocol files, `evolve/` controller and loop code, and
+benchmark runners and tooling. Experiment work (hypotheses, candidate runs,
+results, reports) keeps being committed directly to `main` without a pull
+request, as [Report publication](#report-publication) states.
+
 ## Design freedom and experimental scope
 
 - Research and optimization may include substantial redesigns or replacing the
@@ -159,6 +169,7 @@ base and resulting hashes with the campaign (example layout:
   size) need the owner's explicit approval.
 - The `linux/` submodule stays frozen at its pinned commit.
 - Commits and report publication follow [Report publication](#report-publication).
+- Project rules and scaffolding follow [Rules and scaffolding](#rules-and-scaffolding).
 
 ### Open items (TBD)
 
