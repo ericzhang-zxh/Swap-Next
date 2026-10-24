@@ -146,6 +146,10 @@ silent, the rules above still apply.
   crashes the host kernel (KVM is built in with `enable_virt_at_load=Y` and the
   instance is snapshot-forked). Never pass `-enable-kvm` or `-accel kvm`.
 - Never offline or online host CPUs.
+- Set `SWAP_NEXT_ACCEL=tcg` for every guest run. The runner defaults to KVM
+  for hurricpc-wsl, so a run without it would start KVM and crash the box.
+  `SWAP_NEXT_TCG_SMP` and `SWAP_NEXT_TCG_MEM_MIB` size the guest (default 4
+  vCPU, 2560 MiB); each result records the accelerator and guest size.
 - The host rules above (no reboot, host swap changes, raw disks or sudo) apply.
 
 ### TCG protocol revision
@@ -188,6 +192,17 @@ base and resulting hashes with the campaign (example layout:
 6. **Report** writes the audit and an HTML report (`explainer.html`), then
    follows [Report publication](#report-publication) and
    [Campaign lifecycle](#campaign-lifecycle).
+
+### Rules and scaffolding
+
+Grok Bot and its Swap bot group change project rules or scaffolding only
+through a pull request for the owner's review, and never merge it
+themselves. That covers `AGENTS.md`, `README.md`, `DESIGN.md`,
+[PRINCIPLES.md](evolve/control/PRINCIPLES.md), skills under `.agents/`,
+policy and protocol files, `evolve/` controller and loop code, and benchmark
+runners and tooling. Their experiment work (hypotheses, candidate runs,
+results, reports) follows [Campaign lifecycle](#campaign-lifecycle) and goes
+directly to `main`.
 
 ### Owner gates that still apply
 
