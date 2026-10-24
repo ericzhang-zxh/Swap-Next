@@ -1,0 +1,42 @@
+{
+  "campaign": "xswap-next-2026-10-24",
+  "status": "PREPARING",
+  "authorized_utc": "2026-10-24T08:39:36.414199+00:00",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "protocol": "benchmark/swap-standard/protocol-xswap-next-2026-10-24.json",
+  "budget": {
+    "guest_attempts": 48,
+    "build_attempts": 10,
+    "wall_seconds": 21600,
+    "guest_timeout": 900
+  },
+  "max_candidates": 3,
+  "primary": "swapin_seq.mean_ns, equally weighted disk/zswap",
+  "guards": [
+    "swapin_seq.p99_ns",
+    "swapin_rand.mean_ns",
+    "swapin_rand.p99_ns"
+  ],
+  "allowed_files": [
+    "mm/memory.c",
+    "mm/swap_state.c",
+    "mm/swap.h",
+    "mm/swapfile.c",
+    "mm/page_io.c",
+    "mm/zswap.c"
+  ],
+  "stop_conditions": [
+    "global or campaign STOP",
+    "6 hour deadline",
+    "48 total guests including correctness",
+    "10 total builds",
+    "correctness failure",
+    "uninterpretable measurement"
+  ],
+  "next_hypothesis": "H3: retain physical readahead only for adjacent fault addresses, use synchronous single-folio demand reads after discontinuities",
+  "publication": false,
+  "promotion": false,
+  "slow_tier": false,
+  "historical_campaign": "xswap-swapin-2026-10-23",
+  "recovery": "Prior campaign complete with two fast regressions, 46 guests and eight builds; no active guest or build found. Untracked confirmation inputs preserved."
+}

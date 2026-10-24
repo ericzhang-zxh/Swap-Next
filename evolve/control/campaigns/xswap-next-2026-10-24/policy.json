@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "project": "swap-next",
+  "phase": "xswap continuation: selective physical readahead and source-grounded path redesign",
+  "runtime_enabled": false,
+  "thresholds_calibrated": false,
+  "upstream_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "seed_ref": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "allowed_modify": [
+    "mm/memory.c",
+    "mm/swap_state.c",
+    "mm/swap.h",
+    "mm/swapfile.c",
+    "mm/page_io.c",
+    "mm/zswap.c"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "max_changed_files": 6,
+  "max_changed_lines": 1000,
+  "budget": {
+    "max_candidates": 3,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 8,
+    "guest_memory_mib": 8192,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 900,
+    "max_total_campaign_seconds": 21600,
+    "max_build_attempts": 10
+  },
+  "measurement": {
+    "min_pairs": 10,
+    "min_operations": 1000,
+    "min_swapout_pages": 1,
+    "min_swapin_pages": 1,
+    "bootstrap_resamples": 64000,
+    "confidence": 0.95,
+    "required_workloads": [
+      "anon_disk",
+      "anon_zswap",
+      "fragmented_swap",
+      "mixed_file_anon"
+    ],
+    "required_partitions": [
+      "discovery",
+      "confirmation"
+    ],
+    "holdout_required_for_promotion": true,
+    "min_bootstrap_tail_samples": 30
+  },
+  "metrics": {
+    "throughput_ops_s": {
+      "direction": "higher",
+      "role": "primary",
+      "min_gain": null,
+      "max_regression": null
+    },
+    "latency_p99_us": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "cpu_ns_per_op": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "io_bytes_per_op": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "metadata_bytes_per_slot_peak": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    }
+  },
+  "required_gates": [
+    "gcc_swap_on",
+    "gcc_swap_off",
+    "gcc_zswap_on",
+    "sparse_no_new_diagnostics",
+    "checkpatch",
+    "guest_boot_identity",
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "allocation_failure",
+    "io_failure",
+    "memcg_limits",
+    "large_folio",
+    "lockdep",
+    "kasan",
+    "kcsan",
+    "no_new_kernel_warnings"
+  ],
+  "promotion": "human_review_only",
+  "checkout_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "scope_note": "Owner 2026-10-24: continue Swap-Next along xswap for several overnight experiments, morning review. Primary may select substantive hypotheses within the recorded scope. Fast screening only. No slow tier, host mutation, automatic promotion, or publication.",
+  "primary_metric": "swapin_seq.mean_ns",
+  "discovery_contract": {
+    "architecture_candidates": 3,
+    "guest_attempts": 48,
+    "build_attempts": 10,
+    "wall_seconds": 21600,
+    "standard_suite": true,
+    "formal_runtime_enabled": false,
+    "publication": false,
+    "auto_promotion": false
+  }
+}
