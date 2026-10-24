@@ -81,5 +81,10 @@
     "Fast discovery only; no slow tier, automatic promotion, or publication"
   ],
   "auxiliary_budget": "Correctness/debug guests and manual trusted builds reserve from the same state budget before launch. All failures retained.",
-  "candidate_builds": {}
+  "candidate_builds": {
+    "xs-ra-sequential-v1": "std-7322aadd1100"
+  },
+  "protocol_revision": 2,
+  "preallocate_swap": true,
+  "measurement_revision": "Preallocate private guest swap files before boot. Sparse per-run files in revision 1 allocate host extents during guest swap-out; first A/A disk-random mean differs by 23.8%. This is an environment-confounder hypothesis, not an established root cause. Fresh calibration required; previous noisy attempt stays retained. Workload, thresholds, pair counts and shared 48-guest cap unchanged."
 }

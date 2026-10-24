@@ -30,6 +30,23 @@ def run_id(value):
     return value
 
 
+def create_swap_image(path, preallocate=False, size=16 * 1024**3):
+    """Allocate only this run's private image, before any guest timing."""
+    created = False
+    try:
+        with path.open("xb") as stream:
+            created = True
+            if preallocate:
+                os.posix_fallocate(stream.fileno(), 0, size)
+                os.fsync(stream.fileno())
+            else:
+                stream.truncate(size)
+    except BaseException:
+        if created:
+            path.unlink(missing_ok=True)
+        raise
+
+
 def absolute_stop_file(value):
     path = Path(value)
     if not path.is_absolute():
@@ -104,6 +121,7 @@ def validate_workload(backend, mode, workload):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--preallocate-swap", action="store_true", help="Preallocate the private swap image before guest launch")
     parser.add_argument("--build", required=True)
     parser.add_argument("--backend", choices=["disk", "zswap", "zram", "brd"], required=True)
     parser.add_argument("--mode", choices=["plain", "xswap"], default="plain")
@@ -141,8 +159,7 @@ def main():
         name = args.run_id or (stamp + "-" + args.build + "-" + args.backend + "-" + args.workload)
         dest = create_run_directory(BASE / "runs", name)
         disk = dest / "swap.raw"
-        with disk.open("wb") as stream:
-            stream.truncate(16 * 1024**3)
+        create_swap_image(disk, args.preallocate_swap)
         image_sha = manifest["image_sha256"]
         append = ("console=ttyS0 rdinit=/init panic=-1 loglevel=4 "
                   "zswap.enabled=1 zswap.compressor=zstd brd.rd_size=1073741824 "
@@ -155,7 +172,8 @@ def main():
                    "-kernel", str(image), "-initrd", str(BASE / "initramfs.cpio.gz"), "-append", append,
                    "-drive", f"file={disk},format=raw,if=virtio,cache=none",
                    "-drive", f"file={BASE / 'bench.img'},format=raw,if=virtio,readonly=on"]
-        result = dict(run_id=dest.name, stop_file=str(args.stop_file) if args.stop_file else None,
+        result = dict(swap_image_allocation="preallocated" if args.preallocate_swap else "sparse",
+                      run_id=dest.name, stop_file=str(args.stop_file) if args.stop_file else None,
                       build=args.build, backend=args.backend, mode=args.mode, workload=args.workload,
                       source_commit=manifest["commit"], image_sha256=image_sha,
                       config_sha256=sha(config), guest_provenance=provenance, command=command,

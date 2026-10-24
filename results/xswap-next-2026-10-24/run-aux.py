@@ -31,6 +31,8 @@ with (sw.STATE / ".lock").open("a") as lock:
         result=ROOT/"benchmark/kernel/builds"/a.name/"result.json"
     else:
         cmd=[sys.executable,"benchmark/swap-standard/run.py","--build",a.name,"--backend",a.backend,"--mode","xswap","--workload","correctness","--run-id",ident,"--timeout","900","--stop-file",str(w.stop)]
+        if w.p.get("preallocate_swap"):
+            cmd.append("--preallocate-swap")
         result=ROOT/"benchmark/swap-standard/runs"/ident/"result.json"
     row=dict(id=ident,action="auxiliary",kind=a.kind,tier="correctness",candidate=a.candidate,candidate_commit=commit,status="RUNNING",started=time.time(),command=cmd,result=str(result.relative_to(ROOT)),performance_accepted=False)
     w.ledger.append(row)

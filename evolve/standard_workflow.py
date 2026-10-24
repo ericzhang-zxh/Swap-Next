@@ -261,11 +261,12 @@ class Workflow:
                         attempt = {"id": run_id, "pair": pair_index, "case": case_name, "arm": arm, "status": "STARTED"}
                         row["runs"].append(attempt)
                         save(dest / "report.json", row)
-                        self.command([sys.executable, str(BENCH / "run.py"), "--build", chosen, "--backend", case["backend"], "--mode", case.get("mode", "plain"), "--workload", case["workload"], "--run-id", run_id, "--stop-file", str(self.stop), "--timeout", str(self.p["budget"]["guest_timeout"])], dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60)
+                        self.command([sys.executable, str(BENCH / "run.py"), "--build", chosen, "--backend", case["backend"], "--mode", case.get("mode", "plain"), "--workload", case["workload"], "--run-id", run_id, "--stop-file", str(self.stop), "--timeout", str(self.p["budget"]["guest_timeout"])] + (["--preallocate-swap"] if self.p.get("preallocate_swap") else []), dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60)
                         result_path = BENCH / "runs" / run_id / "result.json"
                         result = read(result_path)
                         expected = self.p["baseline_commit"] if arm == "a" else commit
-                        if result.get("source_commit") != expected or result.get("integration_pass") is not True or result.get("run_id") != run_id:
+                        if (result.get("source_commit") != expected or result.get("integration_pass") is not True or result.get("run_id") != run_id or
+                            result.get("swap_image_allocation", "sparse") != ("preallocated" if self.p.get("preallocate_swap") else "sparse")):
                             raise RuntimeError("run identity or correctness gate failed")
                         attempt.update(status="PASS", result=str(result_path.relative_to(ROOT)), result_sha256=sha(result_path), metrics=result["metrics"])
                         pair[arm].update({case_name + "." + key: extract(result["metrics"], key) for key in case["metrics"]})

@@ -19,6 +19,21 @@ spec.loader.exec_module(runner)
 
 
 class RunnerValidationTests(unittest.TestCase):
+    def test_swap_preallocation_is_real_and_failure_cleans_owned_image(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "swap.raw"
+            runner.create_swap_image(path, True, 4096)
+            self.assertEqual(path.stat().st_size, 4096)
+            self.assertGreaterEqual(path.stat().st_blocks * 512, 4096)
+            with self.assertRaises(FileExistsError):
+                runner.create_swap_image(path, True, 8192)
+            self.assertEqual(path.stat().st_size, 4096)
+            path.unlink()
+            with patch.object(runner.os, "posix_fallocate", side_effect=OSError("no space")):
+                with self.assertRaises(OSError):
+                    runner.create_swap_image(path, True, 4096)
+            self.assertFalse(path.exists())
+
     def test_correctness_routes(self):
         for backend in ('disk', 'zswap'):
             runner.validate_workload(backend, 'xswap', 'correctness')

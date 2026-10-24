@@ -1,6 +1,6 @@
 {
   "campaign": "xswap-next-2026-10-24",
-  "status": "PREPARING",
+  "status": "CORRECTNESS_AND_ENVIRONMENT_REVISION",
   "authorized_utc": "2026-10-24T08:39:36.414199+00:00",
   "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
   "protocol": "benchmark/swap-standard/protocol-xswap-next-2026-10-24.json",
@@ -38,5 +38,7 @@
   "promotion": false,
   "slow_tier": false,
   "historical_campaign": "xswap-swapin-2026-10-23",
-  "recovery": "Prior campaign complete with two fast regressions, 46 guests and eight builds; no active guest or build found. Untracked confirmation inputs preserved."
+  "recovery": "Prior campaign complete with two fast regressions, 46 guests and eight builds; no active guest or build found. Untracked confirmation inputs preserved.",
+  "protocol_revision": 2,
+  "calibration_diagnosis": "calibration-diagnosis.json"
 }

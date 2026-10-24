@@ -1,6 +1,6 @@
 # H3: sequential physical readahead review
 
-Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`. Candidate: `22d34edafce4c1000dc3424604450f1eadb479ae`.
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`. Candidate: `7322aadd18b6030c692265693b8dfd29afa3ee6f`.
 
 ## Judgment
 
@@ -23,10 +23,12 @@ No descriptor, backend entry, or folio pointer crosses a new sleeping allocation
 
 ## Checks
 
-Scope (3 files, 97 changed lines), diff whitespace and checkpatch pass. Exact-commit release/debug builds, data/COW/concurrent-fault/backend swapoff/live destroy, KASAN/lockdep, and calibrated AB/BA measurements remain to run.
+Scope (3 files, 98 changed lines), diff whitespace and checkpatch pass. Exact-commit release/debug builds, data/COW/concurrent-fault/backend swapoff/live destroy, KASAN/lockdep, and calibrated AB/BA measurements remain to run.
 
 ## Limitations
 
 History is shared within a VMA, so unrelated concurrent streams can alter admission. Cluster-based readahead is left disabled for xswap faults when VMA readahead is unavailable. 4 KiB workloads do not cover large folios, KCSAN, allocation/I/O failure injection, or full promotion. Sparse must be reported separately.
 
 Revert candidate commits to return to the frozen baseline; no merge is authorized.
+
+Independent review of the pre-build version found the page-cluster=0 performance boundary. The final commit returns to synchronous faults when readahead is disabled. Source review supports bounded discovery; random-tail recovery still requires measurement.

@@ -1,0 +1,20 @@
+{
+  "status": "ENVIRONMENT_REVISION_REQUIRED",
+  "observed_utc": "2026-10-24T08:47:29.744370+00:00",
+  "calibration_id": "7ef0bcb1918d4209954fc4929c7fe379",
+  "failed_metric": "swapin-disk.swapin_rand.mean_ns",
+  "relative_noise": 0.2377266310296151,
+  "threshold": 0.2,
+  "observed_disk_random_means_ns": [
+    189129,
+    234090,
+    224862,
+    229776
+  ],
+  "host_pressure": "No competing build/guest found; CPU PSI zero at inspection, recent I/O PSI nonzero. Host pressure outside WSL is unobserved.",
+  "inference": "Sparse guest swap files allocate host filesystem extents during writes. Allocation state is a plausible confounder, not a proven cause of random-read variance.",
+  "change": "Opt-in per-run posix_fallocate and fsync before guest launch, with exact result attestation. Baseline/kernel/image/workloads/thresholds/pair counts unchanged.",
+  "preserved_protocol": "protocol-revision1.json",
+  "budget_reset": false,
+  "retry_policy": "One fresh calibration for meaningful revised allocation protocol; retain all failures and stop performance screening if noisy again."
+}
