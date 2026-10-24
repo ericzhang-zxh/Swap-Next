@@ -6,14 +6,14 @@
     "headline": "Neither candidate is ready to advance",
     "tiles": [
       {
-        "label": "Disk: sequential average",
-        "value": "-84.7%",
-        "note": "Sequential average; random p99 +10.5%."
+        "label": "Disk prefetch",
+        "value": "Mixed result",
+        "note": "Sequential reads improve; random tail worsens."
       },
       {
-        "label": "Compressed: sequential p99",
-        "value": "+280.8%",
-        "note": "Sequential p99; average -0.4%."
+        "label": "Compressed prefetch",
+        "value": "Longer stalls",
+        "note": "Average stays similar; tail worsens."
       }
     ]
   },
@@ -65,24 +65,77 @@
           "text": "The baseline routes xswap through synchronous demand reads and skips ordinary readahead. That is reasonable for cheap in-memory reads, but written-back pages now require disk I/O. Sequential access may expose avoidable waiting."
         },
         {
-          "type": "table",
-          "takeaway": "Two different costs motivated two independent changes",
-          "columns": [
-            "Experiment",
-            "Why try it?",
-            "What actually changed"
+          "type": "flow",
+          "takeaway": "Disk: predictable neighbors could hide the next I/O wait",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Disk-backed fault",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Read neighbors",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Fewer later waits",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
           ],
-          "rows": [
-            [
-              "Disk-backed pages",
-              "Upcoming sequential accesses are predictable. Fetching neighbors could hide disk waiting.",
-              "Check physical backing; route those faults through existing readahead. Speculative xswap neighbors must also have physical backing."
-            ],
-            [
-              "Compressed pages",
-              "Neighbors could enter the swap cache early, potentially reducing repeated demand-fault overhead.",
-              "Check actual zswap residency; prefetch compressed neighbors into the swap cache. Each page is still decompressed synchronously."
-            ]
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "Compressed RAM: early cache entries could avoid later fault work",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Resident in zswap",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Decompress ahead",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Fill swap cache",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
           ]
         },
         {
@@ -135,7 +188,7 @@
       "blocks": [
         {
           "type": "strip",
-          "takeaway": "Sequential average -84.7%; random p99 +10.5%",
+          "takeaway": "Disk reads: faster sequential access, worse random tail",
           "x_label": "Latency relative to original (100) \u2014 lower is better",
           "groups": [
             "Sequential mean",
@@ -199,7 +252,7 @@
         },
         {
           "type": "note",
-          "text": "Decision: stop this candidate. Random p99 increased beyond its 3% allowance. The sequential benefit is promising, but needs a new design that protects the tail."
+          "text": "Decision: stop this candidate. Random tail latency fails its guard. Preserve the sequential benefit while protecting the tail."
         }
       ]
     },
@@ -210,7 +263,7 @@
       "blocks": [
         {
           "type": "strip",
-          "takeaway": "Average -0.4%: effectively unchanged; p99 +280.8%",
+          "takeaway": "Compressed reads: similar average, much longer tail",
           "x_label": "Latency relative to original (100) \u2014 lower is better",
           "groups": [
             "Sequential mean",
@@ -274,7 +327,7 @@
         },
         {
           "type": "note",
-          "text": "Decision: stop this candidate. Its average change is inside 3% noise; p99 exceeds the 7.73% allowance. Inference: synchronous decompression concentrates work into fewer, longer faults, rather than reducing total work."
+          "text": "Decision: stop this candidate. Average latency stays within noise and tail latency fails its guard. Inference: synchronous decompression concentrates work into fewer, longer faults."
         }
       ]
     },
@@ -283,24 +336,77 @@
       "title": "What we learned \u2014 and what to try next",
       "blocks": [
         {
-          "type": "table",
-          "takeaway": "Keep the useful mechanism; address its cost",
-          "columns": [
-            "Direction",
-            "Next hypothesis",
-            "What must improve"
+          "type": "flow",
+          "takeaway": "Disk: adapt the window to protect unpredictable reads",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Detect access",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Adapt window",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Protect the tail",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
           ],
-          "rows": [
-            [
-              "Disk prefetch",
-              "Adapt the prefetch window to access behavior",
-              "Keep the sequential gain without a random-tail regression."
-            ],
-            [
-              "Compressed prefetch",
-              "Bound the work performed on a demand fault",
-              "Reduce total latency without concentrating decompression into long stalls."
-            ]
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "Compressed RAM: limit work on the critical path",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Demand fault",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Bound extra work",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Avoid long stalls",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
           ]
         },
         {

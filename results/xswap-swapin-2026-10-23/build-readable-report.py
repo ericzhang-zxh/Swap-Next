@@ -35,6 +35,23 @@ sections=[context,
 for section in old['sections']:
  section=dict(section);section['id']='audit-'+section['id'];sections.append(section)
 spec={'title':'Can prefetch make xswap reads faster?','subtitle':'Two ways to read pages before demand — their motivation, implementation and measured cost','verdict':{'status':'rejected','headline':'Neither candidate is ready to advance','tiles':[{'label':'Disk: sequential average','value':f'{h1mean:.1f}%','note':f'Sequential average; random p99 +{h1tail:.1f}%.'},{'label':'Compressed: sequential p99','value':f'+{h2tail:.1f}%','note':f'Sequential p99; average {h2mean:.1f}%.'}]},'sections':sections}
+# Visual-first overview; exact measurements remain in closed chart/audit details.
+context['blocks'][2:3]=[
+ flow('Disk: predictable neighbors could hide the next I/O wait', ['Disk-backed fault','Read neighbors','Fewer later waits']),
+ flow('Compressed RAM: early cache entries could avoid later fault work', ['Resident in zswap','Decompress ahead','Fill swap cache'])
+]
+sections[1]['blocks'][0]['takeaway']='Disk reads: faster sequential access, worse random tail'
+sections[1]['blocks'][1]['text']='Decision: stop this candidate. Random tail latency fails its guard. Preserve the sequential benefit while protecting the tail.'
+sections[2]['blocks'][0]['takeaway']='Compressed reads: similar average, much longer tail'
+sections[2]['blocks'][1]['text']='Decision: stop this candidate. Average latency stays within noise and tail latency fails its guard. Inference: synchronous decompression concentrates work into fewer, longer faults.'
+sections[3]['blocks'][0:1]=[
+ flow('Disk: adapt the window to protect unpredictable reads', ['Detect access','Adapt window','Protect the tail']),
+ flow('Compressed RAM: limit work on the critical path', ['Demand fault','Bound extra work','Avoid long stalls'])
+]
+spec['verdict']['tiles']=[
+ {'label':'Disk prefetch','value':'Mixed result','note':'Sequential reads improve; random tail worsens.'},
+ {'label':'Compressed prefetch','value':'Longer stalls','note':'Average stays similar; tail worsens.'}
+]
 (p/'explainer.json').write_text(json.dumps(spec,indent=2)+'\n')
 subprocess.run(['python3',str(root/'.agents/skills/explaining-campaign-results/scripts/build_page.py'),str(p/'explainer.json'),str(p/'explainer.html')],check=True)
 h=(p/'explainer.html').read_text()
@@ -47,6 +64,9 @@ h=re.sub(r'(<section id="audit-[^"]+">)(.*?)(</section>)',lambda m:'<details cla
 h=h.replace('<details class="audit">','<h2 id="audit">Evidence, when you need it</h2><p>Full samples, counters, patches and checks. Expand only what you want to inspect.</p><details class="audit">',1)
 h=h.replace('<section id="physical">', '<p class="lead">Average latency describes overall cost. P99 is the time within which 99% of measured reads finish: a higher p99 means a slower tail.</p><section id="physical">')
 h=h.replace('</style>','details.audit{margin:12px 0;border:1px solid var(--grid);border-radius:10px;padding:14px 18px;background:var(--surface-1)}details.audit>summary{font-weight:600;cursor:pointer}details.audit section{margin-top:20px}details.audit pre{overflow:auto} nav{flex-wrap:wrap}</style>')
-h=h.replace('</style>', '@media(max-width:600px){#physical svg,#compressed svg{display:none}}</style>')
-h=h.replace('</body>', '<script>if(matchMedia("(max-width:600px)").matches){document.querySelectorAll("#physical details,#compressed details").forEach(d=>d.open=true)}</script></body>')
+# Keep diagrams visible on phones; allow local horizontal scrolling at readable size.
+h=re.sub(r'(<svg\b.*?</svg>)',r'<div class="visual-scroll">\1</div>',h,flags=re.S)
+h=h.replace('</style>', '.visual-scroll{overflow-x:auto}.visual-scroll svg{min-width:640px}@media(max-width:600px){.visual-scroll{padding-bottom:8px}} </style>')
+h=h.replace('<summary>Table view</summary>','<summary>Show exact measurements</summary>')
+
 (p/'explainer.html').write_text(h)
