@@ -309,7 +309,8 @@ class Workflow:
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["status", "plan", "next", "calibrate", "evaluate", "reference-check"])
-    parser.add_argument("--tier", choices=["fast", "slow", "auto"], default="auto")
+    parser.add_argument("--tier", choices=["fast", "slow", "auto"], default="fast",
+                        help="slow (and auto, which continues into slow) needs explicit owner approval; see AGENTS.md")
     parser.add_argument("--candidate")
     parser.add_argument("--correctness", type=Path)
     parser.add_argument("--protocol", type=Path, default=PROTOCOL)
@@ -330,7 +331,7 @@ def main(argv=None):
                     ready[tier] = str(exc)
             output = {"campaign": p["campaign"], "fingerprint": fp, "budget": workflow.budget, "limits": p["budget"], "tiers": p["tiers"], "calibration": ready, "ledger": [{k: r.get(k) for k in ["id", "action", "tier", "candidate", "status"]} for r in workflow.ledger]}
             if args.action == "next":
-                output["instruction"] = "Resolve correctness holds, then calibrate missing/noisy tiers. Only a calibrated fast tier may screen a controller candidate. Slow requires the exact fast-pass commit; no automatic promotion."
+                output["instruction"] = "Resolve correctness holds, then calibrate missing/noisy tiers. Only a calibrated fast tier may screen a controller candidate. Slow requires the exact fast-pass commit and explicit owner approval; no automatic promotion."
                 output["references"] = []
                 if (STATE / "database").exists():
                     from openevolve.config import DatabaseConfig
