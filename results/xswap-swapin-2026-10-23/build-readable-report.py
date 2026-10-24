@@ -16,17 +16,31 @@ def chart(candidate,metrics,groups,title):
 def change(c,m):
  return next(r[5] for r in s['metric_ratios'] if r[0]==c and r[3]==m)
 h1mean=change('xs-ra-phys-v1','swapin-disk.swapin_seq.mean_ns');h1tail=change('xs-ra-phys-v1','swapin-disk.swapin_rand.p99_ns');h2mean=change('xs-ra-zswap-v1','swapin-zswap.swapin_seq.mean_ns');h2tail=change('xs-ra-zswap-v1','swapin-zswap.swapin_seq.p99_ns')
-sections=[
+def flow(title,labels):
+ return {'type':'flow','takeaway':title,'nodes':[{'id':str(i),'label':x,'col':i,'row':0,'tone':'focus' if i==1 else 'default'} for i,x in enumerate(labels)],'edges':[{'from':str(i),'to':str(i+1)} for i in range(len(labels)-1)]}
+context={'id':'context','title':'The problem: each missing page can stop the application','lead':'When a needed page is outside RAM, the application faults and waits for it to return. Xswap gives that page a virtual swap slot: its contents may be compressed in RAM or written back to disk.','blocks':[
+ flow('Original path in this 4 KiB test: fetch on demand',['Application needs page','Fetch that page','Application continues']),
+ {'type':'note','text':'The baseline routes xswap through synchronous demand reads and skips ordinary readahead. That is reasonable for cheap in-memory reads, but written-back pages now require disk I/O. Sequential access may expose avoidable waiting.'},
+ {'type':'table','takeaway':'Two different costs motivated two independent changes','columns':['Experiment','Why try it?','What actually changed'], 'rows':[
+ ['Disk-backed pages','Upcoming sequential accesses are predictable. Fetching neighbors could hide disk waiting.','Check physical backing; route those faults through existing readahead. Speculative xswap neighbors must also have physical backing.'],
+ ['Compressed pages','Neighbors could enter the swap cache early, potentially reducing repeated demand-fault overhead.','Check actual zswap residency; prefetch compressed neighbors into the swap cache. Each page is still decompressed synchronously.']]},
+ flow('Changed path: one fault also prepares likely next pages',['Application needs page','Fetch page + neighbors','Later reads hit cache']),
+ {'type':'note','text':'Both patches start from the same descriptor-lifetime repair; they are not stacked. The goal is lower application read latency. The tradeoff is extra work on the current fault, especially when neighbors are not needed.'}
+]}
+sections=[context,
  {'id':'physical','title':'1. Read disk-backed pages ahead','lead':'Idea: fetch nearby disk pages before they are needed. Sequential reads become much cheaper, but random-access tail latency fails the screening guard.','blocks':[chart('H1',['swapin-disk.swapin_seq.mean_ns','swapin-disk.swapin_rand.p99_ns'],['Sequential mean','Random p99'],f'Sequential average {h1mean:+.1f}%; random p99 {h1tail:+.1f}%'),{'type':'note','text':'Decision: stop this candidate. Random p99 increased beyond its 3% allowance. The sequential benefit is promising, but needs a new design that protects the tail.'}]},
  {'id':'compressed','title':'2. Decompress nearby pages ahead','lead':'Idea: put neighboring compressed pages into the swap cache before demand. This makes many reads cheap, while some faults pay for several pages at once.','blocks':[chart('H2',['swapin-zswap.swapin_seq.mean_ns','swapin-zswap.swapin_seq.p99_ns'],['Sequential mean','Sequential p99'],f'Average {h2mean:+.1f}%: effectively unchanged; p99 {h2tail:+.1f}%'),{'type':'note','text':'Decision: stop this candidate. Its average change is inside 3% noise; p99 exceeds the 7.73% allowance. Inference: synchronous decompression concentrates work into fewer, longer faults, rather than reducing total work.'}]},
  {'id':'next','title':'What we learned — and what to try next','blocks':[{'type':'table','takeaway':'Keep the useful mechanism; address its cost','columns':['Direction','Next hypothesis','What must improve'], 'rows':[['Disk prefetch','Adapt the prefetch window to access behavior','Keep the sequential gain without a random-tail regression.'],['Compressed prefetch','Bound the work performed on a demand fault','Reduce total latency without concentrating decompression into long stalls.']]},{'type':'note','text':'Evidence strength: two independent pairs per workload, after baseline noise calibration. Both candidates passed correctness checks but failed fast performance screening. No slow confirmation was run; new hypotheses require a new experiment.'}]}
 ]
 for section in old['sections']:
  section=dict(section);section['id']='audit-'+section['id'];sections.append(section)
-spec={'title':'Why neither prefetch change advanced','subtitle':'Swap-in experiments · 23 October 2026 · completed fast screening','verdict':{'status':'rejected','headline':'Neither candidate is ready to advance','tiles':[{'label':'Disk: sequential average','value':f'{h1mean:.1f}%','note':f'Sequential average; random p99 +{h1tail:.1f}%.'},{'label':'Compressed: sequential p99','value':f'+{h2tail:.1f}%','note':f'Sequential p99; average {h2mean:.1f}%.'}]},'sections':sections}
+spec={'title':'Can prefetch make xswap reads faster?','subtitle':'Two ways to read pages before demand — their motivation, implementation and measured cost','verdict':{'status':'rejected','headline':'Neither candidate is ready to advance','tiles':[{'label':'Disk: sequential average','value':f'{h1mean:.1f}%','note':f'Sequential average; random p99 +{h1tail:.1f}%.'},{'label':'Compressed: sequential p99','value':f'+{h2tail:.1f}%','note':f'Sequential p99; average {h2mean:.1f}%.'}]},'sections':sections}
 (p/'explainer.json').write_text(json.dumps(spec,indent=2)+'\n')
 subprocess.run(['python3',str(root/'.agents/skills/explaining-campaign-results/scripts/build_page.py'),str(p/'explainer.json'),str(p/'explainer.html')],check=True)
 h=(p/'explainer.html').read_text()
+# Explain the original path and motivation before showing the verdict.
+context_html=re.search(r'<section id="context">.*?</section>',h,re.S).group(0)
+h=h.replace(context_html,'').replace('<div class="card">',context_html+'<div class="card">',1)
 # Keep the overview navigation short; audit material is explicitly opt-in.
 h=re.sub(r'<a href="#audit-[^"]+">.*?</a>','',h)
 h=re.sub(r'(<section id="audit-[^"]+">)(.*?)(</section>)',lambda m:'<details class="audit"><summary>'+re.search(r'<h2>(.*?)</h2>',m[2]).group(1)+'</summary>'+m[0]+'</details>',h,flags=re.S)
