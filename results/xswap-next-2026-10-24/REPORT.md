@@ -14,11 +14,13 @@ Status: CLOSED. Fast discovery only; human promotion remains disabled.
 
 ## Candidate decisions
 
-xs-ra-sequential-v1: REGRESSION in fast report 49add9b084d04941a459281838bbf3f3: disk seq p99 and rand p99 fail. swap_ra=0 in both candidate disk runs; source VMA-only admission is inactive with the rotational guest backend. Keep failed evidence; no causal speed claim, slow run or promotion.
+The Results table Evaluation column is the harness status, REGRESSION, for every candidate. The round decision is REJECT_FAST for every candidate (`round-decisions.json` and `summary.json` `round_decision`). The first recorded `decision_reason` begins with the word REGRESSION; that word is the harness status.
 
-xs-zswap-linear-v1: REJECT_FAST: report 15ded9c2bdf44b5fae1b3e83f0f75daf fails all four compressed latency guards; zswap seq mean +24.39%. Both release correctness backends and targeted KASAN/lockdep correctness pass. Disk-path movement has no matching mechanism and is not credited. Retain evidence, no slow tier or promotion.
+xs-ra-sequential-v1: REJECT_FAST. Harness evaluation is REGRESSION in fast report 49add9b084d04941a459281838bbf3f3: disk seq p99 and rand p99 fail. swap_ra=0 in both candidate disk runs; source VMA-only admission is inactive with the rotational guest backend. Keep failed evidence; no causal speed claim, slow run or promotion.
 
-xs-ra-cluster-v1: REJECT_FAST: report 9ec21a04b74b4d46a7931c16112a6bdb records useful physical prefetch and disk seq mean -40.19%, but disk random p99 +29.46% and compressed random mean +7.96% fail guards. Targeted KASAN/lockdep, both release correctness backends and CONFIG_SWAP=n build pass. Retain the tradeoff; no slow confirmation or promotion. Two pairs leave causal attribution and between-run variation unresolved.
+xs-zswap-linear-v1: REJECT_FAST. Report 15ded9c2bdf44b5fae1b3e83f0f75daf fails all four compressed latency guards; zswap seq mean +24.39%. The harness status is REGRESSION. `summary.json` records a passed KASAN and PROVE_LOCKING build, `xs-zswap-linear-v1-kasan`, and auxiliary guests recorded PASS. Those guest reports do not name the kernel build or backend they booted, so a targeted KASAN/lockdep guest pass is not re-derived from this tree. Disk-path movement has no matching mechanism and is not credited. Retain evidence, no slow tier or promotion.
+
+xs-ra-cluster-v1: REJECT_FAST. Report 9ec21a04b74b4d46a7931c16112a6bdb records useful physical prefetch and disk seq mean -40.19%, but disk random p99 +29.46% and compressed random mean +7.96% fail guards. The harness status is REGRESSION. `summary.json` records a passed KASAN and PROVE_LOCKING build, `xs-ra-cluster-v1-kasan`, and a passed CONFIG_SWAP=n build, `xs-ra-cluster-v1-noswap`. Auxiliary guests recorded PASS. Those guest reports do not name the kernel build they booted, so a targeted KASAN/lockdep guest pass is not re-derived from this tree. Retain the tradeoff; no slow confirmation or promotion. Two pairs leave causal attribution and between-run variation unresolved.
 
 
 ## Per-workload latency
@@ -86,48 +88,50 @@ Reserved guests: 48/48; builds: 6/10. Completed guest results: 48. Running evalu
 
 ## Mechanism counters
 
-| Run | Candidate | Backend | swap_ra | swap_ra_hit | pswpin | zswpin |
-|---|---|---|---:|---:|---:|---:|
-| 7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a | baseline | disk | 0 | 1 | 262159 | 0 |
-| 7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b | baseline | disk | 0 | 0 | 262163 | 0 |
-| 7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a | baseline | zswap | 0 | 0 | 0 | 262169 |
-| 7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b | baseline | zswap | 0 | 0 | 0 | 262160 |
-| 7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b | baseline | disk | 0 | 1 | 262132 | 0 |
-| 7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a | baseline | disk | 0 | 0 | 262161 | 0 |
-| 7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b | baseline | zswap | 0 | 0 | 0 | 262166 |
-| 7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a | baseline | zswap | 0 | 0 | 0 | 262169 |
-| 7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a | baseline | disk | 0 | 2 | 262152 | 0 |
-| 7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b | baseline | disk | 0 | 0 | 262152 | 0 |
-| 7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a | baseline | zswap | 0 | 0 | 0 | 262160 |
-| 7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b | baseline | zswap | 0 | 0 | 0 | 262160 |
-| 7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b | baseline | disk | 0 | 0 | 262164 | 0 |
-| 7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a | baseline | disk | 0 | 1 | 262135 | 0 |
-| 7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b | baseline | zswap | 0 | 0 | 0 | 262160 |
-| 7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a | baseline | zswap | 0 | 0 | 0 | 262160 |
-| 49add9b084d04941a459281838bbf3f3-0-swapin-disk-a | xs-ra-sequential-v1 | disk | 0 | 1 | 262159 | 0 |
-| 49add9b084d04941a459281838bbf3f3-0-swapin-disk-b | xs-ra-sequential-v1 | disk | 0 | 1 | 262137 | 0 |
-| 49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a | xs-ra-sequential-v1 | zswap | 0 | 0 | 0 | 262165 |
-| 49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b | xs-ra-sequential-v1 | zswap | 0 | 0 | 0 | 262166 |
-| 49add9b084d04941a459281838bbf3f3-1-swapin-disk-b | xs-ra-sequential-v1 | disk | 0 | 0 | 262159 | 0 |
-| 49add9b084d04941a459281838bbf3f3-1-swapin-disk-a | xs-ra-sequential-v1 | disk | 0 | 0 | 262177 | 0 |
-| 49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b | xs-ra-sequential-v1 | zswap | 0 | 0 | 0 | 262160 |
-| 49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a | xs-ra-sequential-v1 | zswap | 0 | 0 | 0 | 262147 |
-| 15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a | xs-zswap-linear-v1 | disk | 0 | 1 | 262137 | 0 |
-| 15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b | xs-zswap-linear-v1 | disk | 0 | 0 | 262162 | 0 |
-| 15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a | xs-zswap-linear-v1 | zswap | 0 | 0 | 0 | 262160 |
-| 15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b | xs-zswap-linear-v1 | zswap | 0 | 0 | 0 | 262161 |
-| 15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b | xs-zswap-linear-v1 | disk | 0 | 0 | 262137 | 0 |
-| 15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a | xs-zswap-linear-v1 | disk | 0 | 3 | 262133 | 0 |
-| 15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b | xs-zswap-linear-v1 | zswap | 0 | 0 | 0 | 262165 |
-| 15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a | xs-zswap-linear-v1 | zswap | 0 | 0 | 0 | 262166 |
-| 9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a | xs-ra-cluster-v1 | disk | 0 | 0 | 262155 | 0 |
-| 9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b | xs-ra-cluster-v1 | disk | 32783 | 32778 | 262164 | 0 |
-| 9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a | xs-ra-cluster-v1 | zswap | 0 | 0 | 0 | 262159 |
-| 9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b | xs-ra-cluster-v1 | zswap | 0 | 0 | 0 | 262160 |
-| 9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b | xs-ra-cluster-v1 | disk | 65548 | 65544 | 262166 | 0 |
-| 9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a | xs-ra-cluster-v1 | disk | 0 | 0 | 262164 | 0 |
-| 9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b | xs-ra-cluster-v1 | zswap | 0 | 0 | 0 | 262160 |
-| 9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a | xs-ra-cluster-v1 | zswap | 0 | 0 | 0 | 262139 |
+Arm A ran baseline commit `5e84ca928deeacb4eee656806a003f27d1eca82f`. Arm B ran the candidate commit. The Candidate column names the comparison, so twelve Arm A rows inside candidate comparisons carry the candidate's name. Arm is derived from `summary.json` `mechanisms[].source_commit`.
+
+| Run | Candidate | Arm | Backend | swap_ra | swap_ra_hit | pswpin | zswpin |
+|---|---|---|---|---:|---:|---:|---:|
+| 7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a | baseline | A | disk | 0 | 1 | 262159 | 0 |
+| 7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b | baseline | A | disk | 0 | 0 | 262163 | 0 |
+| 7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a | baseline | A | zswap | 0 | 0 | 0 | 262169 |
+| 7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b | baseline | A | zswap | 0 | 0 | 0 | 262160 |
+| 7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b | baseline | A | disk | 0 | 1 | 262132 | 0 |
+| 7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a | baseline | A | disk | 0 | 0 | 262161 | 0 |
+| 7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b | baseline | A | zswap | 0 | 0 | 0 | 262166 |
+| 7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a | baseline | A | zswap | 0 | 0 | 0 | 262169 |
+| 7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a | baseline | A | disk | 0 | 2 | 262152 | 0 |
+| 7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b | baseline | A | disk | 0 | 0 | 262152 | 0 |
+| 7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a | baseline | A | zswap | 0 | 0 | 0 | 262160 |
+| 7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b | baseline | A | zswap | 0 | 0 | 0 | 262160 |
+| 7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b | baseline | A | disk | 0 | 0 | 262164 | 0 |
+| 7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a | baseline | A | disk | 0 | 1 | 262135 | 0 |
+| 7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b | baseline | A | zswap | 0 | 0 | 0 | 262160 |
+| 7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a | baseline | A | zswap | 0 | 0 | 0 | 262160 |
+| 49add9b084d04941a459281838bbf3f3-0-swapin-disk-a | xs-ra-sequential-v1 | A | disk | 0 | 1 | 262159 | 0 |
+| 49add9b084d04941a459281838bbf3f3-0-swapin-disk-b | xs-ra-sequential-v1 | B | disk | 0 | 1 | 262137 | 0 |
+| 49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a | xs-ra-sequential-v1 | A | zswap | 0 | 0 | 0 | 262165 |
+| 49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b | xs-ra-sequential-v1 | B | zswap | 0 | 0 | 0 | 262166 |
+| 49add9b084d04941a459281838bbf3f3-1-swapin-disk-b | xs-ra-sequential-v1 | B | disk | 0 | 0 | 262159 | 0 |
+| 49add9b084d04941a459281838bbf3f3-1-swapin-disk-a | xs-ra-sequential-v1 | A | disk | 0 | 0 | 262177 | 0 |
+| 49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b | xs-ra-sequential-v1 | B | zswap | 0 | 0 | 0 | 262160 |
+| 49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a | xs-ra-sequential-v1 | A | zswap | 0 | 0 | 0 | 262147 |
+| 15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a | xs-zswap-linear-v1 | A | disk | 0 | 1 | 262137 | 0 |
+| 15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b | xs-zswap-linear-v1 | B | disk | 0 | 0 | 262162 | 0 |
+| 15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a | xs-zswap-linear-v1 | A | zswap | 0 | 0 | 0 | 262160 |
+| 15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b | xs-zswap-linear-v1 | B | zswap | 0 | 0 | 0 | 262161 |
+| 15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b | xs-zswap-linear-v1 | B | disk | 0 | 0 | 262137 | 0 |
+| 15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a | xs-zswap-linear-v1 | A | disk | 0 | 3 | 262133 | 0 |
+| 15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b | xs-zswap-linear-v1 | B | zswap | 0 | 0 | 0 | 262165 |
+| 15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a | xs-zswap-linear-v1 | A | zswap | 0 | 0 | 0 | 262166 |
+| 9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a | xs-ra-cluster-v1 | A | disk | 0 | 0 | 262155 | 0 |
+| 9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b | xs-ra-cluster-v1 | B | disk | 32783 | 32778 | 262164 | 0 |
+| 9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a | xs-ra-cluster-v1 | A | zswap | 0 | 0 | 0 | 262159 |
+| 9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b | xs-ra-cluster-v1 | B | zswap | 0 | 0 | 0 | 262160 |
+| 9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b | xs-ra-cluster-v1 | B | disk | 65548 | 65544 | 262166 | 0 |
+| 9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a | xs-ra-cluster-v1 | A | disk | 0 | 0 | 262164 | 0 |
+| 9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b | xs-ra-cluster-v1 | B | zswap | 0 | 0 | 0 | 262160 |
+| 9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a | xs-ra-cluster-v1 | A | zswap | 0 | 0 | 0 | 262139 |
 
 ## Descriptive cost readback
 
@@ -178,7 +182,7 @@ Extracted after scoring from retained raw logs; these values were not admission 
 
 ## Required policy gates
 
-Observed applies only to the tested configuration and workload; full promotion remains disabled.
+Observed applies only to the tested configuration and workload; full promotion remains disabled. The kasan and lockdep rows marked observed were recorded by the campaign generator. The published auxiliary guest reports do not name a kernel build, so this tree does not re-derive those two gates.
 
 | Candidate | Gate | Evidence state |
 |---|---|---|

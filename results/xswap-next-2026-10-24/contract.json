@@ -1,0 +1,56 @@
+{
+  "campaign": "xswap-next-2026-10-24",
+  "status": "COMPLETE_ALL_FAST_REJECTED",
+  "authorized_utc": "2026-10-24T08:39:36.414199+00:00",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "protocol": "benchmark/swap-standard/protocol-xswap-next-2026-10-24.json",
+  "budget": {
+    "guest_attempts": 48,
+    "build_attempts": 10,
+    "wall_seconds": 21600,
+    "guest_timeout": 900
+  },
+  "max_candidates": 3,
+  "primary": "swapin_seq.mean_ns, equally weighted disk/zswap",
+  "guards": [
+    "swapin_seq.p99_ns",
+    "swapin_rand.mean_ns",
+    "swapin_rand.p99_ns"
+  ],
+  "allowed_files": [
+    "mm/memory.c",
+    "mm/swap_state.c",
+    "mm/swap.h",
+    "mm/swapfile.c",
+    "mm/page_io.c",
+    "mm/zswap.c"
+  ],
+  "stop_conditions": [
+    "global or campaign STOP",
+    "6 hour deadline",
+    "48 total guests including correctness",
+    "10 total builds",
+    "correctness failure",
+    "uninterpretable measurement"
+  ],
+  "next_hypothesis": "H3: retain physical readahead only for adjacent fault addresses, use synchronous single-folio demand reads after discontinuities",
+  "publication": true,
+  "publication_rule": "Upload and publish the campaign report, then hand it to the owner for review. Experiment work is committed directly to main without a pull request. This is not candidate promotion.",
+  "publication_field_history": "Snapshot 15bf186 stored publication false. The owner confirmed the publish-then-review rule on 2026-10-24. Thresholds, budget and stop conditions are unchanged.",
+  "promotion": false,
+  "slow_tier": false,
+  "historical_campaign": "xswap-swapin-2026-10-23",
+  "recovery": "Prior campaign complete with two fast regressions, 46 guests and eight builds; no active guest or build found. Untracked confirmation inputs preserved.",
+  "protocol_revision": 2,
+  "calibration_diagnosis": "calibration-diagnosis.json",
+  "completed_utc": "2026-10-24T09:24:58.628467+00:00",
+  "actual_budget": {
+    "created": 1792831186.5415323,
+    "guests": 48,
+    "builds": 6
+  },
+  "elapsed_seconds": 2712.086946249008,
+  "running": false,
+  "stop_reason": "All three candidates screened out and 48-guest budget exhausted",
+  "review": "explainer.html"
+}

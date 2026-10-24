@@ -1,0 +1,70 @@
+{
+  "generator_rerun": "Not rerun. generate-report.py reads worker-local ledger, serial logs and candidate worktrees that are not in this tree, and it imports standard_workflow.select_protocol from snapshot 15bf186, which is not in standard_workflow.py on main.",
+  "published_explainer_sha256": "23156c3e0a647721db097179049facdba1a9df8acd19119316b48fddd05fb907",
+  "snapshot_15bf186_explainer_sha256": "0cf5768b265ccfb8a9028a1e43f62b17eed45599c725e43de671c5b61c65e952",
+  "publication_json_original_explainer_sha256": "5a7406fbe8aa4d46992ea03cc6f5c2c6208811ebabcb92655b0f20b8af6d4cdc",
+  "publication_json_hash_note": "publication.json original_explainer_sha256 matches neither the 15bf186 blob nor the published blob. original_summary_sha256 matches the 15bf186 summary.json blob.",
+  "edit_count": 12,
+  "edits": [
+    {
+      "path": ".sections[2].blocks[1].takeaway",
+      "published": "Disk sequential mean is lower with cluster-mode admission",
+      "snapshot_15bf186": "Disk sequential mean: -40.2% for xs-ra-cluster-v1"
+    },
+    {
+      "path": ".sections[2].blocks[2].takeaway",
+      "published": "Disk sequential p99 is lower with cluster-mode admission",
+      "snapshot_15bf186": "Disk sequential p99: -11.6% for xs-ra-cluster-v1"
+    },
+    {
+      "path": ".sections[2].blocks[3].takeaway",
+      "published": "Disk random mean is higher with cluster-mode admission",
+      "snapshot_15bf186": "Disk random mean: +5.9% for xs-ra-cluster-v1"
+    },
+    {
+      "path": ".sections[2].blocks[4].takeaway",
+      "published": "Disk random p99 is higher with cluster-mode admission",
+      "snapshot_15bf186": "Disk random p99: +29.5% for xs-ra-cluster-v1"
+    },
+    {
+      "path": ".sections[2].blocks[5].takeaway",
+      "published": "Compressed sequential mean is higher with input linearization",
+      "snapshot_15bf186": "Compressed sequential mean: +24.4% for xs-zswap-linear-v1"
+    },
+    {
+      "path": ".sections[2].blocks[6].takeaway",
+      "published": "Compressed sequential p99 is higher with input linearization",
+      "snapshot_15bf186": "Compressed sequential p99: +21.2% for xs-zswap-linear-v1"
+    },
+    {
+      "path": ".sections[2].blocks[7].takeaway",
+      "published": "Compressed random mean is higher with input linearization",
+      "snapshot_15bf186": "Compressed random mean: +23.3% for xs-zswap-linear-v1"
+    },
+    {
+      "path": ".sections[2].blocks[8].takeaway",
+      "published": "Compressed random p99 is higher with input linearization",
+      "snapshot_15bf186": "Compressed random p99: +29.1% for xs-zswap-linear-v1"
+    },
+    {
+      "path": ".verdict.tiles[2].note",
+      "published": "round 3; exact effect in evidence",
+      "snapshot_15bf186": "round 3; two fast pairs"
+    },
+    {
+      "path": ".verdict.tiles[2].value",
+      "published": "Lower latency",
+      "snapshot_15bf186": "-40.2%"
+    },
+    {
+      "path": ".verdict.tiles[3].note",
+      "published": "round 3; failed the guard",
+      "snapshot_15bf186": "round 3; two fast pairs"
+    },
+    {
+      "path": ".verdict.tiles[3].value",
+      "published": "Higher latency",
+      "snapshot_15bf186": "+29.5%"
+    }
+  ]
+}

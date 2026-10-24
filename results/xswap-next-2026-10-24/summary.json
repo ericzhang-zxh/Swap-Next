@@ -45,7 +45,8 @@
         "kasan": "missing",
         "kcsan": "missing",
         "no_new_kernel_warnings": "observed"
-      }
+      },
+      "round_decision": "REJECT_FAST"
     },
     {
       "name": "xs-zswap-linear-v1",
@@ -76,7 +77,8 @@
         "kasan": "observed",
         "kcsan": "missing",
         "no_new_kernel_warnings": "observed"
-      }
+      },
+      "round_decision": "REJECT_FAST"
     },
     {
       "name": "xs-ra-cluster-v1",
@@ -107,7 +109,8 @@
         "kasan": "observed",
         "kcsan": "missing",
         "no_new_kernel_warnings": "observed"
-      }
+      },
+      "round_decision": "REJECT_FAST"
     }
   ],
   "metrics": [
@@ -2628,9 +2631,1140 @@
   "running": [],
   "performance_accepted": false,
   "promotion": false,
+  "per_run_latency_us": {
+    "unit": "microseconds per first touch",
+    "source": "Copied from results/xswap-next-2026-10-24/explainer.json strip points on main at 9138731. The generator divided retained nanoseconds by 1000; this tree stores the published microsecond values and does not reconstruct nanoseconds. Recount against this tree: 180 strip points; 20 prefetch points match mechanisms.swap_ra_hit and are not repeated here; 80 mean points also match 1e6 divided by descriptive_costs pages per second within 0.01 us; 4 disk-random means also appear in nanoseconds in calibration-diagnosis.json; 80 p99 points have no other source. An earlier audit count of 162 unsourced points does not match this recount.",
+    "points": [
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 166.561
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 155.075
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 148.921
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 145.092
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 164.789
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 156.279
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 138.402
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 149.603
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 155.503
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 164.33
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 159.38
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 154.112
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 154.543
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 140.254
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 139.724
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 148.223
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 145.972
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 118.379
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 77.223
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 175.072
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 343.474
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 302.115
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 313.77
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 316.708
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 336.485
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 318.25
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 277.831
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 294.689
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 308.872
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 335.764
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 325.239
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 303.688
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 333.23
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 299.063
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 281.075
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 304.344
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 337.344
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 307.771
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 313.517
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_seq.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 366.36
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 189.129
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 234.09
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 224.862
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 229.776
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 201.225
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 225.849
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 209.764
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 209.844
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 221.868
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 210.378
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 225.073
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 215.375
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 213.119
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 188.841
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 184.114
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 184.241
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 216.106
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 216.159
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 224.292
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 200.102
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 339.621
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 372.754
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 398.294
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 397.376
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 383.836
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 390.077
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 340.181
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 344.218
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 356.087
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 386.589
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 380.79
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 345.788
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 398.987
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 356.033
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 332.898
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 319.034
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 376.586
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 415.013
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 592.882
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a",
+        "metric": "swapin-disk.swapin_rand.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 389.872
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 11.676
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 11.846
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 11.758
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 11.848
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 11.735
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 11.887
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 11.719
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 11.754
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 11.866
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 11.827
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 11.995
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 11.714
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 11.755
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 14.586
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 14.651
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 11.749
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 11.818
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 11.838
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 11.981
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 12.056
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 25.93
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 28.007
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 28.005
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 29.655
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 26.259
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 30.056
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 27.272
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 27.44
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 28.413
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 28.134
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 32.687
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 26.999
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 27.032
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 33.189
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 32.988
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 27.581
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 28.317
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 27.893
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 28.335
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_seq.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 27.887
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 13.658
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 13.92
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 13.673
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 13.839
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 13.672
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 13.844
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 13.596
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 13.854
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 13.744
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 13.745
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 13.93
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 13.695
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 13.675
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 16.86
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 16.892
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 13.701
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 20.971
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 19.831
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 22.592
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.mean_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 18.33
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 27.853
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 31.65
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 28.149
+      },
+      {
+        "run_id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "A/A sparse",
+        "series": "baseline",
+        "value_us": 31.295
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 29.351
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 34.106
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 27.727
+      },
+      {
+        "run_id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "A/A allocated",
+        "series": "baseline",
+        "value_us": 29.748
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 31.194
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 32.748
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "candidate",
+        "value_us": 36.006
+      },
+      {
+        "run_id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-ra-sequential-v1",
+        "series": "baseline",
+        "value_us": 29.646
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 29.361
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 40.313
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "candidate",
+        "value_us": 36.661
+      },
+      {
+        "run_id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-zswap-linear-v1",
+        "series": "baseline",
+        "value_us": 30.19
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 43.275
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 41.259
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "candidate",
+        "value_us": 51.41
+      },
+      {
+        "run_id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a",
+        "metric": "swapin-zswap.swapin_rand.p99_ns",
+        "group": "xs-ra-cluster-v1",
+        "series": "baseline",
+        "value_us": 39.489
+      }
+    ]
+  },
   "publication": true,
   "publication_scope": "report_artifacts_only",
   "source_experiment_commit": "15bf186f665368ce19868e5268c422a240ba6699",
   "source_experiment_url": "https://github.com/ericzhang-zxh/Swap-Next/tree/15bf186f665368ce19868e5268c422a240ba6699/results/xswap-next-2026-10-24",
-  "candidate_code_promoted": false
+  "candidate_code_promoted": false,
+  "evidence_limits": [
+    "decision_reason text that says a targeted KASAN/lockdep correctness pass is the recorded controller sentence. builds[] records passed KASAN and PROVE_LOCKING configs. reports[] auxiliary guests do not name the kernel build they booted.",
+    "per_run_latency_us is copied from explainer.json strip points. See that object's source string.",
+    "evidence-manifest.json paths are not in this tree. See evidence-availability.json."
+  ]
 }

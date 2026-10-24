@@ -53,5 +53,6 @@ Campaign scope and baseline changes follow AGENTS.md and the owner-authorized
 contract. The owner approves candidate promotion. No agent gets host root,
 reboots the host, changes host swap or the host kernel, or adds a DCO sign-off.
 Execution workers cannot access credentials, email, push or publish. The primary
-agent performs the standing experiment-branch push and report-only main/Pages
-delivery in AGENTS.md; candidate code is never promoted automatically.
+agent commits experiment work directly to main without a pull request and
+publishes the campaign report for the owner's review, as AGENTS.md requires.
+Candidate code is never promoted automatically.

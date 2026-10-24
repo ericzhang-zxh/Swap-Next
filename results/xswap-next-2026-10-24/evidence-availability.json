@@ -1,0 +1,6 @@
+{
+  "manifest": "evidence-manifest.json",
+  "entries": 128,
+  "present_and_hash_match": 0,
+  "note": "Every manifest path was a worker-local or snapshot artifact when the manifest was written. 127 paths are still absent from this tree. evolve/control/campaigns/xswap-next-2026-10-24/policy.json is present but its bytes no longer match the manifest sha256 ff44e8f8e49b because the publication wording was updated. The matching bytes are policy-snapshot-15bf186.json."
+}

@@ -12,7 +12,7 @@ Status: complete. Three candidates screened out; none eligible for slow confirma
 
 These are two-pair fast observations. Source/counter evidence supports activation of round 3's physical prefetch path. Confidence in general performance attribution remains limited by between-run variation; independent profiling or confirmation could change it.
 
-48 KVM guests completed with integration gates passing, including eight targeted correctness/debug guests. Six builds passed. Two candidates have exact-commit targeted KASAN/lockdep coverage; the last also passed a CONFIG_SWAP=n build. The independent audit checks 48 result/log hashes, candidate identities, all 24 paired metric ratios, the P123 baseline ancestry and the shared budget.
+48 KVM guests completed with integration gates passing, including eight targeted correctness/debug guests. Six builds passed. Two candidates have passed KASAN and PROVE_LOCKING builds recorded in `summary.json`; the auxiliary-guest reports do not name the kernel build they booted, so a KASAN/lockdep guest pass is not re-derived here. The last candidate also has a passed CONFIG_SWAP=n build, `xs-ra-cluster-v1-noswap`. The independent audit recorded 48 result/log hash pairs (96 hashes), candidate identities, all 24 paired metric ratios, the P123 baseline ancestry and the shared budget. `evidence-manifest.json` has 128 entries. All 128 paths are worker-local, and none of those files are in this tree.
 
 ## Next
 
@@ -24,4 +24,6 @@ The first sparse-image A/A failed its noise gate. Preallocation revision 2 passe
 
 ## Source and publication
 
-Scientific results are pinned to [experiment snapshot `15bf186`](https://github.com/ericzhang-zxh/Swap-Next/tree/15bf186f665368ce19868e5268c422a240ba6699/results/xswap-next-2026-10-24). The full runtime logs remain on the Linux worker; the public manifest preserves their identities and hashes. This main commit contains report artifacts and delivery documentation, with no kernel candidate, benchmark or submodule changes.
+Scientific results are pinned to [experiment snapshot `15bf186`](https://github.com/ericzhang-zxh/Swap-Next/tree/15bf186f665368ce19868e5268c422a240ba6699/results/xswap-next-2026-10-24). The full runtime logs remain on the Linux worker; the public manifest preserves their identities and hashes.
+
+These files were copied from that snapshot so the report can be read without the experiment branch: `generate-report.py`, `verify-evidence.py`, `run-aux.py`, `protocol-revision1.json`, and `contract.json` (publication wording updated; see `publication_field_history`). `protocol-revision2.json` is a byte copy of `benchmark/swap-standard/protocol-xswap-next-2026-10-24.json` at the same snapshot. The campaign policy with the publication wording updated is [policy.json](../../evolve/control/campaigns/xswap-next-2026-10-24/policy.json). The manifest hash matches [policy-snapshot-15bf186.json](policy-snapshot-15bf186.json), the unmodified snapshot bytes. The generator imports `standard_workflow.select_protocol` from the snapshot and reads worker-local evidence, so it does not rerun on this tree. `explainer-edits.json` records the hand edit of `explainer.json` after `15bf186`. The frozen protocol limitation text still says "no publication"; [AGENTS.md](../../AGENTS.md#report-publication) is the delivery rule.

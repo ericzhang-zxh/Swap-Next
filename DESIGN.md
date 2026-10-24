@@ -1,7 +1,8 @@
 # Design
 
 Swap Next searches for Linux swap changes that lower a measured cost without
-breaking correctness. A candidate is one small patch on a frozen kernel; a
+breaking correctness. A candidate is a frozen-kernel change under that
+campaign's policy: a small patch or a larger redesign of the swap path. A
 benchmark boots it next to the baseline in KVM; OpenEvolve archives the result
 and picks references for the next proposal. The proposer is the assistant in
 the current session.
@@ -22,8 +23,12 @@ report in `results/`. This document holds what every campaign shares.
 A campaign picks one row as its primary metric and keeps the others as
 guardrails. The formal policy in `evolve/control/config/policy.json` names
 throughput. The new [standard suite](benchmark/swap-standard/README.md) records
-usemem throughput, kernel-build time and Valkey RPS. Its parameters still need
-repeated A/A calibration before they can define a candidate campaign.
+usemem throughput, kernel-build time and Valkey RPS. Passing repeated A/A for
+a frozen campaign protocol is recorded in that campaign's report. The default
+matrix is not itself a calibrated candidate campaign;
+[xswap-next-2026-10-24](results/xswap-next-2026-10-24/REPORT.md) froze a
+narrower swap-in protocol and recorded both a noisy sparse-image A/A and a
+passing preallocated A/A.
 
 ## Upstream landscape
 
@@ -68,9 +73,13 @@ recycled integer destroy handle, and interface documentation. See
 
 ## Where OpenEvolve fits
 
-At present OpenEvolve stores evaluated candidates and samples references.
-Every candidate is generation 1 on the frozen seed, so sampling a "parent" has
-no effect on the next patch. Two changes would make it useful:
+`evolve/loop.py` stores evaluated candidates for kernel, xswap and
+xswap-structure and samples references. The standard suite uses
+`evolve/standard_workflow.py`, also reached as `evolve/loop.py swap-standard`.
+That adapter reserves a ledger entry before each build or guest. It does not
+turn a sampled parent into the next patch. Every candidate on the historical
+adapters is generation 1 on the frozen seed, so sampling a "parent" has no
+effect on the next patch. Two changes would make OpenEvolve useful:
 
 - **Allow lineage.** Let a candidate build on a selected, already-evaluated
   parent, so that successful mechanisms can stack.
@@ -98,5 +107,9 @@ documents link here instead of repeating it.
 - **Statistics**: there is no independent confirmation or holdout, and formal
   acceptance (`analysis.py`) stays disabled until the gates listed in
   `benchmark/<suite>/protocol.json` and `policy.json` exist.
-- **Correctness**: the guests check data integrity, fork/COW, live destroy and
-  swapoff. There is no lockdep, KASAN, KCSAN or fault injection.
+- **Correctness**: historical kernel and xswap guests check data integrity,
+  fork/COW, live destroy and swapoff. Those checked-in suites do not run
+  lockdep, KASAN, KCSAN or fault injection. The xswap-next-2026-10-24 report
+  records targeted KASAN and lockdep builds; the guest-to-build link and the
+  KASAN config files are on the experiment snapshot, not in this tree. KCSAN
+  and fault injection remain uncovered.

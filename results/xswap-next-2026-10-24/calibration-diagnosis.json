@@ -11,7 +11,7 @@
     224862,
     229776
   ],
-  "host_pressure": "No competing build/guest found; CPU PSI zero at inspection, recent I/O PSI nonzero. Host pressure outside WSL is unobserved.",
+  "host_pressure": "Unreproduced in this tree. The original note said no competing build or guest was found, CPU PSI was zero at inspection, and recent I/O PSI was nonzero, with host pressure outside WSL unobserved. No PSI sample or process list is retained here.",
   "inference": "Sparse guest swap files allocate host filesystem extents during writes. Allocation state is a plausible confounder, not a proven cause of random-read variance.",
   "change": "Opt-in per-run posix_fallocate and fsync before guest launch, with exact result attestation. Baseline/kernel/image/workloads/thresholds/pair counts unchanged.",
   "preserved_protocol": "protocol-revision1.json",

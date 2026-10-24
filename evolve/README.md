@@ -8,10 +8,11 @@
   `requirements.snapshot.txt` installs it in editable mode.
 
 ```sh
-evolve/.venv/bin/python evolve/loop.py <kernel|xswap> status
-evolve/.venv/bin/python evolve/loop.py <kernel|xswap> next        # write a proposal brief
-evolve/.venv/bin/python evolve/loop.py <kernel|xswap> evaluate --candidate <name>
-evolve/.venv/bin/python evolve/loop.py xswap calibrate             # A/A boots; xswap only
+evolve/.venv/bin/python evolve/loop.py <kernel|xswap|xswap-structure> status
+evolve/.venv/bin/python evolve/loop.py <kernel|xswap|xswap-structure> next
+evolve/.venv/bin/python evolve/loop.py <kernel|xswap|xswap-structure> evaluate --candidate <name>
+evolve/.venv/bin/python evolve/loop.py <xswap|xswap-structure> calibrate
+evolve/.venv/bin/python evolve/loop.py swap-standard calibrate --tier fast
 ```
 
 State per suite lives in `evolve/<suite>/state-layout-v1/`: the database,

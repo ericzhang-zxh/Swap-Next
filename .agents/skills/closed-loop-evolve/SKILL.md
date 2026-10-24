@@ -102,18 +102,17 @@ artifact, not only the written report. Update the report's status and findings
 first, then produce the review artifact the project defines (for Swap Next, the
 explainer page; see the binding) from the same evidence, and link it from the
 report. Do this even if nothing was accepted or the campaign ended early.
-Generating the artifact is part of closing. Follow the project's standing
-report-publication policy when authorized, independently of candidate promotion.
-For Swap Next, commit and push the completed experiment branch, publish only
-reviewed report artifacts to main from an isolated origin/main worktree, and
-verify that commit's Pages deployment, live campaign page and index. This is
-standing delivery authorization, including rejected and inconclusive outcomes;
-only an explicit user request withholds a push or keeps a report private/local.
-Check current origin/main delivery rules when resuming an older experiment
-branch. An agent-authored publication flag cannot revoke that authorization.
-Frozen experiment inputs, STOP state, budgets and candidate promotion gates
-remain unchanged. An experiment STOP or exhausted budget stops builds and
-guests; it does not cancel this authorized report-only closeout.
+Generating the artifact is part of closing. Follow AGENTS.md for delivery,
+independently of candidate promotion. For Swap Next, every campaign report is
+uploaded and published, then handed to the owner for review, including rejected
+and inconclusive outcomes. Experiment work is committed directly to main
+without a pull request. Verify that commit's Pages deployment, live campaign
+page and index. Only an explicit owner request withholds a push or keeps a
+report private. Check current origin/main delivery rules when resuming an older
+experiment branch. An agent-authored publication flag cannot revoke that
+authorization. Frozen experiment inputs, STOP state, budgets and candidate
+promotion gates remain unchanged. An experiment STOP or exhausted budget stops
+builds and guests; it does not cancel this closeout.
 
 For Swap Next, load `.agents/skills/explaining-campaign-results/SKILL.md` before
 building the human-review HTML. Its presentation contract is: verdict first →

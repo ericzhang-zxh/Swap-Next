@@ -6,5 +6,9 @@
   "original_summary_sha256": "fdd866b299c557e3dc46ba3e550f5f3efb353160a12631208d0ae034d0b50e69",
   "original_explainer_sha256": "5a7406fbe8aa4d46992ea03cc6f5c2c6208811ebabcb92655b0f20b8af6d4cdc",
   "candidate_code_promoted": false,
-  "scientific_results_changed": false
+  "scientific_results_changed": false,
+  "original_explainer_sha256_note": "publication.json original_explainer_sha256 matches neither the 15bf186 blob nor the published blob. original_summary_sha256 matches the 15bf186 summary.json blob.",
+  "published_explainer_sha256": "23156c3e0a647721db097179049facdba1a9df8acd19119316b48fddd05fb907",
+  "snapshot_explainer_sha256": "0cf5768b265ccfb8a9028a1e43f62b17eed45599c725e43de671c5b61c65e952",
+  "audit_note": "The evidence audit added per-run latencies copied from explainer.json, an Arm column derived from mechanisms.source_commit, and wording corrections. Ratios, counters, gate states and round decisions are unchanged."
 }

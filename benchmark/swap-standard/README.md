@@ -101,6 +101,15 @@ selects the tier; auto evaluates fast before slow. Reference checks are fast onl
 | fast | usemem/disk, Valkey/zram, swapin/disk | 2 | 2 |
 | slow | fast cases plus build/zswap and metadata/brd | 4 | 10 |
 
+This table is the default `protocol.json` (campaign `swap-standard-2026-10-22`).
+The xswap-next-2026-10-24 protocol is a different frozen file: its fast cases
+are only `swapin-disk` and `swapin-zswap`, with 2 calibration pairs and 2
+comparison pairs, and it defines no slow tier. The byte copy is
+[protocol-revision2.json](../../results/xswap-next-2026-10-24/protocol-revision2.json),
+taken from `benchmark/swap-standard/protocol-xswap-next-2026-10-24.json` at
+snapshot `15bf186`. Revision 1, retained after the noisy sparse-image A/A, is
+beside it. Neither copy changes the default protocol in this directory.
+
 Each pair uses fresh boots in alternating AB then BA order. One primary metric
 per scored workload contributes equally to the geometric mean of direction-correct
 ratios; all secondary metrics retain regression guards. Metadata is descriptive.

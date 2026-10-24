@@ -8,9 +8,10 @@
   <br /><br />
 </p>
 
-A laboratory for finding Linux swap optimizations. Each candidate is a small
-patch on a frozen kernel. A benchmark boots it next to the baseline in KVM, and
-OpenEvolve records the outcome and selects references for the next proposal.
+A laboratory for finding Linux swap optimizations. Each candidate is a
+frozen-kernel change, from a small patch through a larger redesign. A benchmark
+boots it next to the baseline in KVM, and OpenEvolve records the outcome and
+selects references for the next proposal.
 
 [DESIGN.md](DESIGN.md) covers the shared design: the swap cost model, the
 upstream landscape, measurement principles and the role of OpenEvolve.
@@ -25,8 +26,12 @@ benchmark/        builds, KVM runner, guest workloads, parsers, frozen protocols
   swap-standard/  usemem, kernel build and Valkey performance integration
   kernel/         historical ordinary swap suite
   xswap/          xswap suite (imported Phase I/II reference)
+  xswap-structure/ second-cycle mapped-metadata diagnostic
+  xswap-hole-probe/ mapped-metadata probe with a live anchor
+  tests/          layout checks shared by the suites
 evolve/
-  loop.py         OpenEvolve adapter: `loop.py <suite> status|next|evaluate|calibrate`
+  loop.py         OpenEvolve adapter: `loop.py <kernel|xswap|xswap-structure> status|next|evaluate|calibrate`
+  standard_workflow.py  standard-suite ledger, calibration and evaluation
   control/        candidate controller: worktrees, scope checks, policies
   openevolve/     upstream OpenEvolve submodule, pinned at 59dfe764
 patches/          experimental patches and the imported xswap reference
@@ -53,6 +58,8 @@ python3 evolve/control/controller.py --campaign <c> new <name> --hypothesis '<me
 python3 evolve/control/controller.py --campaign <c> check <name>
 evolve/.venv/bin/python evolve/loop.py xswap evaluate --candidate <name>
 evolve/.venv/bin/python evolve/loop.py xswap next
+evolve/.venv/bin/python evolve/loop.py xswap-structure calibrate
+evolve/.venv/bin/python evolve/loop.py swap-standard calibrate --tier fast
 ```
 
 The controller keeps candidates inside the allowed files and line budget.

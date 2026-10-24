@@ -14,15 +14,19 @@ of them change during a campaign.
 |---|---|---|---|
 | [kernel](kernel/protocol.json) | upstream `744e5400` | requested metadata bytes, first-access p99 | none |
 | [xswap](xswap/README.md) | xswap Phase I/II reference `37de636c` | retained mapped clusters, first-access p99 | A/A required |
+| [xswap-structure](xswap-structure/README.md) | observation baseline `4f83412c` | `mapped_clusters_after_settle` | A/A required |
+| [xswap-hole-probe](xswap-hole-probe/README.md) | same observation baseline `4f83412c` | diagnostic mapped-metadata probe; not a scored primary | bounded guest cap, not an A/A screen |
 
 For new performance studies, start with [swap-standard](swap-standard/README.md):
 usemem, kernel build, Valkey, and supplemental metadata/latency measurements.
-It is an integration-stage suite; repeated A/A calibration and campaign admission
-remain required. Historical suites below retain their original protocols.
+`evolve/loop.py swap-standard` delegates to `evolve/standard_workflow.py`, which
+calibrates. kernel has no calibration step. The default swap-standard protocol
+is still an integration-stage matrix; a campaign may freeze a narrower protocol.
+Historical suites below retain their original protocols.
 
 ## Workload
 
-Both suites:
+The kernel and xswap suites:
 
 - fill a 64 MiB anonymous target and page it out with `MADV_PAGEOUT`;
 - apply pressure with `usemem -O 5G` in a 4 GiB, two-vCPU guest;

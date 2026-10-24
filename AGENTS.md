@@ -73,28 +73,25 @@ Loading that skill does not authorize running or publishing experiments.
 
 ## Report publication
 
-- Commit and push completed experiment work to its experiment branch as part of
-  closeout, then publish the report separately to main. Do not wait for another
-  approval when this standing authorization applies.
-- Closing an authorized campaign includes publishing its completed review report
-  to Pages, including rejected and inconclusive outcomes, unless the user asks
-  to keep that report private or local.
-- Keep candidate code, benchmark changes, submodule updates and live runtime
-  state on the experiment branch. Publish reviewed `results/<campaign>/` report
-  artifacts in a separate commit based on current `origin/main`; never merge the
-  experiment branch merely to expose its report.
+- Every campaign report is uploaded and published, then handed to the owner for
+  review. The handoff includes rejected and inconclusive outcomes. Do not wait
+  for another approval before publishing, unless the owner explicitly asks to
+  keep that report private or local.
+- Experiment work is committed directly to `main` without a pull request. Do
+  the work on a branch, rebase onto `main` if it moved, and fast-forward
+  `main`. Never force-push `main`.
+- Candidate code is never promoted automatically. Publishing the report or
+  committing the experiment record is not acceptance, and it does not authorize
+  another experiment.
 - Include `explainer.html`, `explainer.json`, the written report and a public data
   summary. Preserve failed gates, uncertainty and pinned source/evidence links;
   omit credentials, host-specific paths and raw private runtime data.
-- Use an isolated worktree, inspect the complete diff, build the Pages index and
-  push the report-only commit to `main`. Pages collects the checked-out main
-  tree, not reports across all branches.
+- Inspect the complete diff, build the Pages index and push to `main`. Pages
+  collects the checked-out main tree, not reports across all branches.
 - Verify the deployment for that commit and the live campaign page and index
-  before reporting publication complete. Publishing a report grants no approval
-  to promote its candidate code or launch another experiment.
-
-- For an older experiment branch, reconcile delivery instructions against current
-  `origin/main` before closeout. Frozen baselines, protocols, STOP state and
-  budgets remain unchanged. An agent-authored `publication: false` field does
-  not revoke the owner's standing authorization; only an explicit user request
-  can keep a report private/local or withhold a push.
+  before reporting publication complete.
+- Frozen baselines, protocols, STOP state and budgets remain unchanged. An
+  agent-authored `publication: false` field does not revoke this rule. Only an
+  explicit owner request keeps a report private or withholds a push. For an
+  older checkout, reconcile delivery instructions against current `origin/main`
+  before closeout.
