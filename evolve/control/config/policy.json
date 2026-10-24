@@ -12,15 +12,14 @@
     "mm/swap_table.h",
     "mm/swap.h",
     "mm/page_io.c",
-    "mm/zswap.c",
     "include/linux/swap.h",
     "include/linux/swap_ops.h",
-    "include/linux/zswap.h"
+    "include/linux/swapops.h"
   ],
   "allowed_add": [
     "tools/testing/selftests/mm/swap_next_*.c"
   ],
-  "max_changed_files": 6,
+  "max_changed_files": 8,
   "max_changed_lines": 300,
   "budget": {
     "max_candidates": 8,

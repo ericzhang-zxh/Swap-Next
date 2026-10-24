@@ -11,9 +11,11 @@ crash proves none of them.
 
 Candidates may modify only the swap-core files listed in
 `config/policy.json` and add `tools/testing/selftests/mm/swap_next_*.c`
-tests. `mm/memory.c`, `mm/vmscan.c`, memcg, arch code, Kconfig, Makefiles, UAPI
-and global VM policy are out of scope. Only the controller widens scope, by
-creating a new campaign policy.
+tests. The base list is the source files of the `MEMORY MANAGEMENT - SWAP`
+entry in `linux/MAINTAINERS`. `mm/memory.c`, `mm/zswap.c`, `mm/vmscan.c`,
+memcg, arch code, Kconfig, Makefiles, UAPI and global VM policy are out of
+scope. Only the controller widens scope, by creating a new campaign policy,
+and that policy then governs its campaign.
 
 ## Invariants every candidate preserves
 
