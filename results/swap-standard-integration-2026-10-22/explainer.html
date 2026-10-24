@@ -1,0 +1,627 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Can the standard workloads exercise swap reliably?</title><style>
+.viz-root{color-scheme:light;--page:#f4f0e8;--surface-1:#fbf8f3;--ink:#1f1b16;--ink-2:#5b5348;
+--muted:#8c8274;--grid:#e8e1d4;--axis:#cfc6b6;--ring:rgba(31,27,22,.10);
+--series-1:#6a4fd1;--series-2:#00978c;--series-3:#d0572b;
+--good:#0ca30c;--warning:#fab219;--serious:#ec835a;--critical:#d03b3b;
+--add:#e1f1ec;--del:#f8e3da;--focus:#e6e0fa}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) .viz-root{color-scheme:dark;
+--page:#12110f;--surface-1:#1c1a17;--ink:#f2ede4;--ink-2:#c9c0b2;--muted:#8c8274;--grid:#2d2a25;--axis:#3d3932;
+--ring:rgba(255,250,240,.10);--series-1:#8a76ee;--series-2:#14a596;--series-3:#d9693a;
+--add:#15302c;--del:#3b231a;--focus:#2e2754}}
+:root[data-theme="dark"] .viz-root{color-scheme:dark;--page:#12110f;--surface-1:#1c1a17;--ink:#f2ede4;
+--ink-2:#c9c0b2;--muted:#8c8274;--grid:#2d2a25;--axis:#3d3932;--ring:rgba(255,250,240,.10);--series-1:#8a76ee;
+--series-2:#14a596;--series-3:#d9693a;--add:#15302c;--del:#3b231a;--focus:#2e2754}
+*{box-sizing:border-box}
+body{margin:0}
+.viz-root{background:var(--page);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+main{max-width:860px;margin:0 auto;padding:32px 20px 64px}
+header h1{font-size:26px;margin:0 0 4px}
+header p{color:var(--ink-2);margin:0}
+nav{display:flex;flex-wrap:wrap;gap:8px 16px;margin:16px 0 0;font-size:13px}
+nav a{color:var(--ink-2)}
+.toggle{float:right;font:inherit;font-size:13px;background:var(--surface-1);color:var(--ink-2);
+border:1px solid var(--ring);border-radius:6px;padding:4px 10px;cursor:pointer}
+.card{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:20px;margin:16px 0}
+section>h2{font-size:19px;margin:36px 0 4px}
+.lead{color:var(--ink-2);margin:0 0 8px}
+.chart-title{font-weight:600;margin:0 0 8px}
+.verdict{display:flex;gap:12px;align-items:center;font-size:20px;font-weight:600}
+.badge{display:inline-flex;white-space:nowrap;flex-shrink:0;align-items:center;gap:6px;font-size:13px;font-weight:600;
+padding:3px 10px;border-radius:999px;border:1px solid var(--ring);color:var(--ink)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:16px}
+.tile .label{color:var(--ink-2);font-size:13px}
+.tile .value{font-size:28px;font-weight:600}
+.tile .note{color:var(--muted);font-size:12px}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--ink-2);margin:0 0 6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{fill:var(--ink-2);font:12px system-ui,-apple-system,"Segoe UI",sans-serif}
+svg .axis-label{fill:var(--muted)}
+.hit{cursor:default}
+.hit:hover>.mark,.hit:focus>.mark{stroke:var(--ink);stroke-width:2}
+.hit:focus{outline:none}
+details{margin-top:10px;font-size:13px;color:var(--ink-2)}
+summary{cursor:pointer}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--grid)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.check{list-style:none;padding:0;margin:0}
+.check li{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:8px 0;border-bottom:1px solid var(--grid)}
+.check .ev{color:var(--muted);font-size:12px}
+pre.diff{font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;overflow-x:auto;margin:0;
+border-radius:8px;border:1px solid var(--ring)}
+pre.diff span{display:block;padding:0 10px;white-space:pre}
+pre.diff .a{background:var(--add)}pre.diff .d{background:var(--del)}pre.diff .h{color:var(--muted)}
+.callout{border-left:3px solid var(--series-1);padding:10px 14px;background:var(--surface-1);
+border-radius:0 8px 8px 0;margin:12px 0}
+.tip{position:fixed;pointer-events:none;background:var(--surface-1);color:var(--ink);border:1px solid var(--ring);
+border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);display:none;max-width:280px}
+.tip b{display:block;font-size:14px}
+.visual-scroll{overflow-x:auto}.visual-scroll svg{min-width:640px}details{border:1px solid var(--grid);border-radius:10px;padding:14px}summary{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere}nav{flex-wrap:wrap}</style></head><body><div class="viz-root"><main><header><button class="toggle" type="button">Theme</button><h1>Can the standard workloads exercise swap reliably?</h1><p>Benchmark integration · historical review · 2026-10-22</p><nav><a href="#context">Why a new workload suite was needed</a><a href="#system">Where the suite sits in the larger system</a><a href="#changes">What changed in the measurement path</a><a href="#results">What worked and what failed</a><a href="#next">What must happen before performance review</a></nav></header><div class="card"><div class="verdict"><span class="badge"><i class="dot" style="background:var(--serious)"></i>! Needs review</span><span>Core integration works; performance scoring is not ready</span></div><div class="tiles"><div class="tile"><div class="label">Execution</div><div class="value">Working</div><div class="note">Main workloads completed with swap activity.</div></div><div class="tile"><div class="label">Random usemem</div><div class="value">Excluded</div><div class="note">Guest OOM interrupted the run.</div></div><div class="tile"><div class="label">Performance</div><div class="value">Uncalibrated</div><div class="note">No accepted comparative result.</div></div></div></div><section id="context"><h2>Why a new workload suite was needed</h2><div class="card"><p class="chart-title">Move from metadata observations toward application-facing costs</p><div class="visual-scroll"><svg viewBox="0 0 760 78" role="img" aria-label="Move from metadata observations toward application-facing costs"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs><path d="M160.0,39.0 H305.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><path d="M455.0,39.0 H600.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><rect x="10.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="85.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Swap mechanism</text><rect x="305.0" y="10.0" width="150" height="58" rx="10" fill="var(--focus)" stroke="var(--series-1)" stroke-width="1.5"/><text x="380.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Real workload cost</text><rect x="600.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="675.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Optimization decision</text></svg></div></div><div class="callout">A mapped-cluster count does not describe application throughput or latency. The new suite adds memory pressure, kernel builds and Valkey operations so later studies can measure workload-specific cost.</div></section><section id="system"><h2>Where the suite sits in the larger system</h2><div class="card"><p class="chart-title">The new harness surrounds the guest; kernel code is unchanged</p><div class="visual-scroll"><svg viewBox="0 0 760 78" role="img" aria-label="The new harness surrounds the guest; kernel code is unchanged"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs><path d="M160.0,39.0 H305.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><path d="M455.0,39.0 H600.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><rect x="10.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="85.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Frozen inputs</text><rect x="305.0" y="10.0" width="150" height="58" rx="10" fill="var(--focus)" stroke="var(--series-1)" stroke-width="1.5"/><text x="380.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Isolated KVM guest</text><rect x="600.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="675.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Trusted evaluator</text></svg></div></div><div class="card"><p class="chart-title">Inside the guest, workload pressure reaches the selected swap backend</p><div class="visual-scroll"><svg viewBox="0 0 760 78" role="img" aria-label="Inside the guest, workload pressure reaches the selected swap backend"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs><path d="M160.0,39.0 H305.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><path d="M455.0,39.0 H600.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><rect x="10.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="85.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Workload + memcg</text><rect x="305.0" y="10.0" width="150" height="58" rx="10" fill="var(--focus)" stroke="var(--series-1)" stroke-width="1.5"/><text x="380.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Guest kernel swap</text><rect x="600.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="675.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Disk / zswap / zram</text></svg></div></div><div class="callout">Pinned inputs feed bounded runs. The evaluator checks completion, backend activity and kernel diagnostics. Host locking and stop handling isolate execution; Valkey networking stays inside the guest.</div></section><section id="changes"><h2>What changed in the measurement path</h2><div class="card"><p class="chart-title">Require evidence of useful work, not just process exit</p><div class="visual-scroll"><svg viewBox="0 0 760 78" role="img" aria-label="Require evidence of useful work, not just process exit"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs><path d="M160.0,39.0 H305.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><path d="M455.0,39.0 H600.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><rect x="10.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="85.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Workload output</text><rect x="305.0" y="10.0" width="150" height="58" rx="10" fill="var(--focus)" stroke="var(--series-1)" stroke-width="1.5"/><text x="380.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Per-phase checks</text><rect x="600.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="675.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Retained run record</text></svg></div></div><div class="card"><p class="chart-title">Retain diagnostics and fail incomplete work early</p><div class="visual-scroll"><svg viewBox="0 0 760 78" role="img" aria-label="Retain diagnostics and fail incomplete work early"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs><path d="M160.0,39.0 H305.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><path d="M455.0,39.0 H600.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><rect x="10.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="85.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Kernel diagnostics</text><rect x="305.0" y="10.0" width="150" height="58" rx="10" fill="var(--focus)" stroke="var(--series-1)" stroke-width="1.5"/><text x="380.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Stop failing run</text><rect x="600.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="675.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Keep failed attempt</text></svg></div></div><div class="callout">Swapon memory deltas replace mapped-cluster count as the metadata observation. Historical protocols remain frozen. Extra validation improves evidence quality; it does not establish a performance gain.</div></section><section id="results"><h2>What worked and what failed</h2><div class="card"><p class="chart-title">Main workloads completed on their tested backends</p><div class="visual-scroll"><svg viewBox="0 0 760 78" role="img" aria-label="Main workloads completed on their tested backends"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs><rect x="10.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="85.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">usemem / disk</text><rect x="305.0" y="10.0" width="150" height="58" rx="10" fill="var(--focus)" stroke="var(--series-1)" stroke-width="1.5"/><text x="380.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">build / zswap</text><rect x="600.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="675.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Valkey / zram</text></svg></div></div><div class="card"><p class="chart-title">Random usemem exceeded its memory envelope</p><div class="visual-scroll"><svg viewBox="0 0 760 78" role="img" aria-label="Random usemem exceeded its memory envelope"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs><path d="M160.0,39.0 H305.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><path d="M455.0,39.0 H600.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><rect x="10.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="85.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Memory pressure</text><rect x="305.0" y="10.0" width="150" height="58" rx="10" fill="var(--focus)" stroke="var(--series-1)" stroke-width="1.5"/><text x="380.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Guest OOM kills</text><rect x="600.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="675.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Interrupted run</text></svg></div></div><div class="callout">The initial usemem parser misread byte-count semantics; corrected analysis and a direct rerun passed. Both failures are retained. Random usemem stays excluded from scoring. Metadata and supplemental swap-in checks completed.</div></section><section id="next"><h2>What must happen before performance review</h2><div class="card"><p class="chart-title">Integration is the entry point, not the acceptance test</p><div class="visual-scroll"><svg viewBox="0 0 760 78" role="img" aria-label="Integration is the entry point, not the acceptance test"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs><path d="M160.0,39.0 H305.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><path d="M455.0,39.0 H600.0" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/><rect x="10.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="85.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Freeze protocol</text><rect x="305.0" y="10.0" width="150" height="58" rx="10" fill="var(--focus)" stroke="var(--series-1)" stroke-width="1.5"/><text x="380.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Calibrate baseline</text><rect x="600.0" y="10.0" width="150" height="58" rx="10" fill="var(--surface-1)" stroke="var(--axis)" stroke-width="1.5"/><text x="675.0" y="43.0" text-anchor="middle" style="fill:var(--ink);font-weight:600">Compare candidates</text></svg></div></div><div class="callout">At this report date: partial backend coverage, no calibration or comparison, and xswap held by lifetime review. Revise the random profile separately. A failed replay on frozen artifacts would challenge confidence in basic execution.</div></section><section id="evidence"><h2>Evidence, when you need it</h2><details><summary>Exact run outcomes and integration timings</summary><p>Guest seconds include boot and setup; interrupted runs are not completed measurements.</p><div class="visual-scroll"><table><thead><tr><th>Run</th><th>Workload</th><th>Backend</th><th>Status</th><th>Guest seconds</th><th>Failed gates</th></tr></thead><tbody><tr><td>20261022T194130.173129Z-standard-upstream-v2-disk-usemem</td><td>usemem</td><td>disk</td><td>fail</td><td>13.51</td><td>usemem_output</td></tr><tr><td>20261022T194200.250701Z-standard-upstream-v2-zram-redis</td><td>redis</td><td>zram</td><td>pass</td><td>44.52</td><td></td></tr><tr><td>20261022T194318.425370Z-standard-upstream-v2-zswap-build</td><td>build</td><td>zswap</td><td>pass</td><td>163.59</td><td></td></tr><tr><td>20261022T194701.448614Z-standard-upstream-v2-disk-usemem</td><td>usemem</td><td>disk</td><td>pass</td><td>58.53</td><td></td></tr><tr><td>20261022T194801.948141Z-standard-upstream-v2-zswap-usemem-rand</td><td>usemem-rand</td><td>zswap</td><td>fail</td><td>128.56</td><td>workload_complete, kernel_log_present, no_kernel_warnings, swap_activity, backend_exercised, swap_routing, usemem_output</td></tr><tr><td>20261022T195012.400957Z-standard-upstream-v2-zram-redis</td><td>redis</td><td>zram</td><td>pass</td><td>44.52</td><td></td></tr><tr><td>20261022T195058.820243Z-standard-upstream-v2-brd-metadata</td><td>metadata</td><td>brd</td><td>pass</td><td>7.01</td><td></td></tr><tr><td>20261022T195107.722002Z-standard-upstream-v2-disk-swapin</td><td>swapin</td><td>disk</td><td>pass</td><td>34.52</td><td></td></tr><tr><td>20261022T195144.169353Z-standard-upstream-v2-zswap-build</td><td>build</td><td>zswap</td><td>pass</td><td>164.63</td><td></td></tr></tbody></table></div></details><details><summary>Full validation records and provenance</summary><pre>{
+  &quot;runs&quot;: [
+    {
+      &quot;run&quot;: &quot;20261022T194130.173129Z-standard-upstream-v2-disk-usemem&quot;,
+      &quot;status&quot;: &quot;fail&quot;,
+      &quot;build&quot;: &quot;standard-upstream-v2&quot;,
+      &quot;source_commit&quot;: &quot;744e5400b36f84b4816e3ff8531ec2dff52b474c&quot;,
+      &quot;kernel_sha256&quot;: &quot;b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb&quot;,
+      &quot;guest_image_sha256&quot;: &quot;566fc50b51a8c2ef4dae2eb1b3689e812fc4af2d8f0257d1e494dcd20d8ea897&quot;,
+      &quot;stop_reason&quot;: null,
+      &quot;interruption_reason&quot;: null,
+      &quot;backend&quot;: &quot;disk&quot;,
+      &quot;workload&quot;: &quot;usemem&quot;,
+      &quot;wall_seconds&quot;: 13.506466318969615,
+      &quot;failed_gates&quot;: [
+        &quot;usemem_output&quot;
+      ],
+      &quot;metrics&quot;: {
+        &quot;vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 75,
+          &quot;pswpout&quot;: 1054446,
+          &quot;pgmajfault&quot;: 91,
+          &quot;swpin_zero&quot;: 2,
+          &quot;swpout_zero&quot;: 1,
+          &quot;zswpin&quot;: 0,
+          &quot;zswpout&quot;: 0,
+          &quot;zswpwb&quot;: 0
+        },
+        &quot;kernel_diagnostics&quot;: [],
+        &quot;swap_peak_kib&quot;: {
+          &quot;/dev/vda&quot;: 4215976
+        },
+        &quot;throughput_kbps_sum&quot;: 916757,
+        &quot;throughput_kbps&quot;: [
+          117019,
+          119077,
+          123464,
+          118781,
+          112846,
+          112732,
+          106419,
+          106419
+        ],
+        &quot;nproc&quot;: 8,
+        &quot;free_count&quot;: 8,
+        &quot;bytes&quot;: [
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552
+        ],
+        &quot;free_usec_max&quot;: 36645,
+        &quot;free_usec_mean&quot;: 34161.25,
+        &quot;cg_system_usec&quot;: 13371631,
+        &quot;cg_user_usec&quot;: 1196324
+      },
+      &quot;serial_sha256&quot;: &quot;a1c9a36bc59ffed6f0508b878d1a0ecbe46d0395358b9af7c96973448763453a&quot;,
+      &quot;has_reanalysis&quot;: true,
+      &quot;performance_accepted&quot;: false,
+      &quot;reanalysis_gates&quot;: {
+        &quot;boot&quot;: true,
+        &quot;cmdline_identity&quot;: true,
+        &quot;workload_complete&quot;: true,
+        &quot;kernel_log_present&quot;: true,
+        &quot;no_kernel_warnings&quot;: true,
+        &quot;swap_activity&quot;: true,
+        &quot;swap_routing&quot;: true,
+        &quot;usemem_output&quot;: true
+      },
+      &quot;reanalysis_note&quot;: &quot;Parser-only correction: pinned usemem reports allocation bytes/8 plus one full pass. Original result retained.&quot;
+    },
+    {
+      &quot;run&quot;: &quot;20261022T194200.250701Z-standard-upstream-v2-zram-redis&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;build&quot;: &quot;standard-upstream-v2&quot;,
+      &quot;source_commit&quot;: &quot;744e5400b36f84b4816e3ff8531ec2dff52b474c&quot;,
+      &quot;kernel_sha256&quot;: &quot;b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb&quot;,
+      &quot;guest_image_sha256&quot;: &quot;566fc50b51a8c2ef4dae2eb1b3689e812fc4af2d8f0257d1e494dcd20d8ea897&quot;,
+      &quot;stop_reason&quot;: null,
+      &quot;interruption_reason&quot;: null,
+      &quot;backend&quot;: &quot;zram&quot;,
+      &quot;workload&quot;: &quot;redis&quot;,
+      &quot;wall_seconds&quot;: 44.52040970296366,
+      &quot;failed_gates&quot;: [],
+      &quot;metrics&quot;: {
+        &quot;vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 3825821,
+          &quot;pswpout&quot;: 3431950,
+          &quot;pgmajfault&quot;: 3834814,
+          &quot;swpin_zero&quot;: 68,
+          &quot;swpout_zero&quot;: 433,
+          &quot;zswpin&quot;: 0,
+          &quot;zswpout&quot;: 0,
+          &quot;zswpwb&quot;: 0
+        },
+        &quot;kernel_diagnostics&quot;: [],
+        &quot;swap_peak_kib&quot;: {
+          &quot;/dev/zram0&quot;: 2984612
+        },
+        &quot;redis_fill_rps&quot;: 267642.09,
+        &quot;redis_get_rps&quot;: 312109.84,
+        &quot;redis_get_bgsave_rps&quot;: 139476.5,
+        &quot;redis_get_vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 873802,
+          &quot;pswpout&quot;: 873186,
+          &quot;pgmajfault&quot;: 874567,
+          &quot;swpin_zero&quot;: 4,
+          &quot;swpout_zero&quot;: 118,
+          &quot;zswpin&quot;: 0,
+          &quot;zswpout&quot;: 0,
+          &quot;zswpwb&quot;: 0
+        },
+        &quot;redis_bgsave_vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 2299676,
+          &quot;pswpout&quot;: 1778723,
+          &quot;pgmajfault&quot;: 2307752,
+          &quot;swpin_zero&quot;: 36,
+          &quot;swpout_zero&quot;: 116,
+          &quot;zswpin&quot;: 0,
+          &quot;zswpout&quot;: 0,
+          &quot;zswpwb&quot;: 0
+        }
+      },
+      &quot;serial_sha256&quot;: &quot;3075b40d3f12e2c0693cb45fefb26f7f98a1f9ff30b8cface1b76a3c7c3881c1&quot;,
+      &quot;has_reanalysis&quot;: false,
+      &quot;performance_accepted&quot;: false
+    },
+    {
+      &quot;run&quot;: &quot;20261022T194318.425370Z-standard-upstream-v2-zswap-build&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;build&quot;: &quot;standard-upstream-v2&quot;,
+      &quot;source_commit&quot;: &quot;744e5400b36f84b4816e3ff8531ec2dff52b474c&quot;,
+      &quot;kernel_sha256&quot;: &quot;b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb&quot;,
+      &quot;guest_image_sha256&quot;: &quot;566fc50b51a8c2ef4dae2eb1b3689e812fc4af2d8f0257d1e494dcd20d8ea897&quot;,
+      &quot;stop_reason&quot;: null,
+      &quot;interruption_reason&quot;: null,
+      &quot;backend&quot;: &quot;zswap&quot;,
+      &quot;workload&quot;: &quot;build&quot;,
+      &quot;wall_seconds&quot;: 163.5893723819754,
+      &quot;failed_gates&quot;: [],
+      &quot;metrics&quot;: {
+        &quot;vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 0,
+          &quot;pswpout&quot;: 0,
+          &quot;pgmajfault&quot;: 145,
+          &quot;swpin_zero&quot;: 0,
+          &quot;swpout_zero&quot;: 0,
+          &quot;zswpin&quot;: 4860,
+          &quot;zswpout&quot;: 229990,
+          &quot;zswpwb&quot;: 0
+        },
+        &quot;kernel_diagnostics&quot;: [],
+        &quot;swap_peak_kib&quot;: {
+          &quot;/dev/vda&quot;: 903124
+        },
+        &quot;build_real_usec&quot;: 158021856,
+        &quot;build_system_usec&quot;: 120283001,
+        &quot;build_user_usec&quot;: 1044786639,
+        &quot;build_vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 0,
+          &quot;pswpout&quot;: 0,
+          &quot;pgmajfault&quot;: 73,
+          &quot;swpin_zero&quot;: 0,
+          &quot;swpout_zero&quot;: 0,
+          &quot;zswpin&quot;: 4860,
+          &quot;zswpout&quot;: 229960,
+          &quot;zswpwb&quot;: 0
+        }
+      },
+      &quot;serial_sha256&quot;: &quot;ee8c286b3113cb4eabde30f7de524b84b4a0a73115551573f01c2a8eaf8212ae&quot;,
+      &quot;has_reanalysis&quot;: false,
+      &quot;performance_accepted&quot;: false
+    },
+    {
+      &quot;run&quot;: &quot;20261022T194701.448614Z-standard-upstream-v2-disk-usemem&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;build&quot;: &quot;standard-upstream-v2&quot;,
+      &quot;source_commit&quot;: &quot;744e5400b36f84b4816e3ff8531ec2dff52b474c&quot;,
+      &quot;kernel_sha256&quot;: &quot;b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb&quot;,
+      &quot;guest_image_sha256&quot;: &quot;96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955&quot;,
+      &quot;stop_reason&quot;: null,
+      &quot;interruption_reason&quot;: null,
+      &quot;backend&quot;: &quot;disk&quot;,
+      &quot;workload&quot;: &quot;usemem&quot;,
+      &quot;wall_seconds&quot;: 58.5250767559628,
+      &quot;failed_gates&quot;: [],
+      &quot;metrics&quot;: {
+        &quot;vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 78,
+          &quot;pswpout&quot;: 1053140,
+          &quot;pgmajfault&quot;: 94,
+          &quot;swpin_zero&quot;: 2,
+          &quot;swpout_zero&quot;: 1,
+          &quot;zswpin&quot;: 0,
+          &quot;zswpout&quot;: 0,
+          &quot;zswpwb&quot;: 0
+        },
+        &quot;kernel_diagnostics&quot;: [],
+        &quot;swap_peak_kib&quot;: {
+          &quot;/dev/vda&quot;: 4158248
+        },
+        &quot;throughput_kbps_sum&quot;: 174522,
+        &quot;throughput_kbps&quot;: [
+          22716,
+          22620,
+          22380,
+          22005,
+          21595,
+          21243,
+          20989,
+          20974
+        ],
+        &quot;nproc&quot;: 8,
+        &quot;free_count&quot;: 8,
+        &quot;bytes&quot;: [
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552,
+          1207959552
+        ],
+        &quot;free_usec_max&quot;: 59533,
+        &quot;free_usec_mean&quot;: 57676.625,
+        &quot;cg_system_usec&quot;: 108648562,
+        &quot;cg_user_usec&quot;: 2398975
+      },
+      &quot;serial_sha256&quot;: &quot;a2a5c4fbc8a0cfa573602681062dd73a12baa27a685665f1fff7f8e297713820&quot;,
+      &quot;has_reanalysis&quot;: false,
+      &quot;performance_accepted&quot;: false
+    },
+    {
+      &quot;run&quot;: &quot;20261022T194801.948141Z-standard-upstream-v2-zswap-usemem-rand&quot;,
+      &quot;status&quot;: &quot;fail&quot;,
+      &quot;build&quot;: &quot;standard-upstream-v2&quot;,
+      &quot;source_commit&quot;: &quot;744e5400b36f84b4816e3ff8531ec2dff52b474c&quot;,
+      &quot;kernel_sha256&quot;: &quot;b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb&quot;,
+      &quot;guest_image_sha256&quot;: &quot;96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955&quot;,
+      &quot;stop_reason&quot;: null,
+      &quot;interruption_reason&quot;: &quot;Observed guest memcg OOM kills; terminated this integration guest because usemem sync can wait for killed children.&quot;,
+      &quot;backend&quot;: &quot;zswap&quot;,
+      &quot;workload&quot;: &quot;usemem-rand&quot;,
+      &quot;wall_seconds&quot;: 128.56438401702326,
+      &quot;failed_gates&quot;: [
+        &quot;workload_complete&quot;,
+        &quot;kernel_log_present&quot;,
+        &quot;no_kernel_warnings&quot;,
+        &quot;swap_activity&quot;,
+        &quot;backend_exercised&quot;,
+        &quot;swap_routing&quot;,
+        &quot;usemem_output&quot;
+      ],
+      &quot;metrics&quot;: {
+        &quot;vmstat_delta&quot;: null,
+        &quot;kernel_diagnostics&quot;: [],
+        &quot;swap_peak_kib&quot;: {},
+        &quot;throughput_kbps_sum&quot;: 0,
+        &quot;throughput_kbps&quot;: [],
+        &quot;nproc&quot;: 0,
+        &quot;free_count&quot;: 0,
+        &quot;bytes&quot;: [],
+        &quot;free_usec_max&quot;: null,
+        &quot;free_usec_mean&quot;: null
+      },
+      &quot;serial_sha256&quot;: &quot;7f13b266cd35875d03c62421320f73b53b6e30097d66308616231ff12c007c42&quot;,
+      &quot;has_reanalysis&quot;: false,
+      &quot;performance_accepted&quot;: false
+    },
+    {
+      &quot;run&quot;: &quot;20261022T195012.400957Z-standard-upstream-v2-zram-redis&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;build&quot;: &quot;standard-upstream-v2&quot;,
+      &quot;source_commit&quot;: &quot;744e5400b36f84b4816e3ff8531ec2dff52b474c&quot;,
+      &quot;kernel_sha256&quot;: &quot;b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb&quot;,
+      &quot;guest_image_sha256&quot;: &quot;96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955&quot;,
+      &quot;stop_reason&quot;: null,
+      &quot;interruption_reason&quot;: null,
+      &quot;backend&quot;: &quot;zram&quot;,
+      &quot;workload&quot;: &quot;redis&quot;,
+      &quot;wall_seconds&quot;: 44.520503523002844,
+      &quot;failed_gates&quot;: [],
+      &quot;metrics&quot;: {
+        &quot;vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 3810259,
+          &quot;pswpout&quot;: 3424521,
+          &quot;pgmajfault&quot;: 3821371,
+          &quot;swpin_zero&quot;: 102,
+          &quot;swpout_zero&quot;: 475,
+          &quot;zswpin&quot;: 0,
+          &quot;zswpout&quot;: 0,
+          &quot;zswpwb&quot;: 0
+        },
+        &quot;kernel_diagnostics&quot;: [],
+        &quot;swap_peak_kib&quot;: {
+          &quot;/dev/zram0&quot;: 3013588
+        },
+        &quot;redis_fill_rps&quot;: 272950.59,
+        &quot;redis_get_rps&quot;: 315026.78,
+        &quot;redis_get_bgsave_rps&quot;: 138850.31,
+        &quot;redis_get_vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 869323,
+          &quot;pswpout&quot;: 867986,
+          &quot;pgmajfault&quot;: 870433,
+          &quot;swpin_zero&quot;: 35,
+          &quot;swpout_zero&quot;: 153,
+          &quot;zswpin&quot;: 0,
+          &quot;zswpout&quot;: 0,
+          &quot;zswpwb&quot;: 0
+        },
+        &quot;redis_bgsave_vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 2291129,
+          &quot;pswpout&quot;: 1777960,
+          &quot;pgmajfault&quot;: 2300981,
+          &quot;swpin_zero&quot;: 38,
+          &quot;swpout_zero&quot;: 125,
+          &quot;zswpin&quot;: 0,
+          &quot;zswpout&quot;: 0,
+          &quot;zswpwb&quot;: 0
+        }
+      },
+      &quot;serial_sha256&quot;: &quot;0408478bde371c669a644dfe486d891e08e3843d424d46e47a19c4132f04e3cf&quot;,
+      &quot;has_reanalysis&quot;: false,
+      &quot;performance_accepted&quot;: false
+    },
+    {
+      &quot;run&quot;: &quot;20261022T195058.820243Z-standard-upstream-v2-brd-metadata&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;build&quot;: &quot;standard-upstream-v2&quot;,
+      &quot;source_commit&quot;: &quot;744e5400b36f84b4816e3ff8531ec2dff52b474c&quot;,
+      &quot;kernel_sha256&quot;: &quot;b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb&quot;,
+      &quot;guest_image_sha256&quot;: &quot;96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955&quot;,
+      &quot;stop_reason&quot;: null,
+      &quot;interruption_reason&quot;: null,
+      &quot;backend&quot;: &quot;brd&quot;,
+      &quot;workload&quot;: &quot;metadata&quot;,
+      &quot;wall_seconds&quot;: 7.005777479964308,
+      &quot;failed_gates&quot;: [],
+      &quot;metrics&quot;: {
+        &quot;vmstat_delta&quot;: null,
+        &quot;kernel_diagnostics&quot;: [],
+        &quot;metadata_delta_kib&quot;: {
+          &quot;MemTotal&quot;: 0,
+          &quot;MemFree&quot;: -54596,
+          &quot;MemAvailable&quot;: -54052,
+          &quot;SwapTotal&quot;: 1073741820,
+          &quot;SwapFree&quot;: 1073741820,
+          &quot;Zswap&quot;: 0,
+          &quot;Zswapped&quot;: 0,
+          &quot;Slab&quot;: 332,
+          &quot;SUnreclaim&quot;: 332,
+          &quot;PageTables&quot;: 4,
+          &quot;VmallocUsed&quot;: 49296,
+          &quot;Percpu&quot;: 0,
+          &quot;used_kib&quot;: 54052
+        },
+        &quot;metadata_delta_bytes_per_capacity_slot&quot;: 0.20619201736968762,
+        &quot;swap_total_kib&quot;: 1073741820
+      },
+      &quot;serial_sha256&quot;: &quot;ce8f7ad32e04cca64c5ea93fd05ad93b54acb8f57f0381b90f37a145219a2023&quot;,
+      &quot;has_reanalysis&quot;: false,
+      &quot;performance_accepted&quot;: false
+    },
+    {
+      &quot;run&quot;: &quot;20261022T195107.722002Z-standard-upstream-v2-disk-swapin&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;build&quot;: &quot;standard-upstream-v2&quot;,
+      &quot;source_commit&quot;: &quot;744e5400b36f84b4816e3ff8531ec2dff52b474c&quot;,
+      &quot;kernel_sha256&quot;: &quot;b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb&quot;,
+      &quot;guest_image_sha256&quot;: &quot;96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955&quot;,
+      &quot;stop_reason&quot;: null,
+      &quot;interruption_reason&quot;: null,
+      &quot;backend&quot;: &quot;disk&quot;,
+      &quot;workload&quot;: &quot;swapin&quot;,
+      &quot;wall_seconds&quot;: 34.51894685899606,
+      &quot;failed_gates&quot;: [],
+      &quot;metrics&quot;: {
+        &quot;vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 262160,
+          &quot;pswpout&quot;: 262188,
+          &quot;pgmajfault&quot;: 147171,
+          &quot;swpin_zero&quot;: 0,
+          &quot;swpout_zero&quot;: 0,
+          &quot;zswpin&quot;: 0,
+          &quot;zswpout&quot;: 0,
+          &quot;zswpwb&quot;: 0
+        },
+        &quot;kernel_diagnostics&quot;: [],
+        &quot;swap_peak_kib&quot;: {
+          &quot;/dev/vda&quot;: 1048744
+        },
+        &quot;swapin_seq&quot;: {
+          &quot;samples&quot;: 131072.0,
+          &quot;mean_ns&quot;: 24370.0,
+          &quot;p50_ns&quot;: 521.0,
+          &quot;p90_ns&quot;: 142369.0,
+          &quot;p99_ns&quot;: 306958.0,
+          &quot;p999_ns&quot;: 412812.0,
+          &quot;max_ns&quot;: 4349552.0,
+          &quot;total_ms&quot;: 3194.238
+        },
+        &quot;swapin_rand&quot;: {
+          &quot;samples&quot;: 131072.0,
+          &quot;mean_ns&quot;: 212568.0,
+          &quot;p50_ns&quot;: 209069.0,
+          &quot;p90_ns&quot;: 262678.0,
+          &quot;p99_ns&quot;: 345972.0,
+          &quot;p999_ns&quot;: 736408.0,
+          &quot;max_ns&quot;: 1295720.0,
+          &quot;total_ms&quot;: 27861.656
+        },
+        &quot;swapin_swapped&quot;: {
+          &quot;pages&quot;: 262144.0,
+          &quot;swapped&quot;: 262144.0,
+          &quot;reclaim_rounds&quot;: 1.0
+        }
+      },
+      &quot;serial_sha256&quot;: &quot;0efd012901d675cd723f3ba84a1b95d8175f080620b5ac5437967ec90fc43ac5&quot;,
+      &quot;has_reanalysis&quot;: false,
+      &quot;performance_accepted&quot;: false
+    },
+    {
+      &quot;run&quot;: &quot;20261022T195144.169353Z-standard-upstream-v2-zswap-build&quot;,
+      &quot;status&quot;: &quot;pass&quot;,
+      &quot;build&quot;: &quot;standard-upstream-v2&quot;,
+      &quot;source_commit&quot;: &quot;744e5400b36f84b4816e3ff8531ec2dff52b474c&quot;,
+      &quot;kernel_sha256&quot;: &quot;b4b1bb3fd31d4d04476b69735146695d3fe368f7f890c076eae6dedec3239deb&quot;,
+      &quot;guest_image_sha256&quot;: &quot;96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955&quot;,
+      &quot;stop_reason&quot;: null,
+      &quot;interruption_reason&quot;: null,
+      &quot;backend&quot;: &quot;zswap&quot;,
+      &quot;workload&quot;: &quot;build&quot;,
+      &quot;wall_seconds&quot;: 164.62518842204008,
+      &quot;failed_gates&quot;: [],
+      &quot;metrics&quot;: {
+        &quot;vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 0,
+          &quot;pswpout&quot;: 0,
+          &quot;pgmajfault&quot;: 142,
+          &quot;swpin_zero&quot;: 0,
+          &quot;swpout_zero&quot;: 0,
+          &quot;zswpin&quot;: 5898,
+          &quot;zswpout&quot;: 234404,
+          &quot;zswpwb&quot;: 0
+        },
+        &quot;kernel_diagnostics&quot;: [],
+        &quot;swap_peak_kib&quot;: {
+          &quot;/dev/vda&quot;: 924188
+        },
+        &quot;build_real_usec&quot;: 159024823,
+        &quot;build_system_usec&quot;: 120689747,
+        &quot;build_user_usec&quot;: 1052288197,
+        &quot;build_vmstat_delta&quot;: {
+          &quot;pswpin&quot;: 0,
+          &quot;pswpout&quot;: 0,
+          &quot;pgmajfault&quot;: 70,
+          &quot;swpin_zero&quot;: 0,
+          &quot;swpout_zero&quot;: 0,
+          &quot;zswpin&quot;: 5898,
+          &quot;zswpout&quot;: 234374,
+          &quot;zswpwb&quot;: 0
+        }
+      },
+      &quot;serial_sha256&quot;: &quot;d911b90036d28e530442e9acb117114c475438ec5c489e6cbff4af8c720308bf&quot;,
+      &quot;has_reanalysis&quot;: false,
+      &quot;performance_accepted&quot;: false
+    }
+  ],
+  &quot;count&quot;: 9,
+  &quot;calibrated&quot;: false,
+  &quot;performance_accepted&quot;: false,
+  &quot;validation_tests&quot;: {
+    &quot;parser_tests&quot;: 14,
+    &quot;layout_tests&quot;: 4,
+    &quot;passed&quot;: true
+  },
+  &quot;kernel_build&quot;: &quot;standard-upstream-v2&quot;,
+  &quot;current_guest_image_sha256&quot;: &quot;96d97bcee07d331b4f0d44b914c10eb883dc2149a788b13d85b8a0b2bb950955&quot;
+}</pre></details><details><summary>Original report, checks and limitations</summary><pre># Standard benchmark integration — 2026-10-22
+
+[Visual review](explainer.html) · [Published review](https://ericzhang-zxh.github.io/Swap-Next/swap-standard-integration-2026-10-22/)
+
+The new performance suite runs usemem, a kernel build on tmpfs, and Valkey
+GET/BGSAVE in isolated KVM guests. Confidence in basic execution is high:
+all three completed with workload-specific swap activity and clean kernel
+logs. A failed replay on the same frozen artifacts would change this finding.
+
+| Workload | Backend | Outcome | Guest seconds |
+|---|---|---|---|
+| usemem | disk | pass | 58.53 |
+| build | zswap | pass | 164.63 |
+| redis | zram | pass | 44.52 |
+| metadata | brd | pass | 7.01 |
+| swapin | disk | pass | 34.52 |
+| usemem-rand | zswap | fail | 128.56 |
+
+The table covers the final guest image. Guest seconds include boot and setup;
+they are integration timings, not comparative workload performance. All raw
+metrics, statuses and serial-log hashes are in [validation.json](validation.json).
+The nine development/integration boots are all retained there, including both
+failures; local raw evidence lives under `benchmark/swap-standard/runs/`.
+
+## Failures and corrections
+
+- The first disk usemem guest completed, but its parser rejected the reported
+  byte count. Pinned upstream `do_unit()` counts allocation as `bytes/8` plus
+  one full pass. The parser was corrected to require 9/8 of the allocation per
+  worker. The original failed result and separate passing reanalysis remain;
+  the final-image rerun passed directly.
+- Random usemem with eight 1 GiB workers under a 4 GiB memcg triggered three
+  guest OOM kills. The guest was explicitly terminated after the diagnostics,
+  because usemem&#x27;s synchronization could wait for killed children. Its 128.56
+  seconds is an interrupted run, not a completed measurement. This profile
+  remains outside the admitted scoring workload set. The runner now detects
+  live kernel diagnostics and stops such a run automatically.
+
+## What changed
+
+- Added a pinned, hashed guest root with tools rebuilt from immutable source
+  archives, complete build-tool data, and guest-only loopback for Valkey.
+- Added bounded execution, shared guest locking, stop handling, source snapshots,
+  raw-log hashes, and a summary that retains failures and incomplete attempts.
+- Required all usemem workers and byte counts, active backend evidence,
+  per-phase swap activity, complete BGSAVE evidence, and metadata fields plus
+  the exact 1 TiB brd capacity. Early kernel diagnostics fail the measurement.
+- Recorded swapon memory deltas and their capacity-slot ratio. This replaces
+  mapped-cluster count as the new suite&#x27;s metadata observation.
+- Updated project entry points for new performance studies. Frozen historical
+  evaluator protocols and evidence remain unchanged.
+
+## Checks
+
+- 14 parser regression tests and 4 repository layout tests passed.
+- Python compilation, shell syntax checks and Git whitespace checks passed.
+- The upstream test kernel was built in the existing unprivileged namespace
+  launcher. Tools, image hashes and kernel commit are recorded in the run data.
+- Final-image usemem/disk, kernel-build/zswap, Valkey/zram, metadata/brd and
+  supplemental swap-in/disk guests passed. No kernel source was changed.
+
+## Limitations and next step
+
+These are integration checks. There is no completed repeated A/A calibration,
+AB/BA candidate comparison, confirmation/holdout, or performance acceptance.
+One tested backend per main workload does not validate the whole matrix.
+The randomized usemem profile must be revised and calibrated separately.
+The historical evolve adapters have not been retargeted to this suite; admitting
+it requires a frozen new campaign protocol. xswap execution remains held pending
+resolution of the existing descriptor lifetime review. Other measurement limits
+are in [the suite README](../../benchmark/swap-standard/README.md#limitations).
+</pre></details></section></main></div><script>
+(function(){var t=document.createElement('div');t.className='tip';document.querySelector('.viz-root').appendChild(t);
+function show(e,el){t.textContent='';var b=document.createElement('b');b.textContent=el.dataset.v;t.appendChild(b);
+var s=document.createElement('span');s.textContent=el.dataset.l;t.appendChild(s);t.style.display='block';
+var r=el.getBoundingClientRect(),x=e&&e.clientX?e.clientX:r.left+r.width/2,y=e&&e.clientY?e.clientY:r.top;
+t.style.left=Math.min(x+12,innerWidth-t.offsetWidth-8)+'px';t.style.top=Math.max(8,y-t.offsetHeight-12)+'px'}
+document.querySelectorAll('.hit').forEach(function(el){el.addEventListener('pointermove',function(e){show(e,el)});
+el.addEventListener('focus',function(){show(null,el)});['pointerleave','blur'].forEach(function(k){
+el.addEventListener(k,function(){t.style.display='none'})})});
+var btn=document.querySelector('.toggle');btn.addEventListener('click',function(){var d=document.documentElement;
+var dark=d.dataset.theme?d.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+d.dataset.theme=dark?'light':'dark'})})();
+</script></body></html>

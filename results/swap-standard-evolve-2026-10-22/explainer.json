@@ -6,30 +6,376 @@
     "headline": "Fast calibration is noisy; candidate scoring remains held",
     "tiles": [
       {
-        "label": "Recorded runs",
-        "value": "14",
-        "note": "Retained attempts"
+        "label": "Decision",
+        "value": "Hold scoring",
+        "note": "No candidate winner."
       },
       {
-        "label": "Integration gates",
-        "value": "150/150",
-        "note": "Completed runs only"
+        "label": "Benefit",
+        "value": "Traceable runs",
+        "note": "Failed and interrupted attempts retained."
       },
       {
-        "label": "Evaluations",
-        "value": "4",
-        "note": "Statuses retained"
-      },
-      {
-        "label": "Promoted",
-        "value": "0",
-        "note": "Human review required"
+        "label": "Cost",
+        "value": "Calibration work",
+        "note": "Noise must be resolved first."
       }
     ]
   },
   "sections": [
     {
-      "id": "change",
+      "id": "context",
+      "title": "Why calibrate before comparing kernels?",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Noise can look like a candidate improvement",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Repeated workload",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Timing variation",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Uncertain winner",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Disconnected runs make changes hard to judge. The integration tests repeatability first, then admits comparisons only when the baseline is stable."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where this change fits",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The controller changes; the measured kernel path stays intact",
+          "nodes": [
+            {
+              "id": "goal",
+              "label": "Choose safe changes",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "control",
+              "label": "Tiered controller",
+              "sub": "Changed orchestration",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "guest",
+              "label": "Guest workloads",
+              "sub": "Application performance",
+              "col": 2,
+              "row": 0
+            },
+            {
+              "id": "kernel",
+              "label": "Kernel and storage",
+              "sub": "Same baseline",
+              "col": 2,
+              "row": 1
+            },
+            {
+              "id": "evidence",
+              "label": "Verified evidence",
+              "col": 1,
+              "row": 1
+            },
+            {
+              "id": "reviewer",
+              "label": "Human review",
+              "col": 0,
+              "row": 1
+            }
+          ],
+          "edges": [
+            {
+              "from": "goal",
+              "to": "control"
+            },
+            {
+              "from": "control",
+              "to": "guest"
+            },
+            {
+              "from": "guest",
+              "to": "kernel"
+            },
+            {
+              "from": "kernel",
+              "to": "evidence"
+            },
+            {
+              "from": "evidence",
+              "to": "reviewer"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Frozen builds feed fresh guests; measurements return to admission and review. More calibration work buys confidence before expensive comparisons. This is one orchestration change, with no candidate kernel patch."
+        }
+      ]
+    },
+    {
+      "id": "mechanism",
+      "title": "From isolated runs to staged evidence",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Before: individual runs leave repeatability unresolved",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Build inputs",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Single runs",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Manual comparison",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "After: repeatability gates the comparison",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Paired calibration",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Fast admission",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Slow evidence",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "3",
+              "label": "Human review",
+              "col": 3,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            },
+            {
+              "from": "2",
+              "to": "3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "findings",
+      "title": "The baseline fails its own comparison",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Throughput varies widely on the same kernel",
+          "note": "A and B run the same kernel. Each dot is one run; throughput uses B/A, latency uses A/B.",
+          "groups": [
+            "fast calibrate"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-a; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 0.612789910120998,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-b; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-a; pair=1"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 1.5381657317989939,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-b; pair=1"
+            }
+          ],
+          "x_label": "Direction-adjusted ratio to paired A (1) \u2014 higher is better"
+        },
+        {
+          "type": "strip",
+          "takeaway": "Free latency also fails repeatability",
+          "note": "A and B run the same kernel. Each dot is one run; throughput uses B/A, latency uses A/B.",
+          "groups": [
+            "fast calibrate"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-a; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 0.6972076581813006,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-b; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-a; pair=1"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 1.089471269331462,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-b; pair=1"
+            }
+          ],
+          "x_label": "Direction-adjusted ratio to paired A (1) \u2014 higher is better"
+        },
+        {
+          "type": "note",
+          "text": "Fast calibration is noisy. Slow calibration stopped incomplete; reference comparison did not boot. The historical candidate remains blocked by descriptor lifetime. Candidate correctness gates remain missing; completed guest integration checks passed."
+        }
+      ]
+    },
+    {
+      "id": "next-steps",
+      "title": "Next: make the comparison trustworthy",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Stabilize measurement before spending on candidate scoring",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Investigate noise",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "New frozen A/A",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Eligible comparison",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "High confidence: no winner is established. A stable new calibration, closed lifetime finding and complete candidate correctness evidence would permit a new comparison. No new experiment is launched here."
+        }
+      ]
+    },
+    {
+      "id": "audit-change",
       "title": "What changed",
       "lead": "High confidence: orchestration changed; a candidate patch would change this classification.",
       "blocks": [
@@ -88,7 +434,7 @@
       ]
     },
     {
-      "id": "measurement",
+      "id": "audit-measurement",
       "title": "How it was measured",
       "blocks": [
         {
@@ -142,7 +488,7 @@
       ]
     },
     {
-      "id": "data",
+      "id": "audit-data",
       "title": "What the data shows",
       "blocks": [
         {
@@ -582,7 +928,7 @@
       ]
     },
     {
-      "id": "why",
+      "id": "audit-why",
       "title": "Why",
       "blocks": [
         {
@@ -636,7 +982,7 @@
       ]
     },
     {
-      "id": "review",
+      "id": "audit-review",
       "title": "Review checklist",
       "blocks": [
         {
@@ -748,7 +1094,7 @@
       ]
     },
     {
-      "id": "next",
+      "id": "audit-next",
       "title": "Next",
       "blocks": [
         {
@@ -780,7 +1126,7 @@
       ]
     },
     {
-      "id": "limits",
+      "id": "audit-limits",
       "title": "Limitations",
       "blocks": [
         {

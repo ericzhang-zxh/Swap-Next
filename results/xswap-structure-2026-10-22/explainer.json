@@ -1,1059 +1,1912 @@
 {
- "title": "Structural xswap campaign 2026-10-22",
- "subtitle": "Baseline 4f83412c (Phase I v4 + II v1 + read-only topology counters) · 88 paired/calibration boots · 2 mechanism candidates",
- "verdict": {
-  "status": "needs-review",
-  "headline": "Tail-cache reclaim removes the high regime, but it saves little RAM and a lifetime race blocks it.",
-  "tiles": [
-   {
-    "label": "Boots passing all gates",
-    "value": "88 / 88",
-    "note": "+5 lockdep/smoke boots, 2 kept failures"
-   },
-   {
-    "label": "High regime, tail-cache v2",
-    "value": "0 / 20",
-    "note": "baseline 10 / 20"
-   },
-   {
-    "label": "RAM at stake",
-    "value": "≈156 KiB",
-    "note": "≤2847 descriptors × 56 B"
-   },
-   {
-    "label": "Promotion blocker",
-    "value": "1",
-    "note": "descriptor lifetime race (source-level)"
-   }
+  "title": "Can xswap release metadata after memory pressure?",
+  "subtitle": "Structural campaign \u2014 allocation, tail reclamation and the lifetime blocker",
+  "verdict": {
+    "status": "needs-review",
+    "headline": "Promising reclamation, little RAM saved; a lifetime race blocks promotion",
+    "tiles": [
+      {
+        "label": "Tail-cache reclaim",
+        "value": "Promising",
+        "note": "High retention disappears in the primary workload."
+      },
+      {
+        "label": "Low-first allocation",
+        "value": "Inconclusive",
+        "note": "High retention remains; selection adds lock work."
+      },
+      {
+        "label": "Decision",
+        "value": "Repair first",
+        "note": "Source-level lifetime race; no promotion."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "Why change metadata reclamation?",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Before: memory pressure leaves metadata behind",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Application uses RAM",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Swap mappings grow",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Tail stays mapped",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Xswap tracks pages with cluster descriptors. Shrink releases only a contiguous free tail. High cache-only slots can pin it. Hypothesis: better placement or blocker reclamation releases metadata."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where these changes fit",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Allocation and metadata retirement surround the existing storage path",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application pages",
+              "sub": "Need RAM and safe reads",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "alloc",
+              "label": "Virtual slot allocator",
+              "sub": "Low-first selection",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "store",
+              "label": "Disk or zswap",
+              "sub": "Existing page storage",
+              "col": 2,
+              "row": 0
+            },
+            {
+              "id": "cache",
+              "label": "Swap cache / PTEs",
+              "sub": "Keep slots live",
+              "col": 2,
+              "row": 1
+            },
+            {
+              "id": "shrink",
+              "label": "Metadata shrink",
+              "sub": "Tail-cache clears blockers",
+              "col": 1,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "ram",
+              "label": "Descriptor RAM",
+              "sub": "Returned after safe retirement",
+              "col": 0,
+              "row": 1
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "alloc"
+            },
+            {
+              "from": "alloc",
+              "to": "store"
+            },
+            {
+              "from": "store",
+              "to": "cache"
+            },
+            {
+              "from": "cache",
+              "to": "shrink"
+            },
+            {
+              "from": "shrink",
+              "to": "ram"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Application and backend roles stay unchanged. Metadata savings leave RAM for useful work, but are small here. Low-first adds lock work; tail-cache risks later swap-out I/O and more frequent retirement."
+        }
+      ]
+    },
+    {
+      "id": "mechanisms",
+      "title": "Zoom in: two independent mechanisms",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Low-first: select a lower slot without moving live pages",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Before: list order",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "After: scan lowest",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Existing isolation",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "Tail-cache: clear blockers before the existing tail shrink",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Before: blocker stops",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Reclaim cache-only",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Revalidate and shrink",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Candidates are independent. Tail-cache v2 includes the verified assertion fix. Internal helper retries prevent a strict runtime bound."
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "What changed in the measurements",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Tail-cache reclaim removes the high-retention regime in this workload",
+          "x_label": "mapped clusters after settle",
+          "groups": [
+            "A/A calibration \u00b7 disk",
+            "A/A calibration \u00b7 zswap",
+            "low-first \u00b7 disk",
+            "low-first \u00b7 zswap",
+            "tail-cache v2 \u00b7 disk",
+            "tail-cache v2 \u00b7 zswap"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A calibration \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "A/A calibration \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "A/A calibration \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "A/A calibration \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "A/A calibration \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "16 cache-only pages, highest cache-only cluster 2315"
+            },
+            {
+              "group": "A/A calibration \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "530 cache-only pages, highest cache-only cluster 2325"
+            },
+            {
+              "group": "A/A calibration \u00b7 zswap",
+              "series": "baseline",
+              "value": 2482,
+              "tip": "10 cache-only pages, highest cache-only cluster 2350"
+            },
+            {
+              "group": "A/A calibration \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "2385 cache-only pages, highest cache-only cluster 1460"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "251 cache-only pages, highest cache-only cluster 1608"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "1686 cache-only pages, highest cache-only cluster 1435"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 1898,
+              "tip": "1812 cache-only pages, highest cache-only cluster 1416"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 1898,
+              "tip": "200 cache-only pages, highest cache-only cluster 1457"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 90"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "40 cache-only pages, highest cache-only cluster 2339"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "160 cache-only pages, highest cache-only cluster 2541"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "22 cache-only pages, highest cache-only cluster 2350"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "134 cache-only pages, highest cache-only cluster 2341"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 3066,
+              "tip": "2205 cache-only pages, highest cache-only cluster 2429"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 292,
+              "tip": "6 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "182 cache-only pages, highest cache-only cluster 2309"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "14 cache-only pages, highest cache-only cluster 2325"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "26 cache-only pages, highest cache-only cluster 2324"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "29 cache-only pages, highest cache-only cluster 2305"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "16 cache-only pages, highest cache-only cluster 2345"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "148 cache-only pages, highest cache-only cluster 2332"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "111 cache-only pages, highest cache-only cluster 2324"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "1492 cache-only pages, highest cache-only cluster 2335"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "894 cache-only pages, highest cache-only cluster 1453"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "254 cache-only pages, highest cache-only cluster 1441"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "97 cache-only pages, highest cache-only cluster 1454"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "2881 cache-only pages, highest cache-only cluster 1421"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "198 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 90"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "117 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2482,
+              "tip": "12 cache-only pages, highest cache-only cluster 2366"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2482,
+              "tip": "12 cache-only pages, highest cache-only cluster 2369"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "26 cache-only pages, highest cache-only cluster 2305"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "20 cache-only pages, highest cache-only cluster 2301"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 3066,
+              "tip": "98 cache-only pages, highest cache-only cluster 2421"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "68 cache-only pages, highest cache-only cluster 216"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2482,
+              "tip": "13 cache-only pages, highest cache-only cluster 2379"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "2 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "204 cache-only pages, highest cache-only cluster 101"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "50 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 98"
+            }
+          ],
+          "note": "Each dot is one boot: A baseline, B candidate. Fewer mapped clusters is better; this measures descriptors, not total RAM."
+        },
+        {
+          "type": "lines",
+          "takeaway": "High retention can return after another pressure cycle",
+          "x": [
+            "before",
+            "pressure",
+            "settle",
+            "re-pressure",
+            "re-settle"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "lines": [
+            {
+              "series": "baseline",
+              "label": "baseline (zswap)",
+              "values": [
+                73,
+                1693.6,
+                1693.6,
+                1255.6,
+                1255.6
+              ]
+            },
+            {
+              "series": "candidate",
+              "label": "tail-cache v2 (zswap)",
+              "values": [
+                73,
+                956.3,
+                219,
+                730,
+                730
+              ]
+            }
+          ],
+          "note": "Mapped clusters; lower is better. Second pressure is diagnostic."
+        },
+        {
+          "type": "note",
+          "text": "Low-first is inconclusive. Repeated pressure can leave new blockers after the last trigger. A source-level descriptor retirement race blocks promotion."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Repair lifetime safety before pursuing the mechanism",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Next steps depend on passing the preceding safety check",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Repair reader lifetime",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Retest tail-cache",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Measure interior holes",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Require baseline race reproduction and repair success. Retest with delayed retry; high retention would weaken the finding. Sanitizers, failure injection, confirmation and holdout remain missing. Warning failures are retained."
+        }
+      ]
+    },
+    {
+      "id": "audit-changed",
+      "title": "What changed",
+      "lead": "Two independent mechanism candidates on the instrumented baseline, plus one assertion fix.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Low-first changes where slots land; tail-cache clears cache-only blockers before shrink",
+          "nodes": [
+            {
+              "id": "alloc",
+              "label": "Pick free cluster",
+              "sub": "swap-out",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "lowfirst",
+              "label": "Lowest address first",
+              "sub": "xs-lowfree-v1",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "slot",
+              "label": "Slot in use",
+              "sub": "PTE or swap cache",
+              "col": 2,
+              "row": 0
+            },
+            {
+              "id": "free",
+              "label": "Free cluster",
+              "sub": "schedules shrink",
+              "col": 0,
+              "row": 1
+            },
+            {
+              "id": "reclaim",
+              "label": "Reclaim cache-only tail",
+              "sub": "xs-tailcache-v2",
+              "col": 1,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "shrink",
+              "label": "Unmap free tail",
+              "sub": "descriptor pages",
+              "col": 2,
+              "row": 1
+            }
+          ],
+          "edges": [
+            {
+              "from": "alloc",
+              "to": "lowfirst"
+            },
+            {
+              "from": "lowfirst",
+              "to": "slot"
+            },
+            {
+              "from": "free",
+              "to": "reclaim"
+            },
+            {
+              "from": "reclaim",
+              "to": "shrink"
+            }
+          ]
+        },
+        {
+          "type": "diff",
+          "takeaway": "xs-lowfree-v1: move the lowest free cluster to the list head",
+          "patch": "diff --git a/mm/swapfile.c b/mm/swapfile.c\nindex 4f69ec37d..6bc6f7d95 100644\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -861,6 +861,17 @@ static struct swap_cluster_info *isolate_lock_cluster(\n \tu8 flags = CLUSTER_FLAG_NONE;\n \n \tspin_lock(&si->lock);\n+\tif ((si->flags & SWP_XSWAP) && list == &si->free_clusters) {\n+\t\tstruct swap_cluster_info *lowest = NULL;\n+\n+\t\t/* Keep new allocations low so the mapped tail can empty. */\n+\t\tlist_for_each_entry(ci, list, list) {\n+\t\t\tif (!lowest || ci < lowest)\n+\t\t\t\tlowest = ci;\n+\t\t}\n+\t\tif (lowest)\n+\t\t\tlist_move(&lowest->list, list);\n+\t}\n \tlist_for_each_entry(ci, list, list) {\n \t\tif (!spin_trylock(&ci->lock))\n \t\t\tcontinue;\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "xs-tailcache-v2: bounded cache-only reclaim before tail shrink (+ assertion fix)",
+          "patch": "diff --git a/mm/swapfile.c b/mm/swapfile.c\nindex 4f69ec37d..3fb8867cc 100644\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -839,8 +839,9 @@ static void __free_cluster(struct swap_info_struct *si, struct swap_cluster_info\n \tmove_cluster(si, ci, &si->free_clusters, CLUSTER_FLAG_FREE);\n \tci->order = 0;\n #ifdef CONFIG_XSWAP\n-\t/* Only xswap devices, and not while the device is being torn down. */\n-\tif ((si->flags & SWP_XSWAP) && (si->flags & SWP_WRITEOK))\n+\t/* The running shrink already examines clusters it frees itself. */\n+\tif ((si->flags & SWP_XSWAP) && (si->flags & SWP_WRITEOK) &&\n+\t    current_work() != &si->xswap_shrink_work)\n \t\tschedule_work(&si->xswap_shrink_work);\n #endif\n }\n@@ -4818,7 +4819,7 @@ static unsigned long xswap_grow(struct swap_info_struct *si)\n \tint ret;\n \n \t/* The unmap below is paired with the caller's lock. */\n-\tlockdep_assert_held(&percpu_swap_cluster.lock);\n+\tlockdep_assert_held(&this_cpu_ptr(&percpu_swap_cluster)->lock);\n \n \twant = DIV_ROUND_UP(swap_usage_in_pages(si) * 100,\n \t\t\t    XSWAP_GROW_UNTIL * SWAPFILE_CLUSTER);\n@@ -4997,6 +4998,74 @@ static int xswap_mapped_end(pte_t *pte, unsigned long addr, void *data)\n #define XSWAP_SHRINK_SLACK\tXSWAP_GROW_CLUSTERS\n #define XSWAP_SHRINK_MIN\t(XSWAP_GROW_CLUSTERS * 8)\n \n+/*\n+ * Try cache-only blockers in a bounded tail window. A referenced or busy\n+ * cluster ends this pass; the ordinary shrink still decides what to unmap.\n+ */\n+static void xswap_reclaim_tail_cache(struct swap_info_struct *si,\n+\t\t\t\t     unsigned long mapped)\n+{\n+\tunsigned long nr_scan = min(mapped - 1,\n+\t\t\t\t    XSWAP_SHRINK_MIN + XSWAP_SHRINK_SLACK);\n+\tstruct swap_cluster_info *ci;\n+\tunsigned int off;\n+\tunsigned long entry;\n+\tint ret;\n+\n+\tlockdep_assert_held(&si->xswap_lock);\n+\twhile (nr_scan--) {\n+\t\tif (!(READ_ONCE(si->flags) & SWP_WRITEOK))\n+\t\t\treturn;\n+\t\tci = &si->cluster_info[--mapped];\n+\t\tspin_lock(&ci->lock);\n+\t\tif (!ci->count && ci->flags == CLUSTER_FLAG_FREE)\n+\t\t\tgoto next_cluster;\n+\t\tif (!ci->count || !cluster_table_is_alloced(ci))\n+\t\t\tgoto out_unlock;\n+\n+\t\t/* Leave clusters with live swap references alone. */\n+\t\tfor (off = 0; off < SWAPFILE_CLUSTER; off++) {\n+\t\t\tentry = __swap_table_get(ci, off);\n+\t\t\tif (!swp_tb_is_null(entry) &&\n+\t\t\t    (!swp_tb_is_folio(entry) || swp_tb_get_count(entry)))\n+\t\t\t\tgoto out_unlock;\n+\t\t}\n+\n+\t\tfor (off = 0; off < SWAPFILE_CLUSTER; off++) {\n+\t\t\tentry = __swap_table_get(ci, off);\n+\t\t\tif (swp_tb_is_null(entry))\n+\t\t\t\tcontinue;\n+\t\t\tif (!swp_tb_is_folio(entry) || swp_tb_get_count(entry))\n+\t\t\t\tgoto out_unlock;\n+\n+\t\t\t/* The helper takes its own folio and cluster locks. */\n+\t\t\trcu_read_lock();\n+\t\t\tspin_unlock(&ci->lock);\n+\t\t\tret = __try_to_reclaim_swap(si,\n+\t\t\t\t\tmapped * SWAPFILE_CLUSTER + off, TTRS_ANYWAY);\n+\t\t\tspin_lock(&ci->lock);\n+\t\t\trcu_read_unlock();\n+\t\t\tif (!ci->count && ci->flags == CLUSTER_FLAG_FREE)\n+\t\t\t\tgoto next_cluster;\n+\t\t\tif (!ci->count || !cluster_table_is_alloced(ci))\n+\t\t\t\tgoto out_unlock;\n+\t\t\t/* A failed attempt may have raced a successful free. */\n+\t\t\tif (ret <= 0 && !swp_tb_is_null(__swap_table_get(ci, off)))\n+\t\t\t\tgoto out_unlock;\n+\t\t}\n+\t\t/* A concurrent allocation may have filled an earlier slot. */\n+\t\tif (ci->count || ci->flags != CLUSTER_FLAG_FREE)\n+\t\t\tgoto out_unlock;\n+next_cluster:\n+\t\tspin_unlock(&ci->lock);\n+\t\tcond_resched();\n+\t}\n+\treturn;\n+\n+out_unlock:\n+\tspin_unlock(&ci->lock);\n+}\n+\n static void xswap_shrink_work_fn(struct work_struct *work)\n {\n \tstruct swap_info_struct *si = container_of(work,\n@@ -5039,6 +5108,10 @@ static void xswap_try_shrink(struct swap_info_struct *si)\n \t    nr_mapped * SWAPFILE_CLUSTER * XSWAP_SHRINK_WHEN)\n \t\tgoto out_unlock;\n \n+\txswap_reclaim_tail_cache(si, nr_mapped);\n+\tif (!(READ_ONCE(si->flags) & SWP_WRITEOK))\n+\t\tgoto out_unlock;\n+\n \t/*\n \t * Count the free clusters at the tail of the mapped range.  Scanned,\n \t * not tracked: the count must be exact to size the unmap, and an\n"
+        }
+      ]
+    },
+    {
+      "id": "audit-measured",
+      "title": "How it was measured",
+      "lead": "AB/BA pairs, 10 per backend per candidate, after 8 A/A calibration boots.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The score is read after the first settle; a second pressure cycle is diagnostic only",
+          "nodes": [
+            {
+              "id": "boot",
+              "label": "Boot guest",
+              "sub": "4 GiB \u00b7 2 vCPU",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "press",
+              "label": "Pressure + pageout",
+              "sub": "disk or zswap",
+              "col": 1,
+              "row": 0
+            },
+            {
+              "id": "fork",
+              "label": "Fork + timed reads",
+              "sub": "COW, first-access p99",
+              "col": 2,
+              "row": 0
+            },
+            {
+              "id": "settle",
+              "label": "Settle",
+              "sub": "mapped clusters scored",
+              "col": 2,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "rep",
+              "label": "Re-pressure + settle",
+              "sub": "diagnostic",
+              "col": 1,
+              "row": 1,
+              "tone": "muted"
+            },
+            {
+              "id": "end",
+              "label": "Destroy + swapoff",
+              "sub": "data verified",
+              "col": 0,
+              "row": 1
+            }
+          ],
+          "edges": [
+            {
+              "from": "boot",
+              "to": "press"
+            },
+            {
+              "from": "press",
+              "to": "fork"
+            },
+            {
+              "from": "fork",
+              "to": "settle"
+            },
+            {
+              "from": "settle",
+              "to": "rep"
+            },
+            {
+              "from": "rep",
+              "to": "end"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "audit-data",
+      "title": "What the data shows",
+      "lead": "Every boot is one dot; 219 clusters is the low regime.",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Tail-cache v2 settled at 219 clusters in 20/20 boots; its baseline was high in 10/20",
+          "x_label": "mapped clusters after settle",
+          "groups": [
+            "A/A calibration \u00b7 disk",
+            "A/A calibration \u00b7 zswap",
+            "low-first \u00b7 disk",
+            "low-first \u00b7 zswap",
+            "tail-cache v2 \u00b7 disk",
+            "tail-cache v2 \u00b7 zswap"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A calibration \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "A/A calibration \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "A/A calibration \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "A/A calibration \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "A/A calibration \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "16 cache-only pages, highest cache-only cluster 2315"
+            },
+            {
+              "group": "A/A calibration \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "530 cache-only pages, highest cache-only cluster 2325"
+            },
+            {
+              "group": "A/A calibration \u00b7 zswap",
+              "series": "baseline",
+              "value": 2482,
+              "tip": "10 cache-only pages, highest cache-only cluster 2350"
+            },
+            {
+              "group": "A/A calibration \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "2385 cache-only pages, highest cache-only cluster 1460"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "251 cache-only pages, highest cache-only cluster 1608"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "1686 cache-only pages, highest cache-only cluster 1435"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 1898,
+              "tip": "1812 cache-only pages, highest cache-only cluster 1416"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 1898,
+              "tip": "200 cache-only pages, highest cache-only cluster 1457"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "low-first \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 90"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "40 cache-only pages, highest cache-only cluster 2339"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "160 cache-only pages, highest cache-only cluster 2541"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "22 cache-only pages, highest cache-only cluster 2350"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "134 cache-only pages, highest cache-only cluster 2341"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 3066,
+              "tip": "2205 cache-only pages, highest cache-only cluster 2429"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 292,
+              "tip": "6 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "182 cache-only pages, highest cache-only cluster 2309"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "14 cache-only pages, highest cache-only cluster 2325"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "26 cache-only pages, highest cache-only cluster 2324"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "29 cache-only pages, highest cache-only cluster 2305"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "16 cache-only pages, highest cache-only cluster 2345"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "148 cache-only pages, highest cache-only cluster 2332"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "111 cache-only pages, highest cache-only cluster 2324"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "low-first \u00b7 zswap",
+              "series": "candidate",
+              "value": 2774,
+              "tip": "1492 cache-only pages, highest cache-only cluster 2335"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "894 cache-only pages, highest cache-only cluster 1453"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "254 cache-only pages, highest cache-only cluster 1441"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "97 cache-only pages, highest cache-only cluster 1454"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 1898,
+              "tip": "2881 cache-only pages, highest cache-only cluster 1421"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "198 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 90"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "117 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 disk",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 65"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2482,
+              "tip": "12 cache-only pages, highest cache-only cluster 2366"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2482,
+              "tip": "12 cache-only pages, highest cache-only cluster 2369"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "26 cache-only pages, highest cache-only cluster 2305"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2774,
+              "tip": "20 cache-only pages, highest cache-only cluster 2301"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 3066,
+              "tip": "98 cache-only pages, highest cache-only cluster 2421"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "68 cache-only pages, highest cache-only cluster 216"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 2482,
+              "tip": "13 cache-only pages, highest cache-only cluster 2379"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "baseline",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "2 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "204 cache-only pages, highest cache-only cluster 101"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "50 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 99"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 100"
+            },
+            {
+              "group": "tail-cache v2 \u00b7 zswap",
+              "series": "candidate",
+              "value": 219,
+              "tip": "1 cache-only pages, highest cache-only cluster 98"
+            }
+          ]
+        },
+        {
+          "type": "lines",
+          "takeaway": "A second pressure cycle brings the high regime back on both sides (zswap re-settle high: candidate 2/10, baseline 4/10)",
+          "x": [
+            "before",
+            "pressure",
+            "settle",
+            "re-pressure",
+            "re-settle"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "lines": [
+            {
+              "series": "baseline",
+              "label": "baseline (zswap)",
+              "values": [
+                73,
+                1693.6,
+                1693.6,
+                1255.6,
+                1255.6
+              ]
+            },
+            {
+              "series": "candidate",
+              "label": "tail-cache v2 (zswap)",
+              "values": [
+                73,
+                956.3,
+                219,
+                730,
+                730
+              ]
+            }
+          ]
+        },
+        {
+          "type": "bars",
+          "takeaway": "In a high boot, PTE references stop at cluster 100; a few cache-only slots pin the tail",
+          "categories": [
+            "highest referenced",
+            "highest cache-only",
+            "nonempty clusters",
+            "mapped clusters"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "values": {
+            "baseline": [
+              100,
+              2421,
+              40,
+              3066
+            ],
+            "candidate": [
+              99,
+              99,
+              36,
+              219
+            ]
+          }
+        },
+        {
+          "type": "table",
+          "takeaway": "Neither candidate moved first-access latency beyond run-to-run spread",
+          "columns": [
+            "candidate",
+            "backend",
+            "high A",
+            "high B",
+            "mean clusters A",
+            "mean clusters B",
+            "p99 A (\u00b5s)",
+            "p99 B (\u00b5s)"
+          ],
+          "numeric": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "rows": [
+            [
+              "low-first",
+              "disk",
+              "3/10",
+              "2/10",
+              "722.7",
+              "554.8",
+              "355.9",
+              "353.3"
+            ],
+            [
+              "low-first",
+              "zswap",
+              "9/10",
+              "5/10",
+              "2299.5",
+              "1496.5",
+              "243.6",
+              "257.7"
+            ],
+            [
+              "tail-cache v2",
+              "disk",
+              "4/10",
+              "0/10",
+              "890.6",
+              "219",
+              "389.6",
+              "357.6"
+            ],
+            [
+              "tail-cache v2",
+              "zswap",
+              "6/10",
+              "0/10",
+              "1693.6",
+              "219",
+              "240.0",
+              "244.0"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "audit-why",
+      "title": "Why",
+      "lead": "Shrink only unmaps a contiguous free tail; one cache-only slot ends that tail.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Cache-only blockers explain the regime; the RAM involved is descriptor pages only",
+          "nodes": [
+            {
+              "id": "p",
+              "label": "Pressure peak",
+              "sub": "mapping grows",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "c",
+              "label": "Few cache-only slots high",
+              "sub": "no PTE reference",
+              "col": 1,
+              "row": 0,
+              "tone": "bad"
+            },
+            {
+              "id": "t",
+              "label": "Tail not contiguous",
+              "sub": "shrink skipped",
+              "col": 2,
+              "row": 0
+            },
+            {
+              "id": "r",
+              "label": "Reclaim them first",
+              "sub": "tail-cache v2",
+              "col": 1,
+              "row": 1,
+              "tone": "good"
+            },
+            {
+              "id": "u",
+              "label": "Tail unmapped",
+              "sub": "saves \u2264156 KiB",
+              "col": 2,
+              "row": 1
+            }
+          ],
+          "edges": [
+            {
+              "from": "p",
+              "to": "c"
+            },
+            {
+              "from": "c",
+              "to": "t"
+            },
+            {
+              "from": "c",
+              "to": "r"
+            },
+            {
+              "from": "r",
+              "to": "u"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Per-cluster tables are freed with the cluster; high boots kept 37\u201350 nonempty clusters versus 37 in low boots."
+        }
+      ]
+    },
+    {
+      "id": "audit-review",
+      "title": "Review checklist",
+      "lead": "Every policy gate, including the ones not run.",
+      "blocks": [
+        {
+          "type": "checklist",
+          "takeaway": "Data gates pass; lifetime and sanitizer coverage do not",
+          "items": [
+            {
+              "status": "pass",
+              "label": "data_roundtrip, repressure data, fork/COW, live destroy, swapoff",
+              "evidence": "88/88 boots, evaluations/*/report.json"
+            },
+            {
+              "status": "pass",
+              "label": "guest_boot_identity, inputs unchanged",
+              "evidence": "per-run image/config/initrd/serial sha256 in report.json"
+            },
+            {
+              "status": "pass",
+              "label": "checkpatch + controller scope/diff",
+              "evidence": "evolve/control/state/xswap-structure-2026-10-22/candidates.json"
+            },
+            {
+              "status": "pass",
+              "label": "lockdep smoke (disk + zswap) on tail-cache v2",
+              "evidence": "state/xswap-structure-2026-10-22/tailcache-v2-lockdep-*.json"
+            },
+            {
+              "status": "fail",
+              "label": "lockdep on baseline: xswap_grow assertion used untranslated per-CPU address",
+              "evidence": "fixed separately in xs-lockassert-v1; 2 failed boots kept in ledger"
+            },
+            {
+              "status": "fail",
+              "label": "descriptor retirement lifetime: readers dereference cluster_info with only a device reference",
+              "evidence": "results/xswap-structure-2026-10-22/descriptor-lifetime-review.md (source-level, not runtime)"
+            },
+            {
+              "status": "missing",
+              "label": "KASAN, KCSAN",
+              "evidence": "not built"
+            },
+            {
+              "status": "missing",
+              "label": "allocation and I/O failure injection, memcg limits, large folios",
+              "evidence": "protocol unimplemented_acceptance_gates"
+            },
+            {
+              "status": "missing",
+              "label": "sparse, gcc swap-off / zswap-off builds",
+              "evidence": "not run"
+            },
+            {
+              "status": "missing",
+              "label": "independent confirmation and holdout",
+              "evidence": "not run"
+            },
+            {
+              "status": "warn",
+              "label": "Re-swapout I/O cost of dropping cache-only folios",
+              "evidence": "not measured by this workload"
+            },
+            {
+              "status": "warn",
+              "label": "Primary metric is worth \u2248156 KiB of descriptor RAM at most",
+              "evidence": "2847 clusters \u00d7 56 B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "audit-next",
+      "title": "Next",
+      "lead": "Fix the correctness issue before optimizing a metric worth ~100 KiB.",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Ranked next hypotheses",
+          "columns": [
+            "rank",
+            "hypothesis",
+            "falsifier"
+          ],
+          "rows": [
+            [
+              "1",
+              "Stop retiring descriptor pages (grow-only mapping) removes the lifetime race at \u224856 B per MiB of peak swap",
+              "Measured descriptor retention or a reader still needing protection"
+            ],
+            [
+              "2",
+              "Alternatively keep retirement with RCU-guarded, relookup-after-sleep readers",
+              "Review finds an unguarded reader or measurable fault-path cost"
+            ],
+            [
+              "3",
+              "Measure the re-swapout I/O cost of dropping cache-only folios",
+              "No extra swap-out under repeated pressure"
+            ]
+          ]
+        }
+      ]
+    }
   ]
- },
- "sections": [
-  {
-   "id": "changed",
-   "title": "What changed",
-   "lead": "Two independent mechanism candidates on the instrumented baseline, plus one assertion fix.",
-   "blocks": [
-    {
-     "type": "flow",
-     "takeaway": "Low-first changes where slots land; tail-cache clears cache-only blockers before shrink",
-     "nodes": [
-      {
-       "id": "alloc",
-       "label": "Pick free cluster",
-       "sub": "swap-out",
-       "col": 0,
-       "row": 0
-      },
-      {
-       "id": "lowfirst",
-       "label": "Lowest address first",
-       "sub": "xs-lowfree-v1",
-       "col": 1,
-       "row": 0,
-       "tone": "focus"
-      },
-      {
-       "id": "slot",
-       "label": "Slot in use",
-       "sub": "PTE or swap cache",
-       "col": 2,
-       "row": 0
-      },
-      {
-       "id": "free",
-       "label": "Free cluster",
-       "sub": "schedules shrink",
-       "col": 0,
-       "row": 1
-      },
-      {
-       "id": "reclaim",
-       "label": "Reclaim cache-only tail",
-       "sub": "xs-tailcache-v2",
-       "col": 1,
-       "row": 1,
-       "tone": "focus"
-      },
-      {
-       "id": "shrink",
-       "label": "Unmap free tail",
-       "sub": "descriptor pages",
-       "col": 2,
-       "row": 1
-      }
-     ],
-     "edges": [
-      {
-       "from": "alloc",
-       "to": "lowfirst"
-      },
-      {
-       "from": "lowfirst",
-       "to": "slot"
-      },
-      {
-       "from": "free",
-       "to": "reclaim"
-      },
-      {
-       "from": "reclaim",
-       "to": "shrink"
-      }
-     ]
-    },
-    {
-     "type": "diff",
-     "takeaway": "xs-lowfree-v1: move the lowest free cluster to the list head",
-     "patch": "diff --git a/mm/swapfile.c b/mm/swapfile.c\nindex 4f69ec37d..6bc6f7d95 100644\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -861,6 +861,17 @@ static struct swap_cluster_info *isolate_lock_cluster(\n \tu8 flags = CLUSTER_FLAG_NONE;\n \n \tspin_lock(&si->lock);\n+\tif ((si->flags & SWP_XSWAP) && list == &si->free_clusters) {\n+\t\tstruct swap_cluster_info *lowest = NULL;\n+\n+\t\t/* Keep new allocations low so the mapped tail can empty. */\n+\t\tlist_for_each_entry(ci, list, list) {\n+\t\t\tif (!lowest || ci < lowest)\n+\t\t\t\tlowest = ci;\n+\t\t}\n+\t\tif (lowest)\n+\t\t\tlist_move(&lowest->list, list);\n+\t}\n \tlist_for_each_entry(ci, list, list) {\n \t\tif (!spin_trylock(&ci->lock))\n \t\t\tcontinue;\n"
-    },
-    {
-     "type": "diff",
-     "takeaway": "xs-tailcache-v2: bounded cache-only reclaim before tail shrink (+ assertion fix)",
-     "patch": "diff --git a/mm/swapfile.c b/mm/swapfile.c\nindex 4f69ec37d..3fb8867cc 100644\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -839,8 +839,9 @@ static void __free_cluster(struct swap_info_struct *si, struct swap_cluster_info\n \tmove_cluster(si, ci, &si->free_clusters, CLUSTER_FLAG_FREE);\n \tci->order = 0;\n #ifdef CONFIG_XSWAP\n-\t/* Only xswap devices, and not while the device is being torn down. */\n-\tif ((si->flags & SWP_XSWAP) && (si->flags & SWP_WRITEOK))\n+\t/* The running shrink already examines clusters it frees itself. */\n+\tif ((si->flags & SWP_XSWAP) && (si->flags & SWP_WRITEOK) &&\n+\t    current_work() != &si->xswap_shrink_work)\n \t\tschedule_work(&si->xswap_shrink_work);\n #endif\n }\n@@ -4818,7 +4819,7 @@ static unsigned long xswap_grow(struct swap_info_struct *si)\n \tint ret;\n \n \t/* The unmap below is paired with the caller's lock. */\n-\tlockdep_assert_held(&percpu_swap_cluster.lock);\n+\tlockdep_assert_held(&this_cpu_ptr(&percpu_swap_cluster)->lock);\n \n \twant = DIV_ROUND_UP(swap_usage_in_pages(si) * 100,\n \t\t\t    XSWAP_GROW_UNTIL * SWAPFILE_CLUSTER);\n@@ -4997,6 +4998,74 @@ static int xswap_mapped_end(pte_t *pte, unsigned long addr, void *data)\n #define XSWAP_SHRINK_SLACK\tXSWAP_GROW_CLUSTERS\n #define XSWAP_SHRINK_MIN\t(XSWAP_GROW_CLUSTERS * 8)\n \n+/*\n+ * Try cache-only blockers in a bounded tail window. A referenced or busy\n+ * cluster ends this pass; the ordinary shrink still decides what to unmap.\n+ */\n+static void xswap_reclaim_tail_cache(struct swap_info_struct *si,\n+\t\t\t\t     unsigned long mapped)\n+{\n+\tunsigned long nr_scan = min(mapped - 1,\n+\t\t\t\t    XSWAP_SHRINK_MIN + XSWAP_SHRINK_SLACK);\n+\tstruct swap_cluster_info *ci;\n+\tunsigned int off;\n+\tunsigned long entry;\n+\tint ret;\n+\n+\tlockdep_assert_held(&si->xswap_lock);\n+\twhile (nr_scan--) {\n+\t\tif (!(READ_ONCE(si->flags) & SWP_WRITEOK))\n+\t\t\treturn;\n+\t\tci = &si->cluster_info[--mapped];\n+\t\tspin_lock(&ci->lock);\n+\t\tif (!ci->count && ci->flags == CLUSTER_FLAG_FREE)\n+\t\t\tgoto next_cluster;\n+\t\tif (!ci->count || !cluster_table_is_alloced(ci))\n+\t\t\tgoto out_unlock;\n+\n+\t\t/* Leave clusters with live swap references alone. */\n+\t\tfor (off = 0; off < SWAPFILE_CLUSTER; off++) {\n+\t\t\tentry = __swap_table_get(ci, off);\n+\t\t\tif (!swp_tb_is_null(entry) &&\n+\t\t\t    (!swp_tb_is_folio(entry) || swp_tb_get_count(entry)))\n+\t\t\t\tgoto out_unlock;\n+\t\t}\n+\n+\t\tfor (off = 0; off < SWAPFILE_CLUSTER; off++) {\n+\t\t\tentry = __swap_table_get(ci, off);\n+\t\t\tif (swp_tb_is_null(entry))\n+\t\t\t\tcontinue;\n+\t\t\tif (!swp_tb_is_folio(entry) || swp_tb_get_count(entry))\n+\t\t\t\tgoto out_unlock;\n+\n+\t\t\t/* The helper takes its own folio and cluster locks. */\n+\t\t\trcu_read_lock();\n+\t\t\tspin_unlock(&ci->lock);\n+\t\t\tret = __try_to_reclaim_swap(si,\n+\t\t\t\t\tmapped * SWAPFILE_CLUSTER + off, TTRS_ANYWAY);\n+\t\t\tspin_lock(&ci->lock);\n+\t\t\trcu_read_unlock();\n+\t\t\tif (!ci->count && ci->flags == CLUSTER_FLAG_FREE)\n+\t\t\t\tgoto next_cluster;\n+\t\t\tif (!ci->count || !cluster_table_is_alloced(ci))\n+\t\t\t\tgoto out_unlock;\n+\t\t\t/* A failed attempt may have raced a successful free. */\n+\t\t\tif (ret <= 0 && !swp_tb_is_null(__swap_table_get(ci, off)))\n+\t\t\t\tgoto out_unlock;\n+\t\t}\n+\t\t/* A concurrent allocation may have filled an earlier slot. */\n+\t\tif (ci->count || ci->flags != CLUSTER_FLAG_FREE)\n+\t\t\tgoto out_unlock;\n+next_cluster:\n+\t\tspin_unlock(&ci->lock);\n+\t\tcond_resched();\n+\t}\n+\treturn;\n+\n+out_unlock:\n+\tspin_unlock(&ci->lock);\n+}\n+\n static void xswap_shrink_work_fn(struct work_struct *work)\n {\n \tstruct swap_info_struct *si = container_of(work,\n@@ -5039,6 +5108,10 @@ static void xswap_try_shrink(struct swap_info_struct *si)\n \t    nr_mapped * SWAPFILE_CLUSTER * XSWAP_SHRINK_WHEN)\n \t\tgoto out_unlock;\n \n+\txswap_reclaim_tail_cache(si, nr_mapped);\n+\tif (!(READ_ONCE(si->flags) & SWP_WRITEOK))\n+\t\tgoto out_unlock;\n+\n \t/*\n \t * Count the free clusters at the tail of the mapped range.  Scanned,\n \t * not tracked: the count must be exact to size the unmap, and an\n"
-    }
-   ]
-  },
-  {
-   "id": "measured",
-   "title": "How it was measured",
-   "lead": "AB/BA pairs, 10 per backend per candidate, after 8 A/A calibration boots.",
-   "blocks": [
-    {
-     "type": "flow",
-     "takeaway": "The score is read after the first settle; a second pressure cycle is diagnostic only",
-     "nodes": [
-      {
-       "id": "boot",
-       "label": "Boot guest",
-       "sub": "4 GiB · 2 vCPU",
-       "col": 0,
-       "row": 0
-      },
-      {
-       "id": "press",
-       "label": "Pressure + pageout",
-       "sub": "disk or zswap",
-       "col": 1,
-       "row": 0
-      },
-      {
-       "id": "fork",
-       "label": "Fork + timed reads",
-       "sub": "COW, first-access p99",
-       "col": 2,
-       "row": 0
-      },
-      {
-       "id": "settle",
-       "label": "Settle",
-       "sub": "mapped clusters scored",
-       "col": 2,
-       "row": 1,
-       "tone": "focus"
-      },
-      {
-       "id": "rep",
-       "label": "Re-pressure + settle",
-       "sub": "diagnostic",
-       "col": 1,
-       "row": 1,
-       "tone": "muted"
-      },
-      {
-       "id": "end",
-       "label": "Destroy + swapoff",
-       "sub": "data verified",
-       "col": 0,
-       "row": 1
-      }
-     ],
-     "edges": [
-      {
-       "from": "boot",
-       "to": "press"
-      },
-      {
-       "from": "press",
-       "to": "fork"
-      },
-      {
-       "from": "fork",
-       "to": "settle"
-      },
-      {
-       "from": "settle",
-       "to": "rep"
-      },
-      {
-       "from": "rep",
-       "to": "end"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "data",
-   "title": "What the data shows",
-   "lead": "Every boot is one dot; 219 clusters is the low regime.",
-   "blocks": [
-    {
-     "type": "strip",
-     "takeaway": "Tail-cache v2 settled at 219 clusters in 20/20 boots; its baseline was high in 10/20",
-     "x_label": "mapped clusters after settle",
-     "groups": [
-      "A/A calibration · disk",
-      "A/A calibration · zswap",
-      "low-first · disk",
-      "low-first · zswap",
-      "tail-cache v2 · disk",
-      "tail-cache v2 · zswap"
-     ],
-     "series": [
-      "baseline",
-      "candidate"
-     ],
-     "points": [
-      {
-       "group": "A/A calibration · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "A/A calibration · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "A/A calibration · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "A/A calibration · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "A/A calibration · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "16 cache-only pages, highest cache-only cluster 2315"
-      },
-      {
-       "group": "A/A calibration · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "530 cache-only pages, highest cache-only cluster 2325"
-      },
-      {
-       "group": "A/A calibration · zswap",
-       "series": "baseline",
-       "value": 2482,
-       "tip": "10 cache-only pages, highest cache-only cluster 2350"
-      },
-      {
-       "group": "A/A calibration · zswap",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 1898,
-       "tip": "2385 cache-only pages, highest cache-only cluster 1460"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 1898,
-       "tip": "251 cache-only pages, highest cache-only cluster 1608"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 1898,
-       "tip": "1686 cache-only pages, highest cache-only cluster 1435"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 1898,
-       "tip": "1812 cache-only pages, highest cache-only cluster 1416"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 1898,
-       "tip": "200 cache-only pages, highest cache-only cluster 1457"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "low-first · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 90"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "40 cache-only pages, highest cache-only cluster 2339"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "160 cache-only pages, highest cache-only cluster 2541"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "22 cache-only pages, highest cache-only cluster 2350"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "134 cache-only pages, highest cache-only cluster 2341"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 3066,
-       "tip": "2205 cache-only pages, highest cache-only cluster 2429"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 292,
-       "tip": "6 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "182 cache-only pages, highest cache-only cluster 2309"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "14 cache-only pages, highest cache-only cluster 2325"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "26 cache-only pages, highest cache-only cluster 2324"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 2774,
-       "tip": "29 cache-only pages, highest cache-only cluster 2305"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 2774,
-       "tip": "16 cache-only pages, highest cache-only cluster 2345"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 2774,
-       "tip": "148 cache-only pages, highest cache-only cluster 2332"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 2774,
-       "tip": "111 cache-only pages, highest cache-only cluster 2324"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "low-first · zswap",
-       "series": "candidate",
-       "value": 2774,
-       "tip": "1492 cache-only pages, highest cache-only cluster 2335"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 1898,
-       "tip": "894 cache-only pages, highest cache-only cluster 1453"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 1898,
-       "tip": "254 cache-only pages, highest cache-only cluster 1441"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 1898,
-       "tip": "97 cache-only pages, highest cache-only cluster 1454"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 1898,
-       "tip": "2881 cache-only pages, highest cache-only cluster 1421"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "198 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 90"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "117 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "tail-cache v2 · disk",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 65"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 2482,
-       "tip": "12 cache-only pages, highest cache-only cluster 2366"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 2482,
-       "tip": "12 cache-only pages, highest cache-only cluster 2369"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "26 cache-only pages, highest cache-only cluster 2305"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 2774,
-       "tip": "20 cache-only pages, highest cache-only cluster 2301"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 3066,
-       "tip": "98 cache-only pages, highest cache-only cluster 2421"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 219,
-       "tip": "68 cache-only pages, highest cache-only cluster 216"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 2482,
-       "tip": "13 cache-only pages, highest cache-only cluster 2379"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "baseline",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "2 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "204 cache-only pages, highest cache-only cluster 101"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "50 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 99"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 100"
-      },
-      {
-       "group": "tail-cache v2 · zswap",
-       "series": "candidate",
-       "value": 219,
-       "tip": "1 cache-only pages, highest cache-only cluster 98"
-      }
-     ]
-    },
-    {
-     "type": "lines",
-     "takeaway": "A second pressure cycle brings the high regime back on both sides (zswap re-settle high: candidate 2/10, baseline 4/10)",
-     "x": [
-      "before",
-      "pressure",
-      "settle",
-      "re-pressure",
-      "re-settle"
-     ],
-     "series": [
-      "baseline",
-      "candidate"
-     ],
-     "lines": [
-      {
-       "series": "baseline",
-       "label": "baseline (zswap)",
-       "values": [
-        73,
-        1693.6,
-        1693.6,
-        1255.6,
-        1255.6
-       ]
-      },
-      {
-       "series": "candidate",
-       "label": "tail-cache v2 (zswap)",
-       "values": [
-        73,
-        956.3,
-        219,
-        730,
-        730
-       ]
-      }
-     ]
-    },
-    {
-     "type": "bars",
-     "takeaway": "In a high boot, PTE references stop at cluster 100; a few cache-only slots pin the tail",
-     "categories": [
-      "highest referenced",
-      "highest cache-only",
-      "nonempty clusters",
-      "mapped clusters"
-     ],
-     "series": [
-      "baseline",
-      "candidate"
-     ],
-     "values": {
-      "baseline": [
-       100,
-       2421,
-       40,
-       3066
-      ],
-      "candidate": [
-       99,
-       99,
-       36,
-       219
-      ]
-     }
-    },
-    {
-     "type": "table",
-     "takeaway": "Neither candidate moved first-access latency beyond run-to-run spread",
-     "columns": [
-      "candidate",
-      "backend",
-      "high A",
-      "high B",
-      "mean clusters A",
-      "mean clusters B",
-      "p99 A (µs)",
-      "p99 B (µs)"
-     ],
-     "numeric": [
-      2,
-      3,
-      4,
-      5,
-      6,
-      7
-     ],
-     "rows": [
-      [
-       "low-first",
-       "disk",
-       "3/10",
-       "2/10",
-       "722.7",
-       "554.8",
-       "355.9",
-       "353.3"
-      ],
-      [
-       "low-first",
-       "zswap",
-       "9/10",
-       "5/10",
-       "2299.5",
-       "1496.5",
-       "243.6",
-       "257.7"
-      ],
-      [
-       "tail-cache v2",
-       "disk",
-       "4/10",
-       "0/10",
-       "890.6",
-       "219",
-       "389.6",
-       "357.6"
-      ],
-      [
-       "tail-cache v2",
-       "zswap",
-       "6/10",
-       "0/10",
-       "1693.6",
-       "219",
-       "240.0",
-       "244.0"
-      ]
-     ]
-    }
-   ]
-  },
-  {
-   "id": "why",
-   "title": "Why",
-   "lead": "Shrink only unmaps a contiguous free tail; one cache-only slot ends that tail.",
-   "blocks": [
-    {
-     "type": "flow",
-     "takeaway": "Cache-only blockers explain the regime; the RAM involved is descriptor pages only",
-     "nodes": [
-      {
-       "id": "p",
-       "label": "Pressure peak",
-       "sub": "mapping grows",
-       "col": 0,
-       "row": 0
-      },
-      {
-       "id": "c",
-       "label": "Few cache-only slots high",
-       "sub": "no PTE reference",
-       "col": 1,
-       "row": 0,
-       "tone": "bad"
-      },
-      {
-       "id": "t",
-       "label": "Tail not contiguous",
-       "sub": "shrink skipped",
-       "col": 2,
-       "row": 0
-      },
-      {
-       "id": "r",
-       "label": "Reclaim them first",
-       "sub": "tail-cache v2",
-       "col": 1,
-       "row": 1,
-       "tone": "good"
-      },
-      {
-       "id": "u",
-       "label": "Tail unmapped",
-       "sub": "saves ≤156 KiB",
-       "col": 2,
-       "row": 1
-      }
-     ],
-     "edges": [
-      {
-       "from": "p",
-       "to": "c"
-      },
-      {
-       "from": "c",
-       "to": "t"
-      },
-      {
-       "from": "c",
-       "to": "r"
-      },
-      {
-       "from": "r",
-       "to": "u"
-      }
-     ]
-    },
-    {
-     "type": "note",
-     "text": "Per-cluster tables are freed with the cluster; high boots kept 37–50 nonempty clusters versus 37 in low boots."
-    }
-   ]
-  },
-  {
-   "id": "review",
-   "title": "Review checklist",
-   "lead": "Every policy gate, including the ones not run.",
-   "blocks": [
-    {
-     "type": "checklist",
-     "takeaway": "Data gates pass; lifetime and sanitizer coverage do not",
-     "items": [
-      {
-       "status": "pass",
-       "label": "data_roundtrip, repressure data, fork/COW, live destroy, swapoff",
-       "evidence": "88/88 boots, evaluations/*/report.json"
-      },
-      {
-       "status": "pass",
-       "label": "guest_boot_identity, inputs unchanged",
-       "evidence": "per-run image/config/initrd/serial sha256 in report.json"
-      },
-      {
-       "status": "pass",
-       "label": "checkpatch + controller scope/diff",
-       "evidence": "evolve/control/state/xswap-structure-2026-10-22/candidates.json"
-      },
-      {
-       "status": "pass",
-       "label": "lockdep smoke (disk + zswap) on tail-cache v2",
-       "evidence": "state/xswap-structure-2026-10-22/tailcache-v2-lockdep-*.json"
-      },
-      {
-       "status": "fail",
-       "label": "lockdep on baseline: xswap_grow assertion used untranslated per-CPU address",
-       "evidence": "fixed separately in xs-lockassert-v1; 2 failed boots kept in ledger"
-      },
-      {
-       "status": "fail",
-       "label": "descriptor retirement lifetime: readers dereference cluster_info with only a device reference",
-       "evidence": "results/xswap-structure-2026-10-22/descriptor-lifetime-review.md (source-level, not runtime)"
-      },
-      {
-       "status": "missing",
-       "label": "KASAN, KCSAN",
-       "evidence": "not built"
-      },
-      {
-       "status": "missing",
-       "label": "allocation and I/O failure injection, memcg limits, large folios",
-       "evidence": "protocol unimplemented_acceptance_gates"
-      },
-      {
-       "status": "missing",
-       "label": "sparse, gcc swap-off / zswap-off builds",
-       "evidence": "not run"
-      },
-      {
-       "status": "missing",
-       "label": "independent confirmation and holdout",
-       "evidence": "not run"
-      },
-      {
-       "status": "warn",
-       "label": "Re-swapout I/O cost of dropping cache-only folios",
-       "evidence": "not measured by this workload"
-      },
-      {
-       "status": "warn",
-       "label": "Primary metric is worth ≈156 KiB of descriptor RAM at most",
-       "evidence": "2847 clusters × 56 B"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "next",
-   "title": "Next",
-   "lead": "Fix the correctness issue before optimizing a metric worth ~100 KiB.",
-   "blocks": [
-    {
-     "type": "table",
-     "takeaway": "Ranked next hypotheses",
-     "columns": [
-      "rank",
-      "hypothesis",
-      "falsifier"
-     ],
-     "rows": [
-      [
-       "1",
-       "Stop retiring descriptor pages (grow-only mapping) removes the lifetime race at ≈56 B per MiB of peak swap",
-       "Measured descriptor retention or a reader still needing protection"
-      ],
-      [
-       "2",
-       "Alternatively keep retirement with RCU-guarded, relookup-after-sleep readers",
-       "Review finds an unguarded reader or measurable fault-path cost"
-      ],
-      [
-       "3",
-       "Measure the re-swapout I/O cost of dropping cache-only folios",
-       "No extra swap-out under repeated pressure"
-      ]
-     ]
-    }
-   ]
-  }
- ]
 }

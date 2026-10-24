@@ -1,0 +1,793 @@
+{
+  "title": "Standard benchmark: fast and slow evidence",
+  "subtitle": "744e5400b36f \u00b7 2026-10-22",
+  "verdict": {
+    "status": "inconclusive",
+    "headline": "Fast calibration is noisy; candidate scoring remains held",
+    "tiles": [
+      {
+        "label": "Recorded runs",
+        "value": "14",
+        "note": "Retained attempts"
+      },
+      {
+        "label": "Integration gates",
+        "value": "150/150",
+        "note": "Completed runs only"
+      },
+      {
+        "label": "Evaluations",
+        "value": "4",
+        "note": "Statuses retained"
+      },
+      {
+        "label": "Promoted",
+        "value": "0",
+        "note": "Human review required"
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "change",
+      "title": "What changed",
+      "lead": "High confidence: orchestration changed; a candidate patch would change this classification.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Tiered orchestration replaces disconnected single runs",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Controller",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Fast gate",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "2",
+              "label": "Slow evidence",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "3",
+              "label": "Human review",
+              "col": 3,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            },
+            {
+              "from": "2",
+              "to": "3"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "No candidate kernel diff exists in this framework integration."
+        }
+      ]
+    },
+    {
+      "id": "measurement",
+      "title": "How it was measured",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Frozen inputs produce paired raw evidence",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Frozen build",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Fresh guest",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "2",
+              "label": "AB / BA metrics",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "3",
+              "label": "Hash verification",
+              "col": 3,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            },
+            {
+              "from": "2",
+              "to": "3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "What the data shows",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Fast A/A rejected: maximum multiplicative usemem throughput difference is 63.2% and free-latency difference is 43.4%, exceeding the 20% ceiling."
+        },
+        {
+          "type": "table",
+          "takeaway": "Recorded statuses determine admission",
+          "columns": [
+            "Action",
+            "Tier",
+            "Status",
+            "Runs",
+            "Evaluation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "calibrate",
+              "fast",
+              "CALIBRATION_NOISY",
+              "12",
+              "8b0579940b604f43b32648310f6beda5",
+              "Recorded result"
+            ],
+            [
+              "calibrate",
+              "slow",
+              "INCOMPLETE",
+              "2",
+              "2aae1d7b6bf041b981317ebd833ed850",
+              "STOP"
+            ],
+            [
+              "reference-check",
+              "fast",
+              "INCOMPLETE",
+              "0",
+              "26fe4dd5f27e497c90655b2d597713bf",
+              "calibration noisy; stabilize baseline before comparison"
+            ],
+            [
+              "evaluate",
+              "fast",
+              "BLOCKED",
+              "0",
+              "b4c8f2489f5744639eaa0603628dcefc",
+              "BLOCKED: historical xswap candidate; unresolved descriptor lifetime"
+            ]
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "usemem-disk.throughput_kbps_sum",
+          "note": "Same-kernel A/A; direction-adjusted ratio to paired A. Each arm remains visible.",
+          "groups": [
+            "fast calibrate"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-a; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 0.612789910120998,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-b; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-a; pair=1"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 1.5381657317989939,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-b; pair=1"
+            }
+          ],
+          "x_label": "Direction-adjusted ratio (A=1)"
+        },
+        {
+          "type": "strip",
+          "takeaway": "usemem-disk.free_usec_max",
+          "note": "Same-kernel A/A; direction-adjusted ratio to paired A. Each arm remains visible.",
+          "groups": [
+            "fast calibrate"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-a; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 0.6972076581813006,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-usemem-disk-b; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-a; pair=1"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 1.089471269331462,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-usemem-disk-b; pair=1"
+            }
+          ],
+          "x_label": "Direction-adjusted ratio (A=1)"
+        },
+        {
+          "type": "strip",
+          "takeaway": "redis-zram.redis_get_rps",
+          "note": "Same-kernel A/A; direction-adjusted ratio to paired A. Each arm remains visible.",
+          "groups": [
+            "fast calibrate"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-redis-zram-a; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 0.8940227987791244,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-redis-zram-b; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-redis-zram-a; pair=1"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 0.9878120674804228,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-redis-zram-b; pair=1"
+            }
+          ],
+          "x_label": "Direction-adjusted ratio (A=1)"
+        },
+        {
+          "type": "strip",
+          "takeaway": "redis-zram.redis_get_bgsave_rps",
+          "note": "Same-kernel A/A; direction-adjusted ratio to paired A. Each arm remains visible.",
+          "groups": [
+            "fast calibrate"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-redis-zram-a; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 0.9580543063797454,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-redis-zram-b; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-redis-zram-a; pair=1"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 1.0663081199599846,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-redis-zram-b; pair=1"
+            }
+          ],
+          "x_label": "Direction-adjusted ratio (A=1)"
+        },
+        {
+          "type": "strip",
+          "takeaway": "swapin-disk.swapin_rand.mean_ns",
+          "note": "Same-kernel A/A; direction-adjusted ratio to paired A. Each arm remains visible.",
+          "groups": [
+            "fast calibrate"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-a; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 1.1365207014382455,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-b; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-a; pair=1"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 0.9022796660045612,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-b; pair=1"
+            }
+          ],
+          "x_label": "Direction-adjusted ratio (A=1)"
+        },
+        {
+          "type": "strip",
+          "takeaway": "swapin-disk.swapin_rand.p99_ns",
+          "note": "Same-kernel A/A; direction-adjusted ratio to paired A. Each arm remains visible.",
+          "groups": [
+            "fast calibrate"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-a; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 1.144646533973919,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-b; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-a; pair=1"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 1.0494608199627289,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-b; pair=1"
+            }
+          ],
+          "x_label": "Direction-adjusted ratio (A=1)"
+        },
+        {
+          "type": "strip",
+          "takeaway": "swapin-disk.swapin_seq.p99_ns",
+          "note": "Same-kernel A/A; direction-adjusted ratio to paired A. Each arm remains visible.",
+          "groups": [
+            "fast calibrate"
+          ],
+          "series": [
+            "A",
+            "B"
+          ],
+          "points": [
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-a; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 1.0601124337057433,
+              "tip": "8b0579940b604f43b32648310f6beda5-0-swapin-disk-b; pair=0"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "A",
+              "value": 1.0,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-a; pair=1"
+            },
+            {
+              "group": "fast calibrate",
+              "series": "B",
+              "value": 0.9325109024212286,
+              "tip": "8b0579940b604f43b32648310f6beda5-1-swapin-disk-b; pair=1"
+            }
+          ],
+          "x_label": "Direction-adjusted ratio (A=1)"
+        },
+        {
+          "type": "table",
+          "takeaway": "Every completed and interrupted run is retained",
+          "columns": [
+            "Run",
+            "Case",
+            "Arm",
+            "Recorded status",
+            "Result evidence"
+          ],
+          "rows": [
+            [
+              "8b0579940b604f43b32648310f6beda5-0-usemem-disk-a",
+              "usemem-disk",
+              "a",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-0-usemem-disk-b",
+              "usemem-disk",
+              "b",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-0-redis-zram-a",
+              "redis-zram",
+              "a",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-0-redis-zram-b",
+              "redis-zram",
+              "b",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-0-swapin-disk-a",
+              "swapin-disk",
+              "a",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-0-swapin-disk-b",
+              "swapin-disk",
+              "b",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-1-usemem-disk-b",
+              "usemem-disk",
+              "b",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-1-usemem-disk-a",
+              "usemem-disk",
+              "a",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-1-redis-zram-b",
+              "redis-zram",
+              "b",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-1-redis-zram-a",
+              "redis-zram",
+              "a",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-1-swapin-disk-b",
+              "swapin-disk",
+              "b",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "8b0579940b604f43b32648310f6beda5-1-swapin-disk-a",
+              "swapin-disk",
+              "a",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-a",
+              "usemem-disk",
+              "a",
+              "PASS",
+              "verified result"
+            ],
+            [
+              "2aae1d7b6bf041b981317ebd833ed850-0-usemem-disk-b",
+              "usemem-disk",
+              "b",
+              "STARTED",
+              "incomplete; partial evidence retained"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "why",
+      "title": "Why",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Calibration controls admission",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "A/A noise",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Frozen envelope",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "2",
+              "label": "Admission gate",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "3",
+              "label": "Retained outcome",
+              "col": 3,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            },
+            {
+              "from": "2",
+              "to": "3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "title": "Review checklist",
+      "blocks": [
+        {
+          "type": "checklist",
+          "takeaway": "Candidate correctness gates remain missing",
+          "items": [
+            {
+              "status": "missing",
+              "label": "gcc_swap_on",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "gcc_swap_off",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "gcc_zswap_on",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "sparse_no_new_diagnostics",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "checkpatch",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "guest_boot_identity",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "data_roundtrip",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "fork_cow",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "concurrent_fault",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "swapoff_live_pages",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "allocation_failure",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "io_failure",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "memcg_limits",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "large_folio",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "lockdep",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "kasan",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "kcsan",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "missing",
+              "label": "no_new_kernel_warnings",
+              "evidence": "No candidate acceptance evidence; policy required_gates"
+            },
+            {
+              "status": "pass",
+              "label": "Observed guest integration gates",
+              "evidence": "150/150; evaluations.json raw_result.gates"
+            },
+            {
+              "status": "pass",
+              "label": "Framework tests",
+              "evidence": "83 verified"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Next",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Resolve the evidence gate before candidate scoring",
+          "columns": [
+            "Priority",
+            "Next action",
+            "Falsifier"
+          ],
+          "rows": [
+            [
+              "1",
+              "Investigate noisy metrics without changing this frozen run",
+              "Fresh frozen A/A is stable"
+            ],
+            [
+              "2",
+              "Resolve descriptor lifetime finding",
+              "Source review and targeted correctness evidence close the interleaving"
+            ],
+            [
+              "3",
+              "Run eligible candidate fast then slow",
+              "Candidate fails admission or regression guard"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limitations",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "A/A and reference runs measure repeatability. Missing candidate correctness gates remain missing. Metadata is descriptive. Bootstrap intervals are descriptive. High-confidence evidence accounting changes if reconciliation or raw hashes fail."
+        }
+      ]
+    }
+  ]
+}

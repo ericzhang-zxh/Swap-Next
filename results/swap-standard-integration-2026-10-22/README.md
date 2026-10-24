@@ -1,5 +1,7 @@
 # Standard benchmark integration — 2026-10-22
 
+[Visual review](explainer.html) · [Published review](https://ericzhang-zxh.github.io/Swap-Next/swap-standard-integration-2026-10-22/)
+
 The new performance suite runs usemem, a kernel build on tmpfs, and Valkey
 GET/BGSAVE in isolated KVM guests. Confidence in basic execution is high:
 all three completed with workload-specific swap activity and clean kernel

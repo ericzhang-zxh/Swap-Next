@@ -1,0 +1,369 @@
+{
+  "title": "Can the standard workloads exercise swap reliably?",
+  "subtitle": "Benchmark integration \u00b7 historical review \u00b7 2026-10-22",
+  "verdict": {
+    "status": "needs-review",
+    "headline": "Core integration works; performance scoring is not ready",
+    "tiles": [
+      {
+        "label": "Execution",
+        "value": "Working",
+        "note": "Main workloads completed with swap activity."
+      },
+      {
+        "label": "Random usemem",
+        "value": "Excluded",
+        "note": "Guest OOM interrupted the run."
+      },
+      {
+        "label": "Performance",
+        "value": "Uncalibrated",
+        "note": "No accepted comparative result."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "Why a new workload suite was needed",
+      "lead": "",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Move from metadata observations toward application-facing costs",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Swap mechanism",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Real workload cost",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Optimization decision",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "A mapped-cluster count does not describe application throughput or latency. The new suite adds memory pressure, kernel builds and Valkey operations so later studies can measure workload-specific cost."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where the suite sits in the larger system",
+      "lead": "",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The new harness surrounds the guest; kernel code is unchanged",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Frozen inputs",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Isolated KVM guest",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Trusted evaluator",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "Inside the guest, workload pressure reaches the selected swap backend",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Workload + memcg",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Guest kernel swap",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Disk / zswap / zram",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Pinned inputs feed bounded runs. The evaluator checks completion, backend activity and kernel diagnostics. Host locking and stop handling isolate execution; Valkey networking stays inside the guest."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "What changed in the measurement path",
+      "lead": "",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Require evidence of useful work, not just process exit",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Workload output",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Per-phase checks",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Retained run record",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "Retain diagnostics and fail incomplete work early",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Kernel diagnostics",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Stop failing run",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Keep failed attempt",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Swapon memory deltas replace mapped-cluster count as the metadata observation. Historical protocols remain frozen. Extra validation improves evidence quality; it does not establish a performance gain."
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "What worked and what failed",
+      "lead": "",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Main workloads completed on their tested backends",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "usemem / disk",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "build / zswap",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Valkey / zram",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": []
+        },
+        {
+          "type": "flow",
+          "takeaway": "Random usemem exceeded its memory envelope",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Memory pressure",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Guest OOM kills",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Interrupted run",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "The initial usemem parser misread byte-count semantics; corrected analysis and a direct rerun passed. Both failures are retained. Random usemem stays excluded from scoring. Metadata and supplemental swap-in checks completed."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "What must happen before performance review",
+      "lead": "",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Integration is the entry point, not the acceptance test",
+          "nodes": [
+            {
+              "id": "0",
+              "label": "Freeze protocol",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "1",
+              "label": "Calibrate baseline",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "2",
+              "label": "Compare candidates",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "0",
+              "to": "1"
+            },
+            {
+              "from": "1",
+              "to": "2"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "At this report date: partial backend coverage, no calibration or comparison, and xswap held by lifetime review. Revise the random profile separately. A failed replay on frozen artifacts would challenge confidence in basic execution."
+        }
+      ]
+    }
+  ]
+}
