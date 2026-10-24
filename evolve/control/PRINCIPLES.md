@@ -14,8 +14,8 @@ Candidates may modify only the swap-core files listed in
 tests. The base list is the source files of the `MEMORY MANAGEMENT - SWAP`
 entry in `linux/MAINTAINERS`. `mm/memory.c`, `mm/zswap.c`, `mm/vmscan.c`,
 memcg, arch code, Kconfig, Makefiles, UAPI and global VM policy are out of
-scope. Only the controller widens scope, by creating a new campaign policy,
-and that policy then governs its campaign.
+scope. The file list is fixed. A campaign policy may narrow it but never widen
+it, and the controller rejects any path outside the base list.
 
 ## Invariants every candidate preserves
 

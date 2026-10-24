@@ -333,6 +333,16 @@ class GuardTests(unittest.TestCase):
         with self.assertRaisesRegex(Invalid, "deletion"):
             self.guard()
 
+    def test_campaign_cannot_widen_base_scope(self):
+        (self.root / "mm/memory.c").write_text("int memory_fixture;\n")
+        self.commit()
+        self.base = self.git("rev-parse", "HEAD").strip()
+        (self.root / "mm/memory.c").write_text("int memory_fixture_updated;\n")
+        self.commit()
+        self.policy["allowed_modify"].append("mm/memory.c")
+        with self.assertRaisesRegex(Invalid, "outside"):
+            self.guard()
+
     def test_nested_added_path_rejected(self):
         p = self.root / "tools/testing/selftests/mm/swap_next_nested/arbitrary.c"
         p.parent.mkdir(parents=True)

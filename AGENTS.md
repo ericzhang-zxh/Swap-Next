@@ -55,11 +55,12 @@ Loading that skill does not authorize running or publishing experiments.
   correctness, memory and CPU cost, throughput, tail latency and regressions;
   retain failed attempts and report uncertainty. Design freedom does not lower
   verification or acceptance standards.
-- If a larger design needs broader edit scope or a different experiment budget,
-  the primary agent may establish a documented new protocol within the time and
-  resources authorized by the owner, preserving old protocols and evidence. Do
-  not let an old narrow file list or diff limit silently dictate research
-  direction. Explicit compatibility, host safety and delivery constraints apply.
+- The editable file list in `evolve/control/config/policy.json` is fixed.
+  No agent or campaign policy adds files to it; design within those files.
+- If a larger design needs a different experiment budget, the primary agent may
+  establish a documented new protocol within the time and resources authorized
+  by the owner, preserving old protocols and evidence. Explicit compatibility,
+  host safety and delivery constraints apply.
 
 ## Writing
 

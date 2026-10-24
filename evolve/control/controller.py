@@ -24,6 +24,7 @@ PROJECT = CONTROL.parents[1]
 ROOT = PROJECT / "linux"
 STATE = CONTROL / "state"
 POLICY = CONTROL / "config/policy.json"
+BASE_POLICY = POLICY
 WORKTREES = PROJECT / "worktrees"
 
 
@@ -113,8 +114,17 @@ def event(kind, payload):
                                  "payload": payload}, ensure_ascii=False) + "\n")
 
 
+def in_scope(path, status, config):
+    if status == "M":
+        return path in config["allowed_modify"]
+    return any(Path(path).parent == Path(p).parent and
+               fnmatch.fnmatchcase(Path(path).name, Path(p).name)
+               for p in config["allowed_add"])
+
+
 def diff_guard(root, base, config):
     root = Path(root)
+    base_scope = load_json(BASE_POLICY)
     require(git(root, "rev-parse", "--show-toplevel") == str(root.resolve()),
             "not an exact worktree root")
     require(not git(root, "status", "--porcelain", "--untracked-files=all", "--ignored"),
@@ -136,10 +146,8 @@ def diff_guard(root, base, config):
                 "mode change/symlink/submodule forbidden: " + path)
         require(path and not Path(path).is_absolute() and ".." not in Path(path).parts,
                 "unsafe candidate path")
-        allowed = (path in config["allowed_modify"] if status == "M" else
-                   any(Path(path).parent == Path(p).parent and
-                       fnmatch.fnmatchcase(Path(path).name, Path(p).name)
-                       for p in config["allowed_add"]))
+        # The base file list is fixed; a campaign policy can only narrow it.
+        allowed = all(in_scope(path, status, c) for c in (config, base_scope))
         require(allowed, "path outside candidate scope: " + path)
         changes.append(path)
     require(changes and len(changes) <= config["max_changed_files"],
