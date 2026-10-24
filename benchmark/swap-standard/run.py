@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-only
-"""Run one bounded integration measurement in KVM or TCG; never accept a candidate."""
+"""Run one bounded integration measurement under TCG by default; never accept a candidate."""
 import argparse
 import datetime
 import fcntl
@@ -141,9 +141,9 @@ def main():
     if (args.workload == "metadata") != (args.backend == "brd"):
         parser.error("metadata uses brd exclusively; brd is reserved for metadata")
     validate_workload(args.backend, args.mode, args.workload)
-    # KVM is the default. Grok Bot's cloud box must set SWAP_NEXT_ACCEL=tcg,
-    # because starting KVM there crashes its host.
-    accel = os.environ.get("SWAP_NEXT_ACCEL", "kvm")
+    # TCG is the default. KVM is selected only by SWAP_NEXT_ACCEL=kvm.
+    # Starting KVM on the cloud box crashes the host kernel.
+    accel = os.environ.get("SWAP_NEXT_ACCEL", "tcg")
     if accel not in ("kvm", "tcg"):
         parser.error("SWAP_NEXT_ACCEL must be kvm or tcg")
     tcg = accel == "tcg"
