@@ -27,6 +27,11 @@ Loading that skill does not authorize running or publishing experiments.
 - **Evidence**: missing evidence is a failure, never a pass. Correctness gates
   are not weakened.
 - **Host**: no host reboot, host swap changes, raw host disks or sudo.
+- **Slow tier**: do not run the slow tier, or any other multi-round confirmation,
+  on the Linux worker by default. It is reserved for an exceptionally strong
+  fast-tier result, and the owner must explicitly approve each slow-tier run
+  first. A fast-tier pass alone does not qualify. Report fast-tier results
+  and stop.
 - **Merging**: nothing is merged or promoted automatically.
 - **Commits**: keep runtime state, secrets, machine paths and credentials out
   of commits. AI tools add no `Signed-off-by`; a human certifies upstream
