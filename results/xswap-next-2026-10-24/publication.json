@@ -1,0 +1,10 @@
+{
+  "publication_scope": "report_artifacts_only",
+  "source_experiment_commit": "15bf186f665368ce19868e5268c422a240ba6699",
+  "source_experiment_url": "https://github.com/ericzhang-zxh/Swap-Next/tree/15bf186f665368ce19868e5268c422a240ba6699/results/xswap-next-2026-10-24",
+  "live_report_url": "https://ericzhang-zxh.github.io/Swap-Next/xswap-next-2026-10-24/",
+  "original_summary_sha256": "fdd866b299c557e3dc46ba3e550f5f3efb353160a12631208d0ae034d0b50e69",
+  "original_explainer_sha256": "5a7406fbe8aa4d46992ea03cc6f5c2c6208811ebabcb92655b0f20b8af6d4cdc",
+  "candidate_code_promoted": false,
+  "scientific_results_changed": false
+}

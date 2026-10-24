@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 286" role="img" aria-label="Conceptual xswap physical readahead admission before and after cluster-mode support">
+<defs><marker id="ra-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="var(--ink-2,#5b5348)"/></marker></defs>
+<g fill="var(--ink,#1f1b16)" font-family="system-ui,sans-serif" font-size="12">
+<text x="20" y="22" font-weight="600">Before: the VMA-only gate suppresses speculation on a rotational backend</text>
+<text x="20" y="51">fault address</text><text x="20" y="106">physical reads</text>
+<text x="20" y="156" font-weight="600">After: adjacent demand misses can admit existing cluster readahead</text>
+<text x="20" y="185">fault / cache</text><text x="20" y="242">backed slots</text>
+</g>
+<g fill="none" stroke="var(--axis,#cfc6b6)" stroke-width="1.5">
+<path d="M142 32 H702 V68 H142 Z M142 88 H702 V122 H142 Z M142 166 H702 V202 H142 Z M142 222 H702 V258 H142 Z"/>
+<path d="M222 32 V68 M302 32 V68 M382 32 V68 M462 32 V68 M542 32 V68 M622 32 V68 M222 88 V122 M302 88 V122 M382 88 V122 M462 88 V122 M542 88 V122 M622 88 V122 M222 166 V202 M302 166 V202 M382 166 V202 M462 166 V202 M542 166 V202 M622 166 V202 M222 222 V258 M302 222 V258 M382 222 V258 M462 222 V258 M542 222 V258 M622 222 V258"/>
+</g>
+<g fill="var(--series-1,#6a4fd1)" opacity=".3"><rect x="144" y="34" width="76" height="32"/><rect x="224" y="34" width="76" height="32"/><rect x="144" y="168" width="76" height="32"/><rect x="224" y="168" width="76" height="32"/></g>
+<g fill="var(--series-2,#00978c)" opacity=".25"><rect x="304" y="168" width="76" height="32"/><rect x="384" y="168" width="76" height="32"/><rect x="464" y="168" width="76" height="32"/><rect x="544" y="168" width="76" height="32"/><rect x="624" y="168" width="76" height="32"/></g>
+<g fill="none" stroke="var(--ink-2,#5b5348)" marker-end="url(#ra-arrow)"><path d="M182 68 V88 M262 68 V88 M342 68 V88 M422 68 V88 M502 68 V88 M582 68 V88 M662 68 V88"/><path d="M182 202 V222 M262 202 V222"/><path d="M262 209 H662 M342 222 V202 M422 222 V202 M502 222 V202 M582 222 V202 M662 222 V202"/></g>
+<g fill="var(--ink,#1f1b16)" font-family="system-ui,sans-serif" font-size="12" text-anchor="middle">
+<text x="182" y="54">A</text><text x="262" y="54">A+1</text><text x="342" y="54">A+2</text><text x="422" y="54">A+3</text><text x="502" y="54">A+4</text><text x="582" y="54">A+5</text><text x="662" y="54">A+6</text>
+<text x="182" y="189">A</text><text x="262" y="189">A+1</text><text x="342" y="189">hit</text><text x="422" y="189">hit</text><text x="502" y="189">hit</text><text x="582" y="189">hit</text><text x="662" y="189">hit</text>
+</g><text x="20" y="280" fill="var(--ink-2,#5b5348)" font-family="system-ui,sans-serif" font-size="12">Illustrative stream: actual windows and residency vary; discontinuities retain demand I/O and every entry is revalidated.</text>
+</svg>

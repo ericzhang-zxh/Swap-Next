@@ -10,6 +10,7 @@ campaigns, newest first, with the verdict read from explainer.json.
 import html
 import json
 import pathlib
+import re
 import shutil
 import sys
 
@@ -23,7 +24,11 @@ def main():
     results, site = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
     site.mkdir(parents=True, exist_ok=True)
     rows = []
-    for page in sorted(results.glob("*/explainer.html"), reverse=True):
+    def campaign_date(page):
+        match = re.search(r"\d{4}-\d{2}-\d{2}", page.parent.name)
+        return (match.group(0) if match else "", page.parent.name)
+
+    for page in sorted(results.glob("*/explainer.html"), key=campaign_date, reverse=True):
         name = page.parent.name
         (site / name).mkdir(exist_ok=True)
         shutil.copyfile(page, site / name / "index.html")

@@ -1,0 +1,63 @@
+{
+  "report_sha256": "5c00e5b714635c1e0602e00b19237cfd70e517c27c891bbda2ac5ec11cb22cb5",
+  "report_checks": [
+    {
+      "theme": "light",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "external": 0,
+      "details": 17,
+      "open": 0,
+      "svg": 12,
+      "bodyText": 4277,
+      "expandedScrollWidth": 1280,
+      "toggleWorked": true,
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "external": 0,
+      "details": 17,
+      "open": 0,
+      "svg": 12,
+      "bodyText": 4277,
+      "expandedScrollWidth": 1280,
+      "toggleWorked": true,
+      "errors": []
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "scrollWidth": 390,
+      "external": 0,
+      "details": 17,
+      "open": 0,
+      "svg": 12,
+      "bodyText": 4277,
+      "expandedScrollWidth": 390,
+      "toggleWorked": true,
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "scrollWidth": 390,
+      "external": 0,
+      "details": 17,
+      "open": 0,
+      "svg": 12,
+      "bodyText": 4277,
+      "expandedScrollWidth": 390,
+      "toggleWorked": true,
+      "errors": []
+    }
+  ],
+  "readme": {
+    "href": "https://ericzhang-zxh.github.io/Swap-Next/",
+    "centerError": 0.0078125,
+    "top": 179.65625,
+    "alignment": "center"
+  }
+}

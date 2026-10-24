@@ -1,0 +1,57 @@
+{
+  "no_new_diagnostics": true,
+  "baseline_debug_diagnostics": [
+    ".config:2436:warning: override: reassigning to symbol DEBUG_KERNEL",
+    ".config:2441:warning: override: reassigning to symbol PROVE_LOCKING",
+    ".config:2443:warning: override: reassigning to symbol DEBUG_ATOMIC_SLEEP",
+    ".config:2444:warning: override: reassigning to symbol DEBUG_VM",
+    ".config:2445:warning: override: reassigning to symbol DEBUG_LIST",
+    "/src/mm/vma.c:3067:1: warning: the frame size of 1496 bytes is larger than 1280 bytes [-Wframe-larger-than=]"
+  ],
+  "builds": [
+    {
+      "build": "std-7322aadd1100",
+      "new_diagnostics": [],
+      "retained_diagnostics": []
+    },
+    {
+      "build": "std-218750fed80a",
+      "new_diagnostics": [],
+      "retained_diagnostics": []
+    },
+    {
+      "build": "xs-zswap-linear-v1-kasan",
+      "new_diagnostics": [],
+      "retained_diagnostics": [
+        ".config:2436:warning: override: reassigning to symbol DEBUG_KERNEL",
+        ".config:2441:warning: override: reassigning to symbol PROVE_LOCKING",
+        ".config:2443:warning: override: reassigning to symbol DEBUG_ATOMIC_SLEEP",
+        ".config:2444:warning: override: reassigning to symbol DEBUG_VM",
+        ".config:2445:warning: override: reassigning to symbol DEBUG_LIST",
+        "/src/mm/vma.c:3067:1: warning: the frame size of 1496 bytes is larger than 1280 bytes [-Wframe-larger-than=]"
+      ]
+    },
+    {
+      "build": "std-25e1feb2b74f",
+      "new_diagnostics": [],
+      "retained_diagnostics": []
+    },
+    {
+      "build": "xs-ra-cluster-v1-kasan",
+      "new_diagnostics": [],
+      "retained_diagnostics": [
+        ".config:2436:warning: override: reassigning to symbol DEBUG_KERNEL",
+        ".config:2441:warning: override: reassigning to symbol PROVE_LOCKING",
+        ".config:2443:warning: override: reassigning to symbol DEBUG_ATOMIC_SLEEP",
+        ".config:2444:warning: override: reassigning to symbol DEBUG_VM",
+        ".config:2445:warning: override: reassigning to symbol DEBUG_LIST",
+        "/src/mm/vma.c:3067:1: warning: the frame size of 1496 bytes is larger than 1280 bytes [-Wframe-larger-than=]"
+      ]
+    },
+    {
+      "build": "xs-ra-cluster-v1-noswap",
+      "new_diagnostics": [],
+      "retained_diagnostics": []
+    }
+  ]
+}

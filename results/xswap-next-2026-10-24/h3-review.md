@@ -1,0 +1,38 @@
+# H3: sequential physical readahead review
+
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`. Candidate: `7322aadd18b6030c692265693b8dfd29afa3ee6f`.
+
+## Judgment
+
+Suitable for a bounded fast experiment. Confidence: medium. A calibrated tail guard failure falsifies the expected tradeoff.
+
+The prior physical-residency candidate reduced disk sequential mean latency by 84.69% but failed the random p99 guard (+10.50%). This candidate adds access-pattern admission rather than changing the window constant. The existing `swap_readahead_info` records the previous virtual address; an adjacent miss may prefetch physically backed slots, while a discontinuity resets advisory history and uses the baseline synchronous demand path. Compressed-only targets retain demand reads.
+
+## Ownership and locking
+
+| Resource | Owner / reference holder | Published | Released | Protection |
+|---|---|---|---|---|
+| target swap device | do_swap_page get_swap_device reference | existing device activation | existing put_swap_device | swap device reference |
+| cluster descriptor | unpinned lookup local to hint | repaired mapped bound | local unlock; retirement grace period | repaired RCU lookup and cluster lock |
+| backend entry | existing xswap slot mapping | existing writer under cluster lock | existing swap/cache release | cluster lock; returned hint copies only a boolean |
+| folio | existing swap-cache read path | existing cache publication | existing folio_put and PTE mapping | existing lock and reference rules |
+| memcg charge | existing backend/folio allocator | existing charge point | existing rollback/free path | unchanged accounting rules |
+| VMA history | VMA under fault-side VMA lifetime | atomic_long_set | VMA teardown | advisory atomic history; concurrent faults may change speculation |
+
+No descriptor, backend entry, or folio pointer crosses a new sleeping allocation. A stale residency result is only a hint; normal allocation/read paths revalidate. Readahead retains device references for cross-device PTEs and skips compressed-only neighbors. Errors and all charge/uncharge paths remain in existing code.
+
+## Checks
+
+Scope (3 files, 98 changed lines), diff whitespace and checkpatch pass. Exact-commit release/debug builds, data/COW/concurrent-fault/backend swapoff/live destroy, KASAN/lockdep, and calibrated AB/BA measurements remain to run.
+
+## Limitations
+
+History is shared within a VMA, so unrelated concurrent streams can alter admission. Cluster-based readahead is left disabled for xswap faults when VMA readahead is unavailable. 4 KiB workloads do not cover large folios, KCSAN, allocation/I/O failure injection, or full promotion. Sparse must be reported separately.
+
+Revert candidate commits to return to the frozen baseline; no merge is authorized.
+
+Independent review of the pre-build version found the page-cluster=0 performance boundary. The final commit returns to synchronous faults when readahead is disabled. Source review supports bounded discovery; random-tail recovery still requires measurement.
+
+## Measured disposition
+
+Fast report `49add9b084d04941a459281838bbf3f3` is REGRESSION: disk sequential p99 +7.90% and random p99 +9.34%, beyond their calibrated envelopes. Both release-config correctness runs pass. Both candidate disk measurements report zero swap_ra, so the intended prefetch mechanism was absent. The boot log omits the SS marker for physical swap; swapfile.c increments nr_rotate_swap for that classification, and the candidate rejects non-VMA mode. This source/runtime agreement supports the coverage finding (confidence: high). Additional samples or a device-state trace could change attribution of the observed latency differences; two pairs do not establish a persistent causal regression. The candidate is closed without debug builds or slow confirmation.

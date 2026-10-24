@@ -44,14 +44,21 @@ When the campaign stops, close it with the review page:
    evaluation reports. Follow its verdict-first, visual-first presentation contract;
    keep exact data and audit details collapsed. Check both themes and mobile,
    then link the page from the README.
-3. Retain the complete evidence on the campaign branch. Under AGENTS.md's standing
-   report-publication policy, use an isolated worktree from current `origin/main`
+3. Commit and push completed experiment work and retained evidence to the
+   experiment branch. Under AGENTS.md's standing report-publication policy,
+   use an isolated worktree from current `origin/main`
    to copy only reviewed report artifacts into `results/<c>/`. Keep candidate
    code, benchmark changes, gitlinks and raw runtime state off main.
 4. Inspect the diff and build the Pages index, then push the report-only commit
    to main. Verify that commit's Pages deployment, live campaign URL and index.
    Preserve failed or inconclusive verdicts; report publication is not promotion.
-   If the user explicitly withholds publication, retain the local report instead.
+   If the user explicitly withholds a push or publication, honor that request.
+   Otherwise finish both delivery steps without asking again; an agent-authored
+   publication flag does not override the owner's standing authorization.
+
+For an older experiment checkout, inspect current `origin/main:AGENTS.md` and
+this binding on origin/main before closeout. Reconcile delivery rules without
+changing frozen scientific inputs, STOP files or experiment budgets.
 
 What each adapter action does:
 

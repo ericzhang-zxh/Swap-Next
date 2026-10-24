@@ -1,0 +1,32 @@
+[
+  {
+    "round": 1,
+    "candidate": "xs-ra-sequential-v1",
+    "candidate_commit": "7322aadd18b6030c692265693b8dfd29afa3ee6f",
+    "decision": "REJECT_FAST",
+    "evaluation": "49add9b084d04941a459281838bbf3f3",
+    "mechanism": "swap_ra=0: VMA-only gate excludes rotational guest backend",
+    "next": "Prioritize split compressed-object linearization. A third candidate may support adjacency admission with cluster-mode readahead, preserving explicit history for synchronous misses.",
+    "confidence": "high for absent readahead; limited for causal regression"
+  },
+  {
+    "round": 2,
+    "candidate": "xs-zswap-linear-v1",
+    "candidate_commit": "218750fed80a7ac099d46c5a3a26799a5d185d14",
+    "decision": "REJECT_FAST",
+    "evaluation": "15ded9c2bdf44b5fae1b3e83f0f75daf",
+    "mechanism": "Compressed-source linearization changes the decoder path, but all compressed latency guards regress in this fast screen. Disk-path improvements are not credited to the zswap-only change.",
+    "next": "Test cluster-mode adjacency-gated physical readahead. Defer request-local decoder context until a workload/profile supports useful savings.",
+    "confidence": "high for observed guard failures; medium for decoder-path explanation without profiling"
+  },
+  {
+    "round": 3,
+    "candidate": "xs-ra-cluster-v1",
+    "candidate_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+    "decision": "REJECT_FAST",
+    "evaluation": "9ec21a04b74b4d46a7931c16112a6bdb",
+    "mechanism": "Physical prefetch activates and improves sequential first touch; disk-random p99 and compressed random mean fail fixed guards.",
+    "next": "Investigate path/state variability and demand-first speculation bounds in a separately frozen diagnostic before another optimization. No slow-tier candidate is eligible.",
+    "confidence": "high for measured counters and gate failures; medium for cause without profiling"
+  }
+]

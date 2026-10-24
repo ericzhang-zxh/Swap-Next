@@ -27,6 +27,11 @@ Loading that skill does not authorize running or publishing experiments.
 - **Evidence**: missing evidence is a failure, never a pass. Correctness gates
   are not weakened.
 - **Host**: no host reboot, host swap changes, raw host disks or sudo.
+- **Slow tier**: do not run the slow tier, or any other multi-round confirmation,
+  on the Linux worker by default. It is reserved for an exceptionally strong
+  fast-tier result, and the owner must explicitly approve each slow-tier run
+  first. A fast-tier pass alone does not qualify. Stop experiment execution
+  after the fast tier, then complete the report delivery below.
 - **Merging**: candidate code is never merged or promoted automatically. Report-only
   publication follows the standing policy below.
 - **Commits**: keep runtime state, secrets, machine paths and credentials out
@@ -34,6 +39,27 @@ Loading that skill does not authorize running or publishing experiments.
   submissions.
 - **Language**: project-authored text (docs, comments, commit messages,
   reviews) is English. Upstream and third-party text is preserved as is.
+
+## Design freedom and experimental scope
+
+- Research and optimization may include substantial redesigns or replacing the
+  existing approach entirely. Investigate fundamental costs and architecture;
+  do not default to parameter tuning or small patches.
+- Within the authorized objective, candidates may replace core data structures,
+  redesign algorithms and execution paths, change module responsibilities, or
+  implement an independent alternative. Phase 1, 2, 3 and pending patches are
+  designs to evaluate, not mandatory foundations to preserve unless specified.
+- Choose distinct, substantive hypotheses with meaningful potential benefit and
+  a falsifiable mechanism. Judge scope by expected value, not patch size.
+- Use isolated candidates and reproducible baseline comparisons. Evaluate
+  correctness, memory and CPU cost, throughput, tail latency and regressions;
+  retain failed attempts and report uncertainty. Design freedom does not lower
+  verification or acceptance standards.
+- If a larger design needs broader edit scope or a different experiment budget,
+  the primary agent may establish a documented new protocol within the time and
+  resources authorized by the owner, preserving old protocols and evidence. Do
+  not let an old narrow file list or diff limit silently dictate research
+  direction. Explicit compatibility, host safety and delivery constraints apply.
 
 ## Writing
 
@@ -47,6 +73,9 @@ Loading that skill does not authorize running or publishing experiments.
 
 ## Report publication
 
+- Commit and push completed experiment work to its experiment branch as part of
+  closeout, then publish the report separately to main. Do not wait for another
+  approval when this standing authorization applies.
 - Closing an authorized campaign includes publishing its completed review report
   to Pages, including rejected and inconclusive outcomes, unless the user asks
   to keep that report private or local.
@@ -63,3 +92,9 @@ Loading that skill does not authorize running or publishing experiments.
 - Verify the deployment for that commit and the live campaign page and index
   before reporting publication complete. Publishing a report grants no approval
   to promote its candidate code or launch another experiment.
+
+- For an older experiment branch, reconcile delivery instructions against current
+  `origin/main` before closeout. Frozen baselines, protocols, STOP state and
+  budgets remain unchanged. An agent-authored `publication: false` field does
+  not revoke the owner's standing authorization; only an explicit user request
+  can keep a report private/local or withhold a push.
