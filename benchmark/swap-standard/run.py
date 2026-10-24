@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-only
-"""Run one bounded integration measurement in KVM; never accept a candidate."""
+"""Run one bounded integration measurement under TCG by default; never accept a candidate."""
 import argparse
 import datetime
 import fcntl
@@ -120,8 +120,14 @@ def main():
         if shutil.disk_usage(BASE).free < 24 * 1024**3:
             raise SystemExit("need 24 GiB free disk")
         available = int(re.search(r"MemAvailable:\s+(\d+)", Path("/proc/meminfo").read_text()).group(1))
-        if available < 10 * 1024**2:
-            raise SystemExit("need 10 GiB available host RAM")
+        # Shared-host default is pure software emulation (TCG) with a smaller
+        # guest; KVM only if SWAP_NEXT_ACCEL=kvm.
+        tcg = os.environ.get("SWAP_NEXT_ACCEL", "tcg") != "kvm"
+        guest_mib = int(os.environ.get("SWAP_NEXT_TCG_MEM_MIB", "2560")) if tcg else 8192
+        guest_cpus = os.environ.get("SWAP_NEXT_TCG_SMP", "4") if tcg else "8"
+        need_kib = (guest_mib + 1024) * 1024 if tcg else 10 * 1024**2
+        if available < need_kib:
+            raise SystemExit(f"need {need_kib // 1024} MiB available host RAM")
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
         name = args.run_id or (stamp + "-" + args.build + "-" + args.backend + "-" + args.workload)
         dest = create_run_directory(BASE / "runs", name)
@@ -133,8 +139,10 @@ def main():
                   "zswap.enabled=1 zswap.compressor=zstd brd.rd_size=1073741824 "
                   f"bench.backend={args.backend} bench.mode={args.mode} "
                   f"bench.workload={args.workload} bench.image_sha={image_sha}")
-        command = ["qemu-system-x86_64", "-enable-kvm", "-machine", "pc", "-cpu", "host,migratable=off",
-                   "-smp", "8", "-m", "8192", "-nodefaults", "-display", "none", "-serial", "stdio",
+        accel = (["-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc", "-cpu", "max"] if tcg else
+                 ["-enable-kvm", "-machine", "pc", "-cpu", "host,migratable=off"])
+        command = ["qemu-system-x86_64", *accel,
+                   "-smp", guest_cpus, "-m", str(guest_mib), "-nodefaults", "-display", "none", "-serial", "stdio",
                    "-monitor", "none", "-nic", "none", "-no-reboot",
                    "-sandbox", "on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny",
                    "-kernel", str(image), "-initrd", str(BASE / "initramfs.cpio.gz"), "-append", append,
