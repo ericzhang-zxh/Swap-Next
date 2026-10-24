@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-p123-2026-10-23",
+  "purpose": "Two architecture experiments after repaired Phase I+II+III baseline",
+  "imported_reference": "b2beda7fe460f911b88d27890993347588d70748",
+  "started_utc": "2026-10-23T08:37:24+00:00",
+  "deadline_utc": "2026-10-23T14:37:24+00:00",
+  "runtime_stop_utc": "2026-10-23T14:17:24+00:00",
+  "budget": {
+    "max_builds": 16,
+    "max_guests": 160,
+    "max_architecture_candidates": 2,
+    "max_diagnostic_revisions": 4,
+    "guest_vcpus": 8,
+    "guest_memory_mib": 8192,
+    "guest_disk_gib": 16
+  },
+  "primary_metric": "swap-in latency, separately on disk and compressed zswap",
+  "hypotheses": [
+    "Residency-aware physical logical/VMA readahead",
+    "Compressed folio batch loading with ordinary cache ownership"
+  ],
+  "acceptance": "bounded discovery with independent review; no automatic kernel promotion",
+  "correctness_prerequisite": "Resolve and test descriptor retirement before dependent performance runs",
+  "baseline_commit": null,
+  "phase": "PREPARATION",
+  "stop_scope": "old standard campaign STOP retained; new campaign owns independent STOP and ledger"
+}

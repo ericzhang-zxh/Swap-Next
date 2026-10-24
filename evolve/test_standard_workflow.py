@@ -65,6 +65,26 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(flow.budget["guests"], 0)
         self.assertEqual(flow.budget["builds"], 0)
 
+    def test_exact_commit_proof_alias_still_requires_all_gates(self):
+        campaign = self.p["campaign"]
+        records = self.root / "evolve/control/state" / campaign / "candidates.json"
+        w.save(records, {"candidate": {"worktree": str(self.root / "candidate")}})
+        proof = self.root / "proof.json"
+        flow = w.Workflow(self.p)
+        with patch.object(w.subprocess, "check_output", return_value="exact\n"):
+            w.save(proof, {"source_commit": "exact", "gates": {"swapin_data": True}})
+            with self.assertRaisesRegex(RuntimeError, "correctness"):
+                flow.candidate("candidate", proof)
+            gates = {key: True for key in self.p["required_correctness_gates"]}
+            w.save(proof, {"source_commit": "wrong", "gates": gates, "integration_pass": True})
+            with self.assertRaisesRegex(RuntimeError, "correctness"):
+                flow.candidate("candidate", proof)
+            w.save(proof, {"source_commit": "exact", "gates": gates})
+            with self.assertRaisesRegex(RuntimeError, "integration"):
+                flow.candidate("candidate", proof)
+            w.save(proof, {"source_commit": "exact", "gates": gates, "integration_pass": True})
+            self.assertEqual(flow.candidate("candidate", proof)[0], "exact")
+
     def test_stop_prevents_reservation(self):
         flow = w.Workflow(self.p)
         flow.stop.parent.mkdir(parents=True)

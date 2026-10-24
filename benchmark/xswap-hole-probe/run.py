@@ -167,6 +167,7 @@ def main():
                         except subprocess.TimeoutExpired:
                             os.killpg(proc.pid, signal.SIGKILL)
                             proc.wait()
+                    disk.unlink(missing_ok=True)  # Scratch guest swap; nothing reads it after QEMU exits.
                     exit_code = proc.returncode
         except Exception as error:
             reason = type(error).__name__ + ': ' + str(error)

@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-next-2026-10-24",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_build": "xs-desc-v1",
+  "max_candidates": 3,
+  "budget": {
+    "guest_attempts": 48,
+    "build_attempts": 10,
+    "wall_seconds": 21600,
+    "guest_timeout": 900
+  },
+  "cases": {
+    "swapin-disk": {
+      "workload": "swapin",
+      "backend": "disk",
+      "mode": "xswap",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns"
+    },
+    "swapin-zswap": {
+      "workload": "swapin",
+      "backend": "zswap",
+      "mode": "xswap",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns"
+    }
+  },
+  "tiers": {
+    "fast": {
+      "cases": [
+        "swapin-disk",
+        "swapin-zswap"
+      ],
+      "calibration_pairs": 2,
+      "comparison_pairs": 2
+    }
+  },
+  "order": "alternating AB then BA; same order in calibration",
+  "calibration_max_age_seconds": 86400,
+  "noise_floor": 0.03,
+  "noise_ceiling": 0.2,
+  "bootstrap_resamples": 10000,
+  "promotion": "human_review_only",
+  "excluded": {
+    "usemem-rand": "OOM and synchronization hang in integration"
+  },
+  "blocked_commits": {
+    "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4": "Unresolved descriptor lifetime review; dependent experiment held",
+    "157c4a178c587add1d22f4b483629b49a6ff0eca": "Unresolved descriptor lifetime review; dependent experiment held",
+    "b674f0d1e90c5b158f0a31d4ea877c4876535c2a": "Unresolved descriptor lifetime review; dependent experiment held",
+    "8f02472031fb71b9791a5199872701c645afd276": "Unresolved descriptor lifetime review; dependent experiment held",
+    "615f839bb6653ffd56dbb66ebdc855dea0823d54": "Unresolved descriptor lifetime review; dependent experiment held"
+  },
+  "required_correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings"
+  ],
+  "purpose": "Continue repaired xswap with three distinct feedback-driven fast hypotheses; preserve prior rejected evidence",
+  "mechanism_evidence": [
+    "swap_ra and swap_ra_hit deltas",
+    "zswpin/pswpin path counters",
+    "xswap occupancy/grow/shrink snapshots"
+  ],
+  "limitations": [
+    "4 KiB pages only; no large-folio acceptance",
+    "Application first-touch probe includes swap-cache and readahead effects",
+    "Fast discovery only; no slow tier, automatic promotion, or publication"
+  ],
+  "auxiliary_budget": "Correctness/debug guests and manual trusted builds reserve from the same state budget before launch. All failures retained.",
+  "candidate_builds": {
+    "xs-ra-sequential-v1": "std-7322aadd1100"
+  },
+  "protocol_revision": 2,
+  "preallocate_swap": true,
+  "measurement_revision": "Preallocate private guest swap files before boot. Sparse per-run files in revision 1 allocate host extents during guest swap-out; first A/A disk-random mean differs by 23.8%. This is an environment-confounder hypothesis, not an established root cause. Fresh calibration required; previous noisy attempt stays retained. Workload, thresholds, pair counts and shared 48-guest cap unchanged."
+}

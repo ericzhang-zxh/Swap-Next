@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "project": "swap-next",
+  "phase": "reviewed upstream series import (xswap Phase III on Phase I v4 + Phase II v1)",
+  "runtime_enabled": false,
+  "thresholds_calibrated": false,
+  "upstream_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "seed_ref": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "allowed_modify": [
+    "include/linux/swap.h",
+    "include/linux/swap_ops.h",
+    "include/linux/zswap.h",
+    "mm/Kconfig",
+    "mm/memory.c",
+    "mm/page_io.c",
+    "mm/swap.h",
+    "mm/swap_state.c",
+    "mm/swap_table.h",
+    "mm/swapfile.c",
+    "mm/vmscan.c",
+    "mm/zswap.c",
+    "include/linux/memcontrol.h",
+    "mm/memcontrol.c",
+    "mm/memcontrol-v1.c",
+    "Documentation/admin-guide/cgroup-v1/memcg_test.rst"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "max_changed_files": 16,
+  "max_changed_lines": 6000,
+  "budget": {
+    "max_candidates": 1,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 900,
+    "build_jobs": 4,
+    "guest_vcpus": 2,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 600,
+    "max_total_campaign_seconds": 14400
+  },
+  "measurement": {
+    "min_pairs": 10,
+    "min_operations": 1000,
+    "min_swapout_pages": 1,
+    "min_swapin_pages": 1,
+    "bootstrap_resamples": 64000,
+    "confidence": 0.95,
+    "required_workloads": [
+      "anon_disk",
+      "anon_zswap",
+      "fragmented_swap",
+      "mixed_file_anon"
+    ],
+    "required_partitions": [
+      "discovery",
+      "confirmation"
+    ],
+    "holdout_required_for_promotion": true,
+    "min_bootstrap_tail_samples": 30
+  },
+  "metrics": {
+    "throughput_ops_s": {
+      "direction": "higher",
+      "role": "primary",
+      "min_gain": null,
+      "max_regression": null
+    },
+    "latency_p99_us": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "cpu_ns_per_op": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "io_bytes_per_op": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "metadata_bytes_per_slot_peak": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    }
+  },
+  "required_gates": [
+    "gcc_swap_on",
+    "gcc_swap_off",
+    "gcc_zswap_on",
+    "sparse_no_new_diagnostics",
+    "checkpatch",
+    "guest_boot_identity",
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "allocation_failure",
+    "io_failure",
+    "memcg_limits",
+    "large_folio",
+    "lockdep",
+    "kasan",
+    "kcsan",
+    "no_new_kernel_warnings"
+  ],
+  "promotion": "human_review_only",
+  "session_pilot_adapter": "benchmark/kernel",
+  "checkout_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "scope_note": "Import Phase I v4 and Phase II v1 as a separately reviewed baseline. Candidate scope will be narrowed and frozen before optimization. Phase III excluded."
+}

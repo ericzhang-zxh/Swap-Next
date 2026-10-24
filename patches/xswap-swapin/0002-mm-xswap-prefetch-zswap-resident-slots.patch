@@ -1,0 +1,155 @@
+From f7093a0732ae9b46e31a9ceb90c2b14eb8038c16 Mon Sep 17 00:00:00 2001
+From: Eric Zhang <zxh@xh-zhang.com>
+Date: Fri, 23 Oct 2026 12:48:58 -0700
+Subject: [PATCH] mm, xswap: prefetch zswap-resident slots into the swap cache
+
+Xswap uses synchronous swap-in even when adjacent compressed pages will
+soon be accessed. Route resident xswap faults through the existing order-0
+readahead path so later faults can find ordinary swap-cache folios. Keep
+physical-only xswap targets on their existing synchronous path.
+
+Add a boolean zswap residency hint backed by an XArray lookup. The caller
+holds the device reference, and the query never dereferences the returned
+entry pointer. Residency can change after the query; normal cache
+allocation and read paths still resolve ownership and backing. Filter
+speculative xswap neighbors with this hint in both readahead paths, and
+always preserve the normal target read.
+
+This experiment prefetches synchronously. It does not batch decompression
+or remove later PTE faults. Allocation, charging and decompression remain
+per page; unused prefetched pages may increase latency and reclaim work.
+No performance improvement is claimed without measurement.
+
+Implemented and reviewed with substantial OpenAI Codex assistance from a
+request to test compressed-resident readahead using existing cache
+ownership. Validation: git diff --check and strict checkpatch with signoff
+checking omitted. Builds and runtime checks remain with the controller.
+---
+ mm/memory.c     |  5 +++--
+ mm/swap.h       |  9 +++++++++
+ mm/swap_state.c | 20 ++++++++++++++------
+ mm/zswap.c      | 20 ++++++++++++++++++++
+ 4 files changed, 46 insertions(+), 8 deletions(-)
+
+diff --git a/mm/memory.c b/mm/memory.c
+index 6fd925877..b24a1be83 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -4995,8 +4995,9 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
+ 	if (folio)
+ 		swap_update_readahead(folio, vma, vmf->address);
+ 	if (!folio) {
+-		/* Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices */
+-		if (data_race(si->flags & SWP_SYNCHRONOUS_IO))
++		/* Prefetch compressed xswap neighbors into the swap cache. */
++		if (data_race(si->flags & SWP_SYNCHRONOUS_IO) &&
++		    !((si->flags & SWP_XSWAP) && zswap_entry_present(entry)))
+ 			folio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,
+ 					    thp_swapin_suitable_orders(vmf) | BIT(0),
+ 					    vmf, NULL, 0);
+diff --git a/mm/swap.h b/mm/swap.h
+index b9e7c8a4c..fa84319a1 100644
+--- a/mm/swap.h
++++ b/mm/swap.h
+@@ -530,6 +530,15 @@ static inline void __swap_cache_replace_folio(struct swap_cluster_info *ci,
+ }
+ #endif /* CONFIG_SWAP */
+ 
++#ifdef CONFIG_ZSWAP
++bool zswap_entry_present(swp_entry_t entry);
++#else
++static inline bool zswap_entry_present(swp_entry_t entry)
++{
++	return false;
++}
++#endif
++
+ extern const struct swap_ops swap_bdev_ops;
+ 
+ int shmem_writeout(struct swap_io_ctx *ctx, struct folio *folio,
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 7ac1808ae..a3787f6ed 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -920,8 +920,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,
+ 	struct blk_plug plug;
+ 	swp_entry_t ra_entry;
+ 
+-	/* xswap entries live only in zswap; readahead does not help. */
+-	if (si->flags & SWP_XSWAP)
++	/* Only compressed xswap targets initiate speculative reads. */
++	if ((si->flags & SWP_XSWAP) && !zswap_entry_present(entry))
+ 		goto skip;
+ 
+ 	mask = swapin_nr_pages(offset) - 1;
+@@ -940,6 +940,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,
+ 	for (offset = start_offset; offset <= end_offset ; offset++) {
+ 		/* Ok, do the async read-ahead now */
+ 		ra_entry = swp_entry(swp_type(entry), offset);
++		if ((si->flags & SWP_XSWAP) && offset != entry_offset &&
++		    !zswap_entry_present(ra_entry))
++			continue;
+ 		folio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,
+ 				ilx, offset != entry_offset);
+ 		if (!folio)
+@@ -1018,8 +1021,8 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 	unsigned long start, end, addr;
+ 	pgoff_t ilx = targ_ilx;
+ 
+-	/* xswap entries live only in zswap; readahead does not help. */
+-	if (si->flags & SWP_XSWAP)
++	/* Only compressed xswap targets initiate speculative reads. */
++	if ((si->flags & SWP_XSWAP) && !zswap_entry_present(targ_entry))
+ 		goto skip;
+ 
+ 	win = swap_vma_ra_win(vmf, &start, &end);
+@@ -1054,8 +1057,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 			if (IS_ERR_OR_NULL(si))
+ 				continue;
+ 		}
+-		folio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,
+-					      addr != vmf->address);
++		if (addr != vmf->address &&
++		    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&
++		    !zswap_entry_present(entry))
++			folio = NULL;
++		else
++			folio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,
++						      ilx, addr != vmf->address);
+ 		if (si)
+ 			put_swap_device(si);
+ 		if (!folio)
+diff --git a/mm/zswap.c b/mm/zswap.c
+index 789730c22..fc92e00af 100644
+--- a/mm/zswap.c
++++ b/mm/zswap.c
+@@ -1632,6 +1632,26 @@ bool zswap_store(struct folio *folio, bool may_enter_fs)
+ 	return ret;
+ }
+ 
++/**
++ * zswap_entry_present - Check whether a slot currently has a zswap entry.
++ * @entry: valid swap entry to query, which need not be pinned.
++ *
++ * This is only a readahead hint. A concurrent store or invalidation can
++ * change the result, so the read path must resolve residency again after
++ * acquiring a locked swap-cache folio. Never dereference the entry returned
++ * by the XArray lookup here: only the tree lifetime is protected.
++ *
++ * Context: Caller must hold a reference to the swap device.
++ * Return: true if the slot has a zswap entry at the time of the lookup.
++ */
++bool zswap_entry_present(swp_entry_t entry)
++{
++	if (zswap_never_enabled())
++		return false;
++
++	return xa_load(swap_zswap_tree(entry), swp_offset(entry));
++}
++
+ /**
+  * zswap_is_present() - is any slot in [entry, entry + nr) in zswap?
+  * @entry: base swap entry of the range
+-- 
+2.43.0
+

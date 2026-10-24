@@ -18,10 +18,10 @@ The base policy is `evolve/control/config/policy.json`. A named campaign uses
 `evolve/control/campaigns/<c>/policy.json` and is selected with
 `controller.py --campaign <c>`, which goes before the subcommand. `loop.py`
 for kernel, xswap and xswap-structure takes no campaign flag: it reads
-`benchmark/<suite>/protocol.json`. `standard_workflow.py` on main reads
-`benchmark/swap-standard/protocol.json`. The xswap-next-2026-10-24 snapshot
-selected `benchmark/swap-standard/protocol-xswap-next-2026-10-24.json` through
-`select_protocol`, which is not defined in `standard_workflow.py` on main.
+`benchmark/<suite>/protocol.json`. `standard_workflow.py` reads
+`benchmark/swap-standard/protocol.json` unless `--protocol` selects a
+campaign protocol such as
+`benchmark/swap-standard/protocol-xswap-next-2026-10-24.json`.
 Before evaluating, check that the protocol's campaign and baseline match the
 controller's.
 

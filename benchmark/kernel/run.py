@@ -81,6 +81,7 @@ def main():
             os.killpg(proc.pid,signal.SIGTERM)
             try:proc.wait(timeout=5)
             except subprocess.TimeoutExpired:os.killpg(proc.pid,signal.SIGKILL);proc.wait()
+          disk.unlink(missing_ok=True)  # Scratch guest swap; nothing reads it after QEMU exits.
       result.update(exit_code=proc.returncode,stop_reason=reason,wall_seconds=time.monotonic()-start)
       result.update(parse((dest/"serial.log").read_text(errors="replace")))
       result["gates"]["backend_exercised"]=(all(result["swap_delta"].get(k,0)>0 for k in ["zswpin","zswpout"]) if a.backend=="zswap" else all(result["swap_delta"].get(k,0)==0 for k in ["zswpin","zswpout"]))

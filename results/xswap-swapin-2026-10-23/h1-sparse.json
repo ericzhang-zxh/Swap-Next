@@ -1,0 +1,29 @@
+{
+  "checks": [
+    {
+      "build": "xs-desc-v1",
+      "exit_code": 0,
+      "diagnostics": [
+        "/src/mm/memory.c:282:9: error: incompatible types in conditional expression (different base types):"
+      ],
+      "normalized": [
+        "/src/mm/memory.c: error: incompatible types in conditional expression (different base types):"
+      ],
+      "log_sha256": "5bb83532ab2614e005bcc95bacf89864cb94445b86fb3300abd55c7a33a01664"
+    },
+    {
+      "build": "std-e401f1314",
+      "exit_code": 0,
+      "diagnostics": [
+        "/src/mm/memory.c:282:9: error: incompatible types in conditional expression (different base types):"
+      ],
+      "normalized": [
+        "/src/mm/memory.c: error: incompatible types in conditional expression (different base types):"
+      ],
+      "log_sha256": "5bb83532ab2614e005bcc95bacf89864cb94445b86fb3300abd55c7a33a01664"
+    }
+  ],
+  "no_new_diagnostics": true,
+  "full_tool_success": false,
+  "preparation_note": "Initial output copy followed namespace-only source symlink and failed before any check; repeated copy preserves symlinks, original partial directory retained."
+}

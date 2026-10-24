@@ -85,7 +85,7 @@ historical suites until a separately frozen campaign admits this suite.
   guaranteed to be entirely concurrent.
 - The optional swap-in probe includes readahead, swap-cache and timer costs.
   It is a local diagnostic, not a standardized device-latency benchmark.
-- xswap execution is held pending resolution of the descriptor lifetime review.
+- xswap performance execution requires ancestry from descriptor repair `5e84ca92`; campaign admission also requires exact-commit correctness evidence.
 - These workloads provide performance coverage; they do not certify data
   integrity, concurrency, swapoff, sanitizers or upstream readiness.
 
@@ -150,3 +150,26 @@ The runner verifies actual image/config hashes; the adapter binds source,
 protocol, build recipe and image manifests into a fingerprint checked before
 each guest and analysis. Changing those inputs requires fresh calibration.
 Runtime failures, diagnostics, budgets and stale/missing evidence fail closed.
+
+## Residency-aware swap-in continuation
+
+`protocol-xswap-swapin-2026-10-23.json` binds the independent
+`xswap-swapin-2026-10-23` campaign to the repaired baseline. Pass it with
+`--protocol` to the standard adapter; the original standard protocol and its
+STOP state remain historical. The selected protocol has a separate ledger,
+160 total guests (including auxiliary correctness runs), eight kernel builds,
+and a ten-hour wall limit. Fast and slow calibration/comparison use identical
+frozen images and both xswap/disk and xswap/zswap. The primary is sequential
+first-touch mean latency; sequential p99 and random mean/p99 are guards.
+
+The `correctness` workload uses verified swapped xswap PTEs, 48 children
+faulting/COW-writing 16 shared target pages, full-word data checks, physical
+backend swapoff while xswap remains live, reactivation, live xswap destruction,
+and final empty swapoff. Disk admission also requires positive physical slot
+usage before the live backend swapoff. Exact-commit debug runs complement the
+standard-config proof. The workload uses 4 KiB pages and does not cover fault
+injection, KCSAN or large folios.
+
+Swapin snapshots retain xswap occupancy and `swap_ra`/`swap_ra_hit` counters.
+The timed probe and its fixed sequential-then-random order are unchanged.
+A calibrated result remains bounded discovery for human review.

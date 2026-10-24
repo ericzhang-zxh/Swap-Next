@@ -30,6 +30,23 @@ def run_id(value):
     return value
 
 
+def create_swap_image(path, preallocate=False, size=16 * 1024**3):
+    """Allocate only this run's private image, before any guest timing."""
+    created = False
+    try:
+        with path.open("xb") as stream:
+            created = True
+            if preallocate:
+                os.posix_fallocate(stream.fileno(), 0, size)
+                os.fsync(stream.fileno())
+            else:
+                stream.truncate(size)
+    except BaseException:
+        if created:
+            path.unlink(missing_ok=True)
+        raise
+
+
 def absolute_stop_file(value):
     path = Path(value)
     if not path.is_absolute():
@@ -56,7 +73,16 @@ def sha(path):
     return h.hexdigest()
 
 
-def validate(build, backend, mode):
+# xs-desc-lifetime-v1: unpinned cluster lookups survive an xswap shrink.
+LIFETIME_FIX = "5e84ca928deeacb4eee656806a003f27d1eca82f"
+
+
+def has_lifetime_fix(commit):
+    return subprocess.run(["git", "-C", str(PROJECT / "linux"), "merge-base", "--is-ancestor",
+                           LIFETIME_FIX, commit], capture_output=True).returncode == 0
+
+
+def validate(build, backend, mode, workload):
     manifest = json.loads((build / "result.json").read_text())
     image = build / "output/arch/x86/boot/bzImage"
     config = build / "output/.config"
@@ -71,8 +97,8 @@ def validate(build, backend, mode):
     if backend == "brd":
         required += ["BLK_DEV_RAM"]
     required += ["ZSWAP"]
-    if mode == "xswap":
-        raise ValueError("xswap runs held pending descriptor lifetime review resolution")
+    if mode == "xswap" and workload != "lifetime" and not has_lifetime_fix(manifest["commit"]):
+        raise ValueError("xswap performance runs need the descriptor lifetime fix")
     lines = set(config.read_text().splitlines())
     for option in required:
         if f"CONFIG_{option}=y" not in lines:
@@ -88,12 +114,18 @@ def validate(build, backend, mode):
     return manifest, provenance, image, config
 
 
+def validate_workload(backend, mode, workload):
+    if workload == "correctness" and (mode != "xswap" or backend not in ("disk", "zswap")):
+        raise ValueError("correctness requires xswap with disk or zswap")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--preallocate-swap", action="store_true", help="Preallocate the private swap image before guest launch")
     parser.add_argument("--build", required=True)
     parser.add_argument("--backend", choices=["disk", "zswap", "zram", "brd"], required=True)
     parser.add_argument("--mode", choices=["plain", "xswap"], default="plain")
-    parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata"], required=True)
+    parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime", "correctness"], required=True)
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--run-id", type=run_id, help="explicit unique run directory name")
@@ -108,12 +140,13 @@ def main():
         parser.error("timeout must be 30..3600 seconds")
     if (args.workload == "metadata") != (args.backend == "brd"):
         parser.error("metadata uses brd exclusively; brd is reserved for metadata")
+    validate_workload(args.backend, args.mode, args.workload)
     if stop_requested(args.stop_file):
         raise SystemExit("STOP")
     with (PROJECT / "benchmark/kernel/.runtime.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         build = PROJECT / "benchmark/kernel/builds" / args.build
-        manifest, provenance, image, config = validate(build, args.backend, args.mode)
+        manifest, provenance, image, config = validate(build, args.backend, args.mode, args.workload)
         if args.check_only:
             print("INPUTS_VERIFIED; no guest started")
             return
@@ -126,8 +159,7 @@ def main():
         name = args.run_id or (stamp + "-" + args.build + "-" + args.backend + "-" + args.workload)
         dest = create_run_directory(BASE / "runs", name)
         disk = dest / "swap.raw"
-        with disk.open("wb") as stream:
-            stream.truncate(16 * 1024**3)
+        create_swap_image(disk, args.preallocate_swap)
         image_sha = manifest["image_sha256"]
         append = ("console=ttyS0 rdinit=/init panic=-1 loglevel=4 "
                   "zswap.enabled=1 zswap.compressor=zstd brd.rd_size=1073741824 "
@@ -140,7 +172,8 @@ def main():
                    "-kernel", str(image), "-initrd", str(BASE / "initramfs.cpio.gz"), "-append", append,
                    "-drive", f"file={disk},format=raw,if=virtio,cache=none",
                    "-drive", f"file={BASE / 'bench.img'},format=raw,if=virtio,readonly=on"]
-        result = dict(run_id=dest.name, stop_file=str(args.stop_file) if args.stop_file else None,
+        result = dict(swap_image_allocation="preallocated" if args.preallocate_swap else "sparse",
+                      run_id=dest.name, stop_file=str(args.stop_file) if args.stop_file else None,
                       build=args.build, backend=args.backend, mode=args.mode, workload=args.workload,
                       source_commit=manifest["commit"], image_sha256=image_sha,
                       config_sha256=sha(config), guest_provenance=provenance, command=command,
@@ -155,8 +188,9 @@ def main():
         reason = None
         with (dest / "serial.log").open("w") as log:
             if stop_requested(args.stop_file):
+                disk.unlink()
                 raise SystemExit("STOP")
-            proc = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
+            proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                                     start_new_session=True, preexec_fn=bind_child_to_parent)
             try:
                 while proc.poll() is None:
@@ -179,6 +213,8 @@ def main():
                     except subprocess.TimeoutExpired:
                         os.killpg(proc.pid, signal.SIGKILL)
                         proc.wait()
+                # Scratch guest swap; nothing reads it after QEMU exits.
+                disk.unlink(missing_ok=True)
         result.update(exit_code=proc.returncode, stop_reason=reason, wall_seconds=time.monotonic() - start)
         try:
             result.update(parse((dest / "serial.log").read_text(errors="replace"), image_sha,

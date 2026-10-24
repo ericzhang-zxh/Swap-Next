@@ -45,6 +45,64 @@ def parse_usemem(text):
             'free_count': len(free), 'bytes': [int(x) for x in re.findall(r'(\d+) bytes / \d+ usecs = \d+ KB/s', body)], 'free_usec_max': max(free, default=None), 'free_usec_mean': sum(free) / len(free) if free else None}
 
 
+def correctness_evidence(text, backend, mode):
+    """Require the complete trusted workload, live PTEs and backend roundtrip."""
+    def once(marker):
+        return text.splitlines().count(marker) == 1
+    types = re.findall(r'^XSWAP_TYPE (\d+)$', text, re.M)
+    kind = int(types[0]) if len(types) == 1 else -1
+    headers = re.findall(r'^LATENCY_BEGIN samples=(\d+) skipped=(\d+) minor=(\d+) major=(\d+)$', text, re.M)
+    bodies = re.findall(r'^LATENCY_BEGIN [^\n]+\n(.*?)^LATENCY_END$', text, re.M | re.S)
+    samples = re.findall(r'^LATENCY_NS (\d+) TYPE (\d+)$', text, re.M)
+    valid_samples = (len(headers) == len(bodies) == 1 and 0 <= kind < 32
+                     and len(samples) >= 1000 and len(samples) == int(headers[0][0])
+                     and sum(map(int, headers[0][:2])) == 16384
+                     and len(bodies[0].splitlines()) == len(samples)
+                     and all(int(n) > 0 and int(t) == kind for n, t in samples))
+    targets = re.findall(r'^FORK_TARGET_XSWAP_PTES 16 TOTAL (\d+)$', text, re.M)
+    live = re.findall(r'^DESTROY_LIVE_XSWAP_PTES (\d+)$', text, re.M)
+    target_ok = len(targets) == 1 and 1000 <= int(targets[0]) <= 16384
+    live_ok = len(live) == 1 and 1000 <= int(live[0]) <= 16384
+    physical = re.findall(r'^PHYSICAL_SWAPOFF_LIVE_XSWAP_PTES (\d+) BACKEND_USED_KIB (\d+)$', text, re.M)
+    physical_ok = (len(physical) == 1 and 1000 <= int(physical[0][0]) <= 16384
+                   and (backend != 'disk' or int(physical[0][1]) > 0)
+                   and once('PHYSICAL_SWAPOFF_LIVE_PASS'))
+    phases = ('before', 'after_pressure', 'fork_shared', 'after_children', 'after_reads', 'after_settle')
+    blocks = re.findall(r'^META_BEGIN (\w+)\n(.*?)^META_END$', text, re.M | re.S)
+    fields = {'clusters_max', 'clusters_mapped', 'usage_pages', 'tail_free', 'grows', 'shrinks'}
+    snapshots = {}
+    snapshots_ok = [phase for phase, body in blocks] == list(phases)
+    for phase, body in blocks:
+        entries = re.findall(r'^(\w+) (\d+)$', body, re.M)
+        values = {k: int(v) for k, v in entries}
+        snapshots_ok &= (len(entries) == len(values) == len(body.splitlines())
+                         and set(values) == fields
+                         and values.get('clusters_mapped', 0) <= values.get('clusters_max', 0))
+        snapshots[phase] = values
+    counters = [kv_block(text, 'VMSTAT', 'correctness_' + phase) for phase in ('start', 'end')]
+    counter_keys = {'pswpin', 'pswpout', 'zswpin', 'zswpout'}
+    counters_ok = all(v is not None and counter_keys <= v.keys() for v in counters)
+    counters_ok &= all(once('VMSTAT_' + edge + ' correctness_' + phase)
+                       for edge in ('BEGIN', 'END') for phase in ('start', 'end'))
+    activity = delta(counters[1], counters[0])
+    counters_ok &= bool(activity) and all(v >= 0 for v in activity.values())
+    route = ('zswpin', 'zswpout') if backend == 'zswap' else ('pswpin', 'pswpout')
+    backend_ok = mode == 'xswap' and backend in ('disk', 'zswap') and bool(activity) and all(activity.get(k, 0) > 0 for k in route)
+    common = valid_samples and snapshots_ok and counters_ok and backend_ok and 'CORRECTNESS_FAIL' not in text
+    gates = {
+        'correctness_evidence': common,
+        'data_roundtrip': common and once('KERNEL_WORKLOAD_PASS'),
+        'fork_cow': common and target_ok and once('COW_PASS') and once('FORK_SHARED_PASS'),
+        'concurrent_fault': common and target_ok and once('CONCURRENT_FAULT_PASS workers=48 targets=16'),
+        'destroy_live_pages': common and live_ok and once('DESTROY_LIVE_PASS'),
+        'swapoff_live_pages': common and live_ok and physical_ok and once('DESTROY_LIVE_PASS') and once('SWAPOFF_LIVE_PASS') and once('EMPTY_SWAPS_PASS'),
+    }
+    return gates, {'correctness_vmstat_delta': activity, 'correctness_snapshots': snapshots,
+                   'correctness_samples': len(samples),
+                   'physical_swapoff_live_ptes': int(physical[0][0]) if len(physical) == 1 else None,
+                   'physical_swapoff_used_kib': int(physical[0][1]) if len(physical) == 1 else None}
+
+
 def parse(text, image_sha, backend, mode, workload):
     text = text.replace('\r', '')
     log = block(text, 'KERNEL_LOG_BEGIN', 'KERNEL_LOG_END') or ''
@@ -128,6 +186,30 @@ def parse(text, image_sha, backend, mode, workload):
         metrics['swapin_swapped'] = stats(m.group(1)) if m else None
         gates['swapin_data'] = 'SWAPIN_DATA_PASS' in text
         gates['swapin_output'] = all(metrics[k] and metrics[k].get('samples', 0) > 0 for k in ('swapin_seq', 'swapin_rand'))
+        metrics['swapin_vmstat_delta'] = delta(kv_block(text, 'VMSTAT', 'swapin_end'), kv_block(text, 'VMSTAT', 'swapin_start'))
+        gates['swapin_phase_counters'] = bool(metrics['swapin_vmstat_delta']) and all(k in metrics['swapin_vmstat_delta'] for k in ('swap_ra', 'swap_ra_hit'))
+        if mode == 'xswap':
+            snapshots = {phase: kv_block(text, 'XSWAP', phase) for phase in ('swapin_start', 'swapin_end')}
+            metrics['swapin_xswap_snapshots'] = snapshots
+            gates['swapin_xswap_counters'] = all(v and {'clusters_mapped', 'usage_pages', 'grows', 'shrinks'} <= v.keys() for v in snapshots.values())
+
+    elif workload == 'correctness':
+        extra_gates, extra_metrics = correctness_evidence(text, backend, mode)
+        gates.update(extra_gates)
+        gates['no_new_kernel_warnings'] = gates['no_kernel_warnings']
+        metrics.update(extra_metrics)
+    elif workload == 'lifetime':
+        churn = re.search(r'^CHURN_PASS rounds=(\d+) workers=(\d+) bytes=(\d+) verified_workers=(\d+)$', text, re.M)
+        xs = delta(kv_block(text, 'XSWAP', 'lifetime_end'), kv_block(text, 'XSWAP', 'lifetime_start'), ('grows', 'shrinks'))
+        wb = delta(kv_block(text, 'VMSTAT', 'lifetime_end'), kv_block(text, 'VMSTAT', 'lifetime_start'), ('zswpwb', 'pswpout', 'zswpout'))
+        delay = re.search(r'^WB_DELAY_MS (\S+)$', text, re.M)
+        metrics.update(lifetime_rounds=int(churn[1]) if churn else None,
+                       lifetime_verified_workers=int(churn[4]) if churn else None,
+                       lifetime_xswap_delta=xs, lifetime_vmstat_delta=wb,
+                       wb_delay_ms=delay[1] if delay else None)
+        gates['lifetime_data'] = bool(churn) and int(churn[1]) >= 3 and 'CHURN_MISMATCH' not in text and 'CHURN_FAIL' not in text
+        gates['lifetime_shrink'] = bool(xs) and xs['shrinks'] > 0 and xs['grows'] > 0
+        gates['lifetime_writeback'] = bool(wb) and wb['zswpwb'] > 0
     else:
         gates['known_workload'] = False
     phases = ['build'] if workload == 'build' else ['redis_get', 'redis_bgsave'] if workload == 'redis' else []

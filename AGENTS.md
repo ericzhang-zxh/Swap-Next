@@ -81,6 +81,10 @@ Loading that skill does not authorize running or publishing experiments.
 - Experiment work is committed directly to `main` without a pull request. Do
   the work on a branch, rebase onto `main` if it moved, and fast-forward
   `main`. Never force-push `main`.
+- Closing a campaign leaves nothing on its branch. Reports and evidence go to
+  `results/<campaign>/`, candidate patches to `patches/<campaign>/`, and
+  harness and policy changes to their usual paths on `main`. Then delete the
+  experiment branch locally and on `origin` and remove its worktrees.
 - Candidate code is never promoted automatically. Publishing the report or
   committing the experiment record is not acceptance, and it does not authorize
   another experiment.

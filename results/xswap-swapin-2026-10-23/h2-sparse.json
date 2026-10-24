@@ -1,0 +1,30 @@
+{
+  "checks": [
+    {
+      "build": "xs-desc-v1",
+      "exit_code": 0,
+      "diagnostics": [
+        "/src/mm/memory.c:282:9: error: incompatible types in conditional expression (different base types):"
+      ],
+      "normalized": [
+        "/src/mm/memory.c: error: incompatible types in conditional expression (different base types):"
+      ],
+      "log_path": "/home/xuanhao/playground/Swap-Next-scratch/sparse-resume-h2/xs-desc-v1/sparse.log",
+      "log_sha256": "5bb83532ab2614e005bcc95bacf89864cb94445b86fb3300abd55c7a33a01664"
+    },
+    {
+      "build": "xs-ra-zswap-v1",
+      "exit_code": 0,
+      "diagnostics": [
+        "/src/mm/memory.c:282:9: error: incompatible types in conditional expression (different base types):"
+      ],
+      "normalized": [
+        "/src/mm/memory.c: error: incompatible types in conditional expression (different base types):"
+      ],
+      "log_path": "/home/xuanhao/playground/Swap-Next-scratch/sparse-resume-h2/xs-ra-zswap-v1/sparse.log",
+      "log_sha256": "5bb83532ab2614e005bcc95bacf89864cb94445b86fb3300abd55c7a33a01664"
+    }
+  ],
+  "no_new_diagnostics": true,
+  "full_tool_success": false
+}

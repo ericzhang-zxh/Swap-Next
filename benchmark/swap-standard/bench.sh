@@ -18,7 +18,7 @@ meminfo() {
 
 vmstat() {
 	echo "VMSTAT_BEGIN $1"
-	grep -E '^(pswpin|pswpout|zswpin|zswpout|zswpwb|pgmajfault|swpin_zero|swpout_zero) ' /proc/vmstat || true
+	grep -E '^(pswpin|pswpout|zswpin|zswpout|zswpwb|pgmajfault|swpin_zero|swpout_zero|swap_ra|swap_ra_hit) ' /proc/vmstat || true
 	echo "VMSTAT_END $1"
 }
 
@@ -77,7 +77,7 @@ sample_swaps() {
 
 report_swap_peaks() {
 	echo SWAP_PEAK_BEGIN
-	awk '{if ($2 > m[$1]) m[$1] = $2} END {for (d in m) print d, m[d]}' /tmp/swaps.samples | sort
+	awk '{if ($2 > m[$1]) m[$1] = $2} END {for (d in m) printf "%s %d\n", d, m[d]}' /tmp/swaps.samples | sort
 	echo SWAP_PEAK_END
 }
 
@@ -155,9 +155,55 @@ run_redis() {
 	valkey-cli shutdown nosave >/dev/null 2>&1 || true
 }
 
+xswap_counters() {
+	echo "XSWAP_BEGIN $1"
+	cat /sys/kernel/debug/xswap/type*
+	echo "XSWAP_END $1"
+}
+
+run_lifetime() {
+	[ "$mode" = xswap ] && [ "$backend" = zswap ] || fail lifetime_mode
+	local delay=/sys/module/zswap/parameters/debug_wb_delay_ms
+	echo "$LIFETIME_ZSWAP_POOL_PERCENT" > /sys/module/zswap/parameters/max_pool_percent
+	echo Y > /sys/module/zswap/parameters/shrinker_enabled
+	if [ -f $delay ]; then
+		echo "$LIFETIME_WB_DELAY_MS" > $delay
+		echo "WB_DELAY_MS $(cat $delay)"
+	else
+		echo "WB_DELAY_MS none"
+	fi
+	enter_cgroup "$LIFETIME_MEMCG"
+	xswap_counters lifetime_start
+	vmstat lifetime_start
+	churn "$LIFETIME_SIZE" "$LIFETIME_WORKERS" "$LIFETIME_SEC"
+	sleep "$SETTLE_SEC"
+	vmstat lifetime_end
+	xswap_counters lifetime_end
+}
+
+run_correctness() {
+	[ "$mode" = xswap ] || fail correctness_mode
+	case $backend in disk|zswap) ;; *) fail correctness_backend ;; esac
+	enter_cgroup max
+	local path type
+	set -- /sys/kernel/debug/xswap/type*
+	[ "$#" -eq 1 ] && [ -f "$1" ] || fail correctness_type
+	path=$1 type=${1##*/type}
+	vmstat correctness_start
+	correctness "$type" "$cg/memory.reclaim" || { local status=$?; echo "CORRECTNESS_EXIT $status"; return "$status"; }
+	vmstat correctness_end
+	[ ! -e "$path" ] || fail correctness_destroy
+	[ "$(wc -l < /proc/swaps)" -eq 1 ] || fail correctness_swapoff
+	echo EMPTY_SWAPS_PASS
+}
+
 run_swapin() {
 	enter_cgroup max
+	vmstat swapin_start
+	[ "$mode" != xswap ] || xswap_counters swapin_start
 	swapin "$SWAPIN_SIZE" "$cg/memory.reclaim"
+	vmstat swapin_end
+	[ "$mode" != xswap ] || xswap_counters swapin_end
 }
 
 echo "BENCH_PARAMS backend=$backend mode=$mode workload=$workload ncpu=$(nproc)"
@@ -193,6 +239,8 @@ usemem-rand) run_usemem -R ;;
 build)       run_build ;;
 redis)       run_redis ;;
 swapin)      run_swapin ;;
+lifetime)    run_lifetime ;;
+correctness) run_correctness ;;
 *)           fail workload ;;
 esac
 sleep 1

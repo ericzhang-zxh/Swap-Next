@@ -1,0 +1,27 @@
+From b1eb429f257641dab45dd1633fda80c353d26250 Mon Sep 17 00:00:00 2001
+From: Eric Zhang <zxh@xh-zhang.com>
+Date: Fri, 23 Oct 2026 09:41:34 -0700
+Subject: [PATCH 1/2] mm, swap: assert the per-cpu cluster lock xswap_grow()
+ runs under
+
+local_lock() takes the lock of the current CPU's percpu_swap_cluster,
+but lockdep_assert_held() is given the untranslated per-cpu symbol, so
+the assertion fires on every grow with lockdep enabled.  Assert the
+lock local_lock() actually took.
+---
+ mm/swapfile.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 0f841616d..31ac55a05 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -4938,7 +4938,7 @@ static unsigned long xswap_grow(struct swap_info_struct *si)
+ 	int ret;
+ 
+ 	/* The unmap below is paired with the caller's lock. */
+-	lockdep_assert_held(&percpu_swap_cluster.lock);
++	lockdep_assert_held(&this_cpu_ptr(&percpu_swap_cluster)->lock);
+ 
+ 	want = DIV_ROUND_UP(swap_usage_in_pages(si) * 100,
+ 			    XSWAP_GROW_UNTIL * SWAPFILE_CLUSTER);
