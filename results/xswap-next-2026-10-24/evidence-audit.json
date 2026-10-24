@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "verified_utc": "2026-10-24T09:25:45.582527+00:00",
+  "unique_guest_results": 48,
+  "builds": 6,
+  "candidate_comparisons": 3,
+  "independent_ratio_checks": 24,
+  "calibration_id": "7ac434b0aad649298d7c0282b29a10c1",
+  "fingerprint": "24f5a85f6376d3f90de869af3ed699d04cc539e406b34ae63aba15686ba21849",
+  "baseline": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "p123_ancestry": true,
+  "linux_checkout_clean": true,
+  "all_candidates_closed": true,
+  "budget": {
+    "created": 1792831186.5415323,
+    "guests": 48,
+    "builds": 6
+  }
+}

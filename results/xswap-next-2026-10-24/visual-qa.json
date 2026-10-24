@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "verified_utc": "2026-10-24T09:27:42.033710+00:00",
+  "html_sha256": "5a7406fbe8aa4d46992ea03cc6f5c2c6208811ebabcb92655b0f20b8af6d4cdc",
+  "variants": [
+    {
+      "theme": "light",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "external": 0,
+      "details": 17,
+      "open": 0,
+      "svg": 12,
+      "bodyText": 4199,
+      "expandedScrollWidth": 1280,
+      "toggleWorked": true,
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "external": 0,
+      "details": 17,
+      "open": 0,
+      "svg": 12,
+      "bodyText": 4199,
+      "expandedScrollWidth": 1280,
+      "toggleWorked": true,
+      "errors": []
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "scrollWidth": 390,
+      "external": 0,
+      "details": 17,
+      "open": 0,
+      "svg": 12,
+      "bodyText": 4199,
+      "expandedScrollWidth": 390,
+      "toggleWorked": true,
+      "errors": []
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "scrollWidth": 390,
+      "external": 0,
+      "details": 17,
+      "open": 0,
+      "svg": 12,
+      "bodyText": 4199,
+      "expandedScrollWidth": 390,
+      "toggleWorked": true,
+      "errors": []
+    }
+  ],
+  "screenshots_retained_locally": true,
+  "visual_inspection": "Desktop dark and mobile light inspected; no overflow; figures scroll horizontally on mobile; all exact data stays closed by default."
+}

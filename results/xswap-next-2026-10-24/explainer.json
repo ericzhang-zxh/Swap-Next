@@ -1,0 +1,1934 @@
+{
+  "title": "xswap continuation",
+  "subtitle": "xswap-next-2026-10-24 \u00b7 repaired baseline 5e84ca92",
+  "verdict": {
+    "status": "rejected",
+    "headline": "3 candidates fail calibrated fast guards",
+    "tiles": [
+      {
+        "label": "Guest attempts",
+        "value": 48,
+        "note": "includes calibration and failures"
+      },
+      {
+        "label": "Candidates compared",
+        "value": 3,
+        "note": "0 pass every fast guard"
+      },
+      {
+        "label": "Disk sequential mean",
+        "value": "-40.2%",
+        "note": "round 3; two fast pairs"
+      },
+      {
+        "label": "Disk random p99",
+        "value": "+29.5%",
+        "note": "round 3; two fast pairs"
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "Context and changes",
+      "lead": "Reduce xswap fault cost while preserving data and random-tail guards.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "xswap separates virtual slots from compressed and physical backing",
+          "nodes": [
+            {
+              "id": "ram",
+              "label": "Anonymous RAM",
+              "sub": "resident folios",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "slot",
+              "label": "xswap slots",
+              "sub": "PTE entry + descriptor",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "zswap",
+              "label": "zswap pool",
+              "sub": "compressed objects",
+              "col": 2,
+              "row": 0
+            },
+            {
+              "id": "disk",
+              "label": "Physical swap",
+              "sub": "optional backend slots",
+              "col": 2,
+              "row": 1
+            }
+          ],
+          "edges": [
+            {
+              "from": "ram",
+              "to": "slot"
+            },
+            {
+              "from": "slot",
+              "to": "zswap"
+            },
+            {
+              "from": "slot",
+              "to": "disk"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Each hypothesis changes one cost on the fault path",
+          "columns": [
+            "Candidate",
+            "Hypothesis"
+          ],
+          "rows": [
+            [
+              "xs-ra-sequential-v1",
+              "Admit physical xswap readahead only after adjacent virtual fault addresses; discontinuous faults retain synchronous single-folio reads. Preserve sequential mean gains while eliminating prior random p99 regression; falsified by any calibrated latency guard failure."
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "Copy only split compressed zsmalloc objects into the existing mutex-owned buffer for synchronous transforms, exposing contiguous input to one-shot zstd decode instead of streaming. Expect lower zswap mean/tails, neutral disk; falsified by correctness failure, calibrated guard regression, or improvement inside noise."
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "Extend adjacency-gated physical xswap readahead to the actual rotational cluster mode, recording demand-miss VMA history without altering global estimator state. Recover disk sequential benefit, retain synchronous discontinuities, leave compressed reads unchanged. Falsified by zero useful prefetch counters or any calibrated latency guard failure."
+            ]
+          ]
+        },
+        {
+          "type": "diff",
+          "takeaway": "xs-ra-sequential-v1 exact patch",
+          "patch": "diff --git a/mm/memory.c b/mm/memory.c\nindex 6fd925877..8011947a3 100644\n--- a/mm/memory.c\n+++ b/mm/memory.c\n@@ -4995,8 +4995,12 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)\n \tif (folio)\n \t\tswap_update_readahead(folio, vma, vmf->address);\n \tif (!folio) {\n-\t\t/* Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices */\n-\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO))\n+\t\t/*\n+\t\t * Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices,\n+\t\t * except sequential xswap faults with a physical backend.\n+\t\t */\n+\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO) &&\n+\t\t    !xswap_fault_readahead(vmf, entry))\n \t\t\tfolio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,\n \t\t\t\t\t    thp_swapin_suitable_orders(vmf) | BIT(0),\n \t\t\t\t\t    vmf, NULL, 0);\ndiff --git a/mm/swap.h b/mm/swap.h\nindex b9e7c8a4c..6211c11e2 100644\n--- a/mm/swap.h\n+++ b/mm/swap.h\n@@ -397,6 +397,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t flag,\n \t\tstruct mempolicy *mpol, pgoff_t ilx);\n struct folio *swapin_readahead(swp_entry_t entry, gfp_t flag,\n \t\tstruct vm_fault *vmf);\n+bool xswap_readahead_wanted(struct swap_info_struct *si, swp_entry_t entry);\n+bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry);\n struct folio *swapin_sync(swp_entry_t entry, gfp_t flag, unsigned long orders,\n \t\t\t   struct vm_fault *vmf, struct mempolicy *mpol, pgoff_t ilx);\n void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\n@@ -477,6 +479,17 @@ static inline struct folio *swapin_readahead(swp_entry_t swp, gfp_t gfp_mask,\n \treturn NULL;\n }\n \n+static inline bool xswap_readahead_wanted(struct swap_info_struct *si,\n+\t\t\t\t\t  swp_entry_t entry)\n+{\n+\treturn false;\n+}\n+\n+static inline bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)\n+{\n+\treturn false;\n+}\n+\n static inline struct folio *swapin_sync(\n \tswp_entry_t entry, gfp_t flag, unsigned long orders,\n \tstruct vm_fault *vmf, struct mempolicy *mpol, pgoff_t ilx)\ndiff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..add9effd2 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -753,6 +753,34 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\n \treturn folio;\n }\n \n+/**\n+ * xswap_readahead_wanted - Check whether an xswap slot has a physical backend.\n+ * @si: the swap device of @entry.\n+ * @entry: the swap entry, which need not be pinned.\n+ *\n+ * This is a readahead hint, not a pin on the slot or its backend. The swap\n+ * cache allocation and read paths must revalidate the entry after this\n+ * returns. No cluster pointer or physical entry escapes the lock.\n+ *\n+ * Context: Caller must protect @si with a reference count or locks.\n+ * Return: true if an xswap slot has a physical backend, false otherwise.\n+ */\n+bool xswap_readahead_wanted(struct swap_info_struct *si, swp_entry_t entry)\n+{\n+\tstruct swap_cluster_info *ci;\n+\tbool backed;\n+\n+\tif (!(si->flags & SWP_XSWAP))\n+\t\treturn false;\n+\tci = swap_cluster_lock_unpinned(si, swp_offset(entry));\n+\tif (!ci)\n+\t\treturn false;\n+\tbacked = xswap_slot_backend(ci, swp_cluster_offset(entry)).val;\n+\tswap_cluster_unlock(ci);\n+\n+\treturn backed;\n+}\n+\n /**\n  * swapin_sync - swap-in one or multiple entries skipping readahead.\n  * @entry: swap entry indicating the target slot\n@@ -920,8 +948,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tstruct blk_plug plug;\n \tswp_entry_t ra_entry;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n+\t/* Keep compressed xswap targets on the single-folio path. */\n+\tif ((si->flags & SWP_XSWAP) && !xswap_readahead_wanted(si, entry))\n \t\tgoto skip;\n \n \tmask = swapin_nr_pages(offset) - 1;\n@@ -940,6 +968,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tfor (offset = start_offset; offset <= end_offset ; offset++) {\n \t\t/* Ok, do the async read-ahead now */\n \t\tra_entry = swp_entry(swp_type(entry), offset);\n+\t\tif ((si->flags & SWP_XSWAP) && offset != entry_offset &&\n+\t\t    !xswap_readahead_wanted(si, ra_entry))\n+\t\t\tcontinue;\n \t\tfolio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,\n \t\t\t\tilx, offset != entry_offset);\n \t\tif (!folio)\n@@ -1009,7 +1040,6 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\tstruct mempolicy *mpol, pgoff_t targ_ilx, struct vm_fault *vmf)\n {\n-\tstruct swap_info_struct *si = __swap_entry_to_info(targ_entry);\n \tstruct swap_io_ctx ctx = {};\n \tstruct blk_plug plug;\n \tstruct folio *folio;\n@@ -1018,10 +1048,6 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \tunsigned long start, end, addr;\n \tpgoff_t ilx = targ_ilx;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n-\n \twin = swap_vma_ra_win(vmf, &start, &end);\n \tif (win == 1)\n \t\tgoto skip;\n@@ -1054,8 +1080,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\t\tif (IS_ERR_OR_NULL(si))\n \t\t\t\tcontinue;\n \t\t}\n-\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,\n-\t\t\t\t\t      addr != vmf->address);\n+\t\tif (addr != vmf->address &&\n+\t\t    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&\n+\t\t    !xswap_readahead_wanted(__swap_entry_to_info(entry), entry))\n+\t\t\tfolio = NULL;\n+\t\telse\n+\t\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,\n+\t\t\t\t\t\t      ilx, addr != vmf->address);\n \t\tif (si)\n \t\t\tput_swap_device(si);\n \t\tif (!folio)\n@@ -1071,6 +1102,34 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \treturn swap_cache_read_folio_sync(targ_entry, gfp_mask, mpol, targ_ilx);\n }\n \n+/**\n+ * xswap_fault_readahead - Admit physical readahead after adjacent faults.\n+ * @vmf: fault holding a reference to the target swap device.\n+ * @entry: target swap entry.\n+ *\n+ * Keep discontinuous faults on the synchronous demand path. VMA history is\n+ * advisory: racing faults may suppress or admit speculation, but the swap\n+ * cache and I/O paths still validate every entry and own its references.\n+ */\n+bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)\n+{\n+\tstruct swap_info_struct *si = __swap_entry_to_info(entry);\n+\tstruct vm_area_struct *vma = vmf->vma;\n+\tunsigned long prev;\n+\n+\tif (!(si->flags & SWP_XSWAP) || !swap_use_vma_readahead() ||\n+\t    READ_ONCE(page_cluster) <= 0)\n+\t\treturn false;\n+\tprev = SWAP_RA_ADDR(GET_SWAP_RA_VAL(vma));\n+\tif (vmf->address != prev + PAGE_SIZE &&\n+\t    prev != vmf->address + PAGE_SIZE) {\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(vmf->address, 1, 0));\n+\t\treturn false;\n+\t}\n+\treturn xswap_readahead_wanted(si, entry);\n+}\n+\n /**\n  * swapin_readahead - swap in pages in hope we need them soon\n  * @entry: swap entry of this memory\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "xs-zswap-linear-v1 exact patch",
+          "patch": "diff --git a/mm/zswap.c b/mm/zswap.c\nindex 789730c22..5954a265f 100644\n--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -967,6 +967,13 @@ static bool zswap_decompress(struct zswap_entry *entry, struct folio *folio)\n \t\tsg_set_folio(&output, folio, PAGE_SIZE, 0);\n \t\tacomp_request_set_params(acomp_ctx->req, input, &output,\n \t\t\t\t\t entry->length, PAGE_SIZE);\n+\t\t/* Contiguous input lets synchronous codecs avoid stream walks. */\n+\t\tif (!acomp_is_async(acomp_ctx->acomp) && !sg_is_last(input)) {\n+\t\t\tmemcpy_from_sglist(acomp_ctx->buffer, input, 0,\n+\t\t\t\t\t   entry->length);\n+\t\t\tacomp_request_set_src_nondma(acomp_ctx->req,\n+\t\t\t\t\t\t    acomp_ctx->buffer, entry->length);\n+\t\t}\n \t\tret = crypto_acomp_decompress(acomp_ctx->req);\n \t\tret = crypto_wait_req(ret, &acomp_ctx->wait);\n \t\tdlen = acomp_ctx->req->dlen;\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "xs-ra-cluster-v1 exact patch",
+          "patch": "diff --git a/mm/memory.c b/mm/memory.c\nindex 6fd925877..8011947a3 100644\n--- a/mm/memory.c\n+++ b/mm/memory.c\n@@ -4995,8 +4995,12 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)\n \tif (folio)\n \t\tswap_update_readahead(folio, vma, vmf->address);\n \tif (!folio) {\n-\t\t/* Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices */\n-\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO))\n+\t\t/*\n+\t\t * Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices,\n+\t\t * except sequential xswap faults with a physical backend.\n+\t\t */\n+\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO) &&\n+\t\t    !xswap_fault_readahead(vmf, entry))\n \t\t\tfolio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,\n \t\t\t\t\t    thp_swapin_suitable_orders(vmf) | BIT(0),\n \t\t\t\t\t    vmf, NULL, 0);\ndiff --git a/mm/swap.h b/mm/swap.h\nindex b9e7c8a4c..6211c11e2 100644\n--- a/mm/swap.h\n+++ b/mm/swap.h\n@@ -397,6 +397,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t flag,\n \t\tstruct mempolicy *mpol, pgoff_t ilx);\n struct folio *swapin_readahead(swp_entry_t entry, gfp_t flag,\n \t\tstruct vm_fault *vmf);\n+bool xswap_readahead_wanted(struct swap_info_struct *si, swp_entry_t entry);\n+bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry);\n struct folio *swapin_sync(swp_entry_t entry, gfp_t flag, unsigned long orders,\n \t\t\t   struct vm_fault *vmf, struct mempolicy *mpol, pgoff_t ilx);\n void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\n@@ -477,6 +479,17 @@ static inline struct folio *swapin_readahead(swp_entry_t swp, gfp_t gfp_mask,\n \treturn NULL;\n }\n \n+static inline bool xswap_readahead_wanted(struct swap_info_struct *si,\n+\t\t\t\t\t  swp_entry_t entry)\n+{\n+\treturn false;\n+}\n+\n+static inline bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)\n+{\n+\treturn false;\n+}\n+\n static inline struct folio *swapin_sync(\n \tswp_entry_t entry, gfp_t flag, unsigned long orders,\n \tstruct vm_fault *vmf, struct mempolicy *mpol, pgoff_t ilx)\ndiff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..a66baceee 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -753,6 +753,34 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\n \treturn folio;\n }\n \n+/**\n+ * xswap_readahead_wanted - Check whether an xswap slot has a physical backend.\n+ * @si: the swap device of @entry.\n+ * @entry: the swap entry, which need not be pinned.\n+ *\n+ * This is a readahead hint, not a pin on the slot or its backend. The swap\n+ * cache allocation and read paths must revalidate the entry after this\n+ * returns. No cluster pointer or physical entry escapes the lock.\n+ *\n+ * Context: Caller must protect @si with a reference count or locks.\n+ * Return: true if an xswap slot has a physical backend, false otherwise.\n+ */\n+bool xswap_readahead_wanted(struct swap_info_struct *si, swp_entry_t entry)\n+{\n+\tstruct swap_cluster_info *ci;\n+\tbool backed;\n+\n+\tif (!(si->flags & SWP_XSWAP))\n+\t\treturn false;\n+\tci = swap_cluster_lock_unpinned(si, swp_offset(entry));\n+\tif (!ci)\n+\t\treturn false;\n+\tbacked = xswap_slot_backend(ci, swp_cluster_offset(entry)).val;\n+\tswap_cluster_unlock(ci);\n+\n+\treturn backed;\n+}\n+\n /**\n  * swapin_sync - swap-in one or multiple entries skipping readahead.\n  * @entry: swap entry indicating the target slot\n@@ -920,8 +948,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tstruct blk_plug plug;\n \tswp_entry_t ra_entry;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n+\t/* Keep compressed xswap targets on the single-folio path. */\n+\tif ((si->flags & SWP_XSWAP) && !xswap_readahead_wanted(si, entry))\n \t\tgoto skip;\n \n \tmask = swapin_nr_pages(offset) - 1;\n@@ -940,6 +968,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tfor (offset = start_offset; offset <= end_offset ; offset++) {\n \t\t/* Ok, do the async read-ahead now */\n \t\tra_entry = swp_entry(swp_type(entry), offset);\n+\t\tif ((si->flags & SWP_XSWAP) && offset != entry_offset &&\n+\t\t    !xswap_readahead_wanted(si, ra_entry))\n+\t\t\tcontinue;\n \t\tfolio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,\n \t\t\t\tilx, offset != entry_offset);\n \t\tif (!folio)\n@@ -1009,7 +1040,6 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\tstruct mempolicy *mpol, pgoff_t targ_ilx, struct vm_fault *vmf)\n {\n-\tstruct swap_info_struct *si = __swap_entry_to_info(targ_entry);\n \tstruct swap_io_ctx ctx = {};\n \tstruct blk_plug plug;\n \tstruct folio *folio;\n@@ -1018,10 +1048,6 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \tunsigned long start, end, addr;\n \tpgoff_t ilx = targ_ilx;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n-\n \twin = swap_vma_ra_win(vmf, &start, &end);\n \tif (win == 1)\n \t\tgoto skip;\n@@ -1054,8 +1080,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\t\tif (IS_ERR_OR_NULL(si))\n \t\t\t\tcontinue;\n \t\t}\n-\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,\n-\t\t\t\t\t      addr != vmf->address);\n+\t\tif (addr != vmf->address &&\n+\t\t    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&\n+\t\t    !xswap_readahead_wanted(__swap_entry_to_info(entry), entry))\n+\t\t\tfolio = NULL;\n+\t\telse\n+\t\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,\n+\t\t\t\t\t\t      ilx, addr != vmf->address);\n \t\tif (si)\n \t\t\tput_swap_device(si);\n \t\tif (!folio)\n@@ -1071,6 +1102,39 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \treturn swap_cache_read_folio_sync(targ_entry, gfp_mask, mpol, targ_ilx);\n }\n \n+/**\n+ * xswap_fault_readahead - Admit physical readahead after adjacent faults.\n+ * @vmf: fault holding a reference to the target swap device.\n+ * @entry: target swap entry.\n+ *\n+ * Keep discontinuous faults on the synchronous demand path. VMA history is\n+ * advisory: racing faults may suppress or admit speculation, but the swap\n+ * cache and I/O paths still validate every entry and own its references.\n+ */\n+bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)\n+{\n+\tstruct swap_info_struct *si = __swap_entry_to_info(entry);\n+\tstruct vm_area_struct *vma = vmf->vma;\n+\tunsigned long prev;\n+\tbool vma_ra;\n+\n+\tif (!(si->flags & SWP_XSWAP) || READ_ONCE(page_cluster) <= 0)\n+\t\treturn false;\n+\tvma_ra = swap_use_vma_readahead();\n+\tprev = SWAP_RA_ADDR(GET_SWAP_RA_VAL(vma));\n+\tif (vmf->address != prev + PAGE_SIZE &&\n+\t    prev != vmf->address + PAGE_SIZE) {\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(vmf->address, 1, 0));\n+\t\treturn false;\n+\t}\n+\t/* Cluster-mode cache hits update global history, not the VMA. */\n+\tif (!vma_ra)\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(vmf->address, 1, 0));\n+\treturn xswap_readahead_wanted(si, entry);\n+}\n+\n /**\n  * swapin_readahead - swap in pages in hope we need them soon\n  * @entry: swap entry of this memory\n"
+        }
+      ]
+    },
+    {
+      "id": "method",
+      "title": "Measurement",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "A/A and candidate comparisons share frozen inputs",
+          "columns": [
+            "Item",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Baseline",
+              "5e84ca928deeacb4eee656806a003f27d1eca82f"
+            ],
+            [
+              "Protocol revision",
+              2
+            ],
+            [
+              "Pair order",
+              "alternating AB then BA; same order in calibration"
+            ],
+            [
+              "Allocation",
+              "preallocated after revision 1"
+            ],
+            [
+              "Calibration gate",
+              "20% ceiling; 3% floor"
+            ],
+            [
+              "Budget",
+              "48 guests; 10 builds; six hours"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Observed results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every latency guard stays visible",
+          "columns": [
+            "Candidate",
+            "Metric",
+            "Latency %",
+            "Noise %",
+            "Guard"
+          ],
+          "rows": [
+            [
+              "xs-ra-sequential-v1",
+              "swapin-disk.swapin_seq.mean_ns",
+              4.54,
+              8.09,
+              "PASS"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "swapin-disk.swapin_seq.p99_ns",
+              7.9,
+              6.07,
+              "FAIL"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "swapin-disk.swapin_rand.mean_ns",
+              -0.46,
+              12.24,
+              "PASS"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "swapin-disk.swapin_rand.p99_ns",
+              9.34,
+              3.0,
+              "FAIL"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "swapin-zswap.swapin_seq.mean_ns",
+              1.03,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "swapin-zswap.swapin_seq.p99_ns",
+              9.49,
+              14.46,
+              "PASS"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "swapin-zswap.swapin_rand.mean_ns",
+              0.86,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "swapin-zswap.swapin_rand.p99_ns",
+              12.92,
+              16.2,
+              "PASS"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "swapin-disk.swapin_seq.mean_ns",
+              -7.51,
+              8.09,
+              "PASS"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "swapin-disk.swapin_seq.p99_ns",
+              -8.96,
+              6.07,
+              "PASS"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "swapin-disk.swapin_rand.mean_ns",
+              -5.9,
+              12.24,
+              "PASS"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "swapin-disk.swapin_rand.p99_ns",
+              -3.51,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "swapin-zswap.swapin_seq.mean_ns",
+              24.39,
+              3.0,
+              "FAIL"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "swapin-zswap.swapin_seq.p99_ns",
+              21.18,
+              14.46,
+              "FAIL"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "swapin-zswap.swapin_rand.mean_ns",
+              23.29,
+              3.0,
+              "FAIL"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "swapin-zswap.swapin_rand.p99_ns",
+              29.12,
+              16.2,
+              "FAIL"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "swapin-disk.swapin_seq.mean_ns",
+              -40.19,
+              8.09,
+              "PASS"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "swapin-disk.swapin_seq.p99_ns",
+              -11.64,
+              6.07,
+              "PASS"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "swapin-disk.swapin_rand.mean_ns",
+              5.88,
+              12.24,
+              "PASS"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "swapin-disk.swapin_rand.p99_ns",
+              29.46,
+              3.0,
+              "FAIL"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "swapin-zswap.swapin_seq.mean_ns",
+              -0.23,
+              3.0,
+              "PASS"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "swapin-zswap.swapin_seq.p99_ns",
+              0.04,
+              14.46,
+              "PASS"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "swapin-zswap.swapin_rand.mean_ns",
+              7.96,
+              3.0,
+              "FAIL"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "swapin-zswap.swapin_rand.p99_ns",
+              11.41,
+              16.2,
+              "PASS"
+            ]
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Disk sequential mean: -40.2% for xs-ra-cluster-v1",
+          "x_label": "microseconds per first touch",
+          "groups": [
+            "A/A sparse",
+            "A/A allocated",
+            "xs-ra-sequential-v1",
+            "xs-zswap-linear-v1",
+            "xs-ra-cluster-v1"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 166.561,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 155.075,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 148.921,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 145.092,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 164.789,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 156.279,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 138.402,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 149.603,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 155.503,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 164.33,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 159.38,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 154.112,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 154.543,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 140.254,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 139.724,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 148.223,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 145.972,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 118.379,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 77.223,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 175.072,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Disk sequential p99: -11.6% for xs-ra-cluster-v1",
+          "x_label": "microseconds per first touch",
+          "groups": [
+            "A/A sparse",
+            "A/A allocated",
+            "xs-ra-sequential-v1",
+            "xs-zswap-linear-v1",
+            "xs-ra-cluster-v1"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 343.474,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 302.115,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 313.77,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 316.708,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 336.485,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 318.25,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 277.831,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 294.689,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 308.872,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 335.764,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 325.239,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 303.688,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 333.23,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 299.063,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 281.075,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 304.344,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 337.344,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 307.771,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 313.517,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 366.36,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Disk random mean: +5.9% for xs-ra-cluster-v1",
+          "x_label": "microseconds per first touch",
+          "groups": [
+            "A/A sparse",
+            "A/A allocated",
+            "xs-ra-sequential-v1",
+            "xs-zswap-linear-v1",
+            "xs-ra-cluster-v1"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 189.129,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 234.09,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 224.862,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 229.776,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 201.225,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 225.849,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 209.764,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 209.844,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 221.868,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 210.378,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 225.073,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 215.375,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 213.119,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 188.841,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 184.114,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 184.241,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 216.106,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 216.159,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 224.292,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 200.102,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Disk random p99: +29.5% for xs-ra-cluster-v1",
+          "x_label": "microseconds per first touch",
+          "groups": [
+            "A/A sparse",
+            "A/A allocated",
+            "xs-ra-sequential-v1",
+            "xs-zswap-linear-v1",
+            "xs-ra-cluster-v1"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 339.621,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 372.754,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 398.294,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 397.376,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 383.836,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 390.077,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 340.181,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 344.218,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 356.087,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 386.589,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 380.79,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 345.788,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 398.987,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 356.033,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 332.898,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 319.034,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 376.586,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 415.013,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 592.882,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 389.872,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Compressed sequential mean: +24.4% for xs-zswap-linear-v1",
+          "x_label": "microseconds per first touch",
+          "groups": [
+            "A/A sparse",
+            "A/A allocated",
+            "xs-ra-sequential-v1",
+            "xs-zswap-linear-v1",
+            "xs-ra-cluster-v1"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 11.676,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 11.846,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 11.758,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 11.848,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 11.735,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 11.887,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 11.719,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 11.754,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 11.866,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 11.827,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 11.995,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 11.714,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 11.755,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 14.586,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 14.651,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 11.749,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 11.818,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 11.838,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 11.981,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 12.056,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Compressed sequential p99: +21.2% for xs-zswap-linear-v1",
+          "x_label": "microseconds per first touch",
+          "groups": [
+            "A/A sparse",
+            "A/A allocated",
+            "xs-ra-sequential-v1",
+            "xs-zswap-linear-v1",
+            "xs-ra-cluster-v1"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 25.93,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 28.007,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 28.005,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 29.655,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 26.259,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 30.056,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 27.272,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 27.44,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 28.413,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 28.134,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 32.687,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 26.999,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 27.032,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 33.189,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 32.988,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 27.581,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 28.317,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 27.893,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 28.335,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 27.887,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Compressed random mean: +23.3% for xs-zswap-linear-v1",
+          "x_label": "microseconds per first touch",
+          "groups": [
+            "A/A sparse",
+            "A/A allocated",
+            "xs-ra-sequential-v1",
+            "xs-zswap-linear-v1",
+            "xs-ra-cluster-v1"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 13.658,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 13.92,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 13.673,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 13.839,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 13.672,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 13.844,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 13.596,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 13.854,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 13.744,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 13.745,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 13.93,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 13.695,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 13.675,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 16.86,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 16.892,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 13.701,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 20.971,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 19.831,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 22.592,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 18.33,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Compressed random p99: +29.1% for xs-zswap-linear-v1",
+          "x_label": "microseconds per first touch",
+          "groups": [
+            "A/A sparse",
+            "A/A allocated",
+            "xs-ra-sequential-v1",
+            "xs-zswap-linear-v1",
+            "xs-ra-cluster-v1"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 27.853,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 31.65,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 28.149,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 31.295,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 29.351,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 34.106,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 27.727,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 29.748,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 31.194,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 32.748,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 36.006,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 29.646,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 29.361,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 40.313,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 36.661,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 30.19,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 43.275,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 41.259,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 51.41,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 39.489,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "Prefetch hits reveal whether the physical mechanism ran",
+          "x_label": "swap_ra_hit per guest",
+          "groups": [
+            "A/A sparse",
+            "A/A allocated",
+            "xs-ra-sequential-v1",
+            "xs-zswap-linear-v1",
+            "xs-ra-cluster-v1"
+          ],
+          "series": [
+            "baseline",
+            "candidate"
+          ],
+          "points": [
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 1,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 0,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 1,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A sparse",
+              "series": "baseline",
+              "value": 0,
+              "tip": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 2,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 0,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 0,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b"
+            },
+            {
+              "group": "A/A allocated",
+              "series": "baseline",
+              "value": 1,
+              "tip": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 1,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 1,
+              "tip": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "candidate",
+              "value": 0,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-sequential-v1",
+              "series": "baseline",
+              "value": 0,
+              "tip": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 1,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 0,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "candidate",
+              "value": 0,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-zswap-linear-v1",
+              "series": "baseline",
+              "value": 3,
+              "tip": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 0,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 32778,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "candidate",
+              "value": 65544,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b"
+            },
+            {
+              "group": "xs-ra-cluster-v1",
+              "series": "baseline",
+              "value": 0,
+              "tip": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "checks",
+      "title": "Evidence and limits",
+      "blocks": [
+        {
+          "type": "checklist",
+          "takeaway": "Runtime evidence and missing acceptance gates",
+          "items": [
+            {
+              "status": "pass",
+              "label": "48 completed guest results; 48 integration passes",
+              "evidence": "summary.json"
+            },
+            {
+              "status": "warn",
+              "label": "1 failed or incomplete retained attempts",
+              "evidence": "REPORT.md"
+            },
+            {
+              "status": "missing",
+              "label": "Promotion, independent confirmation and holdout",
+              "evidence": "policy.json required gates"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Every required policy gate",
+          "columns": [
+            "Candidate",
+            "Gate",
+            "Evidence state"
+          ],
+          "rows": [
+            [
+              "xs-ra-sequential-v1",
+              "gcc_swap_on",
+              "observed"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "gcc_swap_off",
+              "missing"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "gcc_zswap_on",
+              "observed"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "sparse_no_new_diagnostics",
+              "missing"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "checkpatch",
+              "observed"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "guest_boot_identity",
+              "observed"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "data_roundtrip",
+              "observed"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "fork_cow",
+              "observed"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "concurrent_fault",
+              "observed"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "swapoff_live_pages",
+              "observed"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "allocation_failure",
+              "missing"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "io_failure",
+              "missing"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "memcg_limits",
+              "missing"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "large_folio",
+              "missing"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "lockdep",
+              "missing"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "kasan",
+              "missing"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "kcsan",
+              "missing"
+            ],
+            [
+              "xs-ra-sequential-v1",
+              "no_new_kernel_warnings",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "gcc_swap_on",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "gcc_swap_off",
+              "missing"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "gcc_zswap_on",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "sparse_no_new_diagnostics",
+              "missing"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "checkpatch",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "guest_boot_identity",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "data_roundtrip",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "fork_cow",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "concurrent_fault",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "swapoff_live_pages",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "allocation_failure",
+              "missing"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "io_failure",
+              "missing"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "memcg_limits",
+              "missing"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "large_folio",
+              "missing"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "lockdep",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "kasan",
+              "observed"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "kcsan",
+              "missing"
+            ],
+            [
+              "xs-zswap-linear-v1",
+              "no_new_kernel_warnings",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "gcc_swap_on",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "gcc_swap_off",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "gcc_zswap_on",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "sparse_no_new_diagnostics",
+              "missing"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "checkpatch",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "guest_boot_identity",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "data_roundtrip",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "fork_cow",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "concurrent_fault",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "swapoff_live_pages",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "allocation_failure",
+              "missing"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "io_failure",
+              "missing"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "memcg_limits",
+              "missing"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "large_folio",
+              "missing"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "lockdep",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "kasan",
+              "observed"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "kcsan",
+              "missing"
+            ],
+            [
+              "xs-ra-cluster-v1",
+              "no_new_kernel_warnings",
+              "observed"
+            ]
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Sparse-image A/A noise is retained. Preallocation tests a possible confounder; causal attribution remains open. Only measured fast evidence informs the next hypothesis."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Next",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Owner review determines confirmation",
+          "columns": [
+            "Action",
+            "Condition"
+          ],
+          "rows": [
+            [
+              "Retain useful mechanisms",
+              "Fast guards and targeted correctness pass"
+            ],
+            [
+              "Run slow confirmation",
+              "Exceptional fast evidence plus explicit owner approval"
+            ],
+            [
+              "Promote candidate",
+              "Complete full project gates and independent evidence"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

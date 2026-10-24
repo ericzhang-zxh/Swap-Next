@@ -1,6 +1,6 @@
 {
   "campaign": "xswap-next-2026-10-24",
-  "status": "CORRECTNESS_AND_ENVIRONMENT_REVISION",
+  "status": "COMPLETE_ALL_FAST_REJECTED",
   "authorized_utc": "2026-10-24T08:39:36.414199+00:00",
   "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
   "protocol": "benchmark/swap-standard/protocol-xswap-next-2026-10-24.json",
@@ -40,5 +40,15 @@
   "historical_campaign": "xswap-swapin-2026-10-23",
   "recovery": "Prior campaign complete with two fast regressions, 46 guests and eight builds; no active guest or build found. Untracked confirmation inputs preserved.",
   "protocol_revision": 2,
-  "calibration_diagnosis": "calibration-diagnosis.json"
+  "calibration_diagnosis": "calibration-diagnosis.json",
+  "completed_utc": "2026-10-24T09:24:58.628467+00:00",
+  "actual_budget": {
+    "created": 1792831186.5415323,
+    "guests": 48,
+    "builds": 6
+  },
+  "elapsed_seconds": 2712.086946249008,
+  "running": false,
+  "stop_reason": "All three candidates screened out and 48-guest budget exhausted",
+  "review": "explainer.html"
 }

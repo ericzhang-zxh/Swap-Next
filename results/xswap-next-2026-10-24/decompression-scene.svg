@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 292" role="img" aria-label="Before and after split-object zswap decompression">
+<defs><marker id="scene-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="var(--ink-2,#5b5348)"/></marker></defs>
+<g fill="none" stroke="var(--axis,#cfc6b6)" stroke-width="1.5">
+<rect x="22" y="42" width="120" height="64" rx="4"/><rect x="168" y="42" width="120" height="64" rx="4"/>
+<rect x="22" y="192" width="120" height="64" rx="4"/><rect x="168" y="192" width="120" height="64" rx="4"/>
+<rect x="340" y="198" width="150" height="46" rx="4"/><rect x="388" y="52" width="140" height="46" rx="8"/>
+<rect x="548" y="198" width="125" height="46" rx="8"/>
+<rect x="624" y="42" width="92" height="64" rx="4"/>
+<rect x="706" y="192" width="32" height="64" rx="4"/>
+</g>
+<g fill="var(--series-1,#6a4fd1)" opacity=".5"><rect x="94" y="46" width="44" height="56"/><rect x="172" y="46" width="44" height="56"/><rect x="94" y="196" width="44" height="56"/><rect x="172" y="196" width="44" height="56"/></g>
+<rect x="345" y="203" width="140" height="36" fill="var(--series-2,#00978c)" opacity=".35"/>
+<g fill="none" stroke="var(--ink-2,#5b5348)" stroke-width="1.5" marker-end="url(#scene-arrow)">
+<path d="M138 64 L388 64"/><path d="M216 88 L388 88"/><path d="M528 75 L624 75"/>
+<path d="M138 214 L340 214"/><path d="M216 236 L340 236"/><path d="M490 221 L548 221"/><path d="M673 221 L706 221"/>
+</g>
+<g fill="var(--ink,#1f1b16)" font-family="system-ui,sans-serif" font-size="12">
+<text x="22" y="24" font-weight="600">Before: one compressed object spans two source pages</text>
+<text x="22" y="128">zsmalloc page</text><text x="168" y="128">next source page</text>
+<text x="404" y="80">streaming decode</text><text x="628" y="80">output folio</text>
+<text x="22" y="173" font-weight="600">After: copy the split payload into the existing locked buffer</text>
+<text x="355" y="226">contiguous input</text><text x="557" y="226">one-shot decode</text>
+<text x="22" y="279">Same payload, destination folio and ownership; the measured question is whether copying costs less than streaming.</text>
+</g></svg>

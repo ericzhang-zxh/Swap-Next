@@ -32,3 +32,7 @@ History is shared within a VMA, so unrelated concurrent streams can alter admiss
 Revert candidate commits to return to the frozen baseline; no merge is authorized.
 
 Independent review of the pre-build version found the page-cluster=0 performance boundary. The final commit returns to synchronous faults when readahead is disabled. Source review supports bounded discovery; random-tail recovery still requires measurement.
+
+## Measured disposition
+
+Fast report `49add9b084d04941a459281838bbf3f3` is REGRESSION: disk sequential p99 +7.90% and random p99 +9.34%, beyond their calibrated envelopes. Both release-config correctness runs pass. Both candidate disk measurements report zero swap_ra, so the intended prefetch mechanism was absent. The boot log omits the SS marker for physical swap; swapfile.c increments nr_rotate_swap for that classification, and the candidate rejects non-VMA mode. This source/runtime agreement supports the coverage finding (confidence: high). Additional samples or a device-state trace could change attribution of the observed latency differences; two pairs do not establish a persistent causal regression. The candidate is closed without debug builds or slow confirmation.
