@@ -21,29 +21,29 @@
     {
       "id": "context",
       "title": "The problem: each missing page can stop the application",
-      "lead": "When a needed page is outside RAM, the application faults and waits for it to return. Xswap gives that page a virtual swap slot: its contents may be compressed in RAM or written back to disk.",
+      "lead": "An application needs a page that has been swapped out. It must wait for the kernel to restore it. The goal is to reduce that application-visible waiting.",
       "blocks": [
         {
           "type": "flow",
-          "takeaway": "Original path in this 4 KiB test: fetch on demand",
+          "takeaway": "Before: demand reads wait for one page at a time",
           "nodes": [
             {
               "id": "0",
-              "label": "Application needs page",
+              "label": "Application waits",
               "col": 0,
               "row": 0,
               "tone": "default"
             },
             {
               "id": "1",
-              "label": "Fetch that page",
+              "label": "Fetch needed page",
               "col": 1,
               "row": 0,
               "tone": "focus"
             },
             {
               "id": "2",
-              "label": "Application continues",
+              "label": "Application resumes",
               "col": 2,
               "row": 0,
               "tone": "default"
@@ -62,15 +62,95 @@
         },
         {
           "type": "note",
-          "text": "The baseline routes xswap through synchronous demand reads and skips ordinary readahead. That is reasonable for cheap in-memory reads, but written-back pages now require disk I/O. Sequential access may expose avoidable waiting."
+          "text": "This baseline skips ordinary readahead for xswap. That can suit cheap compressed-memory reads, but written-back pages require disk I/O. Predictable neighboring reads motivate prefetch."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where the change fits in the system",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The change sits on a swap-cache miss, before backend retrieval",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "fault",
+              "label": "Kernel swap fault",
+              "col": 1,
+              "row": 0
+            },
+            {
+              "id": "cache",
+              "label": "Swap cache",
+              "sub": "Reuse page if present",
+              "col": 2,
+              "row": 0
+            },
+            {
+              "id": "policy",
+              "label": "Xswap read path",
+              "sub": "Changed prefetch policy",
+              "col": 1,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "ram",
+              "label": "Zswap in RAM",
+              "sub": "Decompress page",
+              "col": 0,
+              "row": 2
+            },
+            {
+              "id": "disk",
+              "label": "Physical backing",
+              "sub": "Read page from disk",
+              "col": 2,
+              "row": 2
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "fault"
+            },
+            {
+              "from": "fault",
+              "to": "cache"
+            },
+            {
+              "from": "cache",
+              "to": "policy",
+              "label": "miss"
+            },
+            {
+              "from": "policy",
+              "to": "ram"
+            },
+            {
+              "from": "policy",
+              "to": "disk"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Fetched pages enter the swap cache and satisfy application reads. The patches change which neighbors are prepared, leaving the application, cache role and storage backends in place. Extra work now may save a later wait\u2014or lengthen the current fault."
         },
         {
           "type": "flow",
-          "takeaway": "Disk: predictable neighbors could hide the next I/O wait",
+          "takeaway": "H1: physical-backing checks enable disk readahead",
           "nodes": [
             {
               "id": "0",
-              "label": "Disk-backed fault",
+              "label": "Disk-backed page",
               "col": 0,
               "row": 0,
               "tone": "default"
@@ -84,7 +164,7 @@
             },
             {
               "id": "2",
-              "label": "Fewer later waits",
+              "label": "Fill swap cache",
               "col": 2,
               "row": 0,
               "tone": "default"
@@ -103,7 +183,7 @@
         },
         {
           "type": "flow",
-          "takeaway": "Compressed RAM: early cache entries could avoid later fault work",
+          "takeaway": "H2: residency checks select compressed neighbors",
           "nodes": [
             {
               "id": "0",
@@ -139,45 +219,8 @@
           ]
         },
         {
-          "type": "flow",
-          "takeaway": "Changed path: one fault also prepares likely next pages",
-          "nodes": [
-            {
-              "id": "0",
-              "label": "Application needs page",
-              "col": 0,
-              "row": 0,
-              "tone": "default"
-            },
-            {
-              "id": "1",
-              "label": "Fetch page + neighbors",
-              "col": 1,
-              "row": 0,
-              "tone": "focus"
-            },
-            {
-              "id": "2",
-              "label": "Later reads hit cache",
-              "col": 2,
-              "row": 0,
-              "tone": "default"
-            }
-          ],
-          "edges": [
-            {
-              "from": "0",
-              "to": "1"
-            },
-            {
-              "from": "1",
-              "to": "2"
-            }
-          ]
-        },
-        {
           "type": "note",
-          "text": "Both patches start from the same descriptor-lifetime repair; they are not stacked. The goal is lower application read latency. The tradeoff is extra work on the current fault, especially when neighbors are not needed."
+          "text": "H1 reuses existing readahead and filters speculative xswap pages for physical backing. H2 still decompresses synchronously. Both start from the same lifetime repair; they are independent patches."
         }
       ]
     },

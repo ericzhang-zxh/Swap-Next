@@ -52,12 +52,30 @@ spec['verdict']['tiles']=[
  {'label':'Disk prefetch','value':'Mixed result','note':'Sequential reads improve; random tail worsens.'},
  {'label':'Compressed prefetch','value':'Longer stalls','note':'Average stays similar; tail worsens.'}
 ]
+# Lead with the verdict, then zoom from the system into the changed read policy.
+context['lead']='An application needs a page that has been swapped out. It must wait for the kernel to restore it. The goal is to reduce that application-visible waiting.'
+context['blocks']=[
+ flow('Before: demand reads wait for one page at a time', ['Application waits','Fetch needed page','Application resumes']),
+ {'type':'note','text':'This baseline skips ordinary readahead for xswap. That can suit cheap compressed-memory reads, but written-back pages require disk I/O. Predictable neighboring reads motivate prefetch.'}
+]
+system={'id':'system','title':'Where the change fits in the system','blocks':[
+ {'type':'flow','takeaway':'The change sits on a swap-cache miss, before backend retrieval','nodes':[
+  {'id':'app','label':'Application','col':0,'row':0},
+  {'id':'fault','label':'Kernel swap fault','col':1,'row':0},
+  {'id':'cache','label':'Swap cache','sub':'Reuse page if present','col':2,'row':0},
+  {'id':'policy','label':'Xswap read path','sub':'Changed prefetch policy','col':1,'row':1,'tone':'focus'},
+  {'id':'ram','label':'Zswap in RAM','sub':'Decompress page','col':0,'row':2},
+  {'id':'disk','label':'Physical backing','sub':'Read page from disk','col':2,'row':2}],
+  'edges':[{'from':'app','to':'fault'},{'from':'fault','to':'cache'},{'from':'cache','to':'policy','label':'miss'},{'from':'policy','to':'ram'},{'from':'policy','to':'disk'}]},
+ {'type':'note','text':'Fetched pages enter the swap cache and satisfy application reads. The patches change which neighbors are prepared, leaving the application, cache role and storage backends in place. Extra work now may save a later wait—or lengthen the current fault.'},
+ flow('H1: physical-backing checks enable disk readahead', ['Disk-backed page','Read neighbors','Fill swap cache']),
+ flow('H2: residency checks select compressed neighbors', ['Resident in zswap','Decompress ahead','Fill swap cache']),
+ {'type':'note','text':'H1 reuses existing readahead and filters speculative xswap pages for physical backing. H2 still decompresses synchronously. Both start from the same lifetime repair; they are independent patches.'}
+]}
+sections.insert(1,system)
 (p/'explainer.json').write_text(json.dumps(spec,indent=2)+'\n')
 subprocess.run(['python3',str(root/'.agents/skills/explaining-campaign-results/scripts/build_page.py'),str(p/'explainer.json'),str(p/'explainer.html')],check=True)
 h=(p/'explainer.html').read_text()
-# Explain the original path and motivation before showing the verdict.
-context_html=re.search(r'<section id="context">.*?</section>',h,re.S).group(0)
-h=h.replace(context_html,'').replace('<div class="card">',context_html+'<div class="card">',1)
 # Keep the overview navigation short; audit material is explicitly opt-in.
 h=re.sub(r'<a href="#audit-[^"]+">.*?</a>','',h)
 h=re.sub(r'(<section id="audit-[^"]+">)(.*?)(</section>)',lambda m:'<details class="audit"><summary>'+re.search(r'<h2>(.*?)</h2>',m[2]).group(1)+'</summary>'+m[0]+'</details>',h,flags=re.S)
