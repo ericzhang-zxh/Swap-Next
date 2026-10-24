@@ -30,9 +30,10 @@ Loading that skill does not authorize running or publishing experiments.
 - **Slow tier**: do not run the slow tier, or any other multi-round confirmation,
   on the Linux worker by default. It is reserved for an exceptionally strong
   fast-tier result, and the owner must explicitly approve each slow-tier run
-  first. A fast-tier pass alone does not qualify. Report fast-tier results
-  and stop.
-- **Merging**: nothing is merged or promoted automatically.
+  first. A fast-tier pass alone does not qualify. Stop experiment execution
+  after the fast tier, then complete the report delivery below.
+- **Merging**: candidate code is never merged or promoted automatically. Report-only
+  publication follows the standing policy below.
 - **Commits**: keep runtime state, secrets, machine paths and credentials out
   of commits. AI tools add no `Signed-off-by`; a human certifies upstream
   submissions.
@@ -69,3 +70,31 @@ Loading that skill does not authorize running or publishing experiments.
   or links to [DESIGN.md#limitations](DESIGN.md#limitations).
 - Say a thing once. Link to the document that owns it instead of restating it.
 - Prefer a short table of numbers to a paragraph of qualifiers.
+
+## Report publication
+
+- Commit and push completed experiment work to its experiment branch as part of
+  closeout, then publish the report separately to main. Do not wait for another
+  approval when this standing authorization applies.
+- Closing an authorized campaign includes publishing its completed review report
+  to Pages, including rejected and inconclusive outcomes, unless the user asks
+  to keep that report private or local.
+- Keep candidate code, benchmark changes, submodule updates and live runtime
+  state on the experiment branch. Publish reviewed `results/<campaign>/` report
+  artifacts in a separate commit based on current `origin/main`; never merge the
+  experiment branch merely to expose its report.
+- Include `explainer.html`, `explainer.json`, the written report and a public data
+  summary. Preserve failed gates, uncertainty and pinned source/evidence links;
+  omit credentials, host-specific paths and raw private runtime data.
+- Use an isolated worktree, inspect the complete diff, build the Pages index and
+  push the report-only commit to `main`. Pages collects the checked-out main
+  tree, not reports across all branches.
+- Verify the deployment for that commit and the live campaign page and index
+  before reporting publication complete. Publishing a report grants no approval
+  to promote its candidate code or launch another experiment.
+
+- For an older experiment branch, reconcile delivery instructions against current
+  `origin/main` before closeout. Frozen baselines, protocols, STOP state and
+  budgets remain unchanged. An agent-authored `publication: false` field does
+  not revoke the owner's standing authorization; only an explicit user request
+  can keep a report private/local or withhold a push.

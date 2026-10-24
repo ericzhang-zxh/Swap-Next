@@ -49,6 +49,9 @@ drift. They do not stop a malicious agent.
 
 ## Permissions
 
-Only the owner changes policies and baselines. Agents get no host root, no
-credentials, and may not publish, email, push, reboot, or change host swap or
-the host kernel. Nothing merges automatically, and no agent adds a DCO sign-off.
+Campaign scope and baseline changes follow AGENTS.md and the owner-authorized
+contract. The owner approves candidate promotion. No agent gets host root,
+reboots the host, changes host swap or the host kernel, or adds a DCO sign-off.
+Execution workers cannot access credentials, email, push or publish. The primary
+agent performs the standing experiment-branch push and report-only main/Pages
+delivery in AGENTS.md; candidate code is never promoted automatically.

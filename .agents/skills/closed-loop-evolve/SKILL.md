@@ -102,8 +102,30 @@ artifact, not only the written report. Update the report's status and findings
 first, then produce the review artifact the project defines (for Swap Next, the
 explainer page; see the binding) from the same evidence, and link it from the
 report. Do this even if nothing was accepted or the campaign ended early.
-Generating the artifact is part of closing; publishing it follows the project's
-publication authorization.
+Generating the artifact is part of closing. Follow the project's standing
+report-publication policy when authorized, independently of candidate promotion.
+For Swap Next, commit and push the completed experiment branch, publish only
+reviewed report artifacts to main from an isolated origin/main worktree, and
+verify that commit's Pages deployment, live campaign page and index. This is
+standing delivery authorization, including rejected and inconclusive outcomes;
+only an explicit user request withholds a push or keeps a report private/local.
+Check current origin/main delivery rules when resuming an older experiment
+branch. An agent-authored publication flag cannot revoke that authorization.
+Frozen experiment inputs, STOP state, budgets and candidate promotion gates
+remain unchanged. An experiment STOP or exhausted budget stops builds and
+guests; it does not cancel this authorized report-only closeout.
+
+For Swap Next, load `.agents/skills/explaining-campaign-results/SKILL.md` before
+building the human-review HTML. Its presentation contract is: verdict first →
+context and motivation → actual changes → results and explanation → next steps.
+Explain changes from system to detail: locate the change in the larger architecture
+and end-to-end path before zooming into its local before/after mechanism.
+Use the approved three-level visual standard: whole-system scene → subsystem
+location → concrete before/after, with consistent objects and optional step-through
+interaction. Avoid prose disguised as chains of boxes.
+Prefer diagrams and charts; exact data and full evidence stay closed by default,
+including on mobile. Keep failed gates and material limits visible in the overview.
+The reporting skill owns the detailed layout and visual acceptance checks.
 
 ## Handoff
 

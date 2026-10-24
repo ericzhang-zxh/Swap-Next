@@ -41,9 +41,24 @@ When the campaign stops, close it with the review page:
 1. Update `results/<c>/README.md` (status, findings, limits) and its review notes.
 2. Follow [explaining-campaign-results](../../explaining-campaign-results/SKILL.md)
    to generate `results/<c>/explainer.json` and `explainer.html` from the
-   evaluation reports, render both themes, and link the page from the README.
-3. Commit both on the campaign branch. Merging to `main` publishes the page
-   through GitHub Pages, so it waits for the owner.
+   evaluation reports. Follow its verdict-first, visual-first presentation contract;
+   keep exact data and audit details collapsed. Check both themes and mobile,
+   then link the page from the README.
+3. Commit and push completed experiment work and retained evidence to the
+   experiment branch. Under AGENTS.md's standing report-publication policy,
+   use an isolated worktree from current `origin/main`
+   to copy only reviewed report artifacts into `results/<c>/`. Keep candidate
+   code, benchmark changes, gitlinks and raw runtime state off main.
+4. Inspect the diff and build the Pages index, then push the report-only commit
+   to main. Verify that commit's Pages deployment, live campaign URL and index.
+   Preserve failed or inconclusive verdicts; report publication is not promotion.
+   If the user explicitly withholds a push or publication, honor that request.
+   Otherwise finish both delivery steps without asking again; an agent-authored
+   publication flag does not override the owner's standing authorization.
+
+For an older experiment checkout, inspect current `origin/main:AGENTS.md` and
+this binding on origin/main before closeout. Reconcile delivery rules without
+changing frozen scientific inputs, STOP files or experiment budgets.
 
 What each adapter action does:
 

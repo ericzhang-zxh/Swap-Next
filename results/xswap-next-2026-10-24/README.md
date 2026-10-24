@@ -2,7 +2,7 @@
 
 Status: complete. Three candidates screened out; none eligible for slow confirmation or promotion. All experiment processes have stopped.
 
-[Visual review](explainer.html) | [Full report](REPORT.md) | [Machine-readable summary](summary.json) | [Evidence audit](evidence-audit.json)
+[Live review](https://ericzhang-zxh.github.io/Swap-Next/xswap-next-2026-10-24/) | [Full report](REPORT.md) | [Machine-readable summary](summary.json) | [Evidence audit](evidence-audit.json)
 
 | Round | Candidate | Result |
 |---|---|---|
@@ -21,3 +21,7 @@ Investigate variance and demand-first speculative I/O before further optimizatio
 ## Limitations
 
 The first sparse-image A/A failed its noise gate. Preallocation revision 2 passed, with the initial failure retained. Full promotion still requires missing policy gates and independent evidence; see REPORT.md. No code was promoted or published. The KASAN configurations retain the same pre-existing vma.c frame-size warning and config overrides as their baseline; no new build diagnostics were found.
+
+## Report delivery
+
+The completed report is published separately on main and Pages under the owner's standing authorization. The original scientific snapshot is commit `15bf186`; report delivery does not promote candidate code or restart experiments.
