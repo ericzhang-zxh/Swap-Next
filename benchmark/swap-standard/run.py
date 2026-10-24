@@ -170,6 +170,7 @@ def main():
         reason = None
         with (dest / "serial.log").open("w") as log:
             if stop_requested(args.stop_file):
+                disk.unlink()
                 raise SystemExit("STOP")
             proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                                     start_new_session=True, preexec_fn=bind_child_to_parent)
@@ -194,6 +195,8 @@ def main():
                     except subprocess.TimeoutExpired:
                         os.killpg(proc.pid, signal.SIGKILL)
                         proc.wait()
+                # Scratch guest swap; nothing reads it after QEMU exits.
+                disk.unlink(missing_ok=True)
         result.update(exit_code=proc.returncode, stop_reason=reason, wall_seconds=time.monotonic() - start)
         try:
             result.update(parse((dest / "serial.log").read_text(errors="replace"), image_sha,
