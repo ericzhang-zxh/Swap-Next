@@ -1,0 +1,17 @@
+{
+  "valkey": {
+    "url": "https://github.com/valkey-io/valkey.git",
+    "tag": "8.1.9",
+    "commit": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+    "build": "make -j4 BUILD_TLS=no MALLOC=libc"
+  },
+  "vm-scalability": {
+    "url": "https://git.kernel.org/pub/scm/linux/kernel/git/wfg/vm-scalability.git",
+    "commit": "b3c2ded99b52ff92cafc408e407a6e1b22c96487",
+    "build": "make -j4 usemem"
+  },
+  "linux_source": {
+    "note": "Source tree compiled by the build workload; independent of the kernel under test.",
+    "commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c"
+  }
+}

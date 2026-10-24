@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "campaign": "confirm-h1-ra-phys-2026-10-23",
+  "purpose": "Confirm or refute the fast-tier screen-out of H1 (xs-ra-phys-v1) with 10 rotated rounds, and measure plain-swapfile parity on the same disk and zswap setups.",
+  "supersedes_nothing": "results/xswap-swapin-2026-10-23 and its protocol are preserved unchanged",
+  "reference_arm": "A",
+  "arms": {
+    "A": {"label": "xswap baseline (descriptor-lifetime fix)", "build": "xs-desc-v1", "mode": "xswap", "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f"},
+    "B": {"label": "H1 physical-residency readahead", "build": "std-e401f1314", "mode": "xswap", "commit": "e401f1314d81d3990de62af0ba37fc5df79193f6"},
+    "C": {"label": "plain swapfile, same baseline kernel", "build": "xs-desc-v1", "mode": "plain", "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f"}
+  },
+  "cases": {
+    "swapin-disk": {"workload": "swapin", "backend": "disk", "arms": ["A", "B", "C"],
+      "metrics": ["swapin_seq.mean_ns", "swapin_seq.p50_ns", "swapin_seq.p99_ns", "swapin_rand.mean_ns", "swapin_rand.p50_ns", "swapin_rand.p99_ns"]},
+    "swapin-zswap": {"workload": "swapin", "backend": "zswap", "arms": ["A", "B", "C"],
+      "metrics": ["swapin_seq.mean_ns", "swapin_seq.p50_ns", "swapin_seq.p99_ns", "swapin_rand.mean_ns", "swapin_rand.p50_ns", "swapin_rand.p99_ns"]}
+  },
+  "rounds": 10,
+  "order": "all six case:arm jobs per round, cyclically rotated by round index",
+  "guest_timeout": 900,
+  "bootstrap_resamples": 10000,
+  "seed": 1,
+  "decision_rule": "A metric change is reported as established only when the 95% bootstrap CI of the per-round geometric-mean ratio excludes 1. Reference-arm between-round CV is reported as the observed noise.",
+  "promotion": "none; human review only"
+}

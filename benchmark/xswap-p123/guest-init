@@ -1,0 +1,45 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# Initramfs stage: mount the read-only benchmark root and run one workload in it.
+export PATH=/bin:/sbin
+fail() {
+    echo "BENCH_FAIL $1"
+    echo KERNEL_LOG_BEGIN
+    dmesg
+    echo KERNEL_LOG_END
+    poweroff -f
+    exit 1
+}
+mount -t proc proc /proc || fail proc
+mount -t sysfs sysfs /sys || fail sysfs
+mount -t devtmpfs devtmpfs /dev || fail devtmpfs
+exec </dev/console >/dev/console 2>&1
+echo BENCH_BOOT
+uname -a
+cat /proc/sys/kernel/random/boot_id
+echo CMDLINE_BEGIN
+cat /proc/cmdline
+echo CMDLINE_END
+arg() {
+    for word in $(cat /proc/cmdline); do
+        case "$word" in "$1"=*) echo "${word#*=}"; return;; esac
+    done
+}
+backend=$(arg bench.backend)
+mode=$(arg bench.mode)
+workload=$(arg bench.workload)
+[ -n "$backend" ] && [ -n "$mode" ] && [ -n "$workload" ] || fail cmdline
+mkdir -p /bench
+mount -t ext4 -o ro /dev/vdb /bench || fail benchroot
+for d in proc sys dev; do
+    mount --bind /$d /bench/$d || fail bind_$d
+done
+mount -t tmpfs -o mode=1777,size=24G tmpfs /bench/tmp || fail tmp
+mount -t cgroup2 none /bench/sys/fs/cgroup || fail cgroup
+mount -t debugfs debugfs /bench/sys/kernel/debug || fail debugfs
+chroot /bench /bin/bash /opt/bench/bench.sh "$backend" "$mode" "$workload" || fail workload
+echo KERNEL_LOG_BEGIN
+dmesg
+echo KERNEL_LOG_END
+echo BENCH_PASS
+poweroff -f
