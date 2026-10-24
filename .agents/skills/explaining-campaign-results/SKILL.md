@@ -22,9 +22,16 @@ available on demand.
    addressed, and why the proposed mechanism might help. Assume the reader has
    not followed the campaign conversation. Distinguish the hypothesis from the
    measured finding.
-3. **What changed.** Use before/after or branching flow diagrams to show each
-   candidate's actual change and its expected tradeoff. Put exact patches in
-   collapsed evidence. State whether candidates are independent or stacked.
+3. **What changed, in the larger system.** Start with a high-level system map:
+   show the user/application goal, relevant components or layers, and the request
+   or data path. Highlight where the change sits, its upstream/downstream
+   dependencies, and which surrounding components stay unchanged. Explain why
+   changing this location could affect the end-to-end outcome and where cost or
+   work may move elsewhere in the system. Then zoom into before/after or branching
+   flow diagrams for each candidate's actual mechanism and expected tradeoff.
+   Use plain component roles before code symbols; keep the overview scoped to
+   what helps explain this experiment. Put exact patches in collapsed evidence.
+   State whether candidates are independent or stacked.
 4. **Results and explanation.** Use charts for the decisive comparisons and
    diagrams for the mechanism. Keep failures, uncertainty and important coverage
    limits visible. Label causal interpretations as inference unless demonstrated.

@@ -110,6 +110,8 @@ binding and AGENTS.md, then verify the Pages deployment and live URL.
 For Swap Next, load `.agents/skills/explaining-campaign-results/SKILL.md` before
 building the human-review HTML. Its presentation contract is: verdict first →
 context and motivation → actual changes → results and explanation → next steps.
+Explain changes from system to detail: locate the change in the larger architecture
+and end-to-end path before zooming into its local before/after mechanism.
 Prefer diagrams and charts; exact data and full evidence stay closed by default,
 including on mobile. Keep failed gates and material limits visible in the overview.
 The reporting skill owns the detailed layout and visual acceptance checks.
