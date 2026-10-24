@@ -107,6 +107,13 @@ report-publication policy when authorized, independently of candidate promotion.
 For Swap Next, publish report artifacts separately to main as described in the
 binding and AGENTS.md, then verify the Pages deployment and live URL.
 
+For Swap Next, load `.agents/skills/explaining-campaign-results/SKILL.md` before
+building the human-review HTML. Its presentation contract is: verdict first →
+context and motivation → actual changes → results and explanation → next steps.
+Prefer diagrams and charts; exact data and full evidence stay closed by default,
+including on mobile. Keep failed gates and material limits visible in the overview.
+The reporting skill owns the detailed layout and visual acceptance checks.
+
 ## Handoff
 
 Return the hypothesis and exact revision, work actually performed, passed/failed/

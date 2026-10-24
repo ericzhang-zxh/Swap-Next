@@ -41,7 +41,9 @@ When the campaign stops, close it with the review page:
 1. Update `results/<c>/README.md` (status, findings, limits) and its review notes.
 2. Follow [explaining-campaign-results](../../explaining-campaign-results/SKILL.md)
    to generate `results/<c>/explainer.json` and `explainer.html` from the
-   evaluation reports, render both themes, and link the page from the README.
+   evaluation reports. Follow its verdict-first, visual-first presentation contract;
+   keep exact data and audit details collapsed. Check both themes and mobile,
+   then link the page from the README.
 3. Retain the complete evidence on the campaign branch. Under AGENTS.md's standing
    report-publication policy, use an isolated worktree from current `origin/main`
    to copy only reviewed report artifacts into `results/<c>/`. Keep candidate

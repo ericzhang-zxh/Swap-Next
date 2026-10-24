@@ -7,43 +7,68 @@ description: Use when a campaign, experiment round or candidate evaluation has f
 
 ## Overview
 
-The output is a single self-contained HTML page that a reviewer can check
-in five minutes. Pictures carry the argument: every claim has one chart or
-diagram, and the chart title states the claim. Prose is limited to one-line
-captions. `scripts/build_page.py` renders a JSON spec and enforces the text
-budget.
+Generate a self-contained HTML page for human review in five minutes. Put the
+verdict first, then explain why the experiment existed before showing its
+implementation and results. Prefer diagrams and charts to tables. Use short
+captions to connect the pictures; keep exact measurements and audit material
+available on demand.
 
 ## The page, in order
 
-| # | Section | Form | Content |
-|---|---|---|---|
-| 1 | Verdict | status badge + headline + ≤4 tiles | accepted / rejected / inconclusive / needs-review; boots run, gates passed, effect size |
-| 2 | What changed | `flow` + one `diff` per candidate | where the change sits in the code path; the exact patch |
-| 3 | How it was measured | `flow` | baseline → build → guest phases → metrics, with the scored phase highlighted |
-| 4 | What the data shows | `strip`, `lines`, `bars` | one dot per run, always including A/A or baseline runs; counters across phases; mechanism counters |
-| 5 | Why | `flow` | the cause chain behind the result, `bad`/`good` tones on the decisive step |
-| 6 | Review checklist | `checklist` | every gate as pass / fail / missing, with an evidence path; open questions as `warn` |
-| 7 | Next | `flow` or `table` | ranked next hypotheses, each with its falsifier |
+1. **Verdict.** Start with accepted / rejected / inconclusive / needs-review,
+   whether to continue, and the main benefit and cost in plain language. Prefer
+   qualitative summary tiles; exact effect sizes belong in expandable details.
+2. **Context and motivation.** Show the original path, the cost or problem being
+   addressed, and why the proposed mechanism might help. Assume the reader has
+   not followed the campaign conversation. Distinguish the hypothesis from the
+   measured finding.
+3. **What changed.** Use before/after or branching flow diagrams to show each
+   candidate's actual change and its expected tradeoff. Put exact patches in
+   collapsed evidence. State whether candidates are independent or stacked.
+4. **Results and explanation.** Use charts for the decisive comparisons and
+   diagrams for the mechanism. Keep failures, uncertainty and important coverage
+   limits visible. Label causal interpretations as inference unless demonstrated.
+5. **Next.** Show the next hypothesis, the cost it addresses and the observation
+   that would falsify it, using a short flow or diagram. End with expandable
+   evidence: measurement protocol, full samples, counters, patches and checks.
+
+## Visual and disclosure rules
+
+- Pictures carry the explanation. Prefer `flow` for paths and cause chains,
+  `strip` for paired samples and `lines`/`bars` for comparisons. Use tables for
+  exact lookup inside closed `<details>`, not as the default reading experience.
+- Keep chart axes, units, baseline and direction of improvement visible so the
+  picture is interpretable. Exact per-run values, percentages, thresholds and
+  full numeric tables are hidden by default and revealed on demand. Do not hide
+  the existence of a failed gate, a material regression or missing coverage.
+- Use takeaway titles that state the finding in plain language. Derive every
+  number from the evidence; do not require a number in each title.
+- Keep data tables and audit sections closed on initial load on desktop and
+  mobile. Never replace a mobile chart with an automatically expanded table.
+  Reflow diagrams where practical, otherwise allow local horizontal scrolling
+  with legible labels and no whole-page overflow.
+- Preserve all required evidence behind disclosure controls and pinned links.
+  Collapsing evidence must not remove failed attempts or change the verdict.
 
 ## Steps
 
-1. Read the campaign report, its machine-readable summary, the protocol and
-   the candidate patches.
-2. Write a throwaway extraction script that turns the summary into
-   `spec.json`. Every number on the page comes from that script.
-3. Write each takeaway as a claim with a number, for example "Disk retains
-   219 clusters whenever a shrink ran (9/9 boots)".
-4. Build the page: `python3 scripts/build_page.py spec.json explainer.html`.
-   A text-budget error means the content belongs in a chart or a table.
-5. Render the page in both themes with a headless browser, take
-   screenshots, and fix label collisions, overflow and empty charts.
-6. Save `explainer.json` and `explainer.html` next to the campaign report,
-   and follow AGENTS.md to publish report artifacts in a separate main commit,
-   keeping experimental code on its branch. Verify the deployment and live page
-   before linking it as published. A push to `main` publishes
-   every `results/<campaign>/explainer.html` to
-   `https://ericzhang-zxh.github.io/Swap-Next/<campaign>/` through
-   `.github/workflows/pages.yml` (`scripts/build_site.py` builds the index).
+1. Read the campaign report, machine-readable summary, protocol and patches.
+2. Write an extraction script that derives `explainer.json` from that evidence.
+   Use the page order above and separate overview sections from audit material.
+3. Build with `python3 scripts/build_page.py explainer.json explainer.html`.
+   Chart tables are already collapsed. Where the renderer lacks audit-section
+   disclosure, add reproducible post-processing in the campaign generator to
+   wrap those sections in closed `<details>`; retain verdict-first ordering.
+   A text-budget error means shorten the overview or move detail into evidence.
+4. Render light and dark themes and a narrow mobile viewport. Check readable
+   labels, no overlap or whole-page overflow, visible charts, no visible numeric
+   tables on initial load, and working evidence expand/collapse controls.
+5. Save the source spec, generator and HTML next to the report. Follow AGENTS.md
+   for report-only publication independently of candidate promotion. Build the
+   Pages index with `scripts/build_site.py`, verify the deployment for that
+   commit and the live page and index before claiming publication complete.
+   Pages collects `results/<campaign>/explainer.html` from main and serves it at
+   `https://ericzhang-zxh.github.io/Swap-Next/<campaign>/`.
 
 ## Spec reference
 
@@ -74,8 +99,10 @@ Every chart block takes `takeaway` (rendered as its title) and an optional
 | Mistake | Fix |
 |---|---|
 | Plotting means of two runs | Plot every run as a dot, with the baseline/A/A group in the same chart |
-| A neutral chart title ("Mapped clusters") | Make the title state the finding |
+| A neutral chart title ("Mapped clusters") | State the finding in plain language; keep exact figures expandable |
 | Four or more series on one chart | Split into small multiples; the builder colors three |
 | Typing numbers into the spec by hand | Generate the spec from the summary with a script |
-| A paragraph explaining a chart | Shorten it to one caption, or turn it into a `table` |
+| Starting with context before the verdict | Lead with the decision, then explain context and motivation |
+| Showing exact data or tables by default | Keep visuals visible and exact data in closed details |
+| A paragraph explaining a chart | Use a short caption or a cause-chain diagram; move detailed lookup into closed evidence |
 | A checklist that lists only passing gates | List every policy gate, including missing ones |
