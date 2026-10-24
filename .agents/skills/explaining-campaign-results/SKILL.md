@@ -39,6 +39,33 @@ available on demand.
    that would falsify it, using a short flow or diagram. End with expandable
    evidence: measurement protocol, full samples, counters, patches and checks.
 
+## Default visual standard
+
+Use the owner-approved [swap-in review](../../../results/xswap-swapin-2026-10-23/explainer.html)
+as the presentation reference. Its reproducible generator and `system-story.html`
+are in the same campaign directory. Adapt the visual vocabulary to the experiment;
+do not reuse its findings or impose memory-page imagery on unrelated systems.
+
+After the verdict, tell the story through three explicit zoom levels:
+
+1. **Whole system:** orient the reader with concrete components, locations and
+   objects. For memory work, show application, physical RAM, compressed contents
+   inside RAM and disk. Establish the user-visible goal and cost.
+2. **Relevant subsystem:** keep colors and identities consistent, fade unrelated
+   components, and highlight exactly where the change sits. Distinguish data,
+   metadata and control policy; show upstream/downstream relationships.
+3. **Concrete change:** use the same objects in a before/after scene. Show what
+   moves, becomes available, blocks progress or consumes work. Explain both the
+   benefit and where the cost moves.
+
+Prefer a few large, purposeful scenes over many small box-and-arrow diagrams.
+Do not merely put prose inside boxes. Use spatial grouping, page/object tiles,
+consistent colors and explicitly labeled actions to make the mechanism apparent.
+Use a step-through interaction when sequence helps: show a meaningful comparison
+on initial load, offer next/reset controls, and preserve a useful static explanation.
+Mark illustrative counts, sizes and timing as schematic; real measurements remain
+separate evidence. On phones, reflow scenes rather than shrinking the whole picture.
+
 ## Visual and disclosure rules
 
 - Pictures carry the explanation. Prefer `flow` for paths and cause chains,

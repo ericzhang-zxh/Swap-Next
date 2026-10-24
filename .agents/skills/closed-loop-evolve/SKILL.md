@@ -112,6 +112,9 @@ building the human-review HTML. Its presentation contract is: verdict first →
 context and motivation → actual changes → results and explanation → next steps.
 Explain changes from system to detail: locate the change in the larger architecture
 and end-to-end path before zooming into its local before/after mechanism.
+Use the approved three-level visual standard: whole-system scene → subsystem
+location → concrete before/after, with consistent objects and optional step-through
+interaction. Avoid prose disguised as chains of boxes.
 Prefer diagrams and charts; exact data and full evidence stay closed by default,
 including on mobile. Keep failed gates and material limits visible in the overview.
 The reporting skill owns the detailed layout and visual acceptance checks.
