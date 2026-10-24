@@ -87,4 +87,10 @@ h=re.sub(r'(<svg\b.*?</svg>)',r'<div class="visual-scroll">\1</div>',h,flags=re.
 h=h.replace('</style>', '.visual-scroll{overflow-x:auto}.visual-scroll svg{min-width:640px}@media(max-width:600px){.visual-scroll{padding-bottom:8px}} </style>')
 h=h.replace('<summary>Table view</summary>','<summary>Show exact measurements</summary>')
 
+# The three-level visual story is maintained as a self-contained HTML fragment.
+story=(p/'system-story.html').read_text()
+h=re.sub(r'<section id="context">.*?</section>',lambda _:story,h,flags=re.S)
+h=re.sub(r'<section id="system">.*?</section>','',h,flags=re.S)
+h=h.replace('The problem: each missing page can stop the application</a>','Whole machine</a>').replace('Where the change fits in the system</a>','Swap subsystem</a>')
+h=h.replace('<a href="#physical">','<a href="#mechanism">The change in action</a><a href="#physical">',1)
 (p/'explainer.html').write_text(h)
