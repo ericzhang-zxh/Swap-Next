@@ -9,13 +9,14 @@ crash proves none of them.
 
 ## Scope
 
-Candidates may modify only the swap-core files listed in
-`config/policy.json` and add `tools/testing/selftests/mm/swap_next_*.c`
-tests. The base list is the source files of the `MEMORY MANAGEMENT - SWAP`
-entry in `linux/MAINTAINERS`. `mm/memory.c`, `mm/zswap.c`, `mm/vmscan.c`,
-memcg, arch code, Kconfig, Makefiles, UAPI and global VM policy are out of
-scope. The file list is fixed. A campaign policy may narrow it but never widen
-it, and the controller rejects any path outside the base list.
+Candidates may modify only the files listed in `config/policy.json` and add
+`tools/testing/selftests/mm/swap_next_*.c` tests. The base list is the source
+files of the `MEMORY MANAGEMENT - SWAP` entry in `linux/MAINTAINERS`, plus
+`mm/memory.c`: swap-in fault-path readahead hooks live in `do_swap_page()`.
+`mm/zswap.c`, `mm/vmscan.c`, memcg, arch code, Kconfig, Makefiles, UAPI and
+global VM policy are out of scope. The file list is fixed. A campaign policy
+may narrow it but never widen it, and the controller rejects any path outside
+the base list.
 
 ## Invariants every candidate preserves
 

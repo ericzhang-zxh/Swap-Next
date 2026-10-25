@@ -334,14 +334,39 @@ class GuardTests(unittest.TestCase):
             self.guard()
 
     def test_campaign_cannot_widen_base_scope(self):
-        (self.root / "mm/memory.c").write_text("int memory_fixture;\n")
+        (self.root / "mm/vmscan.c").write_text("int vmscan_fixture;\n")
         self.commit()
         self.base = self.git("rev-parse", "HEAD").strip()
+        (self.root / "mm/vmscan.c").write_text("int vmscan_fixture_updated;\n")
+        self.commit()
+        self.policy["allowed_modify"].append("mm/vmscan.c")
+        with self.assertRaisesRegex(Invalid, "path outside candidate scope: mm/vmscan.c"):
+            self.guard()
+
+    def test_rev3_memory_c_passes_and_outside_paths_rejected(self):
+        campaign = load_json(CONTROL / "campaigns/xswap-tcg-rev3-2026-10-25/policy.json")
+        base = load_json(CONTROL / "config/policy.json")
+        self.assertIn("mm/memory.c", campaign["allowed_modify"])
+        self.assertIn("mm/memory.c", base["allowed_modify"])
+        for path in ("mm/zswap.c", "mm/vmscan.c"):
+            self.assertNotIn(path, campaign["allowed_modify"])
+            self.assertNotIn(path, base["allowed_modify"])
+        (self.root / "mm/memory.c").write_text("int memory_fixture;\n")
+        self.commit()
+        parent = self.git("rev-parse", "HEAD").strip()
         (self.root / "mm/memory.c").write_text("int memory_fixture_updated;\n")
         self.commit()
-        self.policy["allowed_modify"].append("mm/memory.c")
-        with self.assertRaisesRegex(Invalid, "outside"):
-            self.guard()
+        result = diff_guard(self.root, parent, campaign)
+        self.assertEqual(result["status"], "SCOPE_PASS")
+        self.assertEqual(result["changed_paths"], ["mm/memory.c"])
+        for name in ("mm/vmscan.c", "mm/zswap.c"):
+            (self.root / name).write_text("int outside_fixture;\n")
+            self.commit()
+            parent = self.git("rev-parse", "HEAD").strip()
+            (self.root / name).write_text("int outside_fixture_updated;\n")
+            self.commit()
+            with self.assertRaisesRegex(Invalid, "path outside candidate scope: " + name):
+                diff_guard(self.root, parent, campaign)
 
     def test_nested_added_path_rejected(self):
         p = self.root / "tools/testing/selftests/mm/swap_next_nested/arbitrary.c"

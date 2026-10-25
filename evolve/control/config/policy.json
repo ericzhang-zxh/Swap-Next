@@ -7,6 +7,7 @@
   "upstream_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
   "seed_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
   "allowed_modify": [
+    "mm/memory.c",
     "mm/swapfile.c",
     "mm/swap_state.c",
     "mm/swap_table.h",

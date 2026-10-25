@@ -7,6 +7,7 @@
   "upstream_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
   "seed_ref": "5e84ca928deeacb4eee656806a003f27d1eca82f",
   "allowed_modify": [
+    "mm/memory.c",
     "mm/swapfile.c",
     "mm/swap_state.c",
     "mm/swap_table.h",
@@ -103,7 +104,7 @@
   ],
   "promotion": "human_review_only",
   "checkout_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
-  "scope_note": "Owner 2026-10-25: TCG revision 3 screening campaign on the Grok Bot cloud box, replacing PR #4's reuse of the closed xswap-next-2026-10-24 campaign. Fast tier only; no slow tier, host mutation or automatic promotion. The file list is the fixed base list.",
+  "scope_note": "Owner 2026-10-25: TCG revision 3 screening campaign on the Grok Bot cloud box, replacing PR #4's reuse of the closed xswap-next-2026-10-24 campaign. Fast tier only; no slow tier, host mutation or automatic promotion. The file list is the fixed base list. mm/memory.c is included because swap-in fault-path readahead hooks live in do_swap_page().",
   "primary_metric": "swapin_seq.mean_ns",
   "discovery_contract": {
     "architecture_candidates": 3,
