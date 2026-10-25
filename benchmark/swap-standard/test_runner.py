@@ -104,6 +104,41 @@ class RunnerValidationTests(unittest.TestCase):
                 runner.create_run_directory(root, "trial")
             self.assertFalse((root / "missing").exists())
 
+    def test_kvm_is_default_and_tcg_guest_is_4gib(self):
+        kvm_default, dmem, dcpus, daccel = runner.guest_shape({})
+        self.assertFalse(kvm_default)
+        self.assertEqual((dmem, dcpus), (8192, "8"))
+        self.assertIn("-enable-kvm", daccel)
+        tcg, mem, cpus, accel = runner.guest_shape({"SWAP_NEXT_ACCEL": "tcg"})
+        self.assertTrue(tcg)
+        self.assertEqual((mem, cpus), (4096, "4"))
+        self.assertEqual(accel, ["-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc", "-cpu", "max"])
+        self.assertNotIn("-enable-kvm", accel)
+        overridden, small, _, _ = runner.guest_shape({"SWAP_NEXT_ACCEL": "tcg", "SWAP_NEXT_TCG_MEM_MIB": "2560"})
+        self.assertTrue(overridden)
+        self.assertEqual(small, 2560)
+        kvm, kmem, kcpus, kaccel = runner.guest_shape({"SWAP_NEXT_ACCEL": "kvm"})
+        self.assertFalse(kvm)
+        self.assertEqual((kmem, kcpus), (8192, "8"))
+        self.assertIn("-enable-kvm", kaccel)
+        with self.assertRaises(ValueError):
+            runner.guest_shape({"SWAP_NEXT_ACCEL": "tcg", "SWAP_NEXT_TCG_MEM_MIB": "0"})
+        with self.assertRaises(ValueError):
+            runner.guest_shape({"SWAP_NEXT_ACCEL": "tcg,thread=multi"})
+
+    def test_swap_image_preallocate_and_sparse_sizes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sparse, full = root / "sparse", root / "full"
+            runner.create_swap_image(sparse, False, 8192)
+            runner.create_swap_image(full, True, 4096)
+            self.assertEqual(sparse.stat().st_size, 8192)
+            self.assertEqual(full.stat().st_size, 4096)
+
+    def test_xswap_without_linux_git_stays_closed(self):
+        self.assertFalse(runner.has_lifetime_fix("5e84ca928deeacb4eee656806a003f27d1eca82f"))
+        self.assertFalse(runner.has_lifetime_fix("not-a-commit"))
+
 
 if __name__ == "__main__":
     unittest.main()

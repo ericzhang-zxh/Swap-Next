@@ -4,7 +4,8 @@
 A pair is {"a": {"case.metric": number}, "b": {"case.metric": number}}.
 Directions maps every scored metric to "higher" or "lower". Both arms must
 contain exactly those metrics. The caller owns provenance, tier sample counts,
-AB/BA ordering, and correctness gates. Primary selects one metric per scored case; all metrics retain regression guards.
+AB/BA ordering, and correctness gates. Primary selects one metric per scored
+case. Advisory metrics are reported and do not reject a revision 3 screen.
 Omit noisy descriptive metadata from this input.
 """
 import math
@@ -16,14 +17,41 @@ MAX_NOISE = math.log(1.20)
 RESAMPLES = 10000
 
 
-def _logs(pairs, directions):
+def _need_pairs(count, minimum):
+    need = max(2, minimum)
+    if not isinstance(count, int) or count < need:
+        raise ValueError("at least %d independent pairs required" % need)
+    return need
+
+
+def _ratio_log(relative):
+    if isinstance(relative, bool) or not isinstance(relative, (int, float)):
+        raise ValueError("relative threshold")
+    if not math.isfinite(relative) or relative <= 0:
+        raise ValueError("relative threshold")
+    return math.log(1 + relative)
+
+
+def _nearest_rank(values, fraction):
+    """Ceiling nearest-rank percentile. p90 of 10 values is the 9th, index 8."""
+    ordered = sorted(values)
+    index = max(0, min(len(ordered) - 1, math.ceil(fraction * len(ordered)) - 1))
+    return ordered[index]
+
+
+def _advisory(key, suffixes):
+    return any(key.endswith(suffix) for suffix in suffixes)
+
+
+def _logs(pairs, directions, min_pairs=2):
     if not isinstance(directions, dict) or not directions:
         raise ValueError("nonempty directions required")
     if any(not isinstance(k, str) or not k or v not in ("higher", "lower")
            for k, v in directions.items()):
         raise ValueError("invalid metric direction")
-    if not isinstance(pairs, list) or len(pairs) < 2:
-        raise ValueError("at least two independent pairs required")
+    if not isinstance(pairs, list):
+        raise ValueError("pairs must be a list")
+    _need_pairs(len(pairs), min_pairs)
     rows = []
     for pair in pairs:
         if not isinstance(pair, dict) or set(pair) != {"a", "b"}:
@@ -66,18 +94,43 @@ def _primary(primary, directions):
     return sorted(primary)
 
 
-def calibrate(pairs, directions, primary=None):
-    """Reject any scored A/A metric with >20% multiplicative pair noise."""
-    rows = _logs(pairs, directions)
+def calibrate(pairs, directions, primary=None, *, envelope="max", min_pairs=2,
+              noise_ceiling=0.20, noise_floor=0.03, advisory_suffixes=()):
+    """A/A envelope. The default is the revision 1/2 maximum, with a 20% ceiling.
+
+    envelope="p90" uses the nearest-rank 90th percentile of absolute pair
+    ratios and requires at least 10 pairs. Advisory metrics are reported and
+    do not reject the calibration.
+    """
+    if envelope not in ("max", "p90"):
+        raise ValueError("invalid noise envelope")
+    if envelope == "p90" and min_pairs < 10:
+        raise ValueError("p90 envelope requires at least 10 pairs")
+    if not isinstance(advisory_suffixes, (list, tuple)) or any(
+            not isinstance(item, str) or not item for item in advisory_suffixes):
+        raise ValueError("advisory suffixes")
+    floor = _ratio_log(noise_floor)
+    ceiling = _ratio_log(noise_ceiling)
+    if floor >= ceiling:
+        raise ValueError("noise floor must be below the ceiling")
+    rows = _logs(pairs, directions, min_pairs)
     primary = _primary(primary, directions)
-    noise = {key: max(FLOOR, max(abs(row[key]) for row in rows))
-             for key in directions}
-    rejected = [key for key, value in noise.items() if value > MAX_NOISE + 1e-12]
+    if any(_advisory(key, advisory_suffixes) for key in primary):
+        raise ValueError("primary metric cannot be advisory")
+    absolute = {key: [abs(row[key]) for row in rows] for key in directions}
+    if envelope == "max":
+        noise = {key: max(floor, max(values)) for key, values in absolute.items()}
+    else:
+        noise = {key: max(floor, _nearest_rank(values, 0.90)) for key, values in absolute.items()}
+    advisory = [key for key in directions if _advisory(key, advisory_suffixes)]
+    rejected = [key for key, value in noise.items()
+                if value > ceiling + 1e-12 and key not in advisory]
     return {"schema_version": 1, "status": "CALIBRATION_NOISY" if rejected else "CALIBRATED",
             "passed": not rejected, "directions": dict(directions), "primary": primary, "pair_count": len(rows),
+            "envelope": envelope, "noise_ceiling": noise_ceiling, "noise_floor": noise_floor,
             "noise_log": noise, "noise_relative": {k: _exp(v) - 1 for k, v in noise.items()},
-            "rejected_metrics": rejected, "performance_accepted": False,
-            "auto_promote": False}
+            "advisory_metrics": advisory, "rejected_metrics": rejected,
+            "performance_accepted": False, "auto_promote": False}
 
 
 def _interval(values):
@@ -87,18 +140,31 @@ def _interval(values):
             _exp(ordered[math.ceil(.975 * (len(ordered) - 1))])]
 
 
-def compare(pairs, directions, calibration, tier, reference=False, primary=None):
+def compare(pairs, directions, calibration, tier, reference=False, primary=None, *,
+            decision="legacy", min_pairs=None):
     """Return fast admission or slow review evidence, never acceptance.
 
-    Slow intervals resample entire paired metric vectors together, preserving
-    within-pair correlation. These are descriptive bootstrap intervals, not a
-    multiple-comparison correction or a correctness claim.
+    decision="legacy" keeps the revision 1/2 rule: fast guards use the median
+    and slow guards use paired-vector bootstrap intervals. decision="median"
+    judges every tier on the median of pair deltas and requires at least four
+    pairs. Slow legacy intervals resample entire paired metric vectors
+    together. These are descriptive intervals, not a multiple-comparison
+    correction or a correctness claim.
     """
     if tier not in ("fast", "slow") or not isinstance(reference, bool):
         raise ValueError("invalid tier/reference")
-    rows = _logs(pairs, directions)
+    if decision not in ("legacy", "median"):
+        raise ValueError("invalid decision")
+    if decision == "median":
+        if min_pairs is None:
+            min_pairs = 4
+        if min_pairs < 4:
+            raise ValueError("median comparison requires at least 4 independent pairs")
+    elif min_pairs is None:
+        min_pairs = 10 if tier == "slow" else 2
+    rows = _logs(pairs, directions, min_pairs)
     primary = _primary(primary, directions)
-    if tier == "slow" and len(rows) < 10:
+    if decision == "legacy" and tier == "slow" and len(rows) < 10:
         raise ValueError("slow comparison requires at least ten independent pairs")
     if reference and tier != "fast":
         raise ValueError("reference measurements are fast-tier only")
@@ -110,9 +176,15 @@ def compare(pairs, directions, calibration, tier, reference=False, primary=None)
     noise = calibration.get("noise_log")
     if not isinstance(noise, dict) or set(noise) != set(directions):
         raise ValueError("mismatched noise metrics")
-    for value in noise.values():
+    advisory = set(calibration.get("advisory_metrics", []))
+    if any(key not in directions for key in advisory):
+        raise ValueError("advisory metric is not scored")
+    floor = _ratio_log(calibration["noise_floor"]) if "noise_floor" in calibration else FLOOR
+    ceiling = _ratio_log(calibration["noise_ceiling"]) if "noise_ceiling" in calibration else MAX_NOISE
+    for key, value in noise.items():
+        limit = ceiling if key not in advisory else math.inf
         if (isinstance(value, bool) or not isinstance(value, (int, float)) or
-                not math.isfinite(value) or value < FLOOR or value > MAX_NOISE + 1e-12):
+                not math.isfinite(value) or value < floor - 1e-12 or value > limit + 1e-12):
             raise ValueError("invalid calibration envelope")
     metrics = {}
     for key in directions:
@@ -122,17 +194,29 @@ def compare(pairs, directions, calibration, tier, reference=False, primary=None)
                         "median_ratio": _exp(statistics.median(values)),
                         "noise_relative": _exp(noise[key]) - 1,
                         "guard_pass": statistics.median(values) >= -noise[key] - 1e-12}
+        if key in advisory:
+            metrics[key]["advisory"] = True
     overall = [statistics.mean(row[key] for key in primary) for row in rows]
+
+    def scored_pass():
+        return all(metrics[key]["guard_pass"] for key in directions if key not in advisory)
+
     result = {"tier": tier, "pair_count": len(rows), "metrics": metrics,
               "overall_geomean_ratio": _exp(statistics.mean(overall)),
               "combined_score": _exp(statistics.mean(overall)), "primary": primary,
               "reference": reference, "performance_accepted": False,
               "auto_promote": False, "eligible_for_slow": False,
               "needs_review": False}
-    if tier == "fast":
-        admitted = all(m["guard_pass"] for m in metrics.values())
+    if decision == "median" or tier == "fast":
+        admitted = scored_pass()
+        if decision == "median":
+            result["decision"] = "median"
+            result["combined_score"] = _exp(statistics.median(overall))
+            result["overall_median_ratio"] = result["combined_score"]
+        # A median screen does not open the slow tier. KVM confirmation stays an owner decision.
+        eligible = admitted and not reference and decision == "legacy"
         result.update(status="FAST_PASS" if admitted else "REGRESSION",
-                      eligible_for_slow=admitted and not reference)
+                      eligible_for_slow=eligible)
     else:
         rng = random.Random(42)
         samples = {key: [] for key in directions}
@@ -148,8 +232,7 @@ def compare(pairs, directions, calibration, tier, reference=False, primary=None)
                                 guard_pass=interval[0] >= _exp(-noise[key]) - 1e-12)
         interval = _interval(combined)
         envelope = max(noise[key] for key in primary)
-        needs_review = (interval[0] > _exp(envelope) and
-                        all(m["guard_pass"] for m in metrics.values()))
+        needs_review = interval[0] > _exp(envelope) and scored_pass()
         result.update(status="NEEDS_REVIEW" if needs_review else "INCONCLUSIVE",
                       overall_ci95=interval, overall_noise_relative=_exp(envelope) - 1,
                       bootstrap_resamples=RESAMPLES, bootstrap_seed=42,

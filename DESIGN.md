@@ -28,7 +28,8 @@ a frozen campaign protocol is recorded in that campaign's report. The default
 matrix is not itself a calibrated candidate campaign;
 [xswap-next-2026-10-24](results/xswap-next-2026-10-24/REPORT.md) froze a
 narrower swap-in protocol and recorded both a noisy sparse-image A/A and a
-passing preallocated A/A.
+passing preallocated A/A. QEMU TCG screening uses
+[protocol revision 3](benchmark/swap-standard/protocol-tcg-revision3.json).
 
 ## Upstream landscape
 

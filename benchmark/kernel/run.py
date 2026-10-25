@@ -45,6 +45,9 @@ def parse(log):
        "diagnostics":diagnostics,"boot_id":bootids[0].strip() if len(bootids)==1 else None}
 def main():
     p=argparse.ArgumentParser();p.add_argument("--build",required=True);p.add_argument("--backend",choices=["disk","zswap"],required=True);a=p.parse_args()
+    # KVM-only runner. A TCG environment (Grok Bot's cloud box) must not start KVM.
+    if os.environ.get("SWAP_NEXT_ACCEL", "kvm") != "kvm":
+        raise SystemExit("KVM-only runner; refusing SWAP_NEXT_ACCEL=" + os.environ["SWAP_NEXT_ACCEL"])
     if not re.fullmatch("[a-z0-9-]{1,48}",a.build):raise SystemExit("invalid build name")
     if STOP.exists():raise SystemExit("STOP")
     BASE.joinpath("runs").mkdir(exist_ok=True)

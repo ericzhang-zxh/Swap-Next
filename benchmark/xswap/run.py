@@ -15,6 +15,9 @@ def expired(protocol):
 def main():
     if os.geteuid()==0:raise SystemExit("host root execution forbidden")
     p=argparse.ArgumentParser();p.add_argument("--build",required=True);p.add_argument("--backend",choices=["disk","zswap"],required=True);a=p.parse_args()
+    # KVM-only runner. A TCG environment (Grok Bot's cloud box) must not start KVM.
+    if os.environ.get("SWAP_NEXT_ACCEL", "kvm") != "kvm":
+        raise SystemExit("KVM-only runner; refusing SWAP_NEXT_ACCEL=" + os.environ["SWAP_NEXT_ACCEL"])
     if not re.fullmatch("[a-z0-9-]{1,48}",a.build):raise SystemExit("invalid build name")
     if STOP.exists() or CAMPAIGN_STOP.exists():raise SystemExit("STOP")
     BASE.joinpath("runs").mkdir(exist_ok=True)

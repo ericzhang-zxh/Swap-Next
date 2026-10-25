@@ -104,6 +104,9 @@ def main():
     parser.add_argument('--build', required=True)
     parser.add_argument('--backend', choices=('disk', 'zswap'), required=True)
     args = parser.parse_args()
+    # KVM-only runner. A TCG environment (Grok Bot's cloud box) must not start KVM.
+    if os.environ.get("SWAP_NEXT_ACCEL", "kvm") != "kvm":
+        raise SystemExit("KVM-only runner; refusing SWAP_NEXT_ACCEL=" + os.environ["SWAP_NEXT_ACCEL"])
     if not re.fullmatch('[a-z0-9-]{1,48}', args.build):
         raise SystemExit('invalid build name')
     with (PROJECT / 'benchmark/kernel/.runtime.lock').open('a') as lock:

@@ -94,5 +94,105 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(flow.budget["guests"], 0)
 
 
+class Revision3WorkflowTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.state = self.root / "state"
+        self.state.mkdir()
+        self.bench = self.root / "bench"
+        self.p = json.loads(json.dumps(w.read(w.PROTOCOL)))
+        self.p.update(protocol_revision=3, noise_envelope="p90", noise_ceiling=0.25,
+                      comparison_decision="median", advisory_metric_suffixes=[".p99_ns"],
+                      preallocate_swap=True, guest={"vcpus": 4, "mem_mib": 4096, "swap_gib": 16},
+                      accelerator={"require": "tcg"},
+                      validity={"pre_qemu_seconds_max": 60, "wall_time_factor": 1.5,
+                                "wall_median_min_samples": 3, "reruns_per_arm": 1},
+                      tiers={"fast": {"cases": ["swapin-disk"], "calibration_pairs": 10, "comparison_pairs": 4}},
+                      cases={"swapin-disk": {"workload": "swapin", "backend": "disk", "mode": "xswap",
+                                             "metrics": {"swapin_seq.mean_ns": "lower"},
+                                             "primary": "swapin_seq.mean_ns"}})
+        for name, value in [("STATE", self.state), ("BENCH", self.bench), ("ROOT", self.root)]:
+            p = patch.object(w, name, value)
+            p.start()
+            self.addCleanup(p.stop)
+
+    def _analysis(self):
+        spec = importlib.util.spec_from_file_location(
+            "real_standard_analysis", Path(__file__).resolve().parents[1] / "benchmark/swap-standard/analysis.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def _fake_guest(self, calls, invalid_until):
+        def fake_command(command, logfile, timeout, accept_failure=False, env=None):
+            calls["env"] = env
+            calls["commands"].append(command)
+            calls["n"] += 1
+            run_id = command[command.index("--run-id") + 1]
+            dest = self.bench / "runs" / run_id
+            dest.mkdir(parents=True)
+            invalid = calls["n"] <= invalid_until
+            (dest / "result.json").write_text(json.dumps({
+                "run_id": run_id, "source_commit": self.p["baseline_commit"], "integration_pass": True,
+                "swap_image_allocation": "preallocated", "clocksource_invalid": invalid,
+                "pre_qemu_seconds": 1.0, "wall_seconds": 100.0,
+                "host_load": {"before_launch": {"loadavg_1m": 0.2, "loadavg_5m": 0.2, "loadavg_15m": 0.2}},
+                "metrics": {"swapin_seq": {"mean_ns": 1000.0}}, "guest_mem_mib": 4096,
+                "guest_vcpus": 4, "accelerator": "tcg"}))
+            logfile.write_text("mocked\n")
+            return 1 if invalid else 0
+        return fake_command
+
+    def test_invalid_clocksource_is_retained_and_rerun(self):
+        flow = w.Workflow(self.p)
+        calls = {"n": 0, "commands": []}
+        with patch.dict("os.environ", {"SWAP_NEXT_ACCEL": "kvm"}, clear=False), \
+             patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(w, "analysis_module", return_value=self._analysis()), \
+             patch.object(flow, "command", side_effect=self._fake_guest(calls, 1)):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["status"], "CALIBRATED")
+        self.assertEqual(row["protocol_revision"], 3)
+        self.assertEqual(row["runs"][0]["status"], "INVALID")
+        self.assertEqual(row["runs"][0]["invalid_reason"], "clocksource_fallback")
+        self.assertEqual(row["runs"][0]["host_load"]["before_launch"]["loadavg_1m"], 0.2)
+        self.assertEqual(row["runs"][1]["status"], "PASS")
+        self.assertTrue(row["runs"][1]["id"].endswith("-r1"))
+        self.assertEqual(flow.budget["guests"], 21)
+        command = calls["commands"][0]
+        self.assertEqual(command[command.index("--mode") + 1], "xswap")
+        self.assertIn("--preallocate-swap", command)
+        self.assertEqual(command[command.index("--protocol-revision") + 1], "3")
+        self.assertEqual(calls["env"]["SWAP_NEXT_TCG_MEM_MIB"], "4096")
+        self.assertEqual(calls["env"]["SWAP_NEXT_TCG_SMP"], "4")
+        self.assertEqual(calls["env"]["SWAP_NEXT_ACCEL"], "tcg")
+
+    def test_exhausted_validity_reruns_fail_closed(self):
+        flow = w.Workflow(self.p)
+        calls = {"n": 0, "commands": []}
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(flow, "command", side_effect=self._fake_guest(calls, 99)):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["status"], "INCOMPLETE")
+        self.assertIn("validity reruns exhausted", row["reason"])
+        self.assertEqual([item["status"] for item in row["runs"]], ["INVALID", "INVALID"])
+        self.assertEqual(flow.budget["guests"], 2)
+
+    def test_protocol_campaign_selects_its_own_state_directory(self):
+        real_root = Path(__file__).resolve().parents[1]
+        saved = (w.STATE, w.PROTOCOL, w.ROOT, w.BENCH)
+        path = real_root / "benchmark/swap-standard/protocol-tcg-revision3.json"
+        try:
+            w.ROOT = real_root
+            w.BENCH = real_root / "benchmark/swap-standard"
+            w.select_protocol(path)
+            self.assertEqual(w.STATE, real_root / "evolve/swap-standard/state-xswap-tcg-rev3-2026-10-25")
+            self.assertEqual(w.PROTOCOL, path.resolve())
+        finally:
+            w.STATE, w.PROTOCOL, w.ROOT, w.BENCH = saved
+
+
 if __name__ == "__main__":
     unittest.main()

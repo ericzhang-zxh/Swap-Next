@@ -100,6 +100,9 @@ def main():
     parser.add_argument("--stop-file", type=absolute_stop_file,
                         help="additional absolute STOP path checked before and during the run")
     args = parser.parse_args()
+    # KVM-only runner. A TCG environment (Grok Bot's cloud box) must not start KVM.
+    if os.environ.get("SWAP_NEXT_ACCEL", "kvm") != "kvm":
+        raise SystemExit("KVM-only runner; refusing SWAP_NEXT_ACCEL=" + os.environ["SWAP_NEXT_ACCEL"])
     if os.geteuid() == 0:
         parser.error("host root execution forbidden")
     if not re.fullmatch("[a-z0-9-]{1,48}", args.build):
