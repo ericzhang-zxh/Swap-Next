@@ -137,8 +137,58 @@ class AnalysisTests(unittest.TestCase):
                              ("passed", False)):
             calibration = copy.deepcopy(self.calibration)
             calibration[field] = value
-            with self.assertRaises(ValueError):
-                analysis.compare(pairs([1, 1], self.directions), self.directions, calibration, "fast")
+        with self.assertRaises(ValueError):
+            analysis.compare(pairs([1, 1], self.directions), self.directions, calibration, "fast")
+
+
+class Revision3Tests(unittest.TestCase):
+    def test_p90_drops_one_outlier_and_keeps_the_ceiling(self):
+        directions = {"x": "higher"}
+        passed = analysis.calibrate(pairs([1.10] * 9 + [1.50], directions), directions,
+                                    envelope="p90", min_pairs=10, noise_ceiling=0.25)
+        self.assertTrue(passed["passed"])
+        self.assertEqual(passed["status"], "CALIBRATED")
+        self.assertAlmostEqual(passed["noise_relative"]["x"], 0.10)
+        rejected = analysis.calibrate(pairs([1.26] * 10, directions), directions,
+                                      envelope="p90", min_pairs=10, noise_ceiling=0.25)
+        self.assertFalse(rejected["passed"])
+        self.assertEqual(rejected["rejected_metrics"], ["x"])
+        with self.assertRaises(ValueError):
+            analysis.calibrate(pairs([1.0] * 9, directions), directions, envelope="p90", min_pairs=9)
+
+    def test_p99_is_advisory_and_comparison_uses_the_median(self):
+        directions = {"case.mean_ns": "lower", "case.p99_ns": "lower"}
+        rows = [{"a": {"case.mean_ns": 100.0, "case.p99_ns": 100.0},
+                 "b": {"case.mean_ns": 105.0, "case.p99_ns": 140.0}} for _ in range(10)]
+        calibration = analysis.calibrate(rows, directions, primary=["case.mean_ns"], envelope="p90",
+                                         min_pairs=10, noise_ceiling=0.25, advisory_suffixes=(".p99_ns",))
+        self.assertTrue(calibration["passed"])
+        self.assertEqual(calibration["advisory_metrics"], ["case.p99_ns"])
+        self.assertGreater(calibration["noise_relative"]["case.p99_ns"], 0.25)
+        with self.assertRaises(ValueError):
+            analysis.calibrate(rows, directions, primary=["case.p99_ns"], envelope="p90",
+                               min_pairs=10, advisory_suffixes=(".p99_ns",))
+        data = [{"a": {"case.mean_ns": 100.0, "case.p99_ns": 100.0},
+                 "b": {"case.mean_ns": 100.0, "case.p99_ns": 200.0}} for _ in range(4)]
+        screen = analysis.compare(data, directions, calibration, "fast", primary=["case.mean_ns"],
+                                  decision="median", min_pairs=4)
+        self.assertEqual(screen["status"], "FAST_PASS")
+        self.assertTrue(screen["metrics"]["case.p99_ns"]["advisory"])
+        self.assertFalse(screen["metrics"]["case.p99_ns"]["guard_pass"])
+        self.assertFalse(screen["eligible_for_slow"])
+
+    def test_median_decision_ignores_a_single_bad_pair(self):
+        directions = {"x": "higher"}
+        calibration = analysis.calibrate(pairs([1, 1], directions), directions)
+        result = analysis.compare(pairs([0.5, 1.2, 1.2, 1.2], directions), directions, calibration,
+                                  "fast", decision="median", min_pairs=4)
+        self.assertAlmostEqual(result["combined_score"], 1.2)
+        self.assertAlmostEqual(result["overall_median_ratio"], 1.2)
+        self.assertLess(result["overall_geomean_ratio"], 1)
+        self.assertEqual(result["status"], "FAST_PASS")
+        with self.assertRaises(ValueError):
+            analysis.compare(pairs([1, 1, 1], directions), directions, calibration, "fast",
+                             decision="median", min_pairs=3)
 
 
 if __name__ == "__main__":

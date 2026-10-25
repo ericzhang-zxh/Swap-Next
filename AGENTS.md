@@ -146,10 +146,11 @@ silent, the rules above still apply.
   crashes the host kernel (KVM is built in with `enable_virt_at_load=Y` and the
   instance is snapshot-forked). Never pass `-enable-kvm` or `-accel kvm`.
 - Never offline or online host CPUs.
-- Set `SWAP_NEXT_ACCEL=tcg` for every guest run. The runner defaults to KVM
-  for hurricpc-wsl, so a run without it would start KVM and crash the box.
-  `SWAP_NEXT_TCG_SMP` and `SWAP_NEXT_TCG_MEM_MIB` size the guest (default 4
-  vCPU, 2560 MiB); each result records the accelerator and guest size.
+- The runner defaults to QEMU TCG. `SWAP_NEXT_ACCEL=kvm` is opt-in and must
+  not be used on the cloud box. A revision 3 evaluation forces
+  `SWAP_NEXT_ACCEL=tcg` and the protocol guest size. `SWAP_NEXT_TCG_SMP` and
+  `SWAP_NEXT_TCG_MEM_MIB` still override a direct `run.py` call. Each result
+  records the accelerator and guest size.
 - The host rules above (no reboot, host swap changes, raw disks or sudo) apply.
 
 ### TCG protocol revision
@@ -161,9 +162,11 @@ silent, the rules above still apply.
   environment. Never compare TCG numbers with hurricpc-wsl KVM numbers.
 - Run TCG A/A noise calibration for each tier before any accept or reject
   decision. Uncalibrated TCG results are diagnostics only.
-- The standard guest is 8 vCPU, 8 GiB RAM and a 16 GiB swap image. If a TCG run
-  scales the guest down, record the vCPU count, RAM, swap size and QEMU
-  accelerator options in the protocol revision and in every result.
+- The standard guest for TCG revision 3 is 4 vCPU, 4 GiB RAM and a 16 GiB
+  swap image (`-accel tcg,thread=multi,tb-size=256 -machine pc -cpu max`).
+  Record the vCPU count, RAM, swap size and QEMU accelerator options in every
+  result. KVM remains opt-in through `SWAP_NEXT_ACCEL=kvm` and is rejected by
+  a revision 3 evaluation.
 - Tag every result in `results/<campaign>/` with the TCG protocol revision.
 
 ### Baseline ancestry
@@ -213,7 +216,18 @@ directly to `main`.
 
 ### Open items (TBD)
 
-- TCG protocol revision identifier and its `protocol.json`: TBD.
-- Scaled-down guest size for TCG (vCPU, RAM, swap): TBD; record when frozen.
-- TCG A/A calibration envelopes per tier: TBD (not yet measured).
-- TCG guest wall time per case and resulting budgets: TBD.
+- TCG protocol revision 3 and its protocol file:
+  [benchmark/swap-standard/protocol-tcg-revision3.json](benchmark/swap-standard/protocol-tcg-revision3.json).
+  The campaign is `xswap-tcg-r3-2026-10-24`, with
+  [policy.json](evolve/control/campaigns/xswap-tcg-r3-2026-10-24/policy.json).
+  Its ledger is `evolve/swap-standard/state-protocol-tcg-revision3`. The closed
+  `xswap-next-2026-10-24` ledger and its spent guest budget stay unread.
+  Revisions 1 and 2 stay frozen. Verdicts are TCG-only screens for effects of
+  roughly 15–25% or larger. KVM confirmation is an open owner decision.
+- Scaled guest size for revision 3: 4 vCPU, 4096 MiB RAM, 16 GiB swap.
+- TCG A/A method: nearest-rank p90 of at least 10 pairs, scored ceiling 25%,
+  `.p99_ns` advisory, median of at least 4 AB/BA pair deltas per backend.
+  The numeric envelope is whatever a fresh revision 3 calibration measures.
+  A fast-tier pass under this file is a screen, not an acceptance.
+- TCG guest wall time per case: unmeasured. The protocol's `guest_timeout`
+  (900 s) and `wall_seconds` (64800 s) are scaffold caps.

@@ -14,10 +14,13 @@ gates; this performance suite does not replace them.
 | `swapin` | supplemental local probe | sequential/random first-touch latency and data verification |
 
 `tools.json` fixes source revisions. `params.sh` owns workload parameters.
-The common guest has 8 vCPUs and 8 GiB RAM. Each run uses a fresh 16 GiB swap
-file exposed only inside KVM. Disk, zswap, and zram are selectable. The VM has
-no external network interface; Valkey uses guest loopback only. brd is reserved
-for metadata measurements. Large folios are disabled for this initial protocol.
+The common guest under QEMU TCG, the default accelerator, has 4 vCPUs and
+4 GiB RAM. `SWAP_NEXT_TCG_SMP` and `SWAP_NEXT_TCG_MEM_MIB` override that size.
+`SWAP_NEXT_ACCEL=kvm` selects the KVM command line, with 8 vCPUs and 8 GiB RAM.
+Each run uses a fresh 16 GiB swap file exposed only inside the guest. Disk,
+zswap, and zram are selectable. The VM has no external network interface;
+Valkey uses guest loopback only. brd is reserved for metadata measurements.
+Large folios are disabled for this initial protocol.
 
 The initial integration evidence is in [the dated report](../../results/swap-standard-integration-2026-10-22/README.md).
 
@@ -109,6 +112,40 @@ comparison pairs, and it defines no slow tier. The byte copy is
 taken from `benchmark/swap-standard/protocol-xswap-next-2026-10-24.json` at
 snapshot `15bf186`. Revision 1, retained after the noisy sparse-image A/A, is
 beside it. Neither copy changes the default protocol in this directory.
+
+Protocol revision 3 is
+[protocol-tcg-revision3.json](protocol-tcg-revision3.json). It is the QEMU TCG
+screen for this suite's xswap swap-in cases. Revisions 1 and 2 are unchanged.
+Its fast tier calibrates with 10 A/A pairs per backend and compares with 4
+AB/BA pairs per backend. The noise envelope is the nearest-rank p90. The scored
+ceiling is 25%. Metrics ending in `.p99_ns` are advisory. The decision
+statistic is the median pair delta. The guest is 4 vCPU, 4096 MiB and a 16 GiB
+preallocated scratch swap image, under TCG. A run is invalid and is rerun, up
+to two replacements, when the guest reports TSC unstable or a clocksource
+fallback, when wall time exceeds 1.5 times the running median of prior valid
+runs of that case, or when more than 60 seconds elapse before QEMU launches.
+Each attempt records host loadavg and PSI when `/proc/pressure` is present.
+There is no slow tier. A passing verdict is a TCG-only screen for effects of
+roughly 15–25% or larger. KVM confirmation is an open owner decision.
+
+```sh
+python3 evolve/loop.py swap-standard calibrate --tier fast \
+  --protocol benchmark/swap-standard/protocol-tcg-revision3.json
+python3 evolve/loop.py swap-standard evaluate --tier fast \
+  --protocol benchmark/swap-standard/protocol-tcg-revision3.json \
+  --candidate H7 --correctness path/to/h7-correctness.json
+```
+
+The calibration and the H7 screen use a new ledger at
+`evolve/swap-standard/state-protocol-tcg-revision3`. The controller campaign
+is `xswap-tcg-r3-2026-10-24`
+([policy.json](../../evolve/control/campaigns/xswap-tcg-r3-2026-10-24/policy.json)).
+H7 must be registered there, and the correctness file must name H7's commit.
+The closed `xswap-next-2026-10-24` ledger and its spent guest budget stay
+unread. The baseline build name is `xs-desc-v1`. The evaluation sets
+`SWAP_NEXT_ACCEL=tcg` for the runner child. Direct `run.py` still accepts
+`SWAP_NEXT_ACCEL=kvm`. The `correctness` workload and the current guest
+sources stay on this protocol's runner.
 
 Each pair uses fresh boots in alternating AB then BA order. One primary metric
 per scored workload contributes equally to the geometric mean of direction-correct

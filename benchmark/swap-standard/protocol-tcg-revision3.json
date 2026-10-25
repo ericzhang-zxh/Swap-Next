@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-tcg-r3-2026-10-24",
+  "protocol_revision": 3,
+  "protocol_id": "swap-standard-xswap-tcg-revision3",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_build": "xs-desc-v1",
+  "max_candidates": 3,
+  "budget": {
+    "guest_attempts": 120,
+    "build_attempts": 6,
+    "wall_seconds": 64800,
+    "guest_timeout": 900,
+    "note": "Scaffold cap for one 10-pair A/A (40 guests) plus comparison pairs and validity reruns. Per-case TCG wall time is not a measured envelope."
+  },
+  "guest": {
+    "vcpus": 4,
+    "mem_mib": 4096,
+    "swap_gib": 16
+  },
+  "accelerator": {
+    "require": "tcg",
+    "qemu": ["-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc", "-cpu", "max"],
+    "kvm": "run.py accepts KVM only when SWAP_NEXT_ACCEL=kvm. A revision 3 evaluation rejects any result whose accelerator is not tcg."
+  },
+  "cases": {
+    "swapin-disk": {
+      "workload": "swapin",
+      "backend": "disk",
+      "mode": "xswap",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns"
+    },
+    "swapin-zswap": {
+      "workload": "swapin",
+      "backend": "zswap",
+      "mode": "xswap",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns"
+    }
+  },
+  "tiers": {
+    "fast": {
+      "cases": ["swapin-disk", "swapin-zswap"],
+      "calibration_pairs": 10,
+      "comparison_pairs": 4
+    }
+  },
+  "order": "alternating AB then BA; same order in calibration",
+  "calibration_max_age_seconds": 86400,
+  "noise_floor": 0.03,
+  "noise_ceiling": 0.25,
+  "noise_envelope": "p90",
+  "comparison_decision": "median",
+  "advisory_metric_suffixes": [".p99_ns"],
+  "bootstrap_resamples": 10000,
+  "promotion": "human_review_only",
+  "preallocate_swap": true,
+  "validity": {
+    "clocksource_fallback": "invalid_and_rerun",
+    "pre_qemu_seconds_max": 60,
+    "wall_time_factor": 1.5,
+    "wall_median_min_samples": 3,
+    "reruns_per_arm": 2,
+    "host_load": "loadavg and PSI when /proc/pressure exists, stored on every attempt"
+  },
+  "screen": "TCG-only. A passing verdict is a screen for effects of roughly 15% or larger, up to about 25%. KVM confirmation is an open owner decision.",
+  "excluded": {
+    "usemem-rand": "OOM and synchronization hang in integration"
+  },
+  "blocked_commits": {
+    "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4": "Unresolved descriptor lifetime review; dependent experiment held",
+    "157c4a178c587add1d22f4b483629b49a6ff0eca": "Unresolved descriptor lifetime review; dependent experiment held",
+    "b674f0d1e90c5b158f0a31d4ea877c4876535c2a": "Unresolved descriptor lifetime review; dependent experiment held",
+    "8f02472031fb71b9791a5199872701c645afd276": "Unresolved descriptor lifetime review; dependent experiment held",
+    "615f839bb6653ffd56dbb66ebdc855dea0823d54": "Unresolved descriptor lifetime review; dependent experiment held"
+  },
+  "required_correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings"
+  ],
+  "purpose": "QEMU TCG screen for swap-standard/xswap. Revisions 1 and 2 stay frozen.",
+  "measurement_revision": "Noise envelope is the nearest-rank p90 of absolute pair ratios over at least 10 A/A pairs (the 9th of 10 ordered values, so one extreme pair is outside the envelope). Scored ceiling is 25%. Metrics whose names end in .p99_ns are advisory: they are reported and do not reject calibration or a regression guard. Comparison is at least 4 AB/BA pairs per backend, judged on the median pair delta. The TCG guest is 4 vCPU and 4096 MiB with a 16 GiB preallocated scratch swap image.",
+  "ceiling_justification": "Under revision 2 the TCG A/A (2560 MiB guests) was CALIBRATION_NOISY. Pair-median spreads were 4-10% and worst-pair tails were 19-28%. One pair reported TSC unstable, fell back to HPET, and produced large wall-time outliers. At 2560 MiB, zswap wrote back to disk (zswpwb about 24k, 16-17% of faults), which the KVM runs did not do. The 25% ceiling is the bottom of the approved 25-30% band and matches a screen for effects of roughly 15-25%. A 30% ceiling on every metric would treat a p99 tail as if it were the effect size this screen can resolve. p99 stays advisory so a 19-28% p99 tail does not fail the tier by itself. A scored mean or primary metric whose p90 still exceeds 25% stays CALIBRATION_NOISY. Confidence in the 25% split is medium: the published summary gives ranges, not a per-metric p90. A per-metric p90 from the revision 2 pairs that sits above 25% on a scored mean metric would move the ceiling inside the approved band or keep that metric advisory.",
+  "state_directory": "evolve/swap-standard/state-protocol-tcg-revision3",
+  "controller_state": "evolve/control/state/xswap-tcg-r3-2026-10-24",
+  "mechanism_evidence": [
+    "swap_ra and swap_ra_hit deltas",
+    "zswpin/pswpin path counters",
+    "xswap occupancy/grow/shrink snapshots"
+  ],
+  "limitations": [
+    "Verdicts are TCG-only screens for effects of roughly 15-25% or larger. KVM confirmation is an open owner decision.",
+    "p99 latency is advisory under this revision.",
+    "The 25% ceiling is a gate, not the measured p90. Calibration still has to pass on a fresh revision 3 A/A before any candidate comparison.",
+    "Guest wall time per case is unmeasured. guest_timeout 900 and wall_seconds 64800 are scaffold caps.",
+    "4096 MiB is the revision 3 guest size because 2560 MiB spilled zswap to disk. This file does not re-measure that spill.",
+    "A pre-launch stall above 60 seconds, including swap-image preallocation, invalidates the attempt. Repeated stalls exhaust the two reruns and fail the tier.",
+    "The wall-time gate starts after three prior valid wall times for that case. The first three valid runs of a case are not wall outliers.",
+    "No slow tier. eligible_for_slow in a fast result does not authorize a slow run."
+  ],
+  "auxiliary_budget": "Correctness guests and builds reserve from evolve/swap-standard/state-protocol-tcg-revision3 and evolve/control/state/xswap-tcg-r3-2026-10-24. The closed xswap-next-2026-10-24 ledger and its spent 48-guest budget stay unread. All failures are retained.",
+  "candidate_builds": {}
+}

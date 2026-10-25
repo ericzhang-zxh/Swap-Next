@@ -18,16 +18,19 @@ import sys
 import time
 import uuid
 
-from openevolve.config import DatabaseConfig, EvaluatorConfig
-from openevolve.database import Program, ProgramDatabase
-from openevolve.evaluator import Evaluator
-
 PROJECT = pathlib.Path(__file__).resolve().parents[1]
 # Suite name -> whether its evaluator implements an A/A calibration request.
 SUITES = {"kernel": False, "xswap": True, "xswap-structure": True}
 INSTRUCTION = ("Propose one hypothesis and create a new controller worktree. "
                "References are context; base the complete patch on the frozen seed. "
                "Do not edit the evaluator or thresholds. Never auto-merge.")
+
+
+def _openevolve():
+    from openevolve.config import DatabaseConfig, EvaluatorConfig
+    from openevolve.database import Program, ProgramDatabase
+    from openevolve.evaluator import Evaluator
+    return DatabaseConfig, EvaluatorConfig, Program, ProgramDatabase, Evaluator
 
 
 class Suite:
@@ -50,6 +53,7 @@ class Suite:
 
 
 def open_database(suite):
+    DatabaseConfig, _, Program, ProgramDatabase, _ = _openevolve()
     db = ProgramDatabase(DatabaseConfig(in_memory=True, population_size=8, archive_size=8,
                                         num_islands=1, random_seed=42))
     if (suite.state / "database").exists():
@@ -102,6 +106,7 @@ def evaluate_candidate(suite, db, ledger, name):
                                     text=True)
 
     ident = str(uuid.uuid4())
+    _, EvaluatorConfig, Program, _, Evaluator = _openevolve()
     evaluator = Evaluator(EvaluatorConfig(timeout=7200, max_retries=0, cascade_evaluation=False,
                                           parallel_evaluations=1, use_llm_feedback=False),
                           str(suite.bench / "evaluate_kernel.py"), suffix=".json")
