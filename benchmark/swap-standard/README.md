@@ -139,10 +139,14 @@ python3 evolve/loop.py swap-standard evaluate --tier fast \
 Revision 3 belongs to its own controller campaign, `xswap-tcg-rev3-2026-10-25`, with the ledger
 `evolve/swap-standard/state-xswap-tcg-rev3-2026-10-25`. Register candidates there with
 `controller.py --campaign xswap-tcg-rev3-2026-10-25 new`; the correctness file must name the
-candidate's commit. The baseline build name is `xs-desc-v1`. The evaluation
-sets `SWAP_NEXT_ACCEL=tcg` for the runner child and rejects any result whose
-accelerator is not `tcg`. The first calibration waits for the owner's explicit
-approval of the revision 3 parameters.
+candidate's commit. The baseline build name is `xs-desc-v1`. Calibration and
+evaluation set `SWAP_NEXT_ACCEL=tcg`, 4 vCPU and 4096 MiB on the runner child,
+ignoring the caller's accelerator and guest-size environment, and reject any
+result whose accelerator is not `tcg`. A revision 3 protocol whose campaign, state directory,
+or controller policy is the closed `xswap-next-2026-10-24` campaign is refused
+before that ledger, budget, STOP file, candidates file, policy, or controller
+check is read. Nothing starts a calibration by itself. The first calibration
+waits for the owner's explicit approval of the revision 3 parameters.
 
 Each pair uses fresh boots in alternating AB then BA order. One primary metric
 per scored workload contributes equally to the geometric mean of direction-correct

@@ -148,7 +148,9 @@ class Revision3WorkflowTests(unittest.TestCase):
     def test_invalid_clocksource_is_retained_and_rerun(self):
         flow = w.Workflow(self.p)
         calls = {"n": 0, "commands": []}
-        with patch.dict("os.environ", {"SWAP_NEXT_ACCEL": "kvm"}, clear=False), \
+        with patch.dict("os.environ", {"SWAP_NEXT_ACCEL": "kvm",
+                                      "SWAP_NEXT_TCG_MEM_MIB": "2560",
+                                      "SWAP_NEXT_TCG_SMP": "8"}, clear=False), \
              patch.object(w, "fingerprint", return_value="fp"), \
              patch.object(w, "analysis_module", return_value=self._analysis()), \
              patch.object(flow, "command", side_effect=self._fake_guest(calls, 1)):
@@ -188,8 +190,87 @@ class Revision3WorkflowTests(unittest.TestCase):
             w.ROOT = real_root
             w.BENCH = real_root / "benchmark/swap-standard"
             w.select_protocol(path)
+            self.assertEqual(w.read(path)["campaign"], "xswap-tcg-rev3-2026-10-25")
             self.assertEqual(w.STATE, real_root / "evolve/swap-standard/state-xswap-tcg-rev3-2026-10-25")
             self.assertEqual(w.PROTOCOL, path.resolve())
+            policy = real_root / "evolve/control/campaigns/xswap-tcg-rev3-2026-10-25/policy.json"
+            self.assertTrue(policy.is_file())
+        finally:
+            w.STATE, w.PROTOCOL, w.ROOT, w.BENCH = saved
+
+    def test_revision3_refuses_closed_xswap_next_before_any_ledger_read(self):
+        bench = self.root / "benchmark/swap-standard"
+        bench.mkdir(parents=True)
+        closed = self.root / "evolve/swap-standard/state-xswap-next-2026-10-24"
+        control = self.root / "evolve/control/state/xswap-next-2026-10-24"
+        policy = self.root / "evolve/control/campaigns/xswap-next-2026-10-24"
+        for directory in (closed, control, policy):
+            directory.mkdir(parents=True)
+        planted = {
+            closed / "ledger.json": b'[{"guests": 48}]\n',
+            closed / "budget.json": b'{"guests": 48, "builds": 10}\n',
+            control / "candidates.json": b'{"H7": {}}\n',
+            control / "STOP": b"stop\n",
+            policy / "policy.json": b'{"runtime_enabled": false}\n',
+        }
+        for path, content in planted.items():
+            path.write_bytes(content)
+        real_root = Path(__file__).resolve().parents[1]
+        protocol = json.loads((real_root / "benchmark/swap-standard/protocol-tcg-revision3.json").read_text())
+        protocol["campaign"] = "xswap-next-2026-10-24"
+        protocol["state_directory"] = "evolve/swap-standard/state-xswap-next-2026-10-24"
+        protocol_path = bench / "protocol-rev3-closed.json"
+        protocol_path.write_text(json.dumps(protocol))
+        saved = (w.STATE, w.PROTOCOL, w.ROOT, w.BENCH)
+        real_read = w.read
+
+        def guarded(path):
+            text = str(path)
+            if "xswap-next-2026-10-24" in text and not text.endswith("protocol-rev3-closed.json"):
+                raise AssertionError("read closed campaign path " + text)
+            return real_read(path)
+
+        try:
+            w.ROOT = self.root
+            w.BENCH = bench
+            with patch.object(w, "read", side_effect=guarded):
+                with self.assertRaisesRegex(RuntimeError, "closed xswap-next"):
+                    w.select_protocol(protocol_path)
+                self.assertNotEqual(w.STATE, closed)
+                self.assertFalse((closed / ".lock").exists())
+                with self.assertRaisesRegex(RuntimeError, "closed xswap-next"):
+                    w.main(["status", "--protocol", str(protocol_path)])
+            self.p["protocol_revision"] = 3
+            self.p["campaign"] = "xswap-next-2026-10-24"
+            self.p["state_directory"] = "evolve/swap-standard/state-xswap-next-2026-10-24"
+            with patch.object(w, "read", side_effect=guarded), patch.object(w, "STATE", closed):
+                with self.assertRaisesRegex(RuntimeError, "closed xswap-next"):
+                    w.Workflow(self.p)
+            self.p["campaign"] = "xswap-tcg-rev3-2026-10-25"
+            self.p["state_directory"] = "evolve/swap-standard/state-xswap-tcg-rev3-2026-10-25"
+            with patch.object(w, "read", side_effect=guarded), patch.object(w, "STATE", closed):
+                with self.assertRaisesRegex(RuntimeError, "closed xswap-next"):
+                    w.Workflow(self.p)
+        finally:
+            w.STATE, w.PROTOCOL, w.ROOT, w.BENCH = saved
+        for path, content in planted.items():
+            self.assertEqual(path.read_bytes(), content)
+        self.assertFalse((closed / ".lock").exists())
+        self.assertFalse((self.state / "ledger.json").exists())
+
+    def test_older_protocol_keeps_its_campaign_ledger_name(self):
+        bench = self.root / "benchmark/swap-standard"
+        bench.mkdir(parents=True)
+        path = bench / "protocol-older.json"
+        path.write_text(json.dumps({"campaign": "xswap-next-2026-10-24", "protocol_revision": 2}))
+        saved = (w.STATE, w.PROTOCOL, w.ROOT, w.BENCH)
+        try:
+            w.ROOT = self.root
+            w.BENCH = bench
+            w.select_protocol(path)
+            self.assertEqual(w.STATE, self.root / "evolve/swap-standard/state-xswap-next-2026-10-24")
+            self.assertFalse((w.STATE / "ledger.json").exists())
+            self.assertFalse((w.STATE / ".lock").exists())
         finally:
             w.STATE, w.PROTOCOL, w.ROOT, w.BENCH = saved
 

@@ -20,8 +20,30 @@ BENCH = ROOT / "benchmark/swap-standard"
 STATE = ROOT / "evolve/swap-standard/state-layout-v1"
 PROTOCOL = BENCH / "protocol.json"
 WORKFLOW_FILE = Path(__file__).resolve()
+CLOSED_XSWAP_NEXT = "xswap-next-2026-10-24"
 sys.path.insert(0, str(ROOT / "benchmark/kernel"))
 from lifetime import bind_child_to_parent
+
+
+def reject_closed_campaign(protocol, state):
+    """Revision 3 keeps its own ledger. The closed xswap-next campaign stays unread."""
+    revision = protocol.get("protocol_revision", 1)
+    if isinstance(revision, bool) or not isinstance(revision, int) or revision < 3:
+        return
+    campaign = protocol.get("campaign")
+    if not isinstance(campaign, str) or not campaign:
+        raise RuntimeError("revision 3 requires its own campaign")
+    closed_state = (ROOT / "evolve/swap-standard" / ("state-" + CLOSED_XSWAP_NEXT)).resolve()
+    closed_control = (ROOT / "evolve/control/state" / CLOSED_XSWAP_NEXT).resolve()
+    closed_policy = (ROOT / "evolve/control/campaigns" / CLOSED_XSWAP_NEXT).resolve()
+    declared = protocol.get("state_directory")
+    declared_text = declared if isinstance(declared, str) else ""
+    state_path = Path(state)
+    if (CLOSED_XSWAP_NEXT in campaign or CLOSED_XSWAP_NEXT in str(state_path)
+            or CLOSED_XSWAP_NEXT in declared_text or state_path.resolve() == closed_state
+            or (ROOT / "evolve/control/state" / campaign).resolve() == closed_control
+            or (ROOT / "evolve/control/campaigns" / campaign).resolve() == closed_policy):
+        raise RuntimeError("revision 3 must not use the closed xswap-next campaign ledger or budget")
 
 
 def select_protocol(path):
@@ -31,16 +53,21 @@ def select_protocol(path):
     root = ROOT.resolve()
     if not path.is_file() or not path.is_relative_to(root):
         raise ValueError("protocol must be a file inside the repository")
-    PROTOCOL = path
     if path == (BENCH / "protocol.json").resolve():
+        PROTOCOL = path
         STATE = ROOT / "evolve/swap-standard/state-layout-v1"
-    else:
-        # The ledger follows the campaign, so a renamed protocol file cannot
-        # reset an existing campaign's budget.
-        campaign = read(path)["campaign"]
-        if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", campaign):
-            raise ValueError("protocol campaign name")
-        STATE = ROOT / "evolve/swap-standard" / ("state-" + campaign)
+        return
+    # The ledger follows the campaign, so a renamed protocol file cannot
+    # reset an existing campaign's budget. Revision 3 is refused before the
+    # closed xswap-next ledger, budget, or controller records are selected.
+    protocol = read(path)
+    campaign = protocol["campaign"]
+    if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", campaign):
+        raise ValueError("protocol campaign name")
+    state = ROOT / "evolve/swap-standard" / ("state-" + campaign)
+    reject_closed_campaign(protocol, state)
+    PROTOCOL = path
+    STATE = state
 
 
 def read(path):
@@ -132,6 +159,7 @@ def extract(metrics, path):
 class Workflow:
     def __init__(self, p):
         self.p = p
+        reject_closed_campaign(p, STATE)
         self.ledger_path = STATE / "ledger.json"
         self.ledger = read(self.ledger_path) if self.ledger_path.exists() else []
         self.budget_path = STATE / "budget.json"
@@ -432,11 +460,12 @@ def main(argv=None):
                         help="frozen protocol JSON; revision 3 is benchmark/swap-standard/protocol-tcg-revision3.json")
     args = parser.parse_args(argv)
     select_protocol(args.protocol)
+    p = read(PROTOCOL)
+    validity_module().protocol_rules(p)
+    reject_closed_campaign(p, STATE)
     STATE.mkdir(parents=True, exist_ok=True)
     with (STATE / ".lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        p = read(PROTOCOL)
-        validity_module().protocol_rules(p)
         workflow = Workflow(p)
         if args.action in ("status", "plan", "next"):
             fp = fingerprint(p)

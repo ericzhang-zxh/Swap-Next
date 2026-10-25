@@ -72,6 +72,8 @@ class ValidityTests(unittest.TestCase):
         self.assertEqual(protocol["tiers"]["fast"]["calibration_pairs"], 10)
         self.assertEqual(protocol["tiers"]["fast"]["comparison_pairs"], 4)
         self.assertEqual(protocol["accelerator"]["require"], "tcg")
+        self.assertEqual(protocol["campaign"], "xswap-tcg-rev3-2026-10-25")
+        self.assertEqual(protocol["state_directory"], "evolve/swap-standard/state-xswap-tcg-rev3-2026-10-25")
         self.assertTrue(protocol["preallocate_swap"])
         self.assertNotIn("slow", protocol["tiers"])
         rev1 = json.loads((ROOT / "results/xswap-next-2026-10-24/protocol-revision1.json").read_text())
