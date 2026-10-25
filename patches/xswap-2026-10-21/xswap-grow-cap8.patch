@@ -1,0 +1,13 @@
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 180cf538f..70c075cd2 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -83,7 +83,7 @@
+ #define XSWAP_SHRINK_UNTIL	70
+ #define XSWAP_GROW_UNTIL	65
+ #define XSWAP_GROW_WHEN		85
+-#define XSWAP_GROW_CHUNKS	4
++#define XSWAP_GROW_CHUNKS	8
+ 
+ static bool xswap_should_grow(struct swap_info_struct *si);
+ static unsigned long xswap_grow(struct swap_info_struct *si);

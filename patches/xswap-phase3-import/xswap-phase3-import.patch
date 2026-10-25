@@ -1,0 +1,654 @@
+diff --git a/Documentation/admin-guide/cgroup-v1/memcg_test.rst b/Documentation/admin-guide/cgroup-v1/memcg_test.rst
+index d9951c319..cd565626c 100644
+--- a/Documentation/admin-guide/cgroup-v1/memcg_test.rst
++++ b/Documentation/admin-guide/cgroup-v1/memcg_test.rst
+@@ -43,7 +43,7 @@ Please note that implementation details can be changed.
+ 	mem_cgroup_uncharge()
+ 	  Called when a page's refcount goes down to 0.
+ 
+-	mem_cgroup_uncharge_swap()
++	mem_cgroup_swap_uncharge()
+ 	  Called when swp_entry's refcnt goes down to 0. A charge against swap
+ 	  disappears.
+ 
+diff --git a/include/linux/memcontrol.h b/include/linux/memcontrol.h
+index 74110a324..be3351288 100644
+--- a/include/linux/memcontrol.h
++++ b/include/linux/memcontrol.h
+@@ -1944,6 +1944,7 @@ static inline void mem_cgroup_calculate_protection_path(struct mem_cgroup *root,
+ 
+ #if defined(CONFIG_MEMCG) && defined(CONFIG_ZSWAP)
+ bool obj_cgroup_may_zswap(struct obj_cgroup *objcg);
++bool mem_cgroup_may_zswap(const struct mem_cgroup *memcg, bool may_flush);
+ void obj_cgroup_charge_zswap(struct obj_cgroup *objcg, size_t size);
+ void obj_cgroup_uncharge_zswap(struct obj_cgroup *objcg, size_t size);
+ bool mem_cgroup_zswap_writeback_enabled(const struct mem_cgroup *memcg);
+@@ -1952,6 +1953,11 @@ static inline bool obj_cgroup_may_zswap(struct obj_cgroup *objcg)
+ {
+ 	return true;
+ }
++
++static inline bool mem_cgroup_may_zswap(const struct mem_cgroup *memcg, bool may_flush)
++{
++	return true;
++}
+ static inline void obj_cgroup_charge_zswap(struct obj_cgroup *objcg,
+ 					   size_t size)
+ {
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index e78717327..ebcbb9284 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -390,6 +390,12 @@ void free_pages_and_swap_cache(struct encoded_page **, int);
+ /* linux/mm/swapfile.c */
+ extern atomic_long_t nr_swap_pages;
+ extern atomic_t nr_real_swapfiles;
++extern atomic_t nr_xswap_files;
++
++static inline bool xswap_enabled(void)
++{
++	return atomic_read(&nr_xswap_files) > 0;
++}
+ extern long total_swap_pages;
+ extern atomic_t nr_rotate_swap;
+ 
+@@ -531,36 +537,80 @@ static inline void folio_throttle_swaprate(struct folio *folio, gfp_t gfp)
+ #endif
+ 
+ #if defined(CONFIG_MEMCG) && defined(CONFIG_SWAP)
+-int __mem_cgroup_try_charge_swap(struct folio *folio);
+-static inline int mem_cgroup_try_charge_swap(struct folio *folio)
++bool __mem_cgroup_swap_get(struct folio *folio, unsigned short *id);
++static inline bool mem_cgroup_swap_get(struct folio *folio, unsigned short *id)
++{
++	if (mem_cgroup_disabled())
++		return false;
++	return __mem_cgroup_swap_get(folio, id);
++}
++
++int __mem_cgroup_swap_charge(unsigned short id, unsigned int nr_pages);
++static inline int mem_cgroup_swap_charge(unsigned short id,
++					 unsigned int nr_pages)
+ {
+ 	if (mem_cgroup_disabled())
+ 		return 0;
+-	return __mem_cgroup_try_charge_swap(folio);
++	return __mem_cgroup_swap_charge(id, nr_pages);
++}
++
++void __mem_cgroup_swap_record(struct folio *folio, unsigned short id);
++static inline void mem_cgroup_swap_record(struct folio *folio,
++					  unsigned short id)
++{
++	if (mem_cgroup_disabled())
++		return;
++	__mem_cgroup_swap_record(folio, id);
++}
++
++void __mem_cgroup_swap_uncharge(unsigned short id, unsigned int nr_pages);
++static inline void mem_cgroup_swap_uncharge(unsigned short id,
++					    unsigned int nr_pages)
++{
++	if (mem_cgroup_disabled())
++		return;
++	__mem_cgroup_swap_uncharge(id, nr_pages);
+ }
+ 
+-extern void __mem_cgroup_uncharge_swap(unsigned short id, unsigned int nr_pages);
+-static inline void mem_cgroup_uncharge_swap(unsigned short id, unsigned int nr_pages)
++void __mem_cgroup_swap_put(unsigned short id, unsigned int nr_pages);
++static inline void mem_cgroup_swap_put(unsigned short id,
++				       unsigned int nr_pages)
+ {
+ 	if (mem_cgroup_disabled())
+ 		return;
+-	__mem_cgroup_uncharge_swap(id, nr_pages);
++	__mem_cgroup_swap_put(id, nr_pages);
+ }
+ 
+ long mem_cgroup_get_folio_swap_margin(const struct folio *folio);
+ long mem_cgroup_get_nr_swap_pages(const struct mem_cgroup *memcg);
+ bool mem_cgroup_swap_full(const struct folio *folio);
+ #else
+-static inline int mem_cgroup_try_charge_swap(struct folio *folio)
++static inline bool mem_cgroup_swap_get(struct folio *folio, unsigned short *id)
++{
++	return false;
++}
++
++static inline int mem_cgroup_swap_charge(unsigned short id,
++					 unsigned int nr_pages)
+ {
+ 	return 0;
+ }
+ 
+-static inline void mem_cgroup_uncharge_swap(unsigned short id,
++static inline void mem_cgroup_swap_record(struct folio *folio,
++					  unsigned short id)
++{
++}
++
++static inline void mem_cgroup_swap_uncharge(unsigned short id,
+ 					    unsigned int nr_pages)
+ {
+ }
+ 
++static inline void mem_cgroup_swap_put(unsigned short id,
++				       unsigned int nr_pages)
++{
++}
++
+ static inline long mem_cgroup_get_folio_swap_margin(const struct folio *folio)
+ {
+ 	return PAGE_COUNTER_MAX;
+diff --git a/mm/memcontrol-v1.c b/mm/memcontrol-v1.c
+index b7f286888..b75478457 100644
+--- a/mm/memcontrol-v1.c
++++ b/mm/memcontrol-v1.c
+@@ -371,7 +371,8 @@ void memcg1_swapin(struct folio *folio)
+ 	id = __swap_cgroup_clear(ci, swp_cluster_offset(folio->swap),
+ 				 nr_pages);
+ 	swap_cluster_unlock(ci);
+-	mem_cgroup_uncharge_swap(id, nr_pages);
++	mem_cgroup_swap_uncharge(id, nr_pages);
++	mem_cgroup_swap_put(id, nr_pages);
+ }
+ #endif
+ 
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index aad0498a7..2ca39f64c 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -5989,62 +5989,99 @@ int __init mem_cgroup_init(void)
+ 
+ #ifdef CONFIG_SWAP
+ /**
+- * __mem_cgroup_try_charge_swap - try charging swap space for a folio
++ * __mem_cgroup_swap_get - take the private ID refs for a folio's swap slots
+  * @folio: folio being added to swap
++ * @id: out, the ID to record and later charge against
+  *
+- * Try to charge @folio's memcg for the swap space at folio->swap.
++ * Takes one private ID ref per page of @folio on its memcg, or on its closest
++ * online ancestor if it has been offlined. The caller records and charges
++ * against whichever ID comes back, so both land on the same memcg.
+  *
+- * Returns 0 on success, -ENOMEM on failure.
++ * Return: true if an owner was taken, false when there is nothing to account
++ * for. Drop the refs with __mem_cgroup_swap_put().
+  */
+-int __mem_cgroup_try_charge_swap(struct folio *folio)
++bool __mem_cgroup_swap_get(struct folio *folio, unsigned short *id)
+ {
+ 	unsigned int nr_pages = folio_nr_pages(folio);
+-	struct swap_cluster_info *ci;
+-	struct page_counter *counter;
+ 	struct mem_cgroup *memcg;
+ 	struct obj_cgroup *objcg;
+-	unsigned short private_id;
+ 
+ 	if (do_memsw_account())
+-		return 0;
++		return false;
+ 
+ 	objcg = folio_objcg(folio);
+ 	VM_WARN_ON_ONCE_FOLIO(!objcg, folio);
+ 	if (!objcg)
+-		return 0;
++		return false;
+ 
+ 	scoped_guard(rcu) {
+ 		memcg = obj_cgroup_memcg(objcg);
+ 		if (!folio_test_swapcache(folio)) {
+ 			memcg_memory_event(memcg, MEMCG_SWAP_FAIL);
+-			return 0;
++			return false;
+ 		}
+ 
+-		private_id = mem_cgroup_private_id_get(memcg, nr_pages);
++		*id = mem_cgroup_private_id_get(memcg, nr_pages);
++	}
++
++	return true;
++}
++
++/**
++ * __mem_cgroup_swap_charge - charge physical swap space
++ * @id: the ID the slots were recorded against
++ * @nr_pages: the amount of swap space to charge
++ *
++ * Return: 0 on success, -ENOMEM if memory.swap.max is exceeded.
++ */
++int __mem_cgroup_swap_charge(unsigned short id, unsigned int nr_pages)
++{
++	struct page_counter *counter;
++	struct mem_cgroup *memcg;
++
++	if (do_memsw_account())
++		return 0;
+ 
+-		if (!mem_cgroup_private_id_is_root(private_id) &&
++	scoped_guard(rcu) {
++		memcg = mem_cgroup_from_private_id(id);
++		if (!memcg)
++			return 0;
++
++		if (!mem_cgroup_private_id_is_root(id) &&
+ 		    !page_counter_try_charge(&memcg->swap, nr_pages, &counter)) {
+ 			memcg_memory_event(memcg, MEMCG_SWAP_MAX);
+ 			memcg_memory_event(memcg, MEMCG_SWAP_FAIL);
+-			mem_cgroup_private_id_put(private_id, nr_pages);
+ 			return -ENOMEM;
+ 		}
+ 		mod_memcg_state(memcg, MEMCG_SWAP, nr_pages);
+ 	}
+ 
++	return 0;
++}
++
++/**
++ * __mem_cgroup_swap_record - record the owner of a folio's swap slots
++ * @folio: folio being added to swap
++ * @id: the ID taken by __mem_cgroup_swap_get()
++ */
++void __mem_cgroup_swap_record(struct folio *folio, unsigned short id)
++{
++	struct swap_cluster_info *ci;
++
+ 	ci = swap_cluster_get_and_lock(folio);
+-	__swap_cgroup_set(ci, swp_cluster_offset(folio->swap), nr_pages, private_id);
++	__swap_cgroup_set(ci, swp_cluster_offset(folio->swap),
++			  folio_nr_pages(folio), id);
+ 	swap_cluster_unlock(ci);
+-
+-	return 0;
+ }
+ 
+ /**
+- * __mem_cgroup_uncharge_swap - uncharge swap space
+- * @id: cgroup id to uncharge
++ * __mem_cgroup_swap_uncharge - uncharge physical swap space
++ * @id: the ID the slots were recorded against
+  * @nr_pages: the amount of swap space to uncharge
++ *
++ * The owner refs are not touched; drop them with __mem_cgroup_swap_put().
+  */
+-void __mem_cgroup_uncharge_swap(unsigned short id, unsigned int nr_pages)
++void __mem_cgroup_swap_uncharge(unsigned short id, unsigned int nr_pages)
+ {
+ 	struct obj_cgroup *objcg;
+ 	struct mem_cgroup *memcg;
+@@ -6060,15 +6097,49 @@ void __mem_cgroup_uncharge_swap(unsigned short id, unsigned int nr_pages)
+ 				page_counter_uncharge(&memcg->swap, nr_pages);
+ 		}
+ 		mod_memcg_state(memcg, MEMCG_SWAP, -nr_pages);
+-		__mem_cgroup_private_id_put(objcg, id, nr_pages);
+ 	}
+ 	rcu_read_unlock();
+ }
+ 
++/**
++ * __mem_cgroup_swap_put - drop the private ID refs taken for swap slots
++ * @id: the ID taken by __mem_cgroup_swap_get()
++ * @nr_pages: number of refs to drop
++ *
++ * A separate step from __mem_cgroup_swap_uncharge(): a slot's owner is held
++ * from the allocation and released when the slot is freed, while the
++ * counter is charged and uncharged whenever the physical backing comes and
++ * goes.
++ */
++void __mem_cgroup_swap_put(unsigned short id, unsigned int nr_pages)
++{
++	/*
++	 * The refs are the thing being dropped, so an ID that no longer
++	 * resolves has none left and there is nothing to do.
++	 * mem_cgroup_private_id_put() would dereference the NULL instead.
++	 */
++	rcu_read_lock();
++	if (obj_cgroup_from_private_id(id))
++		mem_cgroup_private_id_put(id, nr_pages);
++	rcu_read_unlock();
++}
++
+ long mem_cgroup_get_nr_swap_pages(const struct mem_cgroup *memcg)
+ {
+-	long nr_swap_pages = get_nr_swap_pages();
++	long nr_swap_pages;
+ 
++	/*
++	 * xswap charges physical backing, not allocation, so virtual swap is
++	 * unbounded for a zswap-capable memcg and the swap.max walk below
++	 * would starve anon reclaim.  swap.max is still enforced when the
++	 * backing is charged.
++	 */
++	if (xswap_enabled() && zswap_is_enabled() &&
++	    (mem_cgroup_disabled() || do_memsw_account() ||
++	     mem_cgroup_may_zswap(memcg, false)))
++		return PAGE_COUNTER_MAX;
++
++	nr_swap_pages = get_nr_swap_pages();
+ 	if (!mem_cgroup_disabled() && !do_memsw_account())
+ 		nr_swap_pages = min(nr_swap_pages, page_counter_margin(&memcg->swap));
+ 
+@@ -6261,8 +6332,10 @@ static struct cftype swap_files[] = {
+ 
+ #ifdef CONFIG_ZSWAP
+ /**
+- * obj_cgroup_may_zswap - check if this cgroup can zswap
+- * @objcg: the object cgroup
++ * mem_cgroup_may_zswap - check if this cgroup can zswap
++ * @memcg: the memcg to query
++ * @may_flush: force-flush stats for an accurate check (sleeps). Pass false
++ *             from atomic contexts; the check is then best-effort.
+  *
+  * Check if the hierarchical zswap limit has been reached.
+  *
+@@ -6272,36 +6345,43 @@ static struct cftype swap_files[] = {
+  * spending cycles on compression when there is already no room left
+  * or zswap is disabled altogether somewhere in the hierarchy.
+  */
+-bool obj_cgroup_may_zswap(struct obj_cgroup *objcg)
++bool mem_cgroup_may_zswap(const struct mem_cgroup *memcg, bool may_flush)
+ {
+-	struct mem_cgroup *memcg, *original_memcg;
+-	bool ret = true;
++	const struct mem_cgroup *pos;
+ 
+ 	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys))
+ 		return true;
+ 
+-	original_memcg = get_mem_cgroup_from_objcg(objcg);
+-	for (memcg = original_memcg; !mem_cgroup_is_root(memcg);
+-	     memcg = parent_mem_cgroup(memcg)) {
+-		unsigned long max = READ_ONCE(memcg->zswap_max);
++	for (pos = memcg; !mem_cgroup_is_root(pos); pos = parent_mem_cgroup(pos)) {
++		unsigned long max = READ_ONCE(pos->zswap_max);
+ 		unsigned long pages;
+ 
+ 		if (max == PAGE_COUNTER_MAX)
+ 			continue;
+-		if (max == 0) {
+-			ret = false;
+-			break;
+-		}
++		if (max == 0)
++			return false;
+ 
+-		/* Force flush to get accurate stats for charging */
+-		__mem_cgroup_flush_stats(memcg, true);
+-		pages = memcg_page_state(memcg, MEMCG_ZSWAP_B) / PAGE_SIZE;
+-		if (pages < max)
+-			continue;
+-		ret = false;
+-		break;
++		/*
++		 * Force flush to get accurate stats for charging. The flush
++		 * only reads the counters, but takes the memcg mutable.
++		 */
++		if (may_flush)
++			__mem_cgroup_flush_stats((struct mem_cgroup *)pos, true);
++		pages = memcg_page_state(pos, MEMCG_ZSWAP_B) / PAGE_SIZE;
++		if (pages >= max)
++			return false;
+ 	}
+-	mem_cgroup_put(original_memcg);
++	return true;
++}
++
++bool obj_cgroup_may_zswap(struct obj_cgroup *objcg)
++{
++	struct mem_cgroup *memcg;
++	bool ret;
++
++	memcg = get_mem_cgroup_from_objcg(objcg);
++	ret = mem_cgroup_may_zswap(memcg, true);
++	mem_cgroup_put(memcg);
+ 	return ret;
+ }
+ 
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 180cf538f..0f841616d 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -115,6 +115,11 @@ static void xswap_clear_cache_only(struct swap_cluster_info *ci,
+ 				   unsigned int start, unsigned int nr);
+ static int xswap_reclaim_backing(struct swap_info_struct *si,
+ 				 unsigned long offset, swp_entry_t xentry);
++static unsigned short xswap_entry_id(struct swap_cluster_info *ci,
++				     unsigned long off);
++static void xswap_backend_uncharge(swp_entry_t entry, unsigned int nr);
++static void __xswap_backend_unlink(swp_entry_t entry, swp_entry_t phys,
++				   unsigned int order);
+ 
+ static int xswap_create(int prio);
+ static int xswap_destroy(int type);
+@@ -279,7 +284,7 @@ static unsigned int nr_swapfiles;
+ atomic_long_t nr_swap_pages;
+ atomic_t nr_real_swapfiles;
+ /* Active xswap devices, as in nr_real_swapfiles. */
+-static atomic_t nr_xswap_files;
++atomic_t nr_xswap_files;
+ /*
+  * Some modules use swappable objects and may try to swap them out under
+  * memory pressure (via the shrinker). Before doing so, they may wish to
+@@ -2095,6 +2100,7 @@ int folio_alloc_swap(struct folio *folio)
+ 	unsigned int order = folio_order(folio);
+ 	unsigned int size = 1 << order;
+ 	struct obj_cgroup *objcg;
++	unsigned short swap_id = 0;
+ 	/* True unless the gate below finds an xswap device to route away from. */
+ 	bool may_zswap = true;
+ 
+@@ -2141,10 +2147,22 @@ int folio_alloc_swap(struct folio *folio)
+ 			goto again;
+ 	}
+ 
+-	/* Need to call this even if allocation failed, for MEMCG_SWAP_FAIL. */
+-	if (unlikely(mem_cgroup_try_charge_swap(folio))) {
+-		swap_cache_del_folio(folio);
+-		goto failed;
++	/*
++	 * Need to call this even if allocation failed, for MEMCG_SWAP_FAIL.
++	 * The owner is taken here, then charged and recorded.
++	 */
++	if (mem_cgroup_swap_get(folio, &swap_id)) {
++		/*
++		 * An xswap entry has no physical swap yet, so only record the
++		 * owner here.  Its backing is charged when one is taken.
++		 */
++		if (!(__swap_entry_to_info(folio->swap)->flags & SWP_XSWAP) &&
++		    unlikely(mem_cgroup_swap_charge(swap_id, size))) {
++			mem_cgroup_swap_put(swap_id, size);
++			swap_cache_del_folio(folio);
++			goto failed;
++		}
++		mem_cgroup_swap_record(folio, swap_id);
+ 	}
+ 
+ 	if (unlikely(!folio_test_swapcache(folio)))
+@@ -2290,6 +2308,18 @@ struct swap_info_struct *get_swap_device(swp_entry_t entry)
+ 	return ERR_PTR(-EIO);
+ }
+ 
++/*
++ * An xswap entry was not charged at allocation, so there is nothing to
++ * uncharge here and only the owner refs go.  Its backing, if any, was
++ * uncharged when it was released.
++ */
++static void memcg_swap_free(unsigned short id, unsigned int nr, bool is_xswap)
++{
++	if (!is_xswap)
++		mem_cgroup_swap_uncharge(id, nr);
++	mem_cgroup_swap_put(id, nr);
++}
++
+ /*
+  * Free a set of swap slots after their swap count dropped to zero, or will be
+  * zero after putting the last ref (saves one __swap_cluster_put_entry call).
+@@ -2303,6 +2333,7 @@ void __swap_cluster_free_entries(struct swap_info_struct *si,
+ 	unsigned int ci_off = ci_start, ci_end = ci_start + nr_pages;
+ 	unsigned long ci_head = cluster_offset(si, ci);
+ 	unsigned int batch_off = ci_off;
++	bool is_xswap = si->flags & SWP_XSWAP;
+ 
+ 	VM_WARN_ON(ci->count < nr_pages);
+ 
+@@ -2332,14 +2363,14 @@ void __swap_cluster_free_entries(struct swap_info_struct *si,
+ 		id_cur = __swap_cgroup_clear(ci, ci_off, 1);
+ 		if (batch_id != id_cur) {
+ 			if (batch_id)
+-				mem_cgroup_uncharge_swap(batch_id, ci_off - batch_off);
++				memcg_swap_free(batch_id, ci_off - batch_off, is_xswap);
+ 			batch_id = id_cur;
+ 			batch_off = ci_off;
+ 		}
+ 	} while (++ci_off < ci_end);
+ 
+ 	if (batch_id)
+-		mem_cgroup_uncharge_swap(batch_id, ci_off - batch_off);
++		memcg_swap_free(batch_id, ci_off - batch_off, is_xswap);
+ 
+ 	swap_range_free(si, ci_head + ci_start, nr_pages);
+ 	swap_cluster_assert_empty(ci, ci_start, nr_pages, false);
+@@ -3271,6 +3302,39 @@ static void xswap_free_phys_slot(struct swap_info_struct *si,
+ 	swap_cluster_unlock(ci);
+ }
+ 
++/*
++ * Give a run of backend slots back. Nothing points at them yet, so there is
++ * no reverse mapping to look up and no record to clear.
++ */
++static void xswap_drop_phys_slots(swp_entry_t phys, unsigned int nr)
++{
++	struct swap_info_struct *psi = swap_type_to_info(swp_type(phys));
++	unsigned long poff = swp_offset(phys);
++	struct swap_cluster_info *pci;
++	unsigned int i;
++
++	if (!psi)
++		return;
++
++	pci = swap_cluster_lock(psi, poff);
++	if (!pci)
++		return;
++
++	VM_WARN_ON(pci->count < nr);
++	pci->count -= nr;
++	for (i = 0; i < nr; i++)
++		__swap_table_set(pci, (poff + i) % SWAPFILE_CLUSTER,
++				 null_to_swp_tb());
++
++	if (!pci->count)
++		free_cluster(psi, pci);
++	else
++		partial_free_cluster(psi, pci);
++	swap_cluster_unlock(pci);
++
++	swap_range_free(psi, poff, nr);
++}
++
+ /*
+  * An xswap slot being freed may still own a physical slot. Drop it, or the
+  * physical space and its reverse mapping leak. Caller holds the xswap
+@@ -3282,6 +3346,7 @@ static void xswap_release_slot_backend(struct swap_info_struct *si,
+ {
+ 	swp_entry_t entry = swp_entry(si->type, cluster_offset(si, ci) + slot);
+ 	struct swap_info_struct *psi;
++	unsigned short id = xswap_entry_id(ci, slot);
+ 	swp_entry_t phys = { .val = ci->xs_table[slot] };
+ 
+ 	WRITE_ONCE(ci->xs_table[slot], 0);
+@@ -3289,6 +3354,14 @@ static void xswap_release_slot_backend(struct swap_info_struct *si,
+ 	psi = swap_type_to_info(swp_type(phys));
+ 	if (psi)
+ 		xswap_free_phys_slot(psi, entry, phys);
++
++	/*
++	 * ci->lock is held here, so read the owner out of the swap table
++	 * directly. xswap_backend_uncharge() would take the same lock
++	 * again, and a spinlock is not recursive.
++	 */
++	if (id)
++		mem_cgroup_swap_uncharge(id, 1);
+ }
+ 
+ /*
+@@ -4625,6 +4698,7 @@ swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order,
+ 	struct swap_cluster_info *ci;
+ 	unsigned long nr = 1UL << order;
+ 	unsigned long off = swp_offset(entry);
++	unsigned short id = 0;
+ 	swp_entry_t phys;
+ 	unsigned int i;
+ 
+@@ -4645,6 +4719,21 @@ swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order,
+ 	if (!phys.val)
+ 		return phys;
+ 
++	/*
++	 * The xswap entry was only recorded at allocation, so charge the
++	 * physical swap here.  On failure, drop the physical run without
++	 * uncharging it.
++	 */
++	ci = swap_cluster_lock(si, off);
++	if (ci) {
++		id = xswap_entry_id(ci, off);
++		swap_cluster_unlock(ci);
++	}
++	if (mem_cgroup_swap_charge(id, nr)) {
++		xswap_drop_phys_slots(phys, nr);
++		return (swp_entry_t){};
++	}
++
+ 	/* One IO reads a large folio, so its range has to be contiguous. */
+ 	VM_WARN_ON_ONCE(swp_offset(phys) % nr);
+ 	VM_WARN_ON_ONCE(off % SWAPFILE_CLUSTER + nr > SWAPFILE_CLUSTER);
+@@ -4662,8 +4751,32 @@ swp_entry_t xswap_backend_alloc(swp_entry_t entry, unsigned int order,
+ 	return phys;
+ }
+ 
+-/* Undo xswap_backend_alloc(): the zswap copy is still in place. */
+-void xswap_backend_free(swp_entry_t entry, swp_entry_t phys, unsigned int order)
++/* The ID that owns an xswap entry, or 0 if it has no owner recorded. */
++static unsigned short xswap_entry_id(struct swap_cluster_info *ci,
++				     unsigned long off)
++{
++	return __swap_cgroup_get(ci, off % SWAPFILE_CLUSTER);
++}
++
++static void xswap_backend_uncharge(swp_entry_t entry, unsigned int nr)
++{
++	struct swap_info_struct *si = __swap_entry_to_info(entry);
++	struct swap_cluster_info *ci;
++	unsigned long off = swp_offset(entry);
++	unsigned short id = 0;
++
++	ci = swap_cluster_lock(si, off);
++	if (ci) {
++		id = xswap_entry_id(ci, off);
++		swap_cluster_unlock(ci);
++	}
++	if (id)
++		mem_cgroup_swap_uncharge(id, nr);
++}
++
++/* Drop the physical run and the reverse mapping, without any charging. */
++static void __xswap_backend_unlink(swp_entry_t entry, swp_entry_t phys,
++				   unsigned int order)
+ {
+ 	struct swap_info_struct *si = __swap_entry_to_info(entry);
+ 	struct swap_info_struct *psi = swap_type_to_info(swp_type(phys));
+@@ -4692,6 +4805,13 @@ void xswap_backend_free(swp_entry_t entry, swp_entry_t phys, unsigned int order)
+ 	}
+ }
+ 
++/* Undo xswap_backend_alloc(): the zswap copy is still in place. */
++void xswap_backend_free(swp_entry_t entry, swp_entry_t phys, unsigned int order)
++{
++	__xswap_backend_unlink(entry, phys, order);
++	xswap_backend_uncharge(entry, 1UL << order);
++}
++
+ static int xswap_map_clusters(struct swap_info_struct *si,
+ 			      unsigned long start_idx, unsigned long nr)
+ {

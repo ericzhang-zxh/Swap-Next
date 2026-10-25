@@ -1,0 +1,110 @@
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 180cf538f..4f69ec37d 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -5107,37 +5107,91 @@ static void xswap_try_shrink(struct swap_info_struct *si)
+ 	mutex_unlock(&si->xswap_lock);
+ }
+ 
+-/* Not an interface: how far the mapped range has moved, for testing. */
++/* Not an interface: mapped range and occupancy, for testing. */
+ static ssize_t xswap_debugfs_read(struct file *file, char __user *buf,
+ 				  size_t count, loff_t *ppos)
+ {
+ 	struct swap_info_struct *si = file->private_data;
+-	struct swap_cluster_info *ci;
+-	unsigned long mapped, tail = 0;
+-	char tmp[192];
++	struct {
++		unsigned long clusters_nonempty;
++		unsigned long clusters_free;
++		unsigned long highest_nonempty_plus1;
++		unsigned long highest_blocker_plus1;
++		unsigned long cache_only_pages;
++		unsigned long referenced_pages;
++		unsigned long highest_cache_only_plus1;
++		unsigned long highest_referenced_plus1;
++		unsigned long cache_only_clusters;
++	} stats = {};
++	unsigned long mapped, i, tail = 0;
++	char tmp[640];
+ 	int len;
+ 
+ 	/*
+-	 * The same scan the shrink does.  xswap_lock is what keeps
+-	 * cluster_info from being unmapped under it.
++	 * xswap_lock pins the mapping. Each cluster is sampled under its own
++	 * lock, so this is a rolling scan, not a device-wide atomic snapshot.
+ 	 */
+ 	mutex_lock(&si->xswap_lock);
+ 	mapped = READ_ONCE(si->nr_clusters_mapped);
+ 	if (si->cluster_info) {
+-		while (mapped - tail > 1) {
+-			ci = &si->cluster_info[mapped - tail - 1];
+-			if (READ_ONCE(ci->count) ||
+-			    READ_ONCE(ci->flags) != CLUSTER_FLAG_FREE)
+-				break;
+-			tail++;
++		for (i = 0; i < mapped; i++) {
++			struct swap_cluster_info *ci = &si->cluster_info[i];
++			unsigned int off, cache_only = 0, referenced = 0;
++
++			spin_lock(&ci->lock);
++			if (!ci->count && ci->flags == CLUSTER_FLAG_FREE)
++				stats.clusters_free++;
++			else
++				stats.highest_blocker_plus1 = i + 1;
++			if (ci->count) {
++				stats.clusters_nonempty++;
++				stats.highest_nonempty_plus1 = i + 1;
++			}
++			/* Teardown can leave the reserved count without a table. */
++			if (ci->count && cluster_table_is_alloced(ci)) {
++				for (off = 0; off < SWAPFILE_CLUSTER; off++) {
++					unsigned long entry = __swap_table_get(ci, off);
++
++					if (swp_tb_is_folio(entry) &&
++					    !swp_tb_get_count(entry))
++						cache_only++;
++					else if (swp_tb_get_count(entry) > 0)
++						referenced++;
++				}
++			}
++			spin_unlock(&ci->lock);
++			stats.cache_only_pages += cache_only;
++			stats.referenced_pages += referenced;
++			if (cache_only) {
++				stats.highest_cache_only_plus1 = i + 1;
++				if (!referenced)
++					stats.cache_only_clusters++;
++			}
++			if (referenced)
++				stats.highest_referenced_plus1 = i + 1;
++			cond_resched();
+ 		}
++		/* Cluster 0 remains mapped even if no blocker was observed. */
++		if (mapped)
++			tail = mapped - max(stats.highest_blocker_plus1, 1UL);
+ 	}
+ 	len = scnprintf(tmp, sizeof(tmp),
+-			"clusters_max %lu\nclusters_mapped %lu\nusage_pages %lu\ntail_free %lu\ngrows %lu\nshrinks %lu\n",
++			"clusters_max %lu\nclusters_mapped %lu\nusage_pages %lu\n"
++			"tail_free %lu\ngrows %lu\nshrinks %lu\n"
++			"clusters_nonempty %lu\nclusters_free %lu\n"
++			"highest_nonempty_plus1 %lu\nhighest_blocker_plus1 %lu\n"
++			"cache_only_pages %lu\nreferenced_pages %lu\n"
++			"highest_cache_only_plus1 %lu\n"
++			"highest_referenced_plus1 %lu\ncache_only_clusters %lu\n",
+ 			READ_ONCE(si->nr_clusters_max), mapped,
+ 			swap_usage_in_pages(si), tail,
+ 			atomic_long_read(&si->xswap_grows),
+-			atomic_long_read(&si->xswap_shrinks));
++			atomic_long_read(&si->xswap_shrinks),
++			stats.clusters_nonempty, stats.clusters_free,
++			stats.highest_nonempty_plus1, stats.highest_blocker_plus1,
++			stats.cache_only_pages, stats.referenced_pages,
++			stats.highest_cache_only_plus1,
++			stats.highest_referenced_plus1, stats.cache_only_clusters);
+ 	mutex_unlock(&si->xswap_lock);
+ 
+ 	return simple_read_from_buffer(buf, count, ppos, tmp, len);

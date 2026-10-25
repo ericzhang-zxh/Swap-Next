@@ -1,0 +1,13 @@
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 4f69ec37d..b456d3411 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -4818,7 +4818,7 @@ static unsigned long xswap_grow(struct swap_info_struct *si)
+ 	int ret;
+ 
+ 	/* The unmap below is paired with the caller's lock. */
+-	lockdep_assert_held(&percpu_swap_cluster.lock);
++	lockdep_assert_held(&this_cpu_ptr(&percpu_swap_cluster)->lock);
+ 
+ 	want = DIV_ROUND_UP(swap_usage_in_pages(si) * 100,
+ 			    XSWAP_GROW_UNTIL * SWAPFILE_CLUSTER);

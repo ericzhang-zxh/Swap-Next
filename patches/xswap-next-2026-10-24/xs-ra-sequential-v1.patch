@@ -1,0 +1,180 @@
+diff --git a/mm/memory.c b/mm/memory.c
+index 6fd925877..8011947a3 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -4995,8 +4995,12 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
+ 	if (folio)
+ 		swap_update_readahead(folio, vma, vmf->address);
+ 	if (!folio) {
+-		/* Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices */
+-		if (data_race(si->flags & SWP_SYNCHRONOUS_IO))
++		/*
++		 * Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices,
++		 * except sequential xswap faults with a physical backend.
++		 */
++		if (data_race(si->flags & SWP_SYNCHRONOUS_IO) &&
++		    !xswap_fault_readahead(vmf, entry))
+ 			folio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,
+ 					    thp_swapin_suitable_orders(vmf) | BIT(0),
+ 					    vmf, NULL, 0);
+diff --git a/mm/swap.h b/mm/swap.h
+index b9e7c8a4c..6211c11e2 100644
+--- a/mm/swap.h
++++ b/mm/swap.h
+@@ -397,6 +397,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t flag,
+ 		struct mempolicy *mpol, pgoff_t ilx);
+ struct folio *swapin_readahead(swp_entry_t entry, gfp_t flag,
+ 		struct vm_fault *vmf);
++bool xswap_readahead_wanted(struct swap_info_struct *si, swp_entry_t entry);
++bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry);
+ struct folio *swapin_sync(swp_entry_t entry, gfp_t flag, unsigned long orders,
+ 			   struct vm_fault *vmf, struct mempolicy *mpol, pgoff_t ilx);
+ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,
+@@ -477,6 +479,17 @@ static inline struct folio *swapin_readahead(swp_entry_t swp, gfp_t gfp_mask,
+ 	return NULL;
+ }
+ 
++static inline bool xswap_readahead_wanted(struct swap_info_struct *si,
++					  swp_entry_t entry)
++{
++	return false;
++}
++
++static inline bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)
++{
++	return false;
++}
++
+ static inline struct folio *swapin_sync(
+ 	swp_entry_t entry, gfp_t flag, unsigned long orders,
+ 	struct vm_fault *vmf, struct mempolicy *mpol, pgoff_t ilx)
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 7ac1808ae..add9effd2 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -753,6 +753,34 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,
+ 	return folio;
+ }
+ 
++/**
++ * xswap_readahead_wanted - Check whether an xswap slot has a physical backend.
++ * @si: the swap device of @entry.
++ * @entry: the swap entry, which need not be pinned.
++ *
++ * This is a readahead hint, not a pin on the slot or its backend. The swap
++ * cache allocation and read paths must revalidate the entry after this
++ * returns. No cluster pointer or physical entry escapes the lock.
++ *
++ * Context: Caller must protect @si with a reference count or locks.
++ * Return: true if an xswap slot has a physical backend, false otherwise.
++ */
++bool xswap_readahead_wanted(struct swap_info_struct *si, swp_entry_t entry)
++{
++	struct swap_cluster_info *ci;
++	bool backed;
++
++	if (!(si->flags & SWP_XSWAP))
++		return false;
++	ci = swap_cluster_lock_unpinned(si, swp_offset(entry));
++	if (!ci)
++		return false;
++	backed = xswap_slot_backend(ci, swp_cluster_offset(entry)).val;
++	swap_cluster_unlock(ci);
++
++	return backed;
++}
++
+ /**
+  * swapin_sync - swap-in one or multiple entries skipping readahead.
+  * @entry: swap entry indicating the target slot
+@@ -920,8 +948,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,
+ 	struct blk_plug plug;
+ 	swp_entry_t ra_entry;
+ 
+-	/* xswap entries live only in zswap; readahead does not help. */
+-	if (si->flags & SWP_XSWAP)
++	/* Keep compressed xswap targets on the single-folio path. */
++	if ((si->flags & SWP_XSWAP) && !xswap_readahead_wanted(si, entry))
+ 		goto skip;
+ 
+ 	mask = swapin_nr_pages(offset) - 1;
+@@ -940,6 +968,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,
+ 	for (offset = start_offset; offset <= end_offset ; offset++) {
+ 		/* Ok, do the async read-ahead now */
+ 		ra_entry = swp_entry(swp_type(entry), offset);
++		if ((si->flags & SWP_XSWAP) && offset != entry_offset &&
++		    !xswap_readahead_wanted(si, ra_entry))
++			continue;
+ 		folio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,
+ 				ilx, offset != entry_offset);
+ 		if (!folio)
+@@ -1009,7 +1040,6 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,
+ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 		struct mempolicy *mpol, pgoff_t targ_ilx, struct vm_fault *vmf)
+ {
+-	struct swap_info_struct *si = __swap_entry_to_info(targ_entry);
+ 	struct swap_io_ctx ctx = {};
+ 	struct blk_plug plug;
+ 	struct folio *folio;
+@@ -1018,10 +1048,6 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 	unsigned long start, end, addr;
+ 	pgoff_t ilx = targ_ilx;
+ 
+-	/* xswap entries live only in zswap; readahead does not help. */
+-	if (si->flags & SWP_XSWAP)
+-		goto skip;
+-
+ 	win = swap_vma_ra_win(vmf, &start, &end);
+ 	if (win == 1)
+ 		goto skip;
+@@ -1054,8 +1080,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 			if (IS_ERR_OR_NULL(si))
+ 				continue;
+ 		}
+-		folio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,
+-					      addr != vmf->address);
++		if (addr != vmf->address &&
++		    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&
++		    !xswap_readahead_wanted(__swap_entry_to_info(entry), entry))
++			folio = NULL;
++		else
++			folio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,
++						      ilx, addr != vmf->address);
+ 		if (si)
+ 			put_swap_device(si);
+ 		if (!folio)
+@@ -1071,6 +1102,34 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 	return swap_cache_read_folio_sync(targ_entry, gfp_mask, mpol, targ_ilx);
+ }
+ 
++/**
++ * xswap_fault_readahead - Admit physical readahead after adjacent faults.
++ * @vmf: fault holding a reference to the target swap device.
++ * @entry: target swap entry.
++ *
++ * Keep discontinuous faults on the synchronous demand path. VMA history is
++ * advisory: racing faults may suppress or admit speculation, but the swap
++ * cache and I/O paths still validate every entry and own its references.
++ */
++bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)
++{
++	struct swap_info_struct *si = __swap_entry_to_info(entry);
++	struct vm_area_struct *vma = vmf->vma;
++	unsigned long prev;
++
++	if (!(si->flags & SWP_XSWAP) || !swap_use_vma_readahead() ||
++	    READ_ONCE(page_cluster) <= 0)
++		return false;
++	prev = SWAP_RA_ADDR(GET_SWAP_RA_VAL(vma));
++	if (vmf->address != prev + PAGE_SIZE &&
++	    prev != vmf->address + PAGE_SIZE) {
++		atomic_long_set(&vma->swap_readahead_info,
++				SWAP_RA_VAL(vmf->address, 1, 0));
++		return false;
++	}
++	return xswap_readahead_wanted(si, entry);
++}
++
+ /**
+  * swapin_readahead - swap in pages in hope we need them soon
+  * @entry: swap entry of this memory

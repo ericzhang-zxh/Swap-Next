@@ -1,0 +1,18 @@
+diff --git a/mm/zswap.c b/mm/zswap.c
+index 789730c22..5954a265f 100644
+--- a/mm/zswap.c
++++ b/mm/zswap.c
+@@ -967,6 +967,13 @@ static bool zswap_decompress(struct zswap_entry *entry, struct folio *folio)
+ 		sg_set_folio(&output, folio, PAGE_SIZE, 0);
+ 		acomp_request_set_params(acomp_ctx->req, input, &output,
+ 					 entry->length, PAGE_SIZE);
++		/* Contiguous input lets synchronous codecs avoid stream walks. */
++		if (!acomp_is_async(acomp_ctx->acomp) && !sg_is_last(input)) {
++			memcpy_from_sglist(acomp_ctx->buffer, input, 0,
++					   entry->length);
++			acomp_request_set_src_nondma(acomp_ctx->req,
++						    acomp_ctx->buffer, entry->length);
++		}
+ 		ret = crypto_acomp_decompress(acomp_ctx->req);
+ 		ret = crypto_wait_req(ret, &acomp_ctx->wait);
+ 		dlen = acomp_ctx->req->dlen;
