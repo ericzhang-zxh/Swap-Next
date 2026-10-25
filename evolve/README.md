@@ -7,6 +7,9 @@
 - `openevolve/`: unmodified upstream submodule at `59dfe764` (Apache-2.0).
   `requirements.snapshot.txt` installs it in editable mode.
 
+New campaigns use `swap-standard` (below). The historical suites keep their
+frozen, closed protocols and are KVM-only:
+
 ```sh
 evolve/.venv/bin/python evolve/loop.py <kernel|xswap|xswap-structure> status
 evolve/.venv/bin/python evolve/loop.py <kernel|xswap|xswap-structure> next

@@ -100,6 +100,30 @@ def runner_extra(protocol):
     return extra
 
 
+# Protocols frozen before the campaign contract; they keep their own metrics.
+CONTRACT_EXEMPT = {"protocol.json", "protocol-confirm-h1-2026-10-23.json",
+                   "protocol-xswap-swapin-2026-10-23.json", "protocol-xswap-next-2026-10-24.json",
+                   "protocol-tcg-revision3.json"}
+SWAPIN_PRIMARIES = {"swapin_seq.mean_ns", "swapin_rand.mean_ns"}
+METADATA_METRIC = "metadata_delta_bytes_per_capacity_slot"
+
+
+def contract_errors(p):
+    """Every new campaign scores swap-in latency and screens metadata bytes per slot."""
+    errors = []
+    cases, tiers = p.get("cases", {}), p.get("tiers", {})
+    for name, case in cases.items():
+        if case.get("primary") not in SWAPIN_PRIMARIES | {None}:
+            errors.append(name + ": primary must be a swap-in latency mean or null")
+    fast = [cases.get(name, {}) for name in tiers.get("fast", {}).get("cases", [])]
+    if not any(c.get("workload") == "swapin" and c.get("primary") in SWAPIN_PRIMARIES for c in fast):
+        errors.append("fast tier needs a swapin case whose primary is a swap-in latency mean")
+    if not any(c.get("workload") == "metadata" and c.get("metrics", {}).get(METADATA_METRIC) == "lower"
+               for c in fast):
+        errors.append("fast tier needs a metadata case scoring " + METADATA_METRIC)
+    return errors
+
+
 def fingerprint(p):
     paths = [PROTOCOL, BENCH / "image.json", ROOT / "evolve/loop.py", Path(__file__),
              ROOT / "evolve/control/controller.py", ROOT / "evolve/control/analysis.py",
@@ -244,10 +268,19 @@ class Workflow:
         save(dest / "report.json", row)
         try:
             self.check()
+            if PROTOCOL.name not in CONTRACT_EXEMPT and contract_errors(self.p):
+                raise RuntimeError("BLOCKED: protocol contract: " + "; ".join(contract_errors(self.p)))
             fp = fingerprint(self.p)
             row["fingerprint"] = fp
-            if action == "calibrate" and any(r["action"] == action and r["tier"] == tier and r.get("fingerprint") == fp and r.get("execution_started") for r in self.ledger[:-1]):
-                raise RuntimeError("calibration already attempted for this protocol; inspect retained evidence")
+            if action == "calibrate":
+                prior = [r for r in self.ledger[:-1] if r["action"] == action and r["tier"] == tier and
+                         r.get("fingerprint") == fp and r.get("execution_started")]
+                # A passed calibration may be renewed once it expires. A noisy or
+                # incomplete one is never rerun under the same protocol.
+                if prior and not (all(r.get("analysis", {}).get("passed") is True for r in prior) and
+                                  time.time() - prior[-1].get("finished", time.time()) >
+                                  self.p["calibration_max_age_seconds"]):
+                    raise RuntimeError("calibration already attempted for this protocol; inspect retained evidence")
             count = self.p["tiers"][tier]["calibration_pairs" if action == "calibrate" else "comparison_pairs"]
             required_guests = count * 2 * len(self.p["tiers"][tier]["cases"])
             if self.budget["guests"] + required_guests > self.p["budget"]["guest_attempts"]:

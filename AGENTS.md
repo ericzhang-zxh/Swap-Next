@@ -31,15 +31,28 @@ Loading that skill does not authorize running or publishing experiments.
 - **Workers**: a worker executes one assigned hypothesis. It does not delegate,
   change scope or the evaluator, or publish.
 - **Evidence**: missing evidence is a failure, never a pass. Correctness gates
-  are not weakened.
+  are not weakened. A screen uses its protocol's `required_correctness_gates`;
+  the policy's `required_gates` belong to formal acceptance (see
+  [DESIGN.md#limitations](DESIGN.md#limitations)).
 - **Host**: no host reboot, host swap changes, raw host disks or sudo.
-- **Slow tier**: do not run the slow tier, or any other multi-round confirmation,
-  on the Linux worker by default. It is reserved for an exceptionally strong
-  fast-tier result, and the owner must explicitly approve each slow-tier run
-  first. A fast-tier pass alone does not qualify. Stop experiment execution
-  after the fast tier, then complete the report delivery below.
-- **Merging**: candidate code is never merged or promoted automatically. Report-only
-  publication follows the standing policy below.
+- **Fast tier is a screen**: a fast-tier pass selects a candidate for the
+  owner's review; it never accepts one. Fast-tier A/A calibration, including
+  renewing an expired passed calibration, is part of the fast tier and needs
+  no approval.
+- **Slow tier**: do not run the slow tier, its calibration, or any other
+  multi-round confirmation on the Linux worker by default. It is reserved for
+  an exceptionally strong fast-tier result, and the owner must explicitly
+  approve each slow-tier run first. A fast-tier pass alone does not qualify.
+  Stop experiment execution after the fast tier, then complete the report
+  delivery below.
+- **Metrics**: every campaign's primary metric is swap-in latency (a case
+  primary of `swapin_seq.mean_ns` or `swapin_rand.mean_ns`). Every fast tier
+  also screens metadata bytes per slot (`metadata_delta_bytes_per_capacity_slot`
+  on brd) as a guardrail; all other metrics are guardrails. `standard_workflow.py`
+  blocks a new protocol that breaks this; protocols frozen earlier are exempt.
+- **Promotion**: candidate code is never applied to `linux/`, sent upstream or
+  promoted automatically. Keeping a candidate's patch and evidence on `main`
+  is a record, not a merge.
 - **Commits**: keep runtime state, secrets, machine paths and credentials out
   of commits. AI tools add no `Signed-off-by`; a human certifies upstream
   submissions.
@@ -63,10 +76,29 @@ Loading that skill does not authorize running or publishing experiments.
   verification or acceptance standards.
 - The editable file list in `evolve/control/config/policy.json` is fixed.
   No agent or campaign policy adds files to it; design within those files.
-- If a larger design needs a different experiment budget, the primary agent may
-  establish a documented new protocol within the time and resources authorized
-  by the owner, preserving old protocols and evidence. Explicit compatibility,
-  host safety and delivery constraints apply.
+
+## What needs owner approval
+
+This applies to every agent and runner.
+
+- **No approval needed**: opening a new campaign. That means a new
+  `evolve/control/campaigns/<c>/policy.json` that keeps or narrows the base
+  file list and sets a budget within the owner-authorized time and resources,
+  and a new protocol file that reuses an approved protocol revision's
+  measurement parameters and meets the **Metrics** rule. Candidates, fast-tier
+  runs, calibration and reports follow from the campaign.
+- **Approval needed (core)**: changes to `AGENTS.md`, `README.md`, `DESIGN.md`,
+  `evolve/control/PRINCIPLES.md`, `CODE_PATTERNS.md`, `METRICS.md`, skills
+  under `.agents/`, the base policy `evolve/control/config/policy.json`,
+  controller, analysis and loop code, benchmark runners, guest images and
+  parsers, and any protocol measurement parameter: accelerator, guest size,
+  tier cases and pair counts, noise envelope and ceiling, validity rules. The
+  slow tier and candidate promotion also need approval.
+- A frozen protocol file is never edited. A change is a new file, with old
+  protocols and evidence preserved.
+- Grok Bot asks for core approval with a pull request (see
+  [Grok Bot runs](#grok-bot-runs-cloud-box-qemu-tcg)). An agent in a session
+  the owner attends asks the owner directly.
 
 ## Writing
 
@@ -113,7 +145,8 @@ Every campaign, whoever runs it, follows the same branch lifecycle.
    branch as they happen. Keep runtime state, ledgers and images uncommitted.
 3. **Close**: bring everything worth keeping onto `main`.
    - Reports and evidence go to `results/<campaign>/`.
-   - Candidate patches go to `patches/<campaign>/`.
+   - Candidate patches go to `patches/<campaign>/<candidate>.patch`, exported
+     from the controller's `candidate.patch`.
    - Harness, policy and protocol changes go to their usual paths.
    - Merge the branch into `main` with `--no-ff`. Do not rebase or squash
      commits that a report or evidence manifest cites, because their hashes
@@ -121,12 +154,16 @@ Every campaign, whoever runs it, follows the same branch lifecycle.
      and fast-forwarded.
    - When rules, skills or published reports conflict, keep the `main` side
      unless the campaign deliberately changes them.
-   - Run the project tests before pushing `main`.
+   - Run the [project tests](.agents/skills/closed-loop-evolve/references/swap-next.md#checks)
+     before pushing `main`.
 4. **Clean up**: once `main` contains the branch, delete it locally and on
-   `origin` and remove its worktrees. No finished campaign leaves a branch,
-   a worktree or uncommitted work behind. If a worktree holds changes that
-   are not on `main`, commit them to `main` or report them to the owner;
-   never discard them silently.
+   `origin` and remove its worktrees. Also remove the campaign's candidate
+   worktrees under `worktrees/<campaign>/` with `git -C linux worktree remove`,
+   but keep their `agents/<candidate>` branches in `linux/`: evidence cites
+   those commit hashes, and a branch costs no disk. No finished campaign leaves
+   an experiment branch, a worktree or uncommitted work behind. If a worktree
+   holds changes that are not on `main`, commit them to `main` or report them
+   to the owner; never discard them silently.
 
 An agent that finds stale experiment branches or worktrees from an earlier
 campaign applies steps 3 and 4 to them before starting new work.
@@ -184,10 +221,13 @@ base and resulting hashes with the campaign (example layout:
 
 ### Closed loop
 
-1. **Coordinator** opens the campaign: objective, frozen TCG protocol revision,
-   baseline, budgets, STOP state and evidence destination.
-2. **Hypothesis** proposes candidates, each with a mechanism, expected effect,
-   parent lineage (baseline or prior candidate) and kill criteria.
+1. **Coordinator** is the primary agent. It opens the campaign: objective,
+   frozen TCG protocol revision, baseline, budgets, STOP state and evidence
+   destination.
+2. **Hypothesis** proposes candidates, each with a mechanism, expected effect
+   and kill criteria. Every candidate's parent is the campaign baseline; the
+   controller rejects any other parent (see
+   [DESIGN.md](DESIGN.md#where-openevolve-fits)).
 3. The most promising candidates run automatically. When the owner triggers a
    round (for example "run 3 experiments"), that is the authorization; do not
    ask again per candidate.
@@ -197,33 +237,34 @@ base and resulting hashes with the campaign (example layout:
 5. **Review** independently checks the diff, scope, evidence binding and
    statistics before a decision is recorded.
 6. **Report** writes the audit and an HTML report (`explainer.html`), then
-   follows [Report publication](#report-publication) and
+   publishes for the Coordinator, following
+   [Report publication](#report-publication) and
    [Campaign lifecycle](#campaign-lifecycle).
 
 ### Rules and scaffolding
 
-Grok Bot and its Swap bot group change project rules or scaffolding only
-through a pull request for the owner's review, and never merge it
-themselves. That covers `AGENTS.md`, `README.md`, `DESIGN.md`,
-[PRINCIPLES.md](evolve/control/PRINCIPLES.md), skills under `.agents/`,
-policy and protocol files, `evolve/` controller and loop code, and benchmark
-runners and tooling. Their experiment work (hypotheses, candidate runs,
-results, reports) follows [Campaign lifecycle](#campaign-lifecycle) and goes
-directly to `main`.
+Grok Bot and its Swap bot group make core changes (see
+[What needs owner approval](#what-needs-owner-approval)) only through a pull
+request for the owner's review, and never merge it themselves. Opening a new
+campaign needs no pull request: its policy, protocol and experiment work
+follow [Campaign lifecycle](#campaign-lifecycle) and go directly to `main`.
 
 ### Owner gates that still apply
 
-- The slow tier and any protocol change (including a new TCG revision or guest
-  size) need the owner's explicit approval.
+- The slow tier, core changes and new protocol measurement parameters
+  (including a new TCG revision or guest size) need the owner's explicit
+  approval.
 - The `linux/` submodule stays frozen at its pinned commit.
 - Commits and report publication follow [Report publication](#report-publication).
 
-### Open items (TBD)
+### TCG revision 3
 
 - TCG protocol revision 3 and its protocol file:
   [benchmark/swap-standard/protocol-tcg-revision3.json](benchmark/swap-standard/protocol-tcg-revision3.json),
-  run as campaign `xswap-tcg-rev3-2026-10-25`. Its parameters below need the owner's
-  explicit approval before the first calibration.
+  run as campaign `xswap-tcg-rev3-2026-10-25`. The owner approved its parameters
+  below on 2026-10-25. It was frozen before the **Metrics** rule and has no
+  metadata case. Adding one to a TCG protocol changes its tier cases, so it
+  needs the owner's approval.
   Revisions 1 and 2 stay frozen. Verdicts are TCG-only screens for effects of
   roughly 15–25% or larger. KVM confirmation is an open owner decision.
 - Scaled guest size for revision 3: 4 vCPU, 4096 MiB RAM, 16 GiB swap.

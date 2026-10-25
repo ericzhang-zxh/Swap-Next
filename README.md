@@ -10,7 +10,7 @@
 
 A laboratory for finding Linux swap optimizations. Each candidate is a
 frozen-kernel change, from a small patch through a larger redesign. A benchmark
-boots it next to the baseline in KVM, and OpenEvolve records the outcome and
+boots it next to the baseline in a QEMU guest, and OpenEvolve records the outcome and
 selects references for the next proposal.
 
 [DESIGN.md](DESIGN.md) covers the shared design: the swap cost model, the
@@ -58,17 +58,17 @@ see [AGENTS.md § Grok Bot runs](AGENTS.md#grok-bot-runs-cloud-box-qemu-tcg).
 
 ```sh
 python3 evolve/control/controller.py --campaign <c> new <name> --hypothesis '<mechanism, expected effect, falsifier>'
-# edit allowed files in worktrees/<c>/<name>, commit locally
+# implement and commit inside worktrees/<c>/<name>
 python3 evolve/control/controller.py --campaign <c> check <name>
-evolve/.venv/bin/python evolve/loop.py xswap evaluate --candidate <name>
-evolve/.venv/bin/python evolve/loop.py xswap next
-evolve/.venv/bin/python evolve/loop.py xswap-structure calibrate
-evolve/.venv/bin/python evolve/loop.py swap-standard calibrate --tier fast
+evolve/.venv/bin/python evolve/loop.py swap-standard calibrate --tier fast --protocol benchmark/swap-standard/protocol-<c>.json
+evolve/.venv/bin/python evolve/loop.py swap-standard evaluate --tier fast --protocol benchmark/swap-standard/protocol-<c>.json \
+  --candidate <name> --correctness <correctness.json>
+python3 evolve/control/controller.py --campaign <c> close <name> --reason '<decision and evidence>'
 ```
 
 The controller keeps candidates inside the allowed files and line budget.
-The evaluator runs AB/BA guest pairs on disk and zswap. A human decides
-whether anything goes upstream.
+The evaluator runs AB/BA guest pairs per case. A fast-tier pass is a screen;
+a human decides whether anything goes upstream.
 
 What the harness cannot measure is listed once, in
 [DESIGN.md § Limitations](DESIGN.md#limitations).

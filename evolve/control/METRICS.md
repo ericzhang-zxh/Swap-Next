@@ -9,7 +9,9 @@ Test fixtures exercise only the analyzer.
 ## Metrics
 
 Each campaign freezes one primary metric before running; the others are
-guardrails checked per workload. Policy v1 makes throughput primary.
+guardrails checked per workload. Policy v1 makes throughput primary; the
+project's primary is swap-in latency (AGENTS.md **Metrics**), so v1 must be
+revised to a v2 that derives swap-in latency before it is enabled.
 
 | Metric | Definition | Better |
 |---|---|---|

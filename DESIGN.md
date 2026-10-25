@@ -3,7 +3,8 @@
 Swap Next searches for Linux swap changes that lower a measured cost without
 breaking correctness. A candidate is a frozen-kernel change under that
 campaign's policy: a small patch or a larger redesign of the swap path. A
-benchmark boots it next to the baseline in KVM; OpenEvolve archives the result
+benchmark boots it next to the baseline in a QEMU guest (KVM, or TCG on Grok
+Bot's cloud box); OpenEvolve archives the result
 and picks references for the next proposal. The proposer is the assistant in
 the current session.
 
@@ -20,9 +21,10 @@ report in `results/`. This document holds what every campaign shares.
 | Reclaim CPU | compression, cluster allocation, swap-out path | standard suite records cgroup system/user CPU, not reclaim-only CPU |
 | Scalability | `si->lock`, cluster locks, per-CPU cluster cache | historical guests have two vCPUs; standard suite uses eight, without a scaling study |
 
-A campaign picks one row as its primary metric and keeps the others as
-guardrails. The formal policy in `evolve/control/config/policy.json` names
-throughput. The new [standard suite](benchmark/swap-standard/README.md) records
+Every campaign's primary metric is swap-in latency; metadata bytes per slot
+is screened in every fast tier and the other rows are guardrails (AGENTS.md
+**Metrics**). The disabled formal policy in `evolve/control/config/policy.json`
+still names throughput (see [METRICS.md](evolve/control/METRICS.md)). The new [standard suite](benchmark/swap-standard/README.md) records
 usemem throughput, kernel-build time and Valkey RPS. Passing repeated A/A for
 a frozen campaign protocol is recorded in that campaign's report. The default
 matrix is not itself a calibrated candidate campaign;
@@ -64,7 +66,8 @@ recycled integer destroy handle, and interface documentation. See
   check that the scored value is stable.
 - **Report a rate when the outcome is discrete.** If boots fall into
   regimes, compare regime frequencies over enough boots (at least ten per
-  side), not means of two.
+  side), not means of two. A fast tier with fewer pairs is a screen; this
+  bar applies to acceptance.
 - **Tie every candidate to a mechanism counter.** A change should move a
   counter it targets, such as grow operations or shrink events, before
   anyone reads the end-to-end metric.
@@ -107,10 +110,12 @@ documents link here instead of repeating it.
   bytes. Total RAM is not accounted.
 - **Statistics**: there is no independent confirmation or holdout, and formal
   acceptance (`analysis.py`) stays disabled until the gates listed in
-  `benchmark/<suite>/protocol.json` and `policy.json` exist.
+  `benchmark/<suite>/protocol.json` and `policy.json` exist. The policy's
+  `required_gates` include KCSAN and fault injection, which no harness runs, so
+  no candidate can be promoted yet. Screens use their protocol's
+  `required_correctness_gates`.
 - **Correctness**: historical kernel and xswap guests check data integrity,
   fork/COW, live destroy and swapoff. Those checked-in suites do not run
   lockdep, KASAN, KCSAN or fault injection. The xswap-next-2026-10-24 report
-  records targeted KASAN and lockdep builds; the guest-to-build link and the
-  KASAN config files are on the experiment snapshot, not in this tree. KCSAN
-  and fault injection remain uncovered.
+  records targeted KASAN and lockdep builds; the KASAN and debug configs are in
+  `benchmark/config/`. KCSAN and fault injection remain uncovered.

@@ -141,8 +141,8 @@ Revision 3 belongs to its own controller campaign, `xswap-tcg-rev3-2026-10-25`, 
 `controller.py --campaign xswap-tcg-rev3-2026-10-25 new`; the correctness file must name the
 candidate's commit. The baseline build name is `xs-desc-v1`. The evaluation
 sets `SWAP_NEXT_ACCEL=tcg` for the runner child and rejects any result whose
-accelerator is not `tcg`. The first calibration waits for the owner's explicit
-approval of the revision 3 parameters.
+accelerator is not `tcg`. The owner approved the revision 3 parameters on
+2026-10-25.
 
 Each pair uses fresh boots in alternating AB then BA order. One primary metric
 per scored workload contributes equally to the geometric mean of direction-correct

@@ -71,7 +71,7 @@ benchmark or specialize code for it.
 The review states:
 
 - the problem and its evidence
-- the minimal change
+- the smallest change that implements the mechanism, which may be a redesign
 - the invariants, lock and failure paths
 - the checks run and the checks missing
 - the per-workload effects

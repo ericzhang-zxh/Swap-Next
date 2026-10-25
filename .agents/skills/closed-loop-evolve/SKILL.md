@@ -28,7 +28,9 @@ apply Swap Next's kernel-specific gates to unrelated projects.
 - Distinguish inspection, preparation, and execution. Continue actions already
   authorized by the user. If a missing scope or budget decision is necessary,
   finish independent preparation and ask only for that decision. Do not infer
-  publication, unattended scheduling, or promotion from permission to experiment.
+  unattended scheduling or promotion from permission to experiment. Publication
+  follows the project's standing rule; for Swap Next, AGENTS.md publishes every
+  campaign report.
 - Before execution, record the target behavior, one primary metric, guardrails,
   allowed edits, fixed baseline, required coverage, resource limits, total budget,
   stopping conditions and evidence destinations in the existing campaign format.

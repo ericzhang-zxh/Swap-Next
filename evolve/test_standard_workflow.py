@@ -57,6 +57,41 @@ class WorkflowTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "noisy"):
             flow.calibration("fast", "new")
 
+    def test_expired_passed_calibration_may_be_renewed_but_noisy_may_not(self):
+        flow = w.Workflow(self.p)
+        old = w.time.time() - self.p["calibration_max_age_seconds"] - 10
+        flow.ledger = [{"action": "calibrate", "tier": "fast", "fingerprint": "fp", "execution_started": True,
+                        "finished": old, "analysis": {"passed": True}}]
+        with patch.object(w, "fingerprint", return_value="fp"), patch.object(flow, "reserve", side_effect=RuntimeError("reserved")):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["reason"], "reserved")
+        flow.ledger = [{"action": "calibrate", "tier": "fast", "fingerprint": "fp", "execution_started": True,
+                        "finished": old, "analysis": {"passed": False}}]
+        with patch.object(w, "fingerprint", return_value="fp"):
+            row = flow.run("calibrate", "fast")
+        self.assertIn("already attempted", row["reason"])
+        flow.ledger = [{"action": "calibrate", "tier": "fast", "fingerprint": "fp", "execution_started": True,
+                        "finished": w.time.time(), "analysis": {"passed": True}}]
+        with patch.object(w, "fingerprint", return_value="fp"):
+            row = flow.run("calibrate", "fast")
+        self.assertIn("already attempted", row["reason"])
+
+    def test_new_protocol_must_score_swapin_and_metadata(self):
+        self.assertIn("fast tier needs a metadata case scoring " + w.METADATA_METRIC, w.contract_errors(self.p))
+        good = {"cases": {"swapin-disk": {"workload": "swapin", "metrics": {"swapin_rand.mean_ns": "lower"},
+                                          "primary": "swapin_rand.mean_ns"},
+                          "metadata-brd": {"workload": "metadata", "metrics": {w.METADATA_METRIC: "lower"},
+                                           "primary": None}},
+                "tiers": {"fast": {"cases": ["swapin-disk", "metadata-brd"]}}}
+        self.assertEqual(w.contract_errors(good), [])
+        good["cases"]["swapin-disk"]["primary"] = "throughput_kbps_sum"
+        self.assertTrue(w.contract_errors(good))
+        flow = w.Workflow(self.p)
+        with patch.object(w, "PROTOCOL", self.root / "protocol-new-campaign.json"):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["status"], "BLOCKED")
+        self.assertEqual(flow.budget["guests"], 0)
+
     def test_slow_gate_before_build_or_guest(self):
         flow = w.Workflow(self.p)
         with patch.object(w, "fingerprint", return_value="fp"), patch.object(flow, "candidate", return_value=("commit", {}, {})):

@@ -43,7 +43,8 @@ There are three layers:
 
 - **Instructions**: AGENTS.md and the task contract.
 - **Mechanical gates**: the controller's diff allowlist, size budget and frozen hashes.
-- **Isolation**: namespace-isolated builds and KVM guests.
+- **Isolation**: namespace-isolated builds and QEMU guests (KVM, or TCG on
+  Grok Bot's cloud box).
 
 The host never runs candidate-provided Makefiles, scripts or commands. The
 same Unix user can rewrite rules and evidence, so hashes detect accidental

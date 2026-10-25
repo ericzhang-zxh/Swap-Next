@@ -31,12 +31,16 @@ candidate. Reconcile the two and apply the smaller remaining budget.
 
 ## One round
 
+New campaigns use the standard suite. The historical `loop.py kernel|xswap|xswap-structure`
+adapters keep their frozen, closed protocols and are KVM-only.
+
 ```sh
 python3 evolve/control/controller.py --campaign <c> new <name> --hypothesis '<mechanism, expected effect, falsifier>'
 # implement and commit inside worktrees/<c>/<name>
 python3 evolve/control/controller.py --campaign <c> check <name>
-evolve/.venv/bin/python evolve/loop.py xswap evaluate --candidate <name>
-evolve/.venv/bin/python evolve/loop.py xswap next
+evolve/.venv/bin/python evolve/loop.py swap-standard calibrate --tier fast --protocol benchmark/swap-standard/protocol-<c>.json
+evolve/.venv/bin/python evolve/loop.py swap-standard evaluate --tier fast --protocol benchmark/swap-standard/protocol-<c>.json \
+  --candidate <name> --correctness <correctness.json>
 python3 evolve/control/controller.py --campaign <c> close <name> --reason '<decision and evidence>'
 ```
 
@@ -99,7 +103,7 @@ Never reset a budget by clearing a ledger or database.
 | xswap-structure calibration | `benchmark/xswap-structure/state-layout-v1/calibration.json` |
 | xswap attempts | `benchmark/xswap/state-runtime-layout-v1/attempts.json` |
 | standard-suite ledger | `evolve/swap-standard/state-layout-v1/` for `protocol.json` |
-| xswap-next snapshot ledger | `evolve/swap-standard/state-xswap-next-2026-10-24/` on snapshot `15bf186`; not created by `standard_workflow.py` on main |
+| campaign protocol ledger | `evolve/swap-standard/state-<campaign>/`, selected by `--protocol` |
 | guest lock | `benchmark/kernel/.runtime.lock` |
 
 The untracked `Evolve/` directory is an archive of pre-relocation runs. Read it
@@ -111,10 +115,16 @@ confirm that it has exited.
 
 ## Checks
 
+These are the project tests that [Campaign lifecycle](../../../../AGENTS.md#campaign-lifecycle)
+requires before pushing `main`.
+
 ```sh
 python3 -m unittest discover -s evolve/control/tests -v
 python3 -m unittest discover -s benchmark/tests -v
-python3 -m unittest discover -s benchmark/xswap -p 'test_*.py' -v
+for suite in swap-standard xswap xswap-structure xswap-hole-probe kernel; do
+  evolve/.venv/bin/python -m unittest discover -s benchmark/$suite -p 'test_*.py' -v
+done
+evolve/.venv/bin/python -m unittest evolve.test_standard_workflow -v
 ```
 
 `XSWAP_EVIDENCE_FIXTURE` and `SWAP_NEXT_EVIDENCE_FIXTURE` enable the
