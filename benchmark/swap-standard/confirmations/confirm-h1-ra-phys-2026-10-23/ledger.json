@@ -1,0 +1,32 @@
+{
+  "campaign": "confirm-h1-ra-phys-2026-10-23",
+  "protocol_sha256": "ce9e2994064cc8a11446cef1cf6c3851c915f256981ff1df53fdd49db237b297",
+  "attempts": [
+    {
+      "run_id": "confirm-h1-ra-phys-2026-10-23-0-swapin-disk-A",
+      "round": 0,
+      "case": "swapin-disk",
+      "arm": "A",
+      "started": 1792812895.4552262,
+      "exit": 0,
+      "integration_pass": true,
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "finished": 1792812946.3002772,
+      "status": "PASS",
+      "result_sha256": "726252a4fd760467e4c1214f861bd6919d1417eabaa909ead34d4abeab728b26"
+    },
+    {
+      "run_id": "confirm-h1-ra-phys-2026-10-23-0-swapin-disk-B",
+      "round": 0,
+      "case": "swapin-disk",
+      "arm": "B",
+      "started": 1792812946.3004744,
+      "exit": 1,
+      "integration_pass": null,
+      "source_commit": null,
+      "finished": 1792812948.3282135,
+      "status": "FAIL"
+    }
+  ],
+  "rounds": []
+}
