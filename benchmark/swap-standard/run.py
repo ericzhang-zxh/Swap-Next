@@ -75,13 +75,25 @@ def guest_shape(env):
     return True, mem, str(cpus), ["-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc", "-cpu", "max"]
 
 
+def needs_lifetime_fix(mode, workload):
+    return mode == "xswap" and workload != "lifetime"
+
+
+def require_linux_checkout():
+    """xswap runs prove the lifetime fix from linux/; without it, stop before any work."""
+    if not (PROJECT / "linux" / ".git").exists():
+        raise SystemExit("linux/ checkout missing; run: git submodule update --init linux")
+
+
 def has_lifetime_fix(commit):
-    git_dir = PROJECT / "linux" / ".git"
-    if not git_dir.exists() or not re.fullmatch(r"[0-9a-f]{40}", str(commit)):
-        return False
+    require_linux_checkout()
+    if not re.fullmatch(r"[0-9a-f]{40}", str(commit)):
+        raise ValueError("build manifest commit is not a full SHA: " + str(commit))
     completed = subprocess.run(
         ["git", "-C", str(PROJECT / "linux"), "merge-base", "--is-ancestor", LIFETIME_FIX, commit],
-        capture_output=True)
+        capture_output=True, text=True)
+    if completed.returncode not in (0, 1):
+        raise ValueError("cannot check the lifetime fix: " + completed.stderr.strip())
     return completed.returncode == 0
 
 
@@ -115,15 +127,6 @@ def sha(path):
     return h.hexdigest()
 
 
-# xs-desc-lifetime-v1: unpinned cluster lookups survive an xswap shrink.
-LIFETIME_FIX = "5e84ca928deeacb4eee656806a003f27d1eca82f"
-
-
-def has_lifetime_fix(commit):
-    return subprocess.run(["git", "-C", str(PROJECT / "linux"), "merge-base", "--is-ancestor",
-                           LIFETIME_FIX, commit], capture_output=True).returncode == 0
-
-
 def validate(build, backend, mode, workload):
     manifest = json.loads((build / "result.json").read_text())
     image = build / "output/arch/x86/boot/bzImage"
@@ -139,7 +142,7 @@ def validate(build, backend, mode, workload):
     if backend == "brd":
         required += ["BLK_DEV_RAM"]
     required += ["ZSWAP"]
-    if mode == "xswap" and workload != "lifetime" and not has_lifetime_fix(manifest["commit"]):
+    if needs_lifetime_fix(mode, workload) and not has_lifetime_fix(manifest["commit"]):
         raise ValueError("xswap performance runs need the descriptor lifetime fix")
     lines = set(config.read_text().splitlines())
     for option in required:
@@ -187,6 +190,8 @@ def main():
     if (args.workload == "metadata") != (args.backend == "brd"):
         parser.error("metadata uses brd exclusively; brd is reserved for metadata")
     validate_workload(args.backend, args.mode, args.workload)
+    if needs_lifetime_fix(args.mode, args.workload):
+        require_linux_checkout()
     try:
         guest_shape(os.environ)
     except ValueError as exc:

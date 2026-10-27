@@ -135,9 +135,29 @@ class RunnerValidationTests(unittest.TestCase):
             self.assertEqual(sparse.stat().st_size, 8192)
             self.assertEqual(full.stat().st_size, 4096)
 
-    def test_xswap_without_linux_git_stays_closed(self):
-        self.assertFalse(runner.has_lifetime_fix("5e84ca928deeacb4eee656806a003f27d1eca82f"))
-        self.assertFalse(runner.has_lifetime_fix("not-a-commit"))
+    def test_xswap_without_linux_checkout_errors_out_early(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            argv = ["run.py", "--build", "xs-desc-v1", "--backend", "disk",
+                    "--mode", "xswap", "--workload", "swapin"]
+            with patch.object(runner, "PROJECT", project), patch.object(sys, "argv", argv), \
+                 patch.object(runner.os, "geteuid", return_value=1000), \
+                 patch.object(runner, "validate", side_effect=AssertionError("validated")):
+                with self.assertRaisesRegex(SystemExit, "linux/ checkout missing"):
+                    runner.main()
+                with self.assertRaisesRegex(SystemExit, "linux/ checkout missing"):
+                    runner.has_lifetime_fix(runner.LIFETIME_FIX)
+            self.assertEqual(list(project.iterdir()), [])
+
+    @unittest.skipUnless((runner.PROJECT / "linux" / ".git").exists(), "needs the linux/ checkout")
+    def test_lifetime_fix_check_needs_a_real_commit(self):
+        self.assertTrue(runner.has_lifetime_fix(runner.LIFETIME_FIX))
+        with self.assertRaisesRegex(ValueError, "not a full SHA"):
+            runner.has_lifetime_fix("not-a-commit")
+        with self.assertRaisesRegex(ValueError, "cannot check"):
+            runner.has_lifetime_fix("0" * 40)
+        self.assertFalse(runner.needs_lifetime_fix("plain", "swapin"))
+        self.assertFalse(runner.needs_lifetime_fix("xswap", "lifetime"))
 
 
 if __name__ == "__main__":
