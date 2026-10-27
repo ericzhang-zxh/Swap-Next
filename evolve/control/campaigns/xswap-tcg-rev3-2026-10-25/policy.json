@@ -26,12 +26,12 @@
     "max_active_candidates": 1,
     "worker_wall_seconds": 2400,
     "build_jobs": 4,
-    "guest_vcpus": 8,
-    "guest_memory_mib": 8192,
+    "guest_vcpus": 4,
+    "guest_memory_mib": 4096,
     "guest_disk_gib": 16,
     "run_wall_seconds": 900,
-    "max_total_campaign_seconds": 21600,
-    "max_build_attempts": 10
+    "max_total_campaign_seconds": 64800,
+    "max_build_attempts": 6
   },
   "measurement": {
     "min_pairs": 10,
@@ -107,9 +107,9 @@
   "primary_metric": "swapin_seq.mean_ns",
   "discovery_contract": {
     "architecture_candidates": 3,
-    "guest_attempts": 48,
-    "build_attempts": 10,
-    "wall_seconds": 21600,
+    "guest_attempts": 120,
+    "build_attempts": 6,
+    "wall_seconds": 64800,
     "standard_suite": true,
     "formal_runtime_enabled": false,
     "publication": true,
