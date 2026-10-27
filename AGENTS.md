@@ -83,10 +83,16 @@ This applies to every agent and runner.
 
 - **No approval needed**: opening a new campaign. That means a new
   `evolve/control/campaigns/<c>/policy.json` that keeps or narrows the base
-  file list and sets a budget within the owner-authorized time and resources,
-  and a new protocol file that reuses an approved protocol revision's
+  file list and sets a budget within the default cap below, and a new
+  protocol file that reuses an approved protocol revision's
   measurement parameters and meets the **Metrics** rule. Candidates, fast-tier
   runs, calibration and reports follow from the campaign.
+- **Default campaign budget cap**: at most 120 guest boots and 18 hours of
+  wall time (`guest_attempts` 120 and `wall_seconds` 64800 in the protocol
+  budget) per campaign, and at most one campaign running guests at a time on
+  each machine. Validity reruns and calibration count against the cap. A
+  campaign that needs more asks the owner first. Nothing enforces this
+  mechanically yet; the agent opening the campaign checks it.
 - **Approval needed (core)**: changes to `AGENTS.md`, `README.md`, `DESIGN.md`,
   `evolve/control/PRINCIPLES.md`, `CODE_PATTERNS.md`, `METRICS.md`, skills
   under `.agents/`, the base policy `evolve/control/config/policy.json`,
