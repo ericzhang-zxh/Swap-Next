@@ -453,7 +453,7 @@ class Workflow:
                 commit, record, proof = self.candidate(candidate, correctness)
                 tree = self.candidate_tree(commit, record)
                 row.update(candidate_commit=commit, candidate_tree=tree, correctness=proof, mechanism=record.get("mechanism"),
-                           parent_comparison={"parent_id": record.get("parent_id"), "baseline_commit": self.p["baseline_commit"], "role": "descriptive_only"})
+                           parent_comparison={"parent_candidate": record.get("parent_candidate"), "parent_commit": record.get("parent_commit", record.get("parent")), "baseline_commit": self.p["baseline_commit"], "role": "descriptive_only"})
                 module.validate_mechanism(self.p, record.get("mechanism"))
                 self.probe_attempt_guard(commit, tree, fp)
                 calibration = self.calibration("probe", fp)
@@ -584,7 +584,7 @@ class Workflow:
                 if self.p["campaign"] not in CONTRACT_EXEMPT:
                     tree = self.candidate_tree(commit, record)
                     row.update(candidate_tree=tree, mechanism=record.get("mechanism"),
-                               parent_comparison={"parent_id": record.get("parent_id"), "baseline_commit": self.p["baseline_commit"], "role": "descriptive_only"})
+                               parent_comparison={"parent_candidate": record.get("parent_candidate"), "parent_commit": record.get("parent_commit", record.get("parent")), "baseline_commit": self.p["baseline_commit"], "role": "descriptive_only"})
                     if tier == "fast":
                         prior_probe = self.probe_prerequisite(commit, tree, fp, record, selection_reason)
                         row.update(probe_id=prior_probe["id"], probe_signals=prior_probe.get("probe_signals"),
