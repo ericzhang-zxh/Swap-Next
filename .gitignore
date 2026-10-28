@@ -64,3 +64,10 @@ evolve/xswap-structure/state*/
 # Standard suite evaluation state.
 evolve/swap-standard/state*/
 benchmark/swap-standard/evaluations/
+
+# Campaign directory runtime
+campaigns/STOP
+campaigns/*/runs/
+campaigns/*/.lock
+campaigns/*/STOP
+campaigns/*/ledger/*.tmp
