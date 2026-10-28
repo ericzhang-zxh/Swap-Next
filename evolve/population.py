@@ -119,6 +119,18 @@ def advancement_evidence(row):
                        "screen is exploratory; improvement does not exceed calibrated noise")
 
 
+def _latest_status(entry):
+    """Measurement order, rather than replay arrival order, owns the status."""
+    stages = {"probe": 0, "fast": 1, "slow": 2}
+    def order(item):
+        stamp = item.get("finished", item.get("started", 0))
+        stamp = stamp if _finite(stamp) else 0
+        stage = 3 if item.get("status") == "CORRECTNESS_FAIL" else stages.get(item.get("tier"), -1)
+        return stamp, stage
+    evidence = entry.get("evidence", [])
+    return max(evidence, key=order)["status"] if evidence else entry.get("latest_status", "UNKNOWN")
+
+
 def _atomic(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name("." + path.name + ".tmp")
@@ -203,6 +215,7 @@ class Population:
 
     def _view(self, entry):
         entry = copy.deepcopy(entry)
+        entry["latest_status"] = _latest_status(entry)
         reasons = [item["reason"] for item in entry.get("invalidations", [])]
         if error := _analysis_error(entry.get("analysis")):
             reasons.append("invalid_fast_evidence")
@@ -337,6 +350,10 @@ class Population:
                 if old:
                     if old != evidence:
                         raise ValueError("immutable evaluation ID was reused with changed evidence")
+                    latest = _latest_status(entry)
+                    if entry.get("latest_status") != latest:
+                        entry["latest_status"] = latest
+                        _atomic(self.path, state)
                     source = self.archive / "database/population-source.json"
                     expected = {"state_sha256": _digest(state), "fingerprint": self.fingerprint}
                     if not source.is_file() or json.loads(source.read_text()) != expected:
@@ -398,7 +415,7 @@ class Population:
                     "combined_score": (entry["analysis"]["combined_score"] - parent["analysis"]["combined_score"])
                                       if comparable else None,
                     "interpretation": "diagnostic difference of separate baseline comparisons, not a paired parent control"}
-            entry["latest_status"] = row["status"]
+            entry["latest_status"] = _latest_status(entry)
             entry["tier"] = "fast"
             entry["screen_only"] = True
             entry["performance_accepted"] = False

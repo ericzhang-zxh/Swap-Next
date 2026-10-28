@@ -66,6 +66,11 @@ def save(path, data):
     tmp.replace(path)
 
 
+def failure_reason(exc):
+    """Retained summaries use repository-relative diagnostics."""
+    return str(exc).replace(str(ROOT) + "/", "").replace(str(ROOT), ".")
+
+
 def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -524,11 +529,11 @@ class Workflow:
         except (Exception, KeyboardInterrupt) as exc:
             if isinstance(exc, correctness_proof.CorrectnessFailure):
                 record = exc.candidate_record
-                row.update(status="CORRECTNESS_FAIL", reason=str(exc), finished=time.time(),
+                row.update(status="CORRECTNESS_FAIL", reason=failure_reason(exc), finished=time.time(),
                            candidate_commit=exc.evidence["candidate_commit"], correctness=exc.evidence,
                            candidate_tree=self.candidate_tree(exc.evidence["candidate_commit"], record))
             else:
-                row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=str(exc), finished=time.time())
+                row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=failure_reason(exc), finished=time.time())
         finally:
             save(dest / "report.json", row)
             save(self.ledger_path, self.ledger)
@@ -740,11 +745,11 @@ class Workflow:
         except (Exception, KeyboardInterrupt) as exc:
             if isinstance(exc, correctness_proof.CorrectnessFailure):
                 record = exc.candidate_record
-                row.update(status="CORRECTNESS_FAIL", reason=str(exc), finished=time.time(),
+                row.update(status="CORRECTNESS_FAIL", reason=failure_reason(exc), finished=time.time(),
                            candidate_commit=exc.evidence["candidate_commit"], correctness=exc.evidence,
                            candidate_tree=self.candidate_tree(exc.evidence["candidate_commit"], record))
             else:
-                row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=str(exc), finished=time.time())
+                row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=failure_reason(exc), finished=time.time())
         finally:
             save(dest / "report.json", row)
             save(self.ledger_path, self.ledger)

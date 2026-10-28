@@ -72,6 +72,14 @@ class WorkflowTests(unittest.TestCase):
         self.p = fixture_protocol()
         campaign_tree(self, self.p)
 
+    def test_retained_failure_reason_omits_machine_project_prefix(self):
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", side_effect=OSError("missing " + str(self.root / "private/control.json"))):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["status"], "INCOMPLETE")
+        self.assertNotIn(str(self.root), row["reason"])
+        self.assertIn("private/control.json", row["reason"])
+
     def test_reservation_survives_failure_and_budget(self):
         flow = w.Workflow(self.p)
         flow.reserve("guest")

@@ -172,6 +172,15 @@ class EvolutionLoopTests(Fixture):
         self.assertEqual(record["status"], "closed")
         self.assertIsNone(cs.read_claim())
 
+    def test_replaying_an_earlier_probe_preserves_latest_fast_status(self):
+        self.screen()
+        self.next_cli()
+        path = self.directory / "archive/population.json"
+        entry = json.loads(path.read_text())["entries"]["parent"]
+        self.assertEqual(entry["latest_status"], "FAST_PASS")
+        self.next_cli()
+        self.assertEqual(json.loads(path.read_text())["entries"]["parent"]["latest_status"], "FAST_PASS")
+
     def test_parent_child_lifecycle_scope_invalidation_and_closed_restart(self):
         parent, brief = self.new_candidate("parent")
         parent, parent_scope, parent_tree = self.edit_candidate("parent", "int fixture_parent = 1;")
