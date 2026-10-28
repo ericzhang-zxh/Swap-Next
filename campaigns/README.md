@@ -17,4 +17,5 @@ Lines: [plain](lines/plain.md) · [xswap](lines/xswap.md)
 | [xswap-swapin-2026-10-23](xswap-swapin-2026-10-23/report/REPORT.md) | closed | [xswap](lines/xswap.md) | hurricpc | 2026-10-23 | 2026-10-23 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
 | [confirm-h1-ra-phys-2026-10-23](confirm-h1-ra-phys-2026-10-23/campaign.json) | closed | [xswap](lines/xswap.md) | hurricpc | 2026-10-24 | 2026-10-24 | — |
 | [xswap-next-2026-10-24](xswap-next-2026-10-24/report/REPORT.md) | closed | [xswap](lines/xswap.md) | hurricpc | 2026-10-24 | 2026-10-24 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
-| [xswap-tcg-rev3-2026-10-25](xswap-tcg-rev3-2026-10-25/campaign.json) | open | [xswap](lines/xswap.md) | grok-cloud | 2026-10-25 | — | 5e84ca928deeacb4eee656806a003f27d1eca82f |
+| [xswap-tcg-rev3-2026-10-25](xswap-tcg-rev3-2026-10-25/campaign.json) | closed | [xswap](lines/xswap.md) | grok-cloud | 2026-10-25 | 2026-10-28 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
+| [kbench-smoke-2026-10-27](kbench-smoke-2026-10-27/report/README.md) | closed | [xswap](lines/xswap.md) | hurricpc | 2026-10-28 | 2026-10-28 | 5e84ca928deeacb4eee656806a003f27d1eca82f |

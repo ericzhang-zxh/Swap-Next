@@ -29,27 +29,53 @@ cgstat() {
 	echo "memory.peak $(cat $cg/memory.peak)"
 	echo "memory.swap.peak $(cat $cg/memory.swap.peak 2>/dev/null || echo 0)"
 	echo "CGSTAT_END $1"
+	# Per-memcg swap-in latency histogram from Chris Li's kbench kernels;
+	# upstream kernels do not have it.
+	if [ -f $cg/memory.swapin_latency ]; then
+		echo "SWAPIN_LATENCY_BEGIN $1"
+		cat $cg/memory.swapin_latency
+		echo "SWAPIN_LATENCY_END $1"
+	fi
 }
 
 zswap_enable() { echo "$1" > /sys/module/zswap/parameters/enabled; }
 
+# Size and format zram device $1 with disksize $2, hot-adding it if needed.
+zram_dev() {
+	[ -e /dev/zram$1 ] || cat /sys/class/zram-control/hot_add >/dev/null
+	[ -e /dev/zram$1 ] || fail zram$1
+	echo "$ZRAM_COMP" > /sys/block/zram$1/comp_algorithm
+	echo "$2" > /sys/block/zram$1/disksize
+	mkswap /dev/zram$1 >/dev/null
+}
+
+# Backends follow kbench-setup-{zram,zram-64k,zswap}; disk and brd use one device.
 setup_swap() {
-	local dev
+	echo "$SWAPPINESS" > /proc/sys/vm/swappiness
+	echo "$ZSWAP_COMP" > /sys/module/zswap/parameters/compressor
+	[ ! -f /sys/module/zswap/parameters/zpool ] || echo "$ZSWAP_ZPOOL" > /sys/module/zswap/parameters/zpool
+	zswap_enable Y
 	case $backend in
 	zram)
-		echo "$ZRAM_COMP" > /sys/block/zram0/comp_algorithm
-		echo "$ZRAM_SIZE" > /sys/block/zram0/disksize
-		dev=/dev/zram0 ;;
-	zswap|disk)
-		dev=/dev/vda ;;
+		zram_dev 0 "$ZRAM0_SIZE"
+		zram_dev 1 "$ZRAM1_SIZE"
+		swapon -p 100 /dev/zram0
+		swapon -p 0 /dev/zram1 ;;
+	zram-64k)
+		zram_dev 0 "$ZRAM64K_SIZE"
+		swapon -p 0 /dev/zram0 ;;
+	zswap)
+		echo Y > /sys/module/zswap/parameters/shrinker_enabled
+		zram_dev 1 "$ZRAM1_SIZE"
+		swapon -p 0 /dev/zram1 ;;
+	disk)
+		mkswap /dev/vda >/dev/null
+		swapon -p 0 /dev/vda ;;
 	brd)
-		dev=/dev/ram0 ;;
+		mkswap /dev/ram0 >/dev/null
+		swapon -p 0 /dev/ram0 ;;
 	*) fail backend ;;
 	esac
-	echo "$ZSWAP_COMP" > /sys/module/zswap/parameters/compressor
-	zswap_enable Y
-	mkswap "$dev" >/dev/null
-	swapon -p 0 "$dev"
 	if [ "$mode" = xswap ]; then
 		# Creating xswap requires zswap; drop it afterwards unless it is the backend.
 		echo 32767 > /sys/kernel/mm/xswap/create
@@ -96,19 +122,23 @@ run_usemem() {
 	echo USEMEM_END
 }
 
+# kbench: the source tree is extracted before joining the memcg, so only
+# the configure and build steps are charged to it.
 run_build() {
-	enter_cgroup "$BUILD_MEMCG"
 	mkdir /tmp/linux
 	tar -xf /opt/bench/linux.tar -C /tmp/linux
+	enter_cgroup "$BUILD_MEMCG"
+	echo 1 > $cg/memory.oom.group
 	make -s -C /tmp/linux defconfig >/dev/null
+	sleep "$BUILD_SETTLE_SEC"
 	cgstat build_start
 	vmstat build_start
 	local t0 t1
 	t0=$(date +%s%N)
-	make -s -C /tmp/linux -j"$BUILD_JOBS" "$BUILD_TARGET" >/tmp/build.log 2>&1 || { tail -20 /tmp/build.log; fail build; }
+	make -s -C /tmp/linux -j"$BUILD_JOBS" >/tmp/build.log 2>&1 || { tail -20 /tmp/build.log; fail build; }
 	t1=$(date +%s%N)
 	vmstat build_end
-	[ -f /tmp/linux/$BUILD_TARGET ] || fail build_output
+	[ -f /tmp/linux/vmlinux ] && [ -f /tmp/linux/arch/x86/boot/bzImage ] || fail build_output
 	echo "BUILD_REAL_USEC $(( (t1 - t0) / 1000 ))"
 }
 
@@ -211,10 +241,26 @@ echo PARAMS_BEGIN
 cat /opt/bench/params.sh
 echo PARAMS_END
 echo 0 > /proc/sys/kernel/randomize_va_space
-# Fix THP policy explicitly; larger-folio testing needs its own protocol.
-if [ -f /sys/kernel/mm/transparent_hugepage/enabled ]; then
-	echo never > /sys/kernel/mm/transparent_hugepage/enabled
-fi
+# kbench THP policy: one anonymous size always, every other size and all shmem
+# never. The swap-in and correctness probes opt out with MADV_NOHUGEPAGE.
+thp=/sys/kernel/mm/transparent_hugepage
+[ -d $thp ] || fail thp
+thp_want=$THP_SIZE
+[ "$backend" != zram-64k ] || thp_want=$THP_SIZE_64K
+# Sizes a folio type does not support (such as anonymous 8kB) are read-only.
+thp_set() { [ ! -f $1 ] || [ "$(stat -c %A $1 | cut -c3)" != w ] || echo $2 > $1; }
+thp_set $thp/enabled never
+for d in $thp/hugepages-*kB; do
+	if [ "${d##*/hugepages-}" = "$thp_want" ]; then
+		thp_set $d/enabled always
+	else
+		thp_set $d/enabled never
+	fi
+	thp_set $d/shmem_enabled never
+done
+echo "THP_BEGIN $thp_want"
+grep -Hs . $thp/enabled $thp/hugepages-*kB/enabled | sed "s|^$thp/||" || true
+echo THP_END
 vmstat before
 meminfo before_swapon
 

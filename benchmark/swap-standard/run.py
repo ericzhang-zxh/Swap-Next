@@ -191,11 +191,11 @@ def validate(build, backend, mode, workload):
         sha(config) != manifest.get("config_sha256")):
         raise ValueError("build attestation mismatch")
     required = ["SWAP", "MEMCG", "EXT4_FS", "PROC_PAGE_MONITOR", "DEBUG_FS", "NET", "INET"]
-    if backend == "zram":
+    if backend in ("zram", "zram-64k", "zswap"):
         required += ["ZRAM"]
     if backend == "brd":
         required += ["BLK_DEV_RAM"]
-    required += ["ZSWAP"]
+    required += ["ZSWAP", "TRANSPARENT_HUGEPAGE", "THP_SWAP"]
     if needs_lifetime_fix(mode, workload) and not has_lifetime_fix(manifest["commit"]):
         raise ValueError("xswap performance runs need the descriptor lifetime fix")
     lines = set(config.read_text().splitlines())
@@ -226,7 +226,7 @@ def main():
     parser.add_argument("--campaign", help="explicit campaign for guest execution")
     parser.add_argument("--reservation", type=Path, help="counted guest reservation from guest_budget.py")
     parser.add_argument("--build", required=True)
-    parser.add_argument("--backend", choices=["disk", "zswap", "zram", "brd"], required=True)
+    parser.add_argument("--backend", choices=["disk", "zswap", "zram", "zram-64k", "brd"], required=True)
     parser.add_argument("--mode", choices=["plain", "xswap"], default="plain")
     parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime", "correctness"], required=True)
     parser.add_argument("--timeout", type=int, default=900)
@@ -306,7 +306,7 @@ def main():
         create_swap_image(disk, args.preallocate_swap)
         image_sha = manifest["image_sha256"]
         append = ("console=ttyS0 rdinit=/init panic=-1 loglevel=4 "
-                  "zswap.enabled=1 zswap.compressor=zstd brd.rd_size=1073741824 "
+                  "zswap.enabled=1 zswap.compressor=lzo brd.rd_size=1073741824 "
                   f"bench.backend={args.backend} bench.mode={args.mode} "
                   f"bench.workload={args.workload} bench.image_sha={image_sha}")
         command = ["qemu-system-x86_64", *accel,

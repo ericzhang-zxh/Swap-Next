@@ -8,7 +8,7 @@ gates; this performance suite does not replace them.
 | Workload | Executable | Measurements |
 |---|---|---|
 | `usemem` / `usemem-rand` | pinned vm-scalability `usemem` | per-worker throughput, free latency, cgroup CPU, swap counters |
-| `build` | pinned Linux source, `make -j16 vmlinux` on tmpfs | elapsed time, cgroup system/user CPU, phase swap counters |
+| `build` | kbench: pinned Linux source on tmpfs, defconfig and full `make -j32` in a 470M memcg | elapsed time, cgroup system/user CPU, phase swap counters |
 | `redis` | pinned Valkey server and benchmark | GET RPS, GET during BGSAVE, save completion and phase swap counters |
 | `metadata` | 1 TiB guest brd device, swapon | before/after memory fields and configured swap capacity |
 | `swapin` | supplemental local probe | sequential/random first-touch latency and data verification |
@@ -17,10 +17,31 @@ gates; this performance suite does not replace them.
 The common guest runs under KVM, the default accelerator, with 8 vCPUs and
 8 GiB RAM. `SWAP_NEXT_ACCEL=tcg` selects QEMU TCG with 4 vCPUs and 4 GiB RAM;
 `SWAP_NEXT_TCG_SMP` and `SWAP_NEXT_TCG_MEM_MIB` override that size.
-Each run uses a fresh 16 GiB swap file exposed only inside the guest. Disk,
-zswap, and zram are selectable. The VM has no external network interface;
-Valkey uses guest loopback only. brd is reserved for metadata measurements.
-Large folios are disabled for this initial protocol.
+Each run uses a fresh 16 GiB swap file exposed only inside the guest. The VM
+has no external network interface; Valkey uses guest loopback only.
+
+## Chris Li's kbench setup
+
+Since 2026-10-27 the backends, THP policy and kernel build follow Chris Li's
+kbench scripts. `params.sh` holds the numbers.
+
+| Backend | Swap devices | THP |
+|---|---|---|
+| `zram` | lz4 zram0 3200M (priority 100), zram1 20000M (priority 0) | 2 MiB always |
+| `zram-64k` | lz4 zram0 8G | 64 KiB always, 2 MiB never |
+| `zswap` | lzo/zsmalloc zswap, shrinker on, backed by zram1 20000M | 2 MiB always |
+| `disk` | the 16 GiB virtio swap file | 2 MiB always |
+| `brd` | 1 TiB brd, metadata only | 2 MiB always |
+
+Every THP size not listed is never, as is all shmem THP; swappiness is 60. The
+swap-in and correctness probes opt out with `MADV_NOHUGEPAGE`, so their
+per-page latency is unchanged in kind. Only `disk` writes the host disk.
+Guest kernels need `CONFIG_TRANSPARENT_HUGEPAGE` and `CONFIG_THP_SWAP`
+(`benchmark/config/swap-standard*.config`).
+
+When a kernel exposes kbench's per-memcg `memory.swapin_latency` histogram,
+each cgroup snapshot dumps it and the parser reports it as
+`swapin_latency_hist`. Upstream kernels do not have that file.
 
 The initial integration evidence is in [the dated report](../../campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/README.md).
 
@@ -102,11 +123,14 @@ Pure unit and lifecycle fixtures start no guests.
   It is a retained failed stress case, not an admitted scoring workload. Its
   resource profile needs separate calibration before use in a campaign.
 
-- The initial workload sizes are adaptations to this VM, not exact replication
-  of every upstream email's hardware or configuration. No comparative finding
+- kbench's numbers come from Chris Li's bare-metal hosts; this guest has
+  8 vCPUs, so `-j32` in 470M is heavier relative to the CPU count. usemem and
+  Valkey sizes are VM adaptations of upstream emails. No comparative finding
   is inferred from an integration run.
-- Memory-pressure workloads use memcg limits. Global-pressure and large-folio
-  coverage require separately frozen configurations.
+- Results from before 2026-10-27 (THP off, single zram, zswap over the swap
+  file, `make -j16 vmlinux` in 3G) are not comparable with the kbench setup.
+- Memory-pressure workloads use memcg limits. Global-pressure coverage
+  requires a separately frozen configuration.
 - The metadata delta includes VM noise and measures swapon-time allocation;
   it is not total runtime metadata or a proven bytes-per-live-slot measure.
 - Valkey GET includes misses because random SET does not fill every possible

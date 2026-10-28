@@ -275,8 +275,11 @@ follow [Campaign lifecycle](#campaign-lifecycle) and go directly to `main`.
 
 - TCG protocol revision 3 and its protocol file:
   [campaigns/xswap-tcg-rev3-2026-10-25/protocol.json](campaigns/xswap-tcg-rev3-2026-10-25/protocol.json),
-  run as campaign `xswap-tcg-rev3-2026-10-25`. The owner approved its parameters
-  below on 2026-10-25. It was frozen before the **Metrics** rule and has no
+  campaign `xswap-tcg-rev3-2026-10-25`. The owner approved its parameters
+  below on 2026-10-25 and closed the campaign on 2026-10-27, when swap-standard
+  moved to Chris Li's kbench setup (see
+  [benchmark/swap-standard/README.md](benchmark/swap-standard/README.md)).
+  A new TCG run needs a new protocol revision on that setup. It was frozen before the **Metrics** rule and has no
   metadata case. Adding one to a TCG protocol changes its tier cases, so it
   needs the owner's approval.
   Revisions 1 and 2 stay frozen. Verdicts are TCG-only screens for effects of

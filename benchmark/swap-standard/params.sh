@@ -1,20 +1,34 @@
 # SPDX-License-Identifier: GPL-2.0-only
-# Workload parameters, scaled from upstream swap threads to an 8-vCPU, 8-GiB guest.
+# Workload parameters. Swap backends and the kernel build follow Chris Li's
+# kbench scripts (kbench, kbench-setup-{zram,zram-64k,zswap}); the other
+# workloads keep their upstream-thread sizes for an 8-vCPU, 8-GiB guest.
 # Changing any value is a new protocol revision and needs fresh calibration.
 SETTLE_SEC=3
+SWAPPINESS=60
+
+# zram: two lz4 devices, zram0 first (priority 100) and zram1 as overflow (priority 0).
+# zswap: lzo/zsmalloc with the shrinker on, backed by zram1 alone.
+# zram-64k: one lz4 device with only 64 KiB mTHP enabled.
 ZRAM_COMP=lz4
-ZRAM_SIZE=16G
-ZSWAP_COMP=zstd
+ZRAM0_SIZE=3200M
+ZRAM1_SIZE=20000M
+ZRAM64K_SIZE=8G
+ZSWAP_COMP=lzo
+ZSWAP_ZPOOL=zsmalloc
+# Anonymous THP size set to always; every other size is never.
+THP_SIZE=2048kB
+THP_SIZE_64K=64kB
 
 # vm-scalability usemem: "usemem --init-time -O -y -x [-R] -n N 1G" under a memcg.
 USEMEM_NPROC=8
 USEMEM_SIZE=1G
 USEMEM_MEMCG=4G
 
-# Kernel build under a memcg, source and objects on tmpfs.
-BUILD_MEMCG=3G
-BUILD_JOBS=16
-BUILD_TARGET=vmlinux
+# kbench kernel build: extract outside the memcg, then defconfig and a full
+# "make -j32" inside a 470M memcg, after a 10 s settle.
+BUILD_MEMCG=470M
+BUILD_JOBS=32
+BUILD_SETTLE_SEC=10
 
 # Valkey + valkey-benchmark, the redis-benchmark setup from the swap table series.
 REDIS_MEMCG=1536M

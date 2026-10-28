@@ -150,7 +150,7 @@ Origin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime
 
 ## xswap-tcg-rev3-2026-10-25
 
-Status: open; machine: grok-cloud; opened: 2026-10-25; closed: —.
+Status: closed; machine: grok-cloud; opened: 2026-10-25; closed: 2026-10-28.
 
 Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
 
@@ -161,4 +161,19 @@ Origin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime
 | Candidate | Status | Reason |
 | --- | --- | --- |
 
-Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (xswap-tcg-rev3-2026-10-25)
+## kbench-smoke-2026-10-27
+
+Status: closed; machine: hurricpc; opened: 2026-10-28; closed: 2026-10-28.
+
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Baseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Origin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).
+
+[Campaign report](../kbench-smoke-2026-10-27/report/README.md)
+
+| Candidate | Status | Reason |
+| --- | --- | --- |
+
+Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (kbench-smoke-2026-10-27)

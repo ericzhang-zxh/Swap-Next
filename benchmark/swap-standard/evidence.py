@@ -5,7 +5,9 @@ import re
 DIAGNOSTIC = re.compile(
     r"WARNING:|BUG:|Oops:|Kernel panic|page allocation failure:|Out of memory:|Killed process|UBSAN:|"
     r"KASAN:|KCSAN:|kernel BUG|possible circular locking|INFO: task .*blocked")
-PHYSICAL = {'zram': '/dev/zram0', 'zswap': '/dev/vda', 'disk': '/dev/vda', 'brd': '/dev/ram0'}
+# Physical swap devices per backend; the first one must carry the workload.
+PHYSICAL = {'zram': ('/dev/zram0', '/dev/zram1'), 'zram-64k': ('/dev/zram0',),
+            'zswap': ('/dev/zram1',), 'disk': ('/dev/vda',), 'brd': ('/dev/ram0',)}
 SWAP_EVENTS = ('pswpout', 'zswpout')
 
 
@@ -35,6 +37,25 @@ def delta(after, before, keys=None):
 
 def stats(line):
     return {k: float(v) for k, v in re.findall(r'(\w+)=([\d.]+)', line)}
+
+
+def thp_policy(text):
+    """The selected THP size is always; the global switch and all others are never."""
+    m = re.search(r'^THP_BEGIN (\S+)\n(.*?)^THP_END$', text, re.M | re.S)
+    if not m:
+        return False
+    selected = dict(re.findall(r'^(\S+):.*\[(\w+)\]', m.group(2), re.M))
+    sizes = {k.split('/')[0][len('hugepages-'):]: v for k, v in selected.items() if k.startswith('hugepages-')}
+    return (selected.get('enabled') == 'never' and sizes.get(m.group(1)) == 'always'
+            and all(v == 'never' for k, v in sizes.items() if k != m.group(1)))
+
+
+def swapin_latency(text):
+    """kbench memory.swapin_latency buckets ("lo-hi count") per cgstat tag."""
+    out = {}
+    for tag, body in re.findall(r'^SWAPIN_LATENCY_BEGIN (\S+)\n(.*?)^SWAPIN_LATENCY_END \1$', text, re.M | re.S):
+        out[tag] = {f'{lo}-{hi}': int(n) for lo, hi, n in re.findall(r'^(\d+)-(\d+) (\d+)', body, re.M)}
+    return out or None
 
 
 def parse_usemem(text):
@@ -118,8 +139,10 @@ def parse(text, image_sha, backend, mode, workload):
         'workload_complete': 'BENCH_WORKLOAD_PASS' in text and 'BENCH_PASS' in text and 'BENCH_FAIL' not in text,
         'kernel_log_present': bool(log),
         'no_kernel_warnings': bool(log) and not diagnostics,
+        'thp_policy': thp_policy(text),
     }
     metrics['kernel_diagnostics'] = diagnostics[:20]
+    metrics['swapin_latency_hist'] = swapin_latency(text)
 
     if workload == 'metadata':
         before = kv_block(text, 'MEMINFO', 'metadata_before', ':')
@@ -150,10 +173,10 @@ def parse(text, image_sha, backend, mode, workload):
     metrics['swap_peak_kib'] = peaks
     physical = PHYSICAL[backend]
     if mode == 'xswap':
-        virtual = [v for k, v in peaks.items() if k != physical]
+        virtual = [v for k, v in peaks.items() if k not in physical]
         gates['swap_routing'] = len(virtual) == 1 and virtual[0] > 0
     else:
-        gates['swap_routing'] = peaks.get(physical, 0) > 0 and len(peaks) == 1
+        gates['swap_routing'] = peaks.get(physical[0], 0) > 0 and set(peaks) == set(physical)
 
     cg_end = kv_block(text, 'CGSTAT', 'end')
     if workload in ('usemem', 'usemem-rand'):

@@ -1,6 +1,6 @@
 {
   "campaign": "xswap-tcg-rev3-2026-10-25",
-  "status": "open",
+  "status": "closed",
   "line": "xswap",
   "baseline_from": {
     "campaign": "xswap-p123-2026-10-23",
@@ -13,7 +13,7 @@
   },
   "machine": "grok-cloud",
   "opened": "2026-10-25",
-  "closed": null,
+  "closed": "2026-10-28",
   "budget": {
     "guest_attempts": 120,
     "wall_seconds": 64800,

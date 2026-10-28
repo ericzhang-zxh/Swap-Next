@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 import unittest
-from evidence import parse
+from evidence import parse, PHYSICAL
 
 
 def block(kind, tag, body):
@@ -12,7 +12,15 @@ def fixture(workload="usemem", backend="disk"):
             "ZSWAP_ENABLED N\nKERNEL_LOG_BEGIN\nLinux version test\nKERNEL_LOG_END\nBENCH_WORKLOAD_PASS\nBENCH_PASS\n"
             + block("VMSTAT", "before", "pswpout 0\npswpin 0")
             + block("VMSTAT", "end", "pswpout 100\npswpin 100")
-            + "SWAP_PEAK_BEGIN\n/dev/vda 1024\nSWAP_PEAK_END\n")
+            + f"SWAP_PEAK_BEGIN\n{PHYSICAL[backend][0]} 1024\nSWAP_PEAK_END\n"
+            + thp())
+
+
+def thp(want="2048kB", always="2048kB"):
+    sizes = ("64kB", "2048kB")
+    return (f"THP_BEGIN {want}\nenabled:always madvise [never]\n"
+            + "".join(f"hugepages-{s}/enabled:{'[always] inherit madvise never' if s == always else 'always inherit madvise [never]'}\n" for s in sizes)
+            + "THP_END\n")
 
 
 def usemem(n=8):
@@ -89,6 +97,34 @@ class EvidenceTests(unittest.TestCase):
         r = parse(log, "abc", "disk", "plain", "swapin")
         self.assertFalse(r["gates"]["swapin_output"])
 
+    def test_thp_policy_must_match_backend(self):
+        log = fixture() + usemem()
+        self.assertTrue(parse(log, "abc", "disk", "plain", "usemem")["gates"]["thp_policy"])
+        for bad in (thp(always="64kB"), thp().replace("[never]\nhugepages", "[always]\nhugepages", 1), ""):
+            with self.subTest(bad=bad):
+                r = parse(log.replace(thp(), bad), "abc", "disk", "plain", "usemem")
+                self.assertFalse(r["gates"]["thp_policy"])
+        log = (fixture(backend="zram-64k") + usemem()).replace(thp(), thp("64kB", "64kB"))
+        self.assertTrue(all(parse(log, "abc", "zram-64k", "plain", "usemem")["gates"].values()))
+
+    def test_two_tier_zram_routing(self):
+        log = (fixture(backend="zram") + usemem()).replace("/dev/zram0 1024", "/dev/zram0 1024\n/dev/zram1 0")
+        self.assertTrue(parse(log, "abc", "zram", "plain", "usemem")["gates"]["swap_routing"])
+        idle_first = log.replace("/dev/zram0 1024", "/dev/zram0 0").replace("/dev/zram1 0", "/dev/zram1 1024")
+        self.assertFalse(parse(idle_first, "abc", "zram", "plain", "usemem")["gates"]["swap_routing"])
+        self.assertFalse(parse(log + "", "abc", "disk", "plain", "usemem")["gates"]["swap_routing"])
+
+    def test_zswap_backs_onto_zram1(self):
+        log = (fixture(backend="zswap") + usemem()).replace("ZSWAP_ENABLED N", "ZSWAP_ENABLED Y")
+        log = log.replace("pswpout 100", "pswpout 100\nzswpout 900")
+        self.assertTrue(all(parse(log, "abc", "zswap", "plain", "usemem")["gates"].values()))
+
+    def test_swapin_latency_histogram(self):
+        log = fixture() + usemem() + block("SWAPIN_LATENCY", "end", "header\n0-1000 7\n1000-2000 3")
+        self.assertEqual(parse(log, "abc", "disk", "plain", "usemem")["metrics"]["swapin_latency_hist"],
+                         {"end": {"0-1000": 7, "1000-2000": 3}})
+        self.assertIsNone(parse(fixture() + usemem(), "abc", "disk", "plain", "usemem")["metrics"]["swapin_latency_hist"])
+
     def test_serial_crlf(self):
         r = parse((fixture() + usemem()).replace("\n", "\r\n"), "abc", "disk", "plain", "usemem")
         self.assertTrue(all(r["gates"].values()))
@@ -103,7 +139,7 @@ def lifetime(rounds=5, shrinks=3, zswpwb=500):
            .replace("bench.mode=plain", "bench.mode=xswap")
            .replace("ZSWAP_ENABLED N", "ZSWAP_ENABLED Y")
            .replace("pswpout 100", "pswpout 100\nzswpout 900")
-           .replace("/dev/vda 1024", "/dev/vda 1024\n/dev/xswap0 4096"))
+           .replace("/dev/zram1 1024", "/dev/zram1 1024\n/dev/xswap0 4096"))
     return (log + "WB_DELAY_MS none\n"
             + block("XSWAP", "lifetime_start", "grows 1\nshrinks 0")
             + block("XSWAP", "lifetime_end", f"grows 9\nshrinks {shrinks}")
@@ -137,7 +173,8 @@ class LifetimeTests(unittest.TestCase):
 
 def correctness(backend='disk'):
     log = fixture('correctness', backend).replace('bench.mode=plain', 'bench.mode=xswap')
-    log = log.replace('/dev/vda 1024', '/dev/vda 1024\n/dev/xswap0 4096')
+    device = PHYSICAL[backend][0]
+    log = log.replace(f'{device} 1024', f'{device} 1024\n/dev/xswap0 4096')
     if backend == 'zswap':
         log = log.replace('ZSWAP_ENABLED N', 'ZSWAP_ENABLED Y').replace('pswpout 100', 'pswpout 100\nzswpout 1000')
     log += 'XSWAP_TYPE 1\nFORK_TARGET_XSWAP_PTES 16 TOTAL 16384\n'

@@ -75,7 +75,7 @@ def reserve_guest(campaign, run_id, build, backend, mode, workload, pool="fast")
     path = ticket_path(campaign, run_id)
     identity = dict(zip(IDENTITY_KEYS, (build, backend, mode, workload)))
     if (not isinstance(build, str) or not re.fullmatch(r"[a-z0-9-]{1,48}", build)
-            or backend not in ("disk", "zswap", "zram", "brd")
+            or backend not in ("disk", "zswap", "zram", "zram-64k", "brd")
             or mode not in ("plain", "xswap") or not isinstance(workload, str) or not workload):
         raise store.CampaignError("invalid guest reservation identity")
     if pool not in ("fast", "probe"):
