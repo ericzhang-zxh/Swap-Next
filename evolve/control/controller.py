@@ -17,6 +17,7 @@ import sys
 import time
 
 sys.dont_write_bytecode = True
+import campaign_store
 from analysis import Invalid, analyze, digest, load_json, require
 
 CONTROL = Path(__file__).resolve().parent
@@ -26,6 +27,7 @@ STATE = CONTROL / "state"
 POLICY = CONTROL / "config/policy.json"
 BASE_POLICY = POLICY
 WORKTREES = PROJECT / "worktrees"
+CAMPAIGN = None
 
 
 def emit(data):
@@ -41,13 +43,17 @@ def git(root, *args, binary=False, timeout=90):
 
 def configure_campaign(name):
     """Select a controller-owned frozen campaign, never a worker-supplied path."""
-    global POLICY, STATE, WORKTREES
+    global POLICY, STATE, WORKTREES, CAMPAIGN
     require(re.fullmatch(r"[a-z][a-z0-9-]{0,47}", name), "invalid campaign name")
-    candidate = CONTROL / "campaigns" / name / "policy.json"
-    require(candidate.is_file(), "unknown campaign")
-    POLICY = candidate
-    STATE = CONTROL / "state" / name
+    directory = campaign_store.campaign_dir(name)
+    require((directory / "policy.json").is_file(), "unknown campaign")
+    POLICY, STATE, CAMPAIGN = directory / "policy.json", directory, name
     WORKTREES = PROJECT / "worktrees" / name
+
+
+def artifacts(name):
+    """Per-candidate directory: campaigns/<c>/candidates/<id>/, or state/<id> unscoped."""
+    return STATE / ("candidates" if CAMPAIGN else "") / name
 
 
 def host_check():
@@ -80,11 +86,17 @@ def trusted_control():
 
 
 def stopped():
-    return (CONTROL / "state/STOP").exists() or (STATE / "STOP").exists()
+    """The global STOP always applies; a campaign STOP only adds to it."""
+    flags = [campaign_store.GLOBAL_STOP]
+    if CAMPAIGN:
+        flags.append(campaign_store.campaign_dir(CAMPAIGN) / "STOP")
+    return any(flag.exists() for flag in flags)
 
 
 def active():
     require(not stopped(), "STOP is set; controller halted")
+    if CAMPAIGN:
+        campaign_store.require_open(CAMPAIGN)
 
 
 @contextmanager
@@ -104,12 +116,23 @@ def write_json(path, value):
 
 
 def registry():
+    if CAMPAIGN:
+        return campaign_store.candidates(CAMPAIGN)
     p = STATE / "candidates.json"
     return load_json(p) if p.exists() else {}
 
 
+def save(records, record):
+    if CAMPAIGN:
+        campaign_store.write_candidate(CAMPAIGN, record)
+    else:
+        write_json(STATE / "candidates.json", records)
+
+
 def event(kind, payload):
-    with (STATE / "events.jsonl").open("a") as stream:
+    path = STATE / ("ledger/events.jsonl" if CAMPAIGN else "events.jsonl")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a") as stream:
         stream.write(json.dumps({"time_unix": time.time(), "event": kind,
                                  "payload": payload}, ensure_ascii=False) + "\n")
 
@@ -170,7 +193,7 @@ def get_candidate(name):
     require(name in records, "unknown candidate")
     record = records[name]
     require(record["status"] == "active", "candidate is closed")
-    root = Path(record["worktree"]).resolve()
+    root = (PROJECT / record["worktree"]).resolve()
     allowed = WORKTREES.resolve()
     require(root.parent == allowed and root.name == name, "unexpected worktree location")
     require(git(root, "rev-parse", "--path-format=absolute", "--git-common-dir") ==
@@ -219,11 +242,11 @@ def create(name, hypothesis):
         root.parent.mkdir(parents=True, exist_ok=True)
         parent = seed()
         git(ROOT, "worktree", "add", "-b", "agents/" + name, str(root), parent)
-        record = {"id": name, "parent": parent, "worktree": str(root),
+        record = {"id": name, "parent": parent, "worktree": str(root.relative_to(PROJECT)),
                   "status": "active", "hypothesis": hypothesis,
                   "created_unix": time.time(), "protocol_sha256": protocol_hash()}
         records[name] = record
-        write_json(STATE / "candidates.json", records)
+        save(records, record)
         task = dict(record, allowed_modify=config["allowed_modify"],
                     allowed_add=config["allowed_add"], budget=config["budget"],
                     primary_metric=config.get("primary_metric", "throughput_ops_s"),
@@ -231,7 +254,7 @@ def create(name, hypothesis):
                                       str(CONTROL / "PRINCIPLES.md"), str(CONTROL / "METRICS.md")],
                     boundaries="Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
                     execution_status="PREPARED_ONLY; no worker or kernel was launched")
-        write_json(STATE / name / "task.json", task)
+        write_json(artifacts(name) / "task.json", task)
         event("candidate_created", record)
         return task
 
@@ -241,12 +264,14 @@ def check_candidate(name, static=False):
     active()
     record, root = get_candidate(name)
     result = diff_guard(root, record["parent"], policy())
-    out = STATE / name
+    out = artifacts(name)
     out.mkdir(parents=True, exist_ok=True)
     if static:
         patch = git(root, "diff", "--no-ext-diff", "--no-textconv",
                     record["parent"], result["candidate_commit"], binary=True)
-        (out / "candidate.patch").write_bytes(patch)
+        target = STATE / "patches" / (name + ".patch") if CAMPAIGN else out / "candidate.patch"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(patch)
         commands = [
             ("diff-check", ["git", "-C", str(root), "diff", "--check",
                             record["parent"], result["candidate_commit"]], None),
@@ -258,13 +283,90 @@ def check_candidate(name, static=False):
                                   timeout=120, cwd=ROOT)
             log = out / (label + ".log")
             log.write_bytes(proc.stdout + proc.stderr or b"(no diagnostics)\n")
-            result[label] = {"exit_code": proc.returncode, "evidence": str(log),
+            result[label] = {"exit_code": proc.returncode, "evidence": str(log.relative_to(PROJECT) if CAMPAIGN else log),
                              "sha256": digest(log)}
             if proc.returncode:
                 result["status"] = "STATIC_REJECT"
     write_json(out / ("static.json" if static else "scope.json"), result)
     event("candidate_checked", result)
     return result
+
+
+def baseline_from(args):
+    """Check the evidence named on the command line; return campaign.json's baseline_from."""
+    source, _, cand = args.baseline_from.partition(":")
+    require(source and cand and bool(args.evidence_row) != bool(args.evidence_report),
+            "--baseline-from CAMPAIGN:CANDIDATE needs exactly one of --evidence-row, --evidence-report")
+    source_dir = campaign_store.campaign_dir(source)
+    if args.evidence_row:
+        rows = load_json(source_dir / "ledger/ledger.json")
+        row = next((r for r in rows if r.get("id") == args.evidence_row), None)
+        require(row and row.get("candidate") == cand, "no ledger row for that candidate")
+        require(row.get("status") == "FAST_PASS", "ledger row is not FAST_PASS")
+        require(row.get("candidate_commit"), "ledger row has no candidate_commit")
+        return {"campaign": source, "candidate": cand, "commit": row["candidate_commit"],
+                "evidence": {"kind": "fast_pass", "ledger_row": args.evidence_row}}
+    report = PROJECT / args.evidence_report
+    require(report.is_file(), "evidence report does not exist")
+    commit = git(ROOT, "rev-parse", "--verify", f"refs/heads/agents/{cand}^{{commit}}")
+    path = report.relative_to(PROJECT) if report.is_relative_to(PROJECT) else report
+    return {"campaign": source, "candidate": cand, "commit": commit,
+            "evidence": {"kind": "correctness_fix", "report": str(path)}}
+
+
+def open_campaign(args):
+    require(CAMPAIGN, "open-campaign needs --campaign")
+    directory = campaign_store.campaign_dir(CAMPAIGN)
+    require((directory / "protocol.json").is_file(), "protocol.json is missing")
+    require(not (directory / "campaign.json").exists(), "campaign.json already exists")
+    config, base = policy(), load_json(BASE_POLICY)
+    require(set(config["allowed_modify"]) <= set(base["allowed_modify"]) and
+            set(config["allowed_add"]) <= set(base["allowed_add"]),
+            "campaign policy widens the base scope")
+    require(args.machine == campaign_store.current_machine(),
+            f"--machine {args.machine} is not this machine")
+    for other in sorted(campaign_store.CAMPAIGNS.glob("*/campaign.json")):
+        known = campaign_store.load(other.parent.name)
+        require(not (known["status"] == "open" and known["machine"] == args.machine),
+                f"campaign {known['campaign']} is already open on {args.machine}")
+    budget = dict(load_json(directory / "protocol.json")["budget"])
+    record = {"campaign": CAMPAIGN, "status": "open", "line": args.line,
+              "baseline_from": baseline_from(args) if args.baseline_from else None,
+              "machine": args.machine, "opened": time.strftime("%Y-%m-%d", time.gmtime()),
+              "closed": None,
+              "budget": {"guest_attempts": budget["guest_attempts"],
+                         "wall_seconds": budget["wall_seconds"],
+                         "probe_guest_attempts": budget.get("probe_guest_attempts", 0),
+                         "approved_over_cap": args.over_cap_approval or None}}
+    errors = campaign_store.budget_errors(record)
+    require(not errors, "; ".join(errors))
+    campaign_store.take_claim(CAMPAIGN)
+    try:
+        campaign_store.write(CAMPAIGN, record)
+    except ValueError:
+        campaign_store.release_claim(CAMPAIGN, "open-campaign failed")
+        raise
+    return record
+
+
+def close_campaign(reason):
+    require(CAMPAIGN, "close-campaign needs --campaign")
+    record = campaign_store.require_open(CAMPAIGN)
+    with lock():
+        records = registry()
+        unexported = [i for i, r in records.items() if r["status"] == "active"
+                      and not (STATE / "patches" / (i + ".patch")).is_file()]
+        require(not unexported, "active candidates without an exported patch: " + ", ".join(unexported))
+        for i, r in records.items():
+            if r["status"] == "active":
+                r.update(status="closed", reason=reason)
+                save(records, r)
+                event("candidate_closed", r)
+        record.update(status="closed", closed=time.strftime("%Y-%m-%d", time.gmtime()))
+        campaign_store.write(CAMPAIGN, record)
+        if campaign_store.read_claim() == CAMPAIGN:
+            campaign_store.release_claim(CAMPAIGN, reason)
+    return record
 
 
 def main():
@@ -281,13 +383,22 @@ def main():
     p = commands.add_parser("close")
     p.add_argument("name")
     p.add_argument("--reason", required=True)
+    p = commands.add_parser("open-campaign")
+    p.add_argument("--line", required=True)
+    p.add_argument("--machine", required=True)
+    p.add_argument("--baseline-from", help="CAMPAIGN:CANDIDATE")
+    p.add_argument("--evidence-report")
+    p.add_argument("--evidence-row")
+    p.add_argument("--over-cap-approval")
+    for name in ("close-campaign", "release-claim"):
+        commands.add_parser(name).add_argument("--reason", required=True)
     p = commands.add_parser("analyze")
     p.add_argument("name")
     p.add_argument("manifest", type=Path)
     args = parser.parse_args()
     try:
         host_check()
-        if args.campaign:
+        if args.campaign and args.command != "release-claim":
             configure_campaign(args.campaign)
         if args.command == "doctor":
             result = doctor()
@@ -298,6 +409,13 @@ def main():
                       "auto_promote": False}
         elif args.command == "protocol":
             result = {"protocol_sha256": protocol_hash(), "baseline_commit": seed()}
+        elif args.command == "open-campaign":
+            result = open_campaign(args)
+        elif args.command == "close-campaign":
+            result = close_campaign(args.reason)
+        elif args.command == "release-claim":
+            campaign_store.release_claim(None, args.reason)
+            result = {"status": "RELEASED"}
         elif args.command == "new":
             result = create(args.name, args.hypothesis)
         elif args.command in ("guard", "check"):
@@ -308,7 +426,7 @@ def main():
                 require(args.name in records, "unknown candidate")
                 records[args.name]["status"] = "closed"
                 records[args.name]["reason"] = args.reason
-                write_json(STATE / "candidates.json", records)
+                save(records, records[args.name])
                 event("candidate_closed", records[args.name])
                 result = records[args.name]
         else:
@@ -318,7 +436,7 @@ def main():
             # No amount of submitted JSON enables automatic acceptance.
             result["runtime_enabled"] = policy()["runtime_enabled"]
             result["candidate_id"] = args.name
-            write_json(STATE / args.name / "analysis.json", result)
+            write_json(artifacts(args.name) / "analysis.json", result)
             with lock():
                 event("analysis_complete", result)
         emit(result)
