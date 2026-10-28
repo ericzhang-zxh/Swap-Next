@@ -159,6 +159,28 @@ def sha(path):
     return h.hexdigest()
 
 
+def attestation_fields(args, dest, build, manifest):
+    """Repository-relative provenance for counted runner results."""
+    relative = lambda path: str(Path(path).resolve().relative_to(PROJECT.resolve()))
+    protocol = PROJECT / "campaigns" / args.campaign / "protocol.json"
+    reservation = args.reservation if args.reservation.is_absolute() else PROJECT / args.reservation
+    return {"proof_schema_version": 1, "campaign": args.campaign,
+            "result_path": relative(dest / "result.json"),
+            "reservation": relative(reservation), "reservation_sha256": sha(reservation),
+            "protocol_sha256": sha(protocol),
+            "build_manifest": relative(build / "result.json"),
+            "build_manifest_sha256": sha(build / "result.json"),
+            "input_config_sha256": manifest.get("input_config_sha256"),
+            "serial_log": relative(dest / "serial.log")}
+
+
+def write_attested_result(dest, result):
+    """Keep a separate byte digest; a JSON file cannot embed its own hash."""
+    path = dest / "result.json"
+    path.write_text(json.dumps(result, indent=2) + "\n")
+    (dest / "result.sha256").write_text(sha(path) + "\n")
+
+
 def validate(build, backend, mode, workload):
     manifest = json.loads((build / "result.json").read_text())
     image = build / "output/arch/x86/boot/bzImage"
@@ -304,6 +326,7 @@ def main():
                       config_sha256=sha(config), guest_provenance=provenance, command=command,
                       performance_accepted=False, calibrated=False, auto_promote=False,
                       harness_sha256={x.name: sha(x) for x in BASE.iterdir() if x.is_file() and x.suffix in (".py", ".sh", ".json", ".c") and x.name != "image.json"})
+        result.update(attestation_fields(args, dest, build, manifest))
         snapshot = dest / "harness"
         snapshot.mkdir()
         for name in result["harness_sha256"]:
@@ -315,7 +338,7 @@ def main():
         def write_result(exit_status):
             if args.preallocate_swap:
                 disk.unlink(missing_ok=True)
-            (dest / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+            write_attested_result(dest, result)
             print(json.dumps({"run": str(dest), "integration_pass": result["integration_pass"],
                               "run_valid": result["run_valid"], "invalid_reasons": result["invalid_reasons"],
                               "gates": result["gates"], "wall_seconds": result["wall_seconds"],
