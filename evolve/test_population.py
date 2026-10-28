@@ -298,5 +298,54 @@ class PopulationTests(unittest.TestCase):
         self.assertNotIn("combined_score", brief["prompt"]["user"])
 
 
+    def test_malformed_fast_fitness_never_publishes_an_eligible_entry(self):
+        variants = []
+        missing = row(); del missing["analysis"]["combined_score"]; variants.append(missing)
+        for value in (None, 0, -1, float("inf"), float("nan")):
+            variants.append(row(score=value))
+        contradictory = row(); contradictory["analysis"]["status"] = "REGRESSION"; variants.append(contradictory)
+        wrong_tier = row(); wrong_tier["analysis"]["tier"] = "probe"; variants.append(wrong_tier)
+        for primary in ([], ["missing"], [METRIC, METRIC]):
+            malformed = row(); malformed["analysis"]["primary"] = primary; variants.append(malformed)
+        missing_noise = row(); del missing_noise["analysis"]["metrics"][METRIC]["noise_relative"]; variants.append(missing_noise)
+        advisory = row(); advisory["analysis"]["metrics"][METRIC]["advisory"] = True; variants.append(advisory)
+        for data in variants:
+            with self.subTest(analysis=data["analysis"]):
+                with self.assertRaisesRegex(ValueError, "FAST_PASS analysis"):
+                    self.population.record(data, candidate(), PATCH, "b" * 40)
+                self.assertEqual(self.population.eligible_parents(), {})
+                self.assertFalse(self.population.path.exists())
+                self.assertFalse(pop.advancement_evidence(data)["eligible"])
+
+    def test_invalid_persisted_fitness_is_filtered_read_only(self):
+        self.add()
+        state = self.population._state()
+        del state["entries"]["one"]["analysis"]["combined_score"]
+        pop._atomic(self.population.path, state)
+        before = self.files()
+        self.assertEqual(self.population.eligible_parents(), {})
+        brief = self.population.next_brief([], "", {}, persist=False)
+        self.assertEqual(brief["parent"]["kind"], "baseline")
+        self.assertEqual(before, self.files())
+
+    def test_real_probe_sample_lists_produce_labeled_parent_deltas(self):
+        signals = {"swapin-disk": {"swapin_vmstat_delta.swap_ra_hit": [100]},
+                   "metadata-brd": {"metadata_delta_bytes_per_capacity_slot": [.2]}}
+        parent = row(); parent["probe_signals"] = copy.deepcopy(signals)
+        self.population.record(parent, candidate(), PATCH + "+parent\n", "b" * 40)
+        child = row("two", score=1.2)
+        child["probe_signals"] = {"swapin-disk": {"swapin_vmstat_delta.swap_ra_hit": [110]},
+                                  "metadata-brd": {"metadata_delta_bytes_per_capacity_slot": [.201]}}
+        entry = self.population.record(child, candidate("two", parent_candidate="one", parent_commit="1" * 40),
+                                       PATCH + "+child\n", "c" * 40)
+        self.assertEqual(entry["probe_signals"], child["probe_signals"])
+        self.assertEqual(self.population.eligible_parents()["one"]["probe_signals"], signals)
+        self.assertIn("median of retained samples", entry["parent_delta"]["signal_summary"])
+        deltas = entry["parent_delta"]["probe_signals"]
+        self.assertEqual(deltas["swapin-disk.swapin_vmstat_delta.swap_ra_hit"], 10)
+        self.assertAlmostEqual(deltas["metadata-brd.metadata_delta_bytes_per_capacity_slot"], .001)
+        self.assertEqual(pop._flatten({"counter": [100, 2, 1]})["counter"], 2)
+
+
 if __name__ == "__main__":
     unittest.main()

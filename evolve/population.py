@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 import random
 import re
+import statistics
 import tempfile
 
 NAME = re.compile(r"[a-z][a-z0-9-]{0,47}")
@@ -54,6 +55,33 @@ def _guards(analysis):
                     for v in metrics.values()))
 
 
+
+def _analysis_error(analysis):
+    """Reject incomplete/contradictory fast fitness before it can become a parent."""
+    if not isinstance(analysis, dict) or analysis.get("status") != "FAST_PASS":
+        return "fast analysis status must be FAST_PASS"
+    if analysis.get("tier", "fast") != "fast":
+        return "fast analysis tier must be fast"
+    score = analysis.get("combined_score")
+    if not _finite(score) or score <= 0:
+        return "normalized combined_score must be finite and positive"
+    if not _guards(analysis):
+        return "scored guards failed or are missing"
+    primary = analysis.get("primary")
+    if (not isinstance(primary, list) or not primary or
+            any(not isinstance(key, str) or not key for key in primary) or
+            len(set(primary)) != len(primary)):
+        return "primary must name distinct scored metrics"
+    for key in primary:
+        metric = analysis["metrics"].get(key)
+        if not isinstance(metric, dict) or metric.get("advisory"):
+            return "a primary metric is missing or advisory"
+        noise = metric.get("noise_relative")
+        if not _finite(noise) or noise < 0:
+            return "primary calibrated noise is missing or invalid"
+    return None
+
+
 def advancement_evidence(row):
     """Return an auditable advancement decision; never changes a baseline.
 
@@ -62,14 +90,14 @@ def advancement_evidence(row):
     the normalized combined score must exceed ``1 + max(primary envelopes)``.
     This comparison is against the campaign baseline, not an unmeasured anchor.
     """
-    analysis = row.get("analysis") or {}
+    analysis = row.get("analysis") if isinstance(row.get("analysis"), dict) else {}
     result = {"eligible": False, "reason": "requires a fast evaluation pass",
               "evidence_id": row.get("id"), "candidate_commit": row.get("candidate_commit"),
               "fingerprint": row.get("fingerprint"), "score": analysis.get("combined_score")}
     if not _fast(row):
         return result
-    if not _guards(analysis):
-        return dict(result, reason="a scored guard failed or is missing")
+    if error := _analysis_error(analysis):
+        return dict(result, reason=error)
     primary = analysis.get("primary")
     if not isinstance(primary, list) or not primary:
         return dict(result, reason="primary calibrated noise is missing")
@@ -110,6 +138,10 @@ def _flatten(value, prefix=""):
     if isinstance(value, dict):
         for key, item in value.items():
             out.update(_flatten(item, prefix + "." + str(key) if prefix else str(key)))
+    elif isinstance(value, list):
+        if not value or not all(_finite(item) for item in value):
+            raise ValueError("probe signal samples must be finite numeric values")
+        out[prefix] = statistics.median(value)
     elif _finite(value):
         out[prefix] = value
     return out
@@ -172,6 +204,9 @@ class Population:
     def _view(self, entry):
         entry = copy.deepcopy(entry)
         reasons = [item["reason"] for item in entry.get("invalidations", [])]
+        if error := _analysis_error(entry.get("analysis")):
+            reasons.append("invalid_fast_evidence")
+            entry["invalid_fast_reason"] = error
         if entry.get("fingerprint") != self.fingerprint:
             reasons.append("stale_fingerprint")
         if entry.get("baseline_commit") != self.baseline:
@@ -273,6 +308,8 @@ class Population:
             raise ValueError("evaluation baseline mismatch")
         if not isinstance(patch, str) or not patch.strip():
             raise ValueError("cumulative candidate patch is required")
+        if _fast(row) and (error := _analysis_error(row.get("analysis"))):
+            raise ValueError("FAST_PASS analysis is invalid: " + error)
         evidence = self._evidence(row)
         with self._lock():
             state = self._state()
@@ -356,6 +393,7 @@ class Population:
                 after = _flatten(entry["probe_signals"])
                 entry["parent_delta"] = {
                     "comparable": bool(comparable),
+                    "signal_summary": "median of retained samples; legacy scalar values are unchanged",
                     "probe_signals": {key: after[key] - before[key] for key in sorted(before.keys() & after.keys())},
                     "combined_score": (entry["analysis"]["combined_score"] - parent["analysis"]["combined_score"])
                                       if comparable else None,
