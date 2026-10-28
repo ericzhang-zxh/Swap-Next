@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-only
-"""Collect every results/<campaign>/explainer.html into a static site.
+"""Collect every campaigns/<c>/report/[<sub>/]explainer.html into a static site.
 
-    python3 build_site.py results/ _site/
+    python3 build_site.py campaigns/ _site/
 
-Each page becomes _site/<campaign>/index.html. _site/index.html lists the
-campaigns, newest first, with the verdict read from explainer.json.
+A report at campaigns/<c>/report/explainer.html becomes _site/<c>/index.html;
+a nested report at campaigns/<c>/report/<sub>/explainer.html becomes
+_site/<sub>/index.html. Two sources that publish the same name are an error.
+_site/index.html lists the campaigns, newest first, with the verdict read from
+explainer.json.
 """
 import html
 import json
@@ -21,15 +24,30 @@ from build_page import CSS, STATUS  # noqa: E402
 def main():
     if len(sys.argv) != 3:
         raise SystemExit(__doc__)
-    results, site = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+    campaigns, site = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+    def published_name(page):
+        # campaigns/<c>/report/explainer.html -> <c>; nested report -> its own directory.
+        if page.parent.name == "report":
+            return page.parent.parent.name
+        return page.parent.name
+
+    def campaign_date(page):
+        name = published_name(page)
+        match = re.search(r"\d{4}-\d{2}-\d{2}", name)
+        return (match.group(0) if match else "", name)
+
+    pages = sorted(campaigns.glob("*/report/**/explainer.html"), key=campaign_date, reverse=True)
+    sources = {}
+    for page in pages:
+        name = published_name(page)
+        if name in sources:
+            raise SystemExit(f"duplicate published name {name!r}: {sources[name]} and {page}")
+        sources[name] = page
+
     site.mkdir(parents=True, exist_ok=True)
     rows = []
-    def campaign_date(page):
-        match = re.search(r"\d{4}-\d{2}-\d{2}", page.parent.name)
-        return (match.group(0) if match else "", page.parent.name)
-
-    for page in sorted(results.glob("*/explainer.html"), key=campaign_date, reverse=True):
-        name = page.parent.name
+    for page in pages:
+        name = published_name(page)
         (site / name).mkdir(exist_ok=True)
         shutil.copyfile(page, site / name / "index.html")
         spec_path = page.with_suffix(".json")

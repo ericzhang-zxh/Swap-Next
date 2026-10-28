@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "results/**/explainer.*"
+      - "campaigns/*/report/**/explainer.*"
       - ".agents/skills/explaining-campaign-results/scripts/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -30,9 +30,9 @@ jobs:
         with:
           submodules: false
           sparse-checkout: |
-            results
+            campaigns
             .agents/skills/explaining-campaign-results/scripts
-      - run: python3 .agents/skills/explaining-campaign-results/scripts/build_site.py results _site
+      - run: python3 .agents/skills/explaining-campaign-results/scripts/build_site.py campaigns _site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
