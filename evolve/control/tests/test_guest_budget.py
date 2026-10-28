@@ -83,6 +83,20 @@ class GuestBudgetTests(unittest.TestCase):
             self.reserve()
         self.assertFalse((self.directory / "ledger").exists())
 
+    def test_missing_or_reset_budget_cannot_reuse_retained_reservations(self):
+        ticket = self.reserve()
+        path = self.directory / "ledger/budget.json"
+        original = path.read_bytes()
+        path.unlink()
+        with self.assertRaisesRegex(cs.CampaignError, "budget missing"):
+            self.reserve("second")
+        with self.assertRaisesRegex(cs.CampaignError, "budget missing"):
+            gb.consume_guest("demo", "run-a", ticket["reservation"], self.identity)
+        path.write_bytes(original)
+        data = gb.load(path); data["guests"] = 0; gb.save(path, data)
+        with self.assertRaisesRegex(cs.CampaignError, "below retained"):
+            self.reserve("second")
+
     def test_deadline_and_stop_preserve_budget(self):
         gb.save(self.directory / "ledger/budget.json", {"created": time.time()-4000, "guests": 0, "builds": 0})
         with self.assertRaisesRegex(cs.CampaignError, "deadline"):

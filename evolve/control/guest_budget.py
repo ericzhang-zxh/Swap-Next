@@ -41,7 +41,21 @@ def budget_lock(name):
 
 def read_budget(name):
     path = store.campaign_dir(name) / "ledger/budget.json"
-    return load(path) if path.exists() else {"created": time.time(), "guests": 0, "probe_guests": 0, "builds": 0}
+    tickets = list((path.parent / "guest-reservations").glob("*.json"))
+    if not path.exists() and tickets:
+        raise store.CampaignError("budget missing while guest reservations exist; reconcile retained evidence")
+    budget = load(path) if path.exists() else {"created": time.time(), "guests": 0, "probe_guests": 0, "builds": 0}
+    counts = {"fast": 0, "probe": 0}
+    for ticket in tickets:
+        record = load(ticket)
+        pool = record.get("pool")
+        if record.get("campaign") != name or pool not in counts:
+            raise store.CampaignError("invalid retained guest reservation identity")
+        counts[pool] += 1
+    for pool, key in (("fast", "guests"), ("probe", "probe_guests")):
+        if budget.get(key, 0) < counts[pool]:
+            raise store.CampaignError("budget is below retained " + pool + " reservations; reconcile evidence")
+    return budget
 
 
 def ticket_path(name, run_id):
