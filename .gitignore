@@ -72,3 +72,6 @@ campaigns/*/.lock
 campaigns/*/STOP
 campaigns/*/ledger/*.tmp
 campaigns/*/ledger/.lock
+campaigns/*/ledger/.*.lock
+campaigns/*/candidates/*.json.tmp
+campaigns/*/campaign.json.tmp
