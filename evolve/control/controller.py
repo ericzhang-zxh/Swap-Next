@@ -6,6 +6,7 @@ from contextlib import contextmanager
 import fcntl
 import fnmatch
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -188,6 +189,46 @@ def diff_guard(root, base, config):
             "changed_paths": changes, "changed_lines": lines}
 
 
+def campaign_fingerprint(protocol, directory):
+    """Share the evaluator's identity without importing any model provider."""
+    path = Path(__file__).resolve().parents[1] / "standard_workflow.py"
+    spec = importlib.util.spec_from_file_location("controller_workflow_identity", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.ROOT, module.BENCH = PROJECT, PROJECT / "benchmark/swap-standard"
+    module.CAMPAIGN, module.PROTOCOL = directory, directory / "protocol.json"
+    return module.fingerprint(protocol)
+
+
+def evolution_population(protocol=None, directory=None):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from population import Population
+    directory = directory or STATE
+    protocol = protocol or load_json(directory / "protocol.json")
+    return Population(directory, protocol, campaign_fingerprint(protocol, directory))
+
+
+def line_anchor(line, fallback):
+    """The oldest recorded protocol anchors a line; later baselines cannot reset it."""
+    records = [campaign_store.load(path.parent.name)
+               for path in campaign_store.CAMPAIGNS.glob("*/campaign.json")]
+    records = sorted((r for r in records if r["line"] == line), key=lambda r: (r["opened"], r["campaign"]))
+    declared = {r["line_anchor_commit"] for r in records if r.get("line_anchor_commit")}
+    require(len(declared) <= 1, "line has conflicting anchor identities")
+    if declared:
+        return next(iter(declared))
+    for record in records:
+        directory = campaign_store.campaign_dir(record["campaign"])
+        path = directory / "protocol.json"
+        if not path.exists() and record.get("protocol_ref"):
+            path = PROJECT / record["protocol_ref"]
+        if path.is_file():
+            value = load_json(path).get("baseline_commit")
+            if isinstance(value, str) and re.fullmatch(r"[0-9a-f]{40}", value):
+                return value
+    return fallback
+
+
 def get_candidate(name):
     records = registry()
     require(name in records, "unknown candidate")
@@ -199,7 +240,13 @@ def get_candidate(name):
     require(git(root, "rev-parse", "--path-format=absolute", "--git-common-dir") ==
             git(ROOT, "rev-parse", "--path-format=absolute", "--git-common-dir"),
             "candidate not in controller repository")
-    require(record["parent"] == seed(), "candidate has stale parent")
+    baseline = seed()
+    require(record.get("baseline_commit", record["parent"]) == baseline, "candidate has stale baseline")
+    parent = record.get("parent_commit", record["parent"])
+    require(git(ROOT, "rev-parse", parent + "^{commit}") == parent, "candidate parent is missing")
+    git(root, "merge-base", "--is-ancestor", parent, "HEAD")
+    require(git(root, "rev-parse", "HEAD^{tree}") != git(ROOT, "rev-parse", parent + "^{tree}"),
+            "child source tree is unchanged from its parent")
     return record, root
 
 
@@ -232,7 +279,7 @@ def parse_mechanism(value):
     return value
 
 
-def create(name, hypothesis, mechanism=None):
+def create(name, hypothesis, mechanism=None, parent=None, brief=None):
     require(re.fullmatch(r"[a-z][a-z0-9-]{0,47}", name), "invalid candidate name")
     require(10 <= len(hypothesis) <= 2000, "hypothesis must be 10..2000 characters")
     trusted_control()
@@ -252,9 +299,32 @@ def create(name, hypothesis, mechanism=None):
         root = WORKTREES / name
         require(not root.exists(), "worktree path already exists")
         root.parent.mkdir(parents=True, exist_ok=True)
-        parent = seed()
-        git(ROOT, "worktree", "add", "-b", "agents/" + name, str(root), parent)
-        record = {"id": name, "parent": parent, "worktree": str(root.relative_to(PROJECT)),
+        baseline = seed()
+        chosen = baseline if parent in (None, "baseline") else parent
+        parent_candidate, generation = None, 1
+        protocol_path = STATE / "protocol.json"
+        protocol = load_json(protocol_path) if CAMPAIGN and protocol_path.exists() else {}
+        if "probe" in protocol.get("tiers", {}):
+            require(brief, "new evolution candidates require a durable --brief")
+            require(re.fullmatch(r"[0-9a-f]{40}", chosen), "parent must be an exact commit or baseline")
+            population = evolution_population(protocol)
+            receipt = population.validate_parent(brief, chosen)
+            require(receipt.get("consumed_by") in (None, name), "proposal brief is already consumed")
+            binding = receipt["parent_bindings"][chosen]
+            actual_tree = git(ROOT, "rev-parse", chosen + "^{tree}")
+            if binding.get("source_tree"):
+                require(actual_tree == binding["source_tree"], "parent tree differs from durable brief")
+            parent_candidate = binding.get("candidate")
+            if parent_candidate:
+                generation = population.eligible_parents()[parent_candidate]["generation"] + 1
+            population.consume_brief(brief, chosen, name)
+        else:
+            require(chosen == baseline and not brief, "legacy campaigns use their frozen baseline")
+        git(ROOT, "worktree", "add", "-b", "agents/" + name, str(root), chosen)
+        record = {"id": name, "parent": chosen, "parent_commit": chosen,
+                  "parent_candidate": parent_candidate, "generation": generation,
+                  "baseline_commit": baseline, "brief_id": brief,
+                  "worktree": str(root.relative_to(PROJECT)),
                   "status": "active", "hypothesis": hypothesis,
                   "created_unix": time.time(), "protocol_sha256": protocol_hash()}
         if mechanism is not None:
@@ -276,21 +346,28 @@ def create(name, hypothesis, mechanism=None):
 
 
 def check_candidate(name, static=False):
+    active()  # Refuse closed campaigns before creating the lock directory.
+    with lock():
+        return _check_candidate(name, static)
+
+
+def _check_candidate(name, static=False):
     trusted_control()
     active()
     record, root = get_candidate(name)
-    result = diff_guard(root, record["parent"], policy())
+    baseline = record.get("baseline_commit", record["parent"])
+    result = diff_guard(root, baseline, policy())
     out = artifacts(name)
     out.mkdir(parents=True, exist_ok=True)
     if static:
         patch = git(root, "diff", "--no-ext-diff", "--no-textconv",
-                    record["parent"], result["candidate_commit"], binary=True)
+                    baseline, result["candidate_commit"], binary=True)
         target = STATE / "patches" / (name + ".patch") if CAMPAIGN else out / "candidate.patch"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(patch)
         commands = [
             ("diff-check", ["git", "-C", str(root), "diff", "--check",
-                            record["parent"], result["candidate_commit"]], None),
+                            baseline, result["candidate_commit"]], None),
             ("checkpatch", ["perl", str(ROOT / "scripts/checkpatch.pl"),
                             "--no-tree", "--no-signoff", "-"], patch),
         ]
@@ -330,6 +407,16 @@ def baseline_from(args, protocol):
         require(git(ROOT, "rev-parse", "--verify", commit + "^{commit}") == commit,
                 "inherited commit is not an exact existing commit")
         require(commit == expected, "inherited commit does not match destination baseline")
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from population import advancement_evidence
+        decision = advancement_evidence(row)
+        require(decision["eligible"], "baseline advancement requires improvement above calibrated noise: " + decision["reason"])
+        source_protocol = load_json(source_dir / "protocol.json")
+        population = evolution_population(source_protocol, source_dir)
+        entry = population.eligible_parents().get(cand)
+        require(entry and entry["candidate_commit"] == commit and entry.get("fast_evidence_id") == row["id"],
+                "baseline advancement requires current eligible archived source evidence")
+        require(entry["source_tree"] == git(ROOT, "rev-parse", commit + "^{tree}"), "inherited tree differs from archive")
         return {"campaign": source, "candidate": cand, "commit": row["candidate_commit"],
                 "evidence": {"kind": "fast_pass", "ledger_row": args.evidence_row}}
     report = (PROJECT / args.evidence_report).resolve()
@@ -373,7 +460,7 @@ def _open_campaign(args):
     record = {"campaign": CAMPAIGN, "status": "open", "line": args.line,
               "baseline_from": baseline_from(args, protocol) if args.baseline_from else None,
               "machine": args.machine, "opened": time.strftime("%Y-%m-%d", time.gmtime()),
-              "closed": None,
+              "closed": None, "line_anchor_commit": line_anchor(args.line, seed()),
               "budget": {"guest_attempts": budget["guest_attempts"],
                          "wall_seconds": budget["wall_seconds"],
                          "probe_guest_attempts": budget.get("probe_guest_attempts", 0),
@@ -439,6 +526,8 @@ def _close_campaign(reason):
         campaign_store.write(CAMPAIGN, record)
         if campaign_store.read_claim() == CAMPAIGN:
             campaign_store.release_claim(CAMPAIGN, reason, locked=True)
+    from lines import generate
+    generate(PROJECT)
     return record
 
 
@@ -452,6 +541,8 @@ def main():
     p.add_argument("name")
     p.add_argument("--hypothesis", required=True)
     p.add_argument("--mechanism", type=parse_mechanism)
+    p.add_argument("--parent", default="baseline", help="baseline or the sampled exact parent commit")
+    p.add_argument("--brief", help="durable proposal brief ID for a new evolution candidate")
     for name in ("guard", "check"):
         commands.add_parser(name).add_argument("name")
     p = commands.add_parser("close")
@@ -493,7 +584,7 @@ def main():
             campaign_store.release_claim(None, args.reason)
             result = {"status": "RELEASED"}
         elif args.command == "new":
-            result = create(args.name, args.hypothesis, args.mechanism)
+            result = create(args.name, args.hypothesis, args.mechanism, args.parent, args.brief)
         elif args.command in ("guard", "check"):
             result = check_candidate(args.name, args.command == "check")
         elif args.command == "close":

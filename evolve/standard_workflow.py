@@ -21,6 +21,10 @@ BENCH = ROOT / "benchmark/swap-standard"
 WORKFLOW_FILE = Path(__file__).resolve()
 sys.path.insert(0, str(ROOT / "benchmark/kernel"))
 from lifetime import bind_child_to_parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from population import Population, advancement_evidence
+sys.path.insert(0, str(Path(__file__).resolve().parent / "control"))
+import correctness_proof
 
 _spec = importlib.util.spec_from_file_location("campaign_store", ROOT / "evolve/control/campaign_store.py")
 campaign_store = importlib.util.module_from_spec(_spec)
@@ -159,8 +163,12 @@ def fingerprint(p):
     paths = [PROTOCOL, BENCH / "image.json", ROOT / "evolve/loop.py", Path(__file__),
              ROOT / "evolve/control/controller.py", ROOT / "evolve/control/analysis.py",
              ROOT / "evolve/control/campaign_store.py", ROOT / "evolve/control/guest_budget.py",
+             ROOT / "evolve/control/correctness_proof.py",
+             ROOT / "evolve/population.py", ROOT / "evolve/templates/swap_next.txt",
+             ROOT / "evolve/requirements.snapshot.txt",
              CAMPAIGN / "policy.json",
              ROOT / "benchmark/config/swap-standard.config"]
+    paths += [ROOT / "evolve/openevolve/openevolve" / name for name in ("database.py", "config.py", "prompt/sampler.py")]
     paths += list(BENCH.glob("*.py")) + list(BENCH.glob("*.sh"))
     paths += [BENCH / name for name in ["guest-init", "tools.json", "swapin.c", "correctness.c", "console-drain.c"]]
     paths += [ROOT / "benchmark/kernel" / name for name in ["build.py", "lifetime.py", "build_namespace.sh"]]
@@ -308,6 +316,14 @@ class Workflow:
         if commit in self.p["blocked_commits"]:
             raise RuntimeError("BLOCKED: " + self.p["blocked_commits"][commit])
         proof = read(correctness) if correctness else {}
+        if self.p["campaign"] not in CONTRACT_EXEMPT:
+            try:
+                proof = correctness_proof.validate(proof, self.p, ROOT)
+            except correctness_proof.CorrectnessFailure as exc:
+                if exc.evidence["candidate_commit"] != commit:
+                    raise RuntimeError("correctness failure belongs to another candidate commit") from exc
+                exc.candidate_record = record
+                raise
         # A direct guest result must pass every runner gate, including exit and identity.
         if "source_commit" in proof and proof.get("integration_pass") is not True:
             raise RuntimeError("guest correctness evidence failed integration")
@@ -506,10 +522,18 @@ class Workflow:
             if action == "calibrate":
                 save(STATE / "calibration-probe.json", row)
         except (Exception, KeyboardInterrupt) as exc:
-            row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=str(exc), finished=time.time())
+            if isinstance(exc, correctness_proof.CorrectnessFailure):
+                record = exc.candidate_record
+                row.update(status="CORRECTNESS_FAIL", reason=str(exc), finished=time.time(),
+                           candidate_commit=exc.evidence["candidate_commit"], correctness=exc.evidence,
+                           candidate_tree=self.candidate_tree(exc.evidence["candidate_commit"], record))
+            else:
+                row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=str(exc), finished=time.time())
         finally:
             save(dest / "report.json", row)
             save(self.ledger_path, self.ledger)
+        if action == "evaluate" and row.get("status") == "CORRECTNESS_FAIL":
+            self.archive(row, record)
         print(json.dumps({k: row.get(k) for k in ("id", "action", "tier", "status", "reason", "budget_pools")}), flush=True)
         return row
 
@@ -713,17 +737,41 @@ class Workflow:
             row.update(analysis=result, status=result["status"], finished=time.time())
             if action == "calibrate":
                 save(STATE / ("calibration-" + tier + ".json"), row)
-            if action == "evaluate" and tier == "slow" and result.get("needs_review"):
-                self.archive(row, record)
         except (Exception, KeyboardInterrupt) as exc:
-            row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=str(exc), finished=time.time())
+            if isinstance(exc, correctness_proof.CorrectnessFailure):
+                record = exc.candidate_record
+                row.update(status="CORRECTNESS_FAIL", reason=str(exc), finished=time.time(),
+                           candidate_commit=exc.evidence["candidate_commit"], correctness=exc.evidence,
+                           candidate_tree=self.candidate_tree(exc.evidence["candidate_commit"], record))
+            else:
+                row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=str(exc), finished=time.time())
         finally:
             save(dest / "report.json", row)
             save(self.ledger_path, self.ledger)
+        if action == "evaluate" and row.get("candidate_commit"):
+            records = campaign_store.candidates(self.p["campaign"])
+            if candidate in records:
+                self.archive(row, records[candidate])
         print(json.dumps({k: row.get(k) for k in ["id", "action", "tier", "status", "reason", "analysis"]}, indent=2), flush=True)
         return row
 
+    def population(self, fp):
+        return Population(CAMPAIGN, self.p, fp)
+
     def archive(self, row, record):
+        if "probe" in self.p.get("tiers", {}):
+            population = self.population(row["fingerprint"])
+            known = population.path.exists() and record["id"] in read(population.path)["entries"]
+            if row.get("status") != "FAST_PASS" and not known:
+                return None
+            patch_path = CAMPAIGN / "patches" / (record["id"] + ".patch")
+            patch = patch_path.read_text() if patch_path.exists() else subprocess.check_output(
+                ["git", "-C", str(ROOT / record["worktree"]), "diff", "--no-ext-diff", "--no-textconv",
+                 self.p["baseline_commit"], row["candidate_commit"]], text=True)
+            tree = row.get("candidate_tree") or self.candidate_tree(row["candidate_commit"], record)
+            return population.record(row, record, patch, tree)
+        if row.get("tier") != "slow" or not row.get("analysis", {}).get("needs_review"):
+            return None
         from openevolve.config import DatabaseConfig
         from openevolve.database import Program, ProgramDatabase
         db = ProgramDatabase(DatabaseConfig(in_memory=True, population_size=8, archive_size=8, num_islands=1, random_seed=42))
@@ -763,7 +811,13 @@ def main(argv=None):
         validity_module().protocol_rules(p)
         workflow = Workflow(p)
         if args.action in ("status", "plan", "next"):
-            fp = fingerprint(p)
+            try:
+                fp = fingerprint(p)
+                fingerprint_error = None
+            except OSError as exc:
+                if not closed:
+                    raise
+                fp, fingerprint_error = "unavailable", str(exc)
             ready = {}
             for tier in p["tiers"]:
                 try:
@@ -771,21 +825,30 @@ def main(argv=None):
                 except RuntimeError as exc:
                     ready[tier] = str(exc)
             output = {"campaign": p["campaign"], "fingerprint": fp, "budget": workflow.budget, "budget_pools": workflow.budget_pools(), "limits": p["budget"], "tiers": p["tiers"], "calibration": ready, "ledger": [{k: r.get(k) for k in ["id", "action", "tier", "candidate", "status"]} for r in workflow.ledger]}
+            if fingerprint_error:
+                output["fingerprint_error"] = fingerprint_error
             if args.action == "next":
-                output["instruction"] = "Resolve correctness holds, then calibrate missing/noisy tiers. Only a calibrated fast tier may screen a controller candidate. Slow requires the exact fast-pass commit and explicit owner approval; no automatic promotion."
-                output["references"] = []
-                if (ARCHIVE / "database").exists():
-                    from openevolve.config import DatabaseConfig
-                    from openevolve.database import ProgramDatabase
-                    db = ProgramDatabase(DatabaseConfig(in_memory=True, population_size=8, archive_size=8, num_islands=1, random_seed=42))
-                    db.load(str(ARCHIVE / "database"))
-                    if db.programs:
-                        parent, inspirations = db.sample(num_inspirations=2)
-                        output["references"] = [r.to_dict() for r in [parent, *inspirations]]
-                output["required_patch_base"] = p["baseline_commit"]
+                output["instruction"] = "Inspect mechanism and correctness evidence, select probe passes with a reason, then screen. Neutral exploratory parents are allowed; baseline advancement requires improvement above calibrated noise. Slow needs explicit owner approval."
                 output["controller_campaign"] = p["campaign"]
-                if not closed:
-                    save(TASKS / ("task-" + uuid.uuid4().hex + ".json"), output)
+                if "probe" in p.get("tiers", {}):
+                    records = campaign_store.candidates(p["campaign"])
+                    if not closed:
+                        for row in workflow.ledger:
+                            if (row.get("action") == "evaluate" and row.get("fingerprint") == fp
+                                    and row.get("candidate") in records and row.get("candidate_commit")):
+                                workflow.archive(row, records[row["candidate"]])
+                    line = campaign_store.load(p["campaign"])["line"]
+                    history = ROOT / "campaigns/lines" / (line + ".md")
+                    brief = workflow.population(fp).next_brief(workflow.ledger,
+                        history.read_text() if history.is_file() else "No previous campaigns on this line.",
+                        workflow.budget_pools(), persist=not closed)
+                    output["brief"] = brief
+                    output["required_patch_base"] = brief["allowed_parents"]
+                else:
+                    output["required_patch_base"] = p["baseline_commit"]
+                    output["references"] = []
+                    if not closed:
+                        save(TASKS / ("task-" + uuid.uuid4().hex + ".json"), output)
             print(json.dumps(output, indent=2))
             return
         if args.action == "evaluate" and not args.candidate:
@@ -800,7 +863,7 @@ def main(argv=None):
             tiers = [args.tier]
         for tier in tiers:
             row = workflow.run(args.action, tier, args.candidate, args.correctness, args.selection_reason)
-            if row["status"] in ("INCOMPLETE", "BLOCKED"):
+            if row["status"] in ("INCOMPLETE", "BLOCKED", "CORRECTNESS_FAIL"):
                 raise SystemExit(1)
             if args.action == "evaluate" and tier == "fast" and not row.get("analysis", {}).get("eligible_for_slow"):
                 break

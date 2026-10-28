@@ -307,16 +307,16 @@ class OpenCloseTests(Fixture):
         self.assertEqual((r["campaign"], r["candidate"], r["evidence"]["kind"]),
                          ("old", "cand-b", "correctness_fix"))
 
-    def test_open_fast_pass_row_records_commit(self):
+    def test_bare_fast_pass_cannot_advance_baseline(self):
         self.open_dir("old", status="closed", closed="2026-10-26")
         (self.campaigns / "old/ledger").mkdir()
         (self.campaigns / "old/ledger/ledger.json").write_text(json.dumps([
             {"id": "row-ok", "candidate": "cand-a", "status": "FAST_PASS", "candidate_commit": sh(self.linux, "rev-parse", "seed")}]))
         self.prep("new1")
         rc, out = self.open("new1", "--baseline-from", "old:cand-a", "--evidence-row", "row-ok")
-        self.assertEqual(rc, 0, out)
-        b = cs.load("new1")["baseline_from"]
-        self.assertEqual((b["commit"], b["evidence"]), (sh(self.linux, "rev-parse", "seed"), {"kind": "fast_pass", "ledger_row": "row-ok"}))
+        self.assertEqual(rc, 2, out)
+        self.assertIn("baseline advancement requires improvement", out["error"])
+        self.assertFalse((self.campaigns / "new1/campaign.json").exists())
 
     def test_inheritance_requires_same_line_and_exact_destination_baseline(self):
         self.open_dir("old", status="closed", closed="2026-10-26", line="other")

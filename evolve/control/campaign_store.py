@@ -50,6 +50,9 @@ def _check(name, r):
     if r["status"] not in ("open", "closed"):
         raise CampaignError(f"bad status {r['status']!r}")
     _name(r["line"], "line")
+    if "line_anchor_commit" in r and (not isinstance(r["line_anchor_commit"], str)
+            or not re.fullmatch(r"[0-9a-f]{40}", r["line_anchor_commit"])):
+        raise CampaignError("line_anchor_commit must be an exact commit")
     if r["machine"] not in _hosts():
         raise CampaignError(f"machine {r['machine']!r} is not in hosts.json")
     b = r["baseline_from"]
