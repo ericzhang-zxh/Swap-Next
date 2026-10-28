@@ -1,0 +1,111 @@
+{
+  "campaigns": {
+    "swap-standard-2026-10-22": {
+      "line": "plain",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": null
+    },
+    "xswap-2026-10-21": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": null,
+      "protocol_ref": "benchmark/xswap/protocol.json"
+    },
+    "xswap-next-2026-10-24": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": {
+        "campaign": "xswap-p123-2026-10-23",
+        "candidate": "xs-desc-lifetime-v1",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "evidence": {
+          "kind": "correctness_fix",
+          "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+        }
+      }
+    },
+    "xswap-observe-2026-10-22": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": null
+    },
+    "xswap-p123-2026-10-23": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": null,
+      "protocol_ref": "benchmark/xswap-p123/protocol.json"
+    },
+    "xswap-p123-lifetime-20261023": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": null
+    },
+    "xswap-phase3-import": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": null
+    },
+    "xswap-reference-replay": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": null
+    },
+    "xswap-structure-2026-10-22": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": null,
+      "protocol_ref": "benchmark/xswap-structure/protocol.json"
+    },
+    "xswap-swapin-2026-10-23": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": {
+        "campaign": "xswap-p123-2026-10-23",
+        "candidate": "xs-desc-lifetime-v1",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "evidence": {
+          "kind": "correctness_fix",
+          "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+        }
+      }
+    },
+    "xswap-tcg-rev3-2026-10-25": {
+      "line": "xswap",
+      "machine": "grok-cloud",
+      "status": "open",
+      "baseline_from": {
+        "campaign": "xswap-p123-2026-10-23",
+        "candidate": "xs-desc-lifetime-v1",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "evidence": {
+          "kind": "correctness_fix",
+          "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+        }
+      }
+    },
+    "confirm-h1-ra-phys-2026-10-23": {
+      "line": "xswap",
+      "machine": "hurricpc",
+      "status": "closed",
+      "baseline_from": {
+        "campaign": "xswap-p123-2026-10-23",
+        "candidate": "xs-desc-lifetime-v1",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "evidence": {
+          "kind": "correctness_fix",
+          "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+        }
+      }
+    }
+  }
+}
