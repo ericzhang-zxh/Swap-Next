@@ -16,26 +16,19 @@ selects references for the next proposal.
 [DESIGN.md](DESIGN.md) covers the shared design: the swap cost model, the
 upstream landscape, measurement principles and the role of OpenEvolve.
 Each exploration direction runs as a campaign and reports in
-[results/](results/).
+[campaigns/](campaigns/).
 
 ## Layout
 
 ```text
-linux/            upstream Linux submodule, pinned at 744e5400 (never modified)
-benchmark/        builds, KVM runner, guest workloads, parsers, frozen protocols
-  swap-standard/  usemem, kernel build and Valkey performance integration
-  kernel/         historical ordinary swap suite
-  xswap/          xswap suite (imported Phase I/II reference)
-  xswap-structure/ second-cycle mapped-metadata diagnostic
-  xswap-hole-probe/ mapped-metadata probe with a live anchor
-  tests/          layout checks shared by the suites
-evolve/
-  loop.py         OpenEvolve adapter: `loop.py <kernel|xswap|xswap-structure> status|next|evaluate|calibrate`
-  standard_workflow.py  standard-suite ledger, calibration and evaluation
-  control/        candidate controller: worktrees, scope checks, policies
-  openevolve/     upstream OpenEvolve submodule, pinned at 59dfe764
-patches/          experimental patches and the imported xswap reference
-results/          one report per campaign
+linux/            frozen upstream submodule; never modified
+campaigns/        one directory per campaign; generated campaign and line indexes
+  <campaign>/     campaign.json, policy.json, frozen protocol.json
+                  ledger/, candidates/, patches/, archive/, report/
+                  runs/ is local raw evidence and remains ignored
+benchmark/        trusted builds, guest workloads, parsers and measurement rules
+evolve/           controller, probe/latency workflow, population and task briefs
+  openevolve/     pinned upstream ProgramDatabase and PromptSampler
 ```
 
 Clone with `git clone --recurse-submodules`, or run
@@ -53,21 +46,26 @@ Kernel builds and guests run on a Linux KVM worker; see
 [benchmark/SETUP.md](benchmark/SETUP.md).
 Experiments launched by Grok Bot run on its cloud box under QEMU TCG (no KVM)
 as protocol revision 3
-([benchmark/swap-standard/protocol-tcg-revision3.json](benchmark/swap-standard/protocol-tcg-revision3.json));
+([campaigns/xswap-tcg-rev3-2026-10-25/protocol.json](campaigns/xswap-tcg-rev3-2026-10-25/protocol.json));
 see [AGENTS.md § Grok Bot runs](AGENTS.md#grok-bot-runs-cloud-box-qemu-tcg).
 
 ```sh
-python3 evolve/control/controller.py --campaign <c> new <name> --hypothesis '<mechanism, expected effect, falsifier>'
-# implement and commit inside worktrees/<c>/<name>
+python3 evolve/control/controller.py --campaign <c> open-campaign --line <line> --machine <machine>
+evolve/.venv/bin/python evolve/loop.py swap-standard next --campaign <c>
+python3 evolve/control/controller.py --campaign <c> new <name> --hypothesis '<mechanism and falsifier>' \
+  --mechanism '<case>:<counter>:<direction>' --brief <brief-id> --parent <baseline-or-sampled-commit>
+# Implement and commit in the controller-created candidate worktree.
 python3 evolve/control/controller.py --campaign <c> check <name>
-evolve/.venv/bin/python evolve/loop.py swap-standard calibrate --tier fast --protocol benchmark/swap-standard/protocol-<c>.json
-evolve/.venv/bin/python evolve/loop.py swap-standard evaluate --tier fast --protocol benchmark/swap-standard/protocol-<c>.json \
-  --candidate <name> --correctness <correctness.json>
-python3 evolve/control/controller.py --campaign <c> close <name> --reason '<decision and evidence>'
+evolve/.venv/bin/python evolve/loop.py swap-standard calibrate --tier probe --campaign <c>
+evolve/.venv/bin/python evolve/loop.py swap-standard evaluate --tier probe --campaign <c> \
+  --candidate <name> --correctness <proof.json>
+# The agent selects probe passes and records why they enter fast screening.
 ```
 
 The controller keeps candidates inside the allowed files and line budget.
-The evaluator runs AB/BA guest pairs per case. A fast-tier pass is a screen;
+The evaluator probes mechanisms, then runs AB/BA latency pairs for selected candidates.
+A fast-tier pass enters the exploratory population; baseline advancement additionally
+requires improvement evidence above calibration noise. A fast pass is a screen;
 a human decides whether anything goes upstream.
 
 What the harness cannot measure is listed once, in

@@ -9,7 +9,7 @@ rules and never relaxes them.
 ## Read first
 
 1. [README.md](README.md) and [DESIGN.md](DESIGN.md): purpose, cost model, measurement principles.
-   Read the active campaign's report in `results/` for its findings and next steps.
+   Read the active campaign's `campaigns/<c>/report/` and line history for findings and next steps.
 2. [evolve/control/PRINCIPLES.md](evolve/control/PRINCIPLES.md): scope, invariants,
    trust boundary, permissions.
 3. [evolve/control/CODE_PATTERNS.md](evolve/control/CODE_PATTERNS.md): kernel code
@@ -45,16 +45,28 @@ Loading that skill does not authorize running or publishing experiments.
   approve each slow-tier run first. A fast-tier pass alone does not qualify.
   Stop experiment execution after the fast tier, then complete the report
   delivery below.
-- **Metrics**: every campaign's primary metric is swap-in latency (a case
-  primary of `swapin_seq.mean_ns` or `swapin_rand.mean_ns`). Every fast tier
-  also screens metadata bytes per slot (`metadata_delta_bytes_per_capacity_slot`
-  on brd) as a guardrail; all other metrics are guardrails. `standard_workflow.py`
-  blocks a new protocol that breaks this; protocols frozen earlier are exempt.
+- **Metrics**: every new campaign's primary metric is swap-in latency
+  (`swapin_seq.mean_ns` or `swapin_rand.mean_ns`). The probe tier guards
+  metadata bytes per capacity slot for plain-mode campaigns. Other metrics
+  are guardrails. Frozen older protocols keep their original contract.
+- **Mechanism**: a new probe candidate declares one case, measured counter and
+  direction. A probe pass establishes cumulative mechanism engagement. Report
+  parent-to-child evidence separately; an inherited counter change does not
+  establish the child's contribution.
+- **Evolution**: a fast pass may enter the exploratory population, including a
+  neutral candidate. Advancing a cross-campaign baseline requires improvement
+  above its calibrated noise and passing scored guards. Preserve the line's
+  original anchor and evidence; do not call a neutral screen progress. A slow
+  regression, correctness failure or stale fingerprint removes parent
+  eligibility while keeping history. Screen evidence never promotes code.
+- **Identity**: record commit and source-tree identities. A child must change
+  its parent's tree. An equivalent tree cannot buy another attempt by changing
+  commit metadata. Revised measurements preserve and supersede earlier results.
 - **Promotion**: candidate code is never applied to `linux/`, sent upstream or
   promoted automatically. Keeping a candidate's patch and evidence on `main`
   is a record, not a merge.
-- **Commits**: keep runtime state, secrets, machine paths and credentials out
-  of commits. AI tools add no `Signed-off-by`; a human certifies upstream
+- **Commits**: track campaign ledgers, candidate records, patches and archive
+  summaries; keep raw `runs/`, secrets, machine paths and credentials out of commits. AI tools add no `Signed-off-by`; a human certifies upstream
   submissions.
 - **Language**: project-authored text (docs, comments, commit messages,
   reviews) is English. Upstream and third-party text is preserved as is.
@@ -81,18 +93,22 @@ Loading that skill does not authorize running or publishing experiments.
 
 This applies to every agent and runner.
 
-- **No approval needed**: opening a new campaign. That means a new
-  `evolve/control/campaigns/<c>/policy.json` that keeps or narrows the base
-  file list and sets a budget within the default cap below, and a new
-  protocol file that reuses an approved protocol revision's
-  measurement parameters and meets the **Metrics** rule. Candidates, fast-tier
-  runs, calibration and reports follow from the campaign.
-- **Default campaign budget cap**: at most 120 guest boots and 18 hours of
-  wall time (`guest_attempts` 120 and `wall_seconds` 64800 in the protocol
-  budget) per campaign, and at most one campaign running guests at a time on
-  each machine. Validity reruns and calibration count against the cap. A
-  campaign that needs more asks the owner first. Nothing enforces this
-  mechanically yet; the agent opening the campaign checks it.
+- **No approval needed**: opening a campaign within the approved measurement
+  contract. Write `campaigns/<c>/policy.json` and `protocol.json`, then use
+  `controller.py --campaign <c> open-campaign --line L --machine M`.
+  Its file list keeps or narrows the base list. Candidates, probe and fast
+  calibration, screening, and report delivery follow from that campaign.
+- **Default campaign budget cap**: 120 guest attempts total across probe and
+  latency pools, including correctness and validity attempts, and 18 hours
+  (`wall_seconds: 64800`). `open-campaign`, the workflow and counted guest
+  reservations enforce it. Candidate counts are ceilings; report the actual
+  attainable population and generation depth within the remaining pools.
+- **Ownership and recovery**: at most one open campaign per machine. Every
+  launch checks open status, machine, claim, both STOP files and a single-use
+  counted reservation. `release-claim --reason` clears a stale claim;
+  `resume-campaign --reason` restores an existing open campaign's ownership
+  without changing its budgets, deadline, evidence or STOP files. Closed
+  `status`, `plan` and `next` reads do not rewrite stored state.
 - **Approval needed (core)**: changes to `AGENTS.md`, `README.md`, `DESIGN.md`,
   `evolve/control/PRINCIPLES.md`, `CODE_PATTERNS.md`, `METRICS.md`, skills
   under `.agents/`, the base policy `evolve/control/config/policy.json`,
@@ -142,37 +158,29 @@ This applies to every agent and runner.
 
 ## Campaign lifecycle
 
-Every campaign, whoever runs it, follows the same branch lifecycle.
+1. **Open**: work directly on current `main`. Read the line history. Write the
+   campaign policy and frozen protocol, then `open-campaign` with line and
+   machine. Inherited baselines name exact source evidence on the same line;
+   the seed, protocol baseline and inherited commit agree. Retain `line_anchor_commit`.
+2. **Run**: keep candidates in controller-created isolated kernel worktrees.
+   Commit `campaigns/<c>/ledger/`, `candidates/`, `patches/` and `archive/` at
+   each calibration and candidate outcome boundary. Raw `runs/` stays ignored.
+   The agent chooses which probe passes enter fast and records its reason.
+   A durable brief permits the sampled exact parent or the baseline; record
+   the actual choice. Scope and line limits cover the cumulative baseline diff.
+3. **Close**: retain patches and failed evidence, use `close-campaign --reason`,
+   regenerate campaign and line indexes, write the review report and publish
+   it under the standing publication rule. Run the project checks before pushing.
+4. **Clean up**: remove finished candidate worktrees, preserving their
+   `agents/<candidate>` branches because evidence cites their commits. Integrate
+   any useful isolated implementation branches before removing their worktrees;
+   preserve uncommitted work instead of discarding it.
 
-1. **Open**: work on one branch named `experiments/<campaign>`, created from
-   current `origin/main`. Scratch and publication worktrees belong to that
-   campaign and live outside the main checkout.
-2. **Run**: commit harness, policy, protocol and evidence changes on that
-   branch as they happen. Keep runtime state, ledgers and images uncommitted.
-3. **Close**: bring everything worth keeping onto `main`.
-   - Reports and evidence go to `results/<campaign>/`.
-   - Candidate patches go to `patches/<campaign>/<candidate>.patch`, exported
-     from the controller's `candidate.patch`.
-   - Harness, policy and protocol changes go to their usual paths.
-   - Merge the branch into `main` with `--no-ff`. Do not rebase or squash
-     commits that a report or evidence manifest cites, because their hashes
-     must stay valid. A branch with no cited commits may instead be rebased
-     and fast-forwarded.
-   - When rules, skills or published reports conflict, keep the `main` side
-     unless the campaign deliberately changes them.
-   - Run the [project tests](.agents/skills/closed-loop-evolve/references/swap-next.md#checks)
-     before pushing `main`.
-4. **Clean up**: once `main` contains the branch, delete it locally and on
-   `origin` and remove its worktrees. Also remove the campaign's candidate
-   worktrees under `worktrees/<campaign>/` with `git -C linux worktree remove`,
-   but keep their `agents/<candidate>` branches in `linux/`: evidence cites
-   those commit hashes, and a branch costs no disk. No finished campaign leaves
-   an experiment branch, a worktree or uncommitted work behind. If a worktree
-   holds changes that are not on `main`, commit them to `main` or report them
-   to the owner; never discard them silently.
-
-An agent that finds stale experiment branches or worktrees from an earlier
-campaign applies steps 3 and 4 to them before starting new work.
+Historical migration preserves frozen file bytes in one commit, then rewrites
+report links separately. `campaigns/MOVED.json` pins the pre-migration commit.
+Each additional machine explicitly runs `migrate.py import-state` to import its
+own ignored evidence with conflict checks; the shared layout marker alone does
+not mean that machine's state was imported.
 
 ## Grok Bot runs (cloud box, QEMU TCG)
 
@@ -214,7 +222,7 @@ silent, the rules above still apply.
   Record the vCPU count, RAM, swap size and QEMU accelerator options in every
   result. A revision 3 evaluation sets `SWAP_NEXT_ACCEL=tcg` itself and
   rejects any result whose accelerator is not `tcg`.
-- Tag every result in `results/<campaign>/` with the TCG protocol revision.
+- Tag every result in `campaigns/<campaign>/report/` with the TCG protocol revision.
 
 ### Baseline ancestry
 
@@ -266,7 +274,7 @@ follow [Campaign lifecycle](#campaign-lifecycle) and go directly to `main`.
 ### TCG revision 3
 
 - TCG protocol revision 3 and its protocol file:
-  [benchmark/swap-standard/protocol-tcg-revision3.json](benchmark/swap-standard/protocol-tcg-revision3.json),
+  [campaigns/xswap-tcg-rev3-2026-10-25/protocol.json](campaigns/xswap-tcg-rev3-2026-10-25/protocol.json),
   run as campaign `xswap-tcg-rev3-2026-10-25`. The owner approved its parameters
   below on 2026-10-25. It was frozen before the **Metrics** rule and has no
   metadata case. Adding one to a TCG protocol changes its tier cases, so it

@@ -4,7 +4,7 @@ This directory connects controller-approved kernel patches to an isolated build,
 KVM guest measurements, retained evidence, and OpenEvolve's program database.
 It is a pilot, not a performance acceptance system. **The legacy instrumented adapter has not yet been rebuilt and booted after relocation.**
 The separate [xswap suite](xswap/README.md) has historical build/KVM evidence from before this relocation in
-[its dated report](../results/xswap-2026-10-21/README.md). No historical build
+[its dated report](../campaigns/xswap-2026-10-21/report/README.md). No historical build
 manifests, guest evidence, database, binaries, or runtime state are bundled.
 
 The current conversation's assistant proposes changes. There is no automatic
@@ -17,7 +17,8 @@ All paths derive from this checkout, with no sibling private repositories:
 
 - `../linux/`: upstream Linux submodule and Git objects used for snapshots.
 - `../evolve/control/controller.py`: candidate scope/static checks.
-- `../evolve/control/state/`: controller state, including the `STOP` sentinel.
+- `../evolve/control/state/`: unscoped legacy controller state.
+- `../campaigns/`: campaign records and global/per-campaign STOP sentinels.
 - `config/kernel.config`: shared baseline/candidate configuration.
 - `kernel/`: trusted evaluator, workload, overlay, build and guest runners.
 
@@ -90,7 +91,7 @@ evolve/.venv/bin/python evolve/loop.py kernel next
 `next` writes a proposal brief; it does not start a model. Evaluation runs fresh
 AB/BA boots for disk and zswap, preserves failures, verifies input identities,
 and stores measured feedback. Candidate and run budgets remain in
-`kernel/protocol.json`. `touch evolve/control/state/STOP` requests the existing stop
+`kernel/protocol.json`. `touch campaigns/STOP` requests the existing stop
 checks; an active runner monitors the sentinel. No process launches are implied
 by merely reading or selecting references.
 

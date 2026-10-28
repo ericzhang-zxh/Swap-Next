@@ -1,6 +1,7 @@
 # Campaign directories, an evaluation cascade, and inheritance
 
-Status: approved by the owner 2026-10-27. The owner approved the direction in session:
+Status: approved by the owner 2026-10-27, with the subsequent
+[evolution review corrections](2026-10-27-evolution-review.md). The owner approved the direction in session:
 make Swap Next actually evolve, give every campaign one directory, move the
 existing campaigns into it, add a cheap probe stage before the latency screen,
 and cap campaign budgets by default.

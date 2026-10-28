@@ -35,6 +35,20 @@ class NoOldPathTests(unittest.TestCase):
     def test_no_old_global_stop(self):
         self.assertEqual(grep(r"evolve/control/state/STOP"), [])
 
+    def test_active_docs_use_campaign_commands_and_locations(self):
+        paths = ["AGENTS.md", "README.md", "DESIGN.md", "evolve/README.md",
+                 "benchmark/swap-standard/README.md", "benchmark/SETUP.md",
+                 ".agents/skills/closed-loop-evolve/SKILL.md",
+                 ".agents/skills/closed-loop-evolve/references/swap-next.md",
+                 ".agents/skills/explaining-campaign-results/SKILL.md"]
+        obsolete = ("evolve/control/campaigns/", "evolve/swap-standard/state-",
+                    "--protocol benchmark/swap-standard", "evolve/control/state/STOP")
+        for name in paths:
+            text = (ROOT / name).read_text()
+            for old in obsolete:
+                with self.subTest(path=name, obsolete=old):
+                    self.assertNotIn(old, text)
+
     def test_every_runner_honours_global_stop(self):
         for path in RUNNERS:
             with self.subTest(path=path):

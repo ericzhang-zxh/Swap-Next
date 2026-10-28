@@ -41,7 +41,7 @@ available on demand.
 
 ## Default visual standard
 
-Use the owner-approved [swap-in review](../../../results/xswap-swapin-2026-10-23/explainer.html)
+Use the owner-approved [swap-in review](../../../campaigns/xswap-swapin-2026-10-23/report/explainer.html)
 as the presentation reference. Its reproducible generator and `system-story.html`
 are in the same campaign directory. Adapt the visual vocabulary to the experiment;
 do not reuse its findings or impose memory-page imagery on unrelated systems.
@@ -101,7 +101,7 @@ separate evidence. On phones, reflow scenes rather than shrinking the whole pict
    for report-only publication independently of candidate promotion. Build the
    Pages index with `scripts/build_site.py`, verify the deployment for that
    commit and the live page and index before claiming publication complete.
-   Pages collects `results/<campaign>/explainer.html` from main and serves it at
+   Pages collects `campaigns/<campaign>/report/explainer.html` from main and serves it at
    `https://ericzhang-zxh.github.io/Swap-Next/<campaign>/`.
 
 ## Spec reference

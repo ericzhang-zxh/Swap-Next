@@ -22,53 +22,79 @@ zswap, and zram are selectable. The VM has no external network interface;
 Valkey uses guest loopback only. brd is reserved for metadata measurements.
 Large folios are disabled for this initial protocol.
 
-The initial integration evidence is in [the dated report](../../results/swap-standard-integration-2026-10-22/README.md).
+The initial integration evidence is in [the dated report](../../campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/README.md).
 
-## Prepare on the Linux worker
+## Inputs and execution
 
-Run from the repository root, with the two tool checkouts under `TOOLS` and a
-trusted guest-only BusyBox tree under `TEMPLATE`:
+The trusted preparer pins vm-scalability, Valkey, guest sources and binary/image
+hashes. Build products and images stay local. `--check-only` verifies inputs
+without a guest. Image rebuilds and experiments are separate from framework
+implementation. Both `campaigns/STOP` and `campaigns/<c>/STOP` always apply.
 
-```sh
-python3 benchmark/kernel/build.py --commit 744e5400b36f84b4816e3ff8531ec2dff52b474c \
-  --name standard-upstream --config benchmark/config/swap-standard.config --no-instrumentation
-python3 benchmark/swap-standard/prepare-image.py --src "$TOOLS" --busybox-template "$TEMPLATE"
-python3 benchmark/swap-standard/run.py --build standard-upstream --backend disk --workload usemem
-```
+All execution belongs to an open campaign with a current machine claim. The
+workflow reserves each guest before launch. The standalone runner also needs
+an explicit `--run-id` and matching `--reservation`; auxiliary correctness
+attempts reserve through `evolve/control/guest_budget.py`. A consumed ticket
+cannot start another run. Invalid/setup-failed attempts remain spent.
 
-The preparer builds tools from immutable Git archives, records binary hashes,
-and packages the Linux build source independently of the kernel under test.
-The guest userland comes from the worker toolchain directories; the complete
-image is hashed. Existing images are never overwritten. Archive old runtime
-outputs before rebuilding. Images and toolchain contents remain local.
+## Evaluation and evolution
 
-Use `--check-only` to verify inputs without booting. `--timeout` defaults to
-900 seconds and is bounded at 3600. Kernel build workloads can require a
-longer timeout. The common runtime lock prevents concurrent benchmark guests.
-`evolve/control/state/STOP` stops the run. Failed boots and timeouts retain their
-logs and results under ignored `runs/`; `started.json` also records interrupted
-launches. Existing campaign budgets and protocols are not changed.
+Use `evolve/.venv/bin/python evolve/loop.py swap-standard <action> --campaign <c>`.
+Actions include `status`, `plan`, `next`, `calibrate`, `reference-check` and
+`evaluate --candidate NAME --correctness PATH`. New protocols use a mechanism
+probe, followed by agent-selected fast AB/BA screening. The slow tier retains
+its separate owner approval. Each frozen campaign protocol owns case/run counts.
 
-## Evidence and acceptance
+The probe records finite, protocol-allowed mechanism signals and metadata
+bytes per capacity slot. Its baseline band is widened by frozen constants;
+missing, reversed, noisy or incomplete evidence cannot pass. Fast admission
+requires current exact candidate/tree/fingerprint probe evidence and the
+agent's selection reason. The parent-to-child contribution is descriptive and
+reported separately from comparisons to the campaign baseline.
 
-A measurement requires verified kernel/config/guest hashes, complete workload
-output, the intended swap device, actual swap activity, and a clean kernel log.
-The build and each measured Valkey phase require their own swap activity.
-usemem requires all eight workers' expected byte counts and free timings.
-BGSAVE requires a successful start, completed polling and a nonempty snapshot.
-Metadata requires memory fields, active device evidence and a capacity increase.
-A measurement failure is retained, never silently dropped.
+A fast pass enters the exploratory population, including neutral candidates.
+Advancement requires improvement above calibrated primary noise and passing
+scored guards; the line's original anchor is retained. Durable briefs use the
+pinned OpenEvolve population and include exact permitted parent, inspirations,
+relevant failures and remaining pools. Equivalent code does not gain more
+attempts merely by using a new commit.
 
-```sh
-python3 -m unittest discover -s benchmark/swap-standard -p 'test_*.py' -v
-python3 benchmark/swap-standard/summarize.py
-```
+## Frozen historical protocols
 
-Every result has `performance_accepted=false` and `calibrated=false`. Before a
-candidate campaign, freeze the image, configuration, runner and parameters;
-run repeated A/A measurements; define variance limits, AB/BA ordering, budget
-and confirmation/holdout. The existing evolve adapters remain on their frozen
-historical suites until a separately frozen campaign admits this suite.
+- [Original standard campaign](../../campaigns/swap-standard-2026-10-22/protocol.json).
+- [Repaired xswap swap-in](../../campaigns/xswap-swapin-2026-10-23/protocol.json).
+- [Xswap next](../../campaigns/xswap-next-2026-10-24/protocol.json), with its
+  [retained revisions](../../campaigns/xswap-next-2026-10-24/report/).
+- [TCG revision 3](../../campaigns/xswap-tcg-rev3-2026-10-25/protocol.json).
+
+Revision 3 retains TCG, 4 vCPU/4096 MiB/16 GiB swap, 10 A/A and 4 comparison
+pairs per backend, p90 calibration, 25% ceiling, median decisions and advisory
+p99. Frozen older protocols retain their own cases and gates. Select them by
+campaign name; closed campaigns support inspection, not execution.
+
+## Revision 4 template
+
+[revision4-protocol-template.json](revision4-protocol-template.json) describes
+KVM, 8 vCPU/8192 MiB/16 GiB swap and the approved revision 3 statistics. Probe
+cases are disk/zswap swap-in and brd metadata; latency cases are disk/zswap
+swap-in. Its 36 probe and 84 fast pool ceilings total 120. Eight probes and
+two fast screens require at least 105 performance guests; 15 remain for
+correctness and validity attempts. Counts are ceilings and not a promise to
+complete them under failures or an expired deadline.
+
+This file is a template, not a campaign. The existing correctness guest
+requires xswap interfaces and cannot certify plain mode. A future plain
+correctness adapter must provide exact source/mode/backend/config evidence;
+no xswap-only proof stands in for it. No real revision 4 run is claimed.
+
+## Evidence
+
+The runner binds source/config/image identity, complete output, intended
+backend, actual swap activity and clean logs. The workflow fingerprints trusted
+inputs before each attempt and analysis. Its tracked campaign ledger preserves
+reservations, invalid attempts, interrupted outcomes, calibrations and
+selection decisions. Raw guest logs and images remain in ignored `runs/`.
+Pure unit and lifecycle fixtures start no guests.
 
 ## Limitations
 
@@ -91,119 +117,3 @@ historical suites until a separately frozen campaign admits this suite.
 - xswap performance execution requires ancestry from descriptor repair `5e84ca92`; campaign admission also requires exact-commit correctness evidence.
 - These workloads provide performance coverage; they do not certify data
   integrity, concurrency, swapoff, sanitizers or upstream readiness.
-
-## Evolve tiers
-
-Use `evolve/.venv/bin/python evolve/loop.py swap-standard <action>`.
-Actions are `plan`, `status`, `next`, `calibrate`, `reference-check`, and
-`evaluate --candidate NAME --correctness PATH`. `--tier fast|slow|auto`
-selects the tier; auto evaluates fast before slow. Reference checks are fast only.
-
-| Tier | Cases | A/A pairs per case | Candidate AB/BA pairs per case |
-|---|---|---:|---:|
-| fast | usemem/disk, Valkey/zram, swapin/disk | 2 | 2 |
-| slow | fast cases plus build/zswap and metadata/brd | 4 | 10 |
-
-This table is the default `protocol.json` (campaign `swap-standard-2026-10-22`).
-The xswap-next-2026-10-24 protocol is a different frozen file: its fast cases
-are only `swapin-disk` and `swapin-zswap`, with 2 calibration pairs and 2
-comparison pairs, and it defines no slow tier. The byte copy is
-[protocol-revision2.json](../../results/xswap-next-2026-10-24/protocol-revision2.json),
-taken from `benchmark/swap-standard/protocol-xswap-next-2026-10-24.json` at
-snapshot `15bf186`. Revision 1, retained after the noisy sparse-image A/A, is
-beside it. Neither copy changes the default protocol in this directory.
-
-Protocol revision 3 is
-[protocol-tcg-revision3.json](protocol-tcg-revision3.json). It is the QEMU TCG
-screen for this suite's xswap swap-in cases. Revisions 1 and 2 are unchanged.
-Its fast tier calibrates with 10 A/A pairs per backend and compares with 4
-AB/BA pairs per backend. The noise envelope is the nearest-rank p90. The scored
-ceiling is 25%. Metrics ending in `.p99_ns` are advisory. The decision
-statistic is the median pair delta. The guest is 4 vCPU, 4096 MiB and a 16 GiB
-preallocated scratch swap image, under TCG. A run is invalid and is rerun, up
-to two replacements, when the guest reports TSC unstable or a clocksource
-fallback, when wall time exceeds 1.5 times the running median of prior valid
-runs of that case, or when more than 60 seconds elapse before QEMU launches.
-Each attempt records host loadavg and PSI when `/proc/pressure` is present.
-There is no slow tier. A passing verdict is a TCG-only screen for effects of
-roughly 15–25% or larger. KVM confirmation is an open owner decision.
-
-```sh
-python3 evolve/loop.py swap-standard calibrate --tier fast \
-  --protocol benchmark/swap-standard/protocol-tcg-revision3.json
-python3 evolve/loop.py swap-standard evaluate --tier fast \
-  --protocol benchmark/swap-standard/protocol-tcg-revision3.json \
-  --candidate <name> --correctness path/to/<name>-correctness.json
-```
-
-Revision 3 belongs to its own controller campaign, `xswap-tcg-rev3-2026-10-25`, with the ledger
-`evolve/swap-standard/state-xswap-tcg-rev3-2026-10-25`. Register candidates there with
-`controller.py --campaign xswap-tcg-rev3-2026-10-25 new`; the correctness file must name the
-candidate's commit. The baseline build name is `xs-desc-v1`. The evaluation
-sets `SWAP_NEXT_ACCEL=tcg` for the runner child and rejects any result whose
-accelerator is not `tcg`. The owner approved the revision 3 parameters on
-2026-10-25.
-
-Each pair uses fresh boots in alternating AB then BA order. One primary metric
-per scored workload contributes equally to the geometric mean of direction-correct
-ratios; all secondary metrics retain regression guards. Metadata is descriptive.
-The protocol excludes the random-usemem case after its integration OOM/hang.
-This matrix covers representative combinations rather than every backend/workload.
-
-A/A sets a per-metric envelope with a 3% floor. Any metric varying by more than
-20% blocks its tier. Fast admits candidates without median regressions beyond
-those envelopes. Slow requires the exact fast-pass commit and fingerprint, its
-own calibration, ten pairs, and paired-vector bootstrap intervals. A slow result
-enters the OpenEvolve reference database only when the aggregate lower bound
-exceeds the largest primary noise envelope and every guard passes. It remains
-`NEEDS_REVIEW`; no result auto-promotes. `next` samples measured references and
-emits a task with the frozen patch base. The baseline is never assigned a fake
-measured score. A same-kernel `reference-check` exercises scoring and is excluded
-from candidate admission and the database.
-
-`--correctness` names a trusted JSON report with `candidate_commit` and boolean
-`gates` for the protocol-required data/COW/concurrent-fault/swapoff/no-warning
-checks. The controller separately verifies scope, parent, clean worktree,
-checkpatch and immutable commit identity. Full project promotion gates remain
-in the controller policy. Historical xswap candidates are held by the descriptor
-lifetime review before builds or boots, including requests supplied as commit IDs.
-
-The ignored `evolve/swap-standard/state-layout-v1/` stores the shared ledger,
-budget, per-tier calibration and OpenEvolve database. Every request and resource
-attempt is reserved before execution. Interrupted detailed reports are reconciled
-into the ledger; attempted candidate/tier identities cannot silently rerun.
-Calibration attempts cannot be repeated under the same fingerprint to pick a
-better result. Both tiers share the 240-guest/4-build/8-hour campaign cap and the
-runner lock; a tier needs enough remaining boots to finish before it can start.
-The two-candidate limit is a ceiling, not a guarantee that both fit the boot cap.
-
-The adapter supervises owned subprocesses directly because the OpenEvolve
-thread timeout cannot terminate a synchronous guest evaluator. Parent-death,
-per-process deadlines and both global/campaign STOP files stop owned execution.
-The runner verifies actual image/config hashes; the adapter binds source,
-protocol, build recipe and image manifests into a fingerprint checked before
-each guest and analysis. Changing those inputs requires fresh calibration.
-Runtime failures, diagnostics, budgets and stale/missing evidence fail closed.
-
-## Residency-aware swap-in continuation
-
-`protocol-xswap-swapin-2026-10-23.json` binds the independent
-`xswap-swapin-2026-10-23` campaign to the repaired baseline. Pass it with
-`--protocol` to the standard adapter; the original standard protocol and its
-STOP state remain historical. The selected protocol has a separate ledger,
-160 total guests (including auxiliary correctness runs), eight kernel builds,
-and a ten-hour wall limit. Fast and slow calibration/comparison use identical
-frozen images and both xswap/disk and xswap/zswap. The primary is sequential
-first-touch mean latency; sequential p99 and random mean/p99 are guards.
-
-The `correctness` workload uses verified swapped xswap PTEs, 48 children
-faulting/COW-writing 16 shared target pages, full-word data checks, physical
-backend swapoff while xswap remains live, reactivation, live xswap destruction,
-and final empty swapoff. Disk admission also requires positive physical slot
-usage before the live backend swapoff. Exact-commit debug runs complement the
-standard-config proof. The workload uses 4 KiB pages and does not cover fault
-injection, KCSAN or large folios.
-
-Swapin snapshots retain xswap occupancy and `swap_ra`/`swap_ra_hit` counters.
-The timed probe and its fixed sequential-then-random order are unchanged.
-A calibrated result remains bounded discovery for human review.

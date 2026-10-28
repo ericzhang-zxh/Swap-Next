@@ -107,8 +107,8 @@ report. Do this even if nothing was accepted or the campaign ended early.
 Generating the artifact is part of closing. Follow AGENTS.md for delivery,
 independently of candidate promotion. For Swap Next, every campaign report is
 uploaded and published, then handed to the owner for review, including rejected
-and inconclusive outcomes. Experiment work is committed directly to main
-without a pull request. Verify that commit's Pages deployment, live campaign
+and inconclusive outcomes. Experiment records are committed directly to main
+without a pull request; campaign ledgers and population summaries are tracked, raw runs are ignored. Verify that commit's Pages deployment, live campaign
 page and index. Only an explicit owner request withholds a push or keeps a
 report private. Check current origin/main delivery rules when resuming an older
 experiment branch. An agent-authored publication flag cannot revoke that

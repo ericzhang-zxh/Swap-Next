@@ -9,7 +9,7 @@ and picks references for the next proposal. The proposer is the assistant in
 the current session.
 
 Each exploration direction is a campaign with its own baseline, protocol and
-report in `results/`. This document holds what every campaign shares.
+report in `campaigns/<c>/report/`. This document holds what every campaign shares.
 
 ## What swap costs
 
@@ -21,17 +21,17 @@ report in `results/`. This document holds what every campaign shares.
 | Reclaim CPU | compression, cluster allocation, swap-out path | standard suite records cgroup system/user CPU, not reclaim-only CPU |
 | Scalability | `si->lock`, cluster locks, per-CPU cluster cache | historical guests have two vCPUs; standard suite uses eight, without a scaling study |
 
-Every campaign's primary metric is swap-in latency; metadata bytes per slot
-is screened in every fast tier and the other rows are guardrails (AGENTS.md
+Every campaign's primary metric is swap-in latency; metadata bytes per capacity slot
+is screened in each new plain-mode probe tier and the other rows are guardrails (AGENTS.md
 **Metrics**). The disabled formal policy in `evolve/control/config/policy.json`
 still names throughput (see [METRICS.md](evolve/control/METRICS.md)). The new [standard suite](benchmark/swap-standard/README.md) records
 usemem throughput, kernel-build time and Valkey RPS. Passing repeated A/A for
 a frozen campaign protocol is recorded in that campaign's report. The default
 matrix is not itself a calibrated candidate campaign;
-[xswap-next-2026-10-24](results/xswap-next-2026-10-24/REPORT.md) froze a
+[xswap-next-2026-10-24](campaigns/xswap-next-2026-10-24/report/REPORT.md) froze a
 narrower swap-in protocol and recorded both a noisy sparse-image A/A and a
 passing preallocated A/A. QEMU TCG screening uses
-[protocol revision 3](benchmark/swap-standard/protocol-tcg-revision3.json).
+[protocol revision 3](campaigns/xswap-tcg-rev3-2026-10-25/protocol.json).
 
 ## Upstream landscape
 
@@ -46,14 +46,14 @@ passing preallocated A/A. QEMU TCG screening uses
   each xswap slot an optional physical backend. Pages that zswap refuses are
   written to disk, the backend can be swapped off, cache-only physical slots
   are reclaimed, and THP swap-in is enabled.
-- **xswap Phase III** (6 patches; Baoquan He, Nhat Pham). This charges memcg only when an xswap entry gains a physical backend, instead of at slot allocation. Imported as [patches/xswap-phase3](patches/xswap-phase3/README.md) on top of Phase II (`b2beda7f`); not yet measured.
+- **xswap Phase III** (6 patches; Baoquan He, Nhat Pham). This charges memcg only when an xswap entry gains a physical backend, instead of at slot allocation. Imported as [patches/xswap-phase3](campaigns/_unassigned/patches/xswap-phase3/README.md) on top of Phase II (`b2beda7f`); not yet measured.
 - **vswap** (Nhat Pham) is a competing virtual-swap design. Attribution is
   disputed upstream ([thread](https://lists.openwall.net/linux-kernel/2026/10/12/779)).
   We take no side.
 
 Known open items in the xswap reference: virtual capacity accounting, a
 recycled integer destroy handle, and interface documentation. See
-[patches/xswap-reference](patches/xswap-reference/README.md).
+[patches/xswap-reference](campaigns/_unassigned/patches/xswap-reference/README.md).
 
 ## Measurement principles
 
@@ -77,21 +77,38 @@ recycled integer destroy handle, and interface documentation. See
 
 ## Where OpenEvolve fits
 
-`evolve/loop.py` stores evaluated candidates for kernel, xswap and
-xswap-structure and samples references. The standard suite uses
-`evolve/standard_workflow.py`, also reached as `evolve/loop.py swap-standard`.
-That adapter reserves a ledger entry before each build or guest. It does not
-turn a sampled parent into the next patch. Every candidate on the historical
-adapters is generation 1 on the frozen seed, so sampling a "parent" has no
-effect on the next patch. Two changes would make OpenEvolve useful:
+The loop has variation, selection and inheritance. A candidate declares a
+hypothesis and mechanism, passes scope and correctness, then enters the cheap
+probe tier. The agent selects engaged, non-regressing candidates for the paired
+latency screen and records its selection reason. A passing screen enters an
+OpenEvolve population as exploratory evidence.
 
-- **Allow lineage.** Let a candidate build on a selected, already-evaluated
-  parent, so that successful mechanisms can stack.
-- **Map the trade-off.** Define MAP-Elites feature dimensions, for example
-  metadata occupancy and worst-backend latency ratio. The archive then keeps
-  the trade-off frontier instead of a single scalar ranking.
+A neutral candidate may be a parent. Preserve the line's original anchor and
+its best evidence; advancing a later campaign's baseline requires improvement
+above calibrated noise and passing scored guards. Record parent-to-child
+changes alongside cumulative baseline comparisons, so inherited mechanism
+engagement is not mistaken for a new contribution. Equivalent source trees do
+not get additional attempts through new commit messages.
 
-Until then, treat it as a ledger with a sampler.
+`ProgramDatabase` keeps eligible parents and inspirations. `PromptSampler`
+renders briefs containing the exact permitted parent, cumulative patch,
+mechanism, probe signals, latency evidence, relevant failures, line history and
+remaining pools. Sampling receipts and the actual parent choice are tracked.
+Only the sampled parent or the frozen baseline can be chosen. Scope checks
+cover the full baseline-to-child diff. The assistant proposes and edits;
+OpenEvolve's LLM providers and autonomous evaluator are not used.
+
+The archive retains history when correctness fails, later evidence regresses,
+or the fingerprint changes. Such records cannot silently remain eligible
+parents. Fast scores from different measurement identities are not one ranking.
+MAP-Elites dimensions remain deferred; one island suffices for the first loop.
+
+Each campaign owns policy, protocol, ledger, candidate records, patches,
+population and report in `campaigns/<c>/`. Only raw runs, images and locks stay
+local. A layout migration and a machine's evidence import are separate steps.
+The approved design and review corrections are in
+[the framework specification](docs/superpowers/specs/2026-10-27-campaigns-cascade-evolution-design.md)
+and [the evolution review](docs/superpowers/specs/2026-10-27-evolution-review.md).
 
 ## Limitations
 
@@ -119,3 +136,12 @@ documents link here instead of repeating it.
   lockdep, KASAN, KCSAN or fault injection. The xswap-next-2026-10-24 report
   records targeted KASAN and lockdep builds; the KASAN and debug configs are in
   `benchmark/config/`. KCSAN and fault injection remain uncovered.
+
+## Revision 4 readiness
+
+The revision 4 template describes the approved KVM plain-mode measurements. It
+is not an open campaign or execution evidence. The current correctness guest
+requires xswap interfaces, so plain-mode full correctness remains an explicit
+runtime capability gap. No plain proof is inferred from an xswap-only run.
+Framework validation uses guest-free end-to-end tests; real calibration and
+performance evaluation are separate authorized work.

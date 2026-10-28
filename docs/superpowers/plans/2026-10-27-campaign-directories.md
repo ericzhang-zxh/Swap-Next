@@ -1,5 +1,11 @@
 # Campaign Directories Implementation Plan (part 1 of 3)
 
+Implementation status: Tasks 1-8 are implemented, including the subsequent
+[evolution review corrections](../specs/2026-10-27-evolution-review.md).
+The historical checklist below records the original execution plan. Parts 2
+and 3 are implemented in the probe-cascade and inheritance-population plans.
+No experiments are included in this framework delivery.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give every Swap Next campaign one tracked directory `campaigns/<c>/`, move all existing campaigns into it, and enforce campaign status, the default budget cap and one open campaign per machine.
