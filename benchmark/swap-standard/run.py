@@ -24,6 +24,8 @@ import time
 BASE = Path(__file__).resolve().parent
 PROJECT = BASE.parents[1]
 sys.path.insert(0, str(PROJECT / "benchmark/kernel"))
+sys.path.insert(0, str(PROJECT / "evolve/control"))
+import campaign_store
 from lifetime import bind_child_to_parent
 from evidence import parse, DIAGNOSTIC
 from validity import clocksource_invalid, launch_blocked, read_host_load
@@ -122,8 +124,23 @@ def run_root(value):
     return path
 
 
-def stop_requested(extra_stop=None):
-    return STOP.exists() or (extra_stop is not None and extra_stop.exists())
+def stop_requested(extra_stop=None, campaign_stop=None):
+    return (STOP.exists() or (extra_stop is not None and extra_stop.exists())
+            or (campaign_stop is not None and campaign_stop.exists()))
+
+
+def execution_campaign(args):
+    """An explicit campaign or validated run-root supplies guest ownership."""
+    inferred = None
+    if args.run_root != BASE / "runs":
+        inferred = args.run_root.relative_to((PROJECT / "campaigns").resolve()).parts[0]
+    if args.campaign and inferred and args.campaign != inferred:
+        raise campaign_store.CampaignError("--campaign and --run-root name different campaigns")
+    name = args.campaign or inferred
+    campaign_store.require_execution(name)
+    if inferred is None:
+        args.run_root = PROJECT / "campaigns" / name / "runs/guests"
+    return name
 
 
 def create_run_directory(root, name):
@@ -183,6 +200,7 @@ def main():
     parser.add_argument("--preallocate-swap", action="store_true",
                         help="Preallocate the private swap image before guest launch")
     parser.add_argument("--protocol-revision", type=int, default=1)
+    parser.add_argument("--campaign", help="explicit campaign for guest execution")
     parser.add_argument("--build", required=True)
     parser.add_argument("--backend", choices=["disk", "zswap", "zram", "brd"], required=True)
     parser.add_argument("--mode", choices=["plain", "xswap"], default="plain")
@@ -212,7 +230,14 @@ def main():
         guest_shape(os.environ)
     except ValueError as exc:
         parser.error(str(exc))
-    if stop_requested(args.stop_file):
+    args.campaign_stop = None
+    if not args.check_only:
+        try:
+            args.campaign = execution_campaign(args)
+        except campaign_store.CampaignError as exc:
+            raise SystemExit("BLOCKED: " + str(exc))
+        args.campaign_stop = PROJECT / "campaigns" / args.campaign / "STOP"
+    if stop_requested(args.stop_file, args.campaign_stop):
         raise SystemExit("STOP")
     with (PROJECT / "benchmark/kernel/.runtime.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -288,14 +313,19 @@ def main():
         start = time.monotonic()
         reason = None
         with (dest / "serial.log").open("w") as log:
-            if stop_requested(args.stop_file):
+            if stop_requested(args.stop_file, args.campaign_stop):
                 disk.unlink(missing_ok=True)
                 raise SystemExit("STOP")
+            try:
+                campaign_store.require_execution(args.campaign)
+            except campaign_store.CampaignError as exc:
+                disk.unlink(missing_ok=True)
+                raise SystemExit("BLOCKED: " + str(exc))
             proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                                     start_new_session=True, preexec_fn=bind_child_to_parent)
             try:
                 while proc.poll() is None:
-                    if stop_requested(args.stop_file):
+                    if stop_requested(args.stop_file, args.campaign_stop):
                         reason = "STOP"
                     elif time.monotonic() - start > args.timeout:
                         reason = "timeout"

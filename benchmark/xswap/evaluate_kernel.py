@@ -13,6 +13,9 @@ from evidence import parse
 
 BASE = pathlib.Path(__file__).resolve().parent
 PROJECT = BASE.parents[1]
+import sys
+sys.path.insert(0, str(PROJECT / "evolve/control"))
+import campaign_store
 KERNEL = BASE.parent / 'kernel'
 SUITE = ['protocol.json', 'evaluate_kernel.py', 'run.py', 'workload.c',
          'guest-init', 'prepare-rootfs.py', 'lifetime.py', 'evidence.py']
@@ -79,6 +82,7 @@ def evaluate(program_path):
         raise ValueError('invalid candidate ID')
     evaluation_id = str(uuid.UUID(request['evaluation_id']))
     protocol = json.loads((BASE / 'protocol.json').read_text())
+    campaign_store.require_execution(protocol['campaign'])
     calibration = ident == 'calibration-aa'
     state = BASE / 'evaluations' / evaluation_id
     state.mkdir(parents=True, exist_ok=False)

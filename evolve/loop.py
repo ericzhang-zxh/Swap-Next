@@ -181,6 +181,8 @@ def main():
         parser.error(args.suite + " boots KVM guests only; under TCG use swap-standard with a TCG protocol")
 
     suite = Suite(args.suite)
+    if args.action in ("evaluate", "calibrate"):
+        campaign_store.require_execution(suite.campaign)
     suite.state.mkdir(parents=True, exist_ok=True)
     with (suite.state / ".lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)

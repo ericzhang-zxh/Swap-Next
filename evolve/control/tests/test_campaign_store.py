@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 """The campaign directory store validates layout, cap, host and claim."""
 import json
+import multiprocessing
 import os
 import pathlib
 import sys
@@ -19,6 +20,15 @@ def record(**kw):
                     "probe_guest_attempts": 0, "approved_over_cap": None}}
     r.update(kw)
     return r
+
+def contend_claim(name, event, result):
+    event.wait(5)
+    try:
+        cs.take_claim(name)
+        result.put((name, True))
+    except cs.CampaignError:
+        result.put((name, False))
+
 
 class StoreTests(unittest.TestCase):
     def setUp(self):
@@ -118,6 +128,57 @@ class StoreTests(unittest.TestCase):
         cs.release_claim(None, "crash")
         self.assertIsNone(cs.read_claim())
         self.assertIn("crash", cs.claim_path().with_suffix(".log").read_text())
+
+    def test_concurrent_claims_have_one_owner(self):
+        ctx = multiprocessing.get_context("fork")
+        event, result = ctx.Event(), ctx.Queue()
+        processes = [ctx.Process(target=contend_claim, args=(name, event, result)) for name in ("a", "b")]
+        for proc in processes:
+            proc.start()
+        event.set()
+        rows = [result.get(timeout=10) for _ in processes]
+        for proc in processes:
+            proc.join(10)
+            self.assertEqual(proc.exitcode, 0)
+        winners = [name for name, ok in rows if ok]
+        self.assertEqual(len(winners), 1, rows)
+        self.assertEqual(cs.read_claim(), winners[0])
+
+    def test_execution_requires_machine_claim_and_both_stops(self):
+        cs.write("a", record())
+        cs.take_claim("a")
+        with patch.dict(os.environ, {"SWAP_NEXT_MACHINE": "hurricpc"}):
+            self.assertEqual(cs.require_execution("a")["campaign"], "a")
+            for stop in (self.root / "STOP", self.root / "a/STOP"):
+                stop.touch()
+                with self.assertRaisesRegex(cs.CampaignError, "STOP"):
+                    cs.require_execution("a")
+                stop.unlink()
+        with patch.dict(os.environ, {"SWAP_NEXT_MACHINE": "grok-cloud"}):
+            with self.assertRaisesRegex(cs.CampaignError, "belongs to"):
+                cs.require_execution("a")
+        cs.release_claim("a", "test")
+        with patch.dict(os.environ, {"SWAP_NEXT_MACHINE": "hurricpc"}):
+            with self.assertRaisesRegex(cs.CampaignError, "claim"):
+                cs.require_execution("a")
+        cs.write("a", record(status="closed", closed="2026-10-27"))
+        with self.assertRaisesRegex(cs.CampaignError, "closed"):
+            cs.require_execution("a")
+
+    def test_claim_transition_holds_machine_lock(self):
+        # Fork before acquiring the lock, so the child inherits no lock descriptor.
+        ctx = multiprocessing.get_context("fork")
+        event, result = ctx.Event(), ctx.Queue()
+        proc = ctx.Process(target=contend_claim, args=("a", event, result))
+        proc.start()
+        with cs.claim_lock():
+            event.set()
+            import queue
+            with self.assertRaises(queue.Empty):
+                result.get(timeout=0.1)
+        self.assertEqual(result.get(timeout=10), ("a", True))
+        proc.join(10)
+        self.assertEqual(proc.exitcode, 0)
 
     def test_candidates_roundtrip(self):
         cs.write_candidate("a", {"id": "c1", "x": 1})

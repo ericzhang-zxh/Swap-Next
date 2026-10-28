@@ -5,6 +5,9 @@ import argparse,datetime,fcntl,hashlib,json,math,os,pathlib,re,signal,subprocess
 from lifetime import bind_child_to_parent
 BASE=pathlib.Path(__file__).resolve().parent
 PROJECT=BASE.parents[1]
+import sys
+sys.path.insert(0, str(PROJECT / "evolve/control"))
+import campaign_store
 CAMPAIGN_STOP=PROJECT/"campaigns/xswap-2026-10-21/STOP"
 STOP=PROJECT/"campaigns/STOP"
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
@@ -20,6 +23,7 @@ def main():
         raise SystemExit("KVM-only runner; refusing SWAP_NEXT_ACCEL=" + os.environ["SWAP_NEXT_ACCEL"])
     if not re.fullmatch("[a-z0-9-]{1,48}",a.build):raise SystemExit("invalid build name")
     if STOP.exists() or CAMPAIGN_STOP.exists():raise SystemExit("STOP")
+    campaign_store.require_execution(json.loads((BASE / "protocol.json").read_text())["campaign"])
     BASE.joinpath("runs").mkdir(exist_ok=True)
     with (PROJECT/"benchmark/kernel/.runtime.lock").open("a") as lock:
       fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)

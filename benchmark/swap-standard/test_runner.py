@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 """Runner validation tests; no guest launches."""
 import argparse
+from types import SimpleNamespace
 import re
 import subprocess
 import shlex
@@ -88,6 +89,37 @@ class RunnerValidationTests(unittest.TestCase):
                     runner.main()
                 self.assertEqual(raised.exception.code, 2)
                 euid.assert_not_called()
+
+    def test_execution_requires_explicit_matching_campaign_identity(self):
+        default = BASE / "runs"
+        missing = SimpleNamespace(campaign=None, run_root=default)
+        with self.assertRaisesRegex(runner.campaign_store.CampaignError, "explicit campaign"):
+            runner.execution_campaign(missing)
+        for campaign, root, expected in (("a", default, "a"),
+                                         (None, runner.PROJECT / "campaigns/a/runs/guests", "a")):
+            args = SimpleNamespace(campaign=campaign, run_root=root)
+            with patch.object(runner.campaign_store, "require_execution") as gate:
+                self.assertEqual(runner.execution_campaign(args), expected)
+                gate.assert_called_once_with(expected)
+        args = SimpleNamespace(campaign="b", run_root=runner.PROJECT / "campaigns/a/runs/guests")
+        with patch.object(runner.campaign_store, "require_execution") as gate:
+            with self.assertRaisesRegex(runner.campaign_store.CampaignError, "different campaigns"):
+                runner.execution_campaign(args)
+            gate.assert_not_called()
+
+    def test_closed_guest_is_refused_before_runtime_lock_or_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            argv = ["run.py", "--build", "b", "--backend", "disk", "--workload", "swapin", "--campaign", "closed"]
+            with patch.object(runner, "PROJECT", project), patch.object(sys, "argv", argv), \
+                 patch.object(runner.os, "geteuid", return_value=1000), \
+                 patch.object(runner.campaign_store, "require_execution", side_effect=runner.campaign_store.CampaignError("campaign closed is closed")), \
+                 patch.object(runner, "validate") as validate, patch.object(runner.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(SystemExit, "closed"):
+                    runner.main()
+                validate.assert_not_called()
+                launch.assert_not_called()
+            self.assertEqual(list(project.iterdir()), [])
 
     def test_either_stop_file_stops_run(self):
         with tempfile.TemporaryDirectory() as directory:

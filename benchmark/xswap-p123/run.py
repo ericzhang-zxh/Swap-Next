@@ -17,6 +17,8 @@ import time
 
 BASE = Path(__file__).resolve().parent
 PROJECT = BASE.parents[1]
+sys.path.insert(0, str(PROJECT / "evolve/control"))
+import campaign_store
 sys.path.insert(0, str(PROJECT / "benchmark/kernel"))
 from lifetime import bind_child_to_parent
 from evidence import parse, DIAGNOSTIC
@@ -113,6 +115,8 @@ def main():
         parser.error("metadata uses brd exclusively; brd is reserved for metadata")
     if stop_requested(args.stop_file):
         raise SystemExit("STOP")
+    if not args.check_only:
+        campaign_store.require_execution("xswap-p123-2026-10-23")
     with (PROJECT / "benchmark/kernel/.runtime.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         build = PROJECT / "benchmark/kernel/builds" / args.build

@@ -16,6 +16,8 @@ import time
 
 PROJECT = Path(__file__).resolve().parents[1]
 BASE = PROJECT / "benchmark/swap-standard"
+sys.path.insert(0, str(PROJECT / "evolve/control"))
+import campaign_store
 STOP = PROJECT / "campaigns/STOP"
 
 
@@ -71,8 +73,12 @@ def main():
     args = parser.parse_args()
     p = json.loads(args.protocol.read_text())
     proto_sha = hashlib.sha256(args.protocol.read_bytes()).hexdigest()
+    record = (campaign_store.load(p["campaign"]) if args.analyze_only
+              else campaign_store.require_execution(p["campaign"]))
+    read_only = record["status"] == "closed"
     state = PROJECT / "campaigns" / p["campaign"] / "ledger"
-    state.mkdir(parents=True, exist_ok=True)
+    if not read_only:
+        state.mkdir(parents=True, exist_ok=True)
     ledger_path = state / "confirmation.json"
     ledger = json.loads(ledger_path.read_text()) if ledger_path.exists() else {
         "campaign": p["campaign"], "protocol_sha256": proto_sha, "attempts": [], "rounds": []}
@@ -85,8 +91,7 @@ def main():
             order = jobs[shift:] + jobs[:shift]
             rnd = {"index": index, "order": [c + ":" + a for c, a in order]}
             for case, arm in order:
-                if STOP.exists():
-                    raise SystemExit("STOP")
+                campaign_store.require_execution(p["campaign"])
                 spec, arm_spec = p["cases"][case], p["arms"][arm]
                 run_id = f"{p['campaign']}-{index}-{case}-{arm}"
                 attempt = {"run_id": run_id, "round": index, "case": case, "arm": arm, "started": time.time()}
@@ -95,8 +100,11 @@ def main():
                 proc = subprocess.run([sys.executable, str(BASE / "run.py"), "--build", arm_spec["build"],
                                        "--backend", spec["backend"], "--mode", arm_spec["mode"],
                                        "--workload", spec["workload"], "--run-id", run_id,
+                                       "--campaign", p["campaign"],
+                                       "--run-root", str(PROJECT / "campaigns" / p["campaign"] / "runs/guests"),
+                                       "--stop-file", str(PROJECT / "campaigns" / p["campaign"] / "STOP"),
                                        "--timeout", str(p["guest_timeout"])], capture_output=True, text=True)
-                result_path = BASE / "runs" / run_id / "result.json"
+                result_path = PROJECT / "campaigns" / p["campaign"] / "runs/guests" / run_id / "result.json"
                 result = json.loads(result_path.read_text()) if result_path.exists() else {}
                 attempt.update(exit=proc.returncode, integration_pass=result.get("integration_pass"),
                                source_commit=result.get("source_commit"), finished=time.time())
@@ -111,7 +119,8 @@ def main():
             ledger["rounds"].append(rnd)
             save(ledger_path, ledger)
     analysis = analyze(p, ledger["rounds"])
-    save(state / "confirmation-analysis.json", {"campaign": p["campaign"], "protocol_sha256": proto_sha,
+    if not read_only:
+        save(state / "confirmation-analysis.json", {"campaign": p["campaign"], "protocol_sha256": proto_sha,
                                    "rounds": len(ledger["rounds"]), "performance_accepted": False,
                                    "auto_promote": False, "metrics": analysis})
     for key, row in analysis.items():

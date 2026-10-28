@@ -15,7 +15,10 @@ REPO = Path(__file__).resolve().parents[1]
 def fixture_protocol():
     """The standard protocol; falls back to its pre-migration path until campaigns/ holds it."""
     new = REPO / "campaigns/swap-standard-2026-10-22/protocol.json"
-    return w.read(new if new.exists() else REPO / "benchmark/swap-standard/protocol.json")
+    p = w.read(new if new.exists() else REPO / "benchmark/swap-standard/protocol.json")
+    # Fresh fixture campaigns have matching records within the approved cap.
+    p["budget"].update(guest_attempts=120, wall_seconds=64800)
+    return p
 
 
 def write_campaign(campaigns, name, status="open", **budget):
@@ -87,6 +90,39 @@ class WorkflowTests(unittest.TestCase):
         before = ledger.read_bytes()
         w.Workflow(self.p)
         self.assertEqual(ledger.read_bytes(), before)
+
+    def test_closed_orphan_reads_never_write_reports_locks_or_tasks(self):
+        write_campaign(self.campaigns, self.p["campaign"], status="closed")
+        w.save(w.PROTOCOL, self.p)
+        row = {"id": "orphan", "status": "RUNNING", "action": "evaluate", "tier": "fast"}
+        ledger = self.state / "ledger.json"
+        w.save(ledger, [row])
+        before = {path: path.read_bytes() for path in self.campaign.rglob("*") if path.is_file()}
+        for action in ("status", "plan", "next"):
+            with patch.object(w, "fingerprint", return_value="fp"), \
+                 patch.object(w.validity_module(), "protocol_rules"), patch("sys.stdout"):
+                w.main([action, "--campaign", self.p["campaign"]])
+        after = {path: path.read_bytes() for path in self.campaign.rglob("*") if path.is_file()}
+        self.assertEqual(before, after)
+        self.assertEqual(w.read(ledger)[0]["status"], "RUNNING")
+        self.assertFalse((self.state / ".lock").exists())
+        self.assertFalse((self.campaign / "runs").exists())
+
+    def test_budget_and_machine_drift_block_every_reservation(self):
+        flow = w.Workflow(self.p)
+        self.p["budget"]["guest_attempts"] = 121
+        with self.assertRaisesRegex(RuntimeError, "budget.guest_attempts"):
+            flow.reserve("guest")
+        self.p["budget"]["guest_attempts"] = 120
+        self.p["budget"]["wall_seconds"] = 64801
+        with self.assertRaisesRegex(RuntimeError, "budget.wall_seconds"):
+            flow.reserve("build")
+        self.p["budget"]["wall_seconds"] = 64800
+        with patch.dict("os.environ", {"SWAP_NEXT_MACHINE": "unknown"}):
+            with self.assertRaisesRegex(RuntimeError, "SWAP_NEXT_MACHINE"):
+                flow.reserve("guest")
+        self.assertEqual((flow.budget["guests"], flow.budget["builds"]), (0, 0))
+        self.assertFalse(flow.budget_path.exists())
 
     def test_blocked_historical_commit_uses_no_budget(self):
         flow = w.Workflow(self.p)
@@ -173,6 +209,7 @@ class WorkflowTests(unittest.TestCase):
             self.assertIn("cap", row["reason"])
             write_campaign(self.campaigns, self.p["campaign"], guest_attempts=200,
                            approved_over_cap="owner approved 2026-10-27")
+            self.p["budget"]["guest_attempts"] = 200
             row = flow.run("calibrate", "fast")
             self.assertEqual(row["reason"], "reserved")
         self.assertEqual(flow.budget["guests"], 0)

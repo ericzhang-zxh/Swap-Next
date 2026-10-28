@@ -18,6 +18,9 @@ from lifetime import bind_child_to_parent
 
 BASE = pathlib.Path(__file__).resolve().parent
 PROJECT = BASE.parents[1]
+import sys
+sys.path.insert(0, str(PROJECT / "evolve/control"))
+import campaign_store
 SOURCES = ('workload.c', 'guest-init', 'prepare-rootfs.py')
 HARNESS = (*SOURCES, 'run.py', 'evidence.py', 'lifetime.py', 'protocol.json', 'initramfs.json')
 
@@ -108,6 +111,7 @@ def main():
         raise SystemExit("KVM-only runner; refusing SWAP_NEXT_ACCEL=" + os.environ["SWAP_NEXT_ACCEL"])
     if not re.fullmatch('[a-z0-9-]{1,48}', args.build):
         raise SystemExit('invalid build name')
+    campaign_store.require_execution(json.loads((BASE / 'protocol.json').read_text())['campaign'])
     with (PROJECT / 'benchmark/kernel/.runtime.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         protocol = json.loads((BASE / 'protocol.json').read_text())

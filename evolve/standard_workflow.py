@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 """Bounded standard-suite adapter; ledger reservation precedes every side effect."""
 import argparse
+from contextlib import contextmanager, nullcontext
 import fcntl
 import hashlib
 import importlib.util
@@ -124,6 +125,7 @@ def contract_errors(p):
 def fingerprint(p):
     paths = [PROTOCOL, BENCH / "image.json", ROOT / "evolve/loop.py", Path(__file__),
              ROOT / "evolve/control/controller.py", ROOT / "evolve/control/analysis.py",
+             ROOT / "evolve/control/campaign_store.py",
              CAMPAIGN / "policy.json",
              ROOT / "benchmark/config/swap-standard.config"]
     paths += list(BENCH.glob("*.py")) + list(BENCH.glob("*.sh"))
@@ -153,6 +155,7 @@ def extract(metrics, path):
 class Workflow:
     def __init__(self, p):
         self.p = p
+        self.read_only = campaign_store.load(p["campaign"])["status"] == "closed"
         self.ledger_path = STATE / "ledger.json"
         self.ledger = read(self.ledger_path) if self.ledger_path.exists() else []
         self.budget_path = STATE / "budget.json"
@@ -165,7 +168,7 @@ class Workflow:
         # Holding the evaluation lock proves these are abandoned adapter calls.
         changed = False
         for row in self.ledger:
-            if row["status"] == "RUNNING":
+            if not self.read_only and row["status"] == "RUNNING":
                 changed = True
                 report = EVALUATIONS / row["id"] / "report.json"
                 if report.exists():
@@ -178,17 +181,15 @@ class Workflow:
             save(self.ledger_path, self.ledger)
 
     def check(self):
+        errors = self.campaign_errors()
+        if errors:
+            raise RuntimeError("BLOCKED: campaign: " + "; ".join(errors))
         if self.stop.exists() or self.global_stop.exists():
             raise RuntimeError("STOP")
         if time.time() > self.budget["created"] + self.p["budget"]["wall_seconds"]:
             raise RuntimeError("campaign deadline")
 
     def reserve(self, kind):
-        if kind == "guest":
-            try:
-                campaign_store.require_claim(self.p["campaign"])
-            except campaign_store.CampaignError as exc:
-                raise RuntimeError("BLOCKED: machine claim: " + str(exc))
         self.check()
         key, cap = ("guests", "guest_attempts") if kind == "guest" else ("builds", "build_attempts")
         if self.budget[key] >= self.p["budget"][cap]:
@@ -260,9 +261,8 @@ class Workflow:
     def campaign_errors(self):
         """Closed, over-cap or unclaimed campaigns are refused before any ledger row or budget."""
         try:
-            errors = campaign_store.budget_errors(campaign_store.require_open(self.p["campaign"]))
-            campaign_store.require_claim(self.p["campaign"])
-            return errors
+            campaign_store.require_execution(self.p["campaign"], self.p)
+            return []
         except campaign_store.CampaignError as exc:
             return [str(exc)]
 
@@ -374,6 +374,7 @@ class Workflow:
                                           "--backend", case["backend"], "--mode", case.get("mode", "plain"),
                                           "--workload", case["workload"], "--run-id", run_id,
                                           "--stop-file", str(self.stop), "--run-root", str(RUNS),
+                                          "--campaign", self.p["campaign"],
                                           "--timeout", str(self.p["budget"]["guest_timeout"]), *extra],
                                          dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60,
                                          accept_failure=True, env=env)
@@ -469,6 +470,14 @@ class Workflow:
         db.save(str(path), iteration=len(self.ledger))
 
 
+@contextmanager
+def state_lock():
+    STATE.mkdir(parents=True, exist_ok=True)
+    with (STATE / ".lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        yield
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["status", "plan", "next", "calibrate", "evaluate", "reference-check"])
@@ -480,9 +489,8 @@ def main(argv=None):
                         help="campaign directory under campaigns/; revision 3 is xswap-tcg-rev3-2026-10-25")
     args = parser.parse_args(argv)
     select_campaign(args.campaign)
-    STATE.mkdir(parents=True, exist_ok=True)
-    with (STATE / ".lock").open("a") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    closed = campaign_store.load(args.campaign)["status"] == "closed"
+    with nullcontext() if closed else state_lock():
         p = read(PROTOCOL)
         if p.get("campaign") != args.campaign:
             raise SystemExit("protocol campaign " + repr(p.get("campaign")) + " does not match " + args.campaign)
@@ -510,7 +518,8 @@ def main(argv=None):
                         output["references"] = [r.to_dict() for r in [parent, *inspirations]]
                 output["required_patch_base"] = p["baseline_commit"]
                 output["controller_campaign"] = p["campaign"]
-                save(TASKS / ("task-" + uuid.uuid4().hex + ".json"), output)
+                if not closed:
+                    save(TASKS / ("task-" + uuid.uuid4().hex + ".json"), output)
             print(json.dumps(output, indent=2))
             return
         if args.action == "evaluate" and not args.candidate:

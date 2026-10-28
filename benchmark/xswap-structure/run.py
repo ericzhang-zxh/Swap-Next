@@ -5,6 +5,9 @@ import argparse,datetime,fcntl,hashlib,json,math,os,pathlib,re,signal,subprocess
 from lifetime import bind_child_to_parent
 BASE=pathlib.Path(__file__).resolve().parent
 PROJECT=BASE.parents[1]
+import sys
+sys.path.insert(0, str(PROJECT / "evolve/control"))
+import campaign_store
 def campaign_stop(protocol):
     return PROJECT/"campaigns"/protocol["campaign"]/"STOP"
 STOP=PROJECT/"campaigns/STOP"
@@ -21,6 +24,7 @@ def main():
         raise SystemExit("KVM-only runner; refusing SWAP_NEXT_ACCEL=" + os.environ["SWAP_NEXT_ACCEL"])
     if not re.fullmatch("[a-z0-9-]{1,48}",a.build):raise SystemExit("invalid build name")
     protocol=json.loads((BASE/"protocol.json").read_text())
+    campaign_store.require_execution(protocol["campaign"])
     if not re.fullmatch("[0-9a-f]{40}", protocol["baseline_commit"]):raise SystemExit("baseline is not frozen")
     if STOP.exists() or campaign_stop(protocol).exists():raise SystemExit("STOP")
     BASE.joinpath("runs").mkdir(exist_ok=True)

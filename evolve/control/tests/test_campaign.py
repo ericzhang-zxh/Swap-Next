@@ -81,7 +81,7 @@ class Fixture(unittest.TestCase):
         self.policy(name)
         b = {"guest_attempts": 10, "wall_seconds": 1000}
         b.update(budget)
-        (self.campaigns / name / "protocol.json").write_text(json.dumps({"budget": b}))
+        (self.campaigns / name / "protocol.json").write_text(json.dumps({"campaign": name, "baseline_commit": sh(self.linux, "rev-parse", "seed"), "budget": b}))
 
     def run_cli(self, *argv):
         out = io.StringIO()
@@ -231,7 +231,7 @@ class OpenCloseTests(Fixture):
         ledger = self.campaigns / "old/ledger"
         ledger.mkdir()
         (ledger / "ledger.json").write_text(json.dumps([
-            {"id": "row-ok", "candidate": "cand-a", "status": "FAST_PASS", "candidate_commit": "a" * 40},
+            {"id": "row-ok", "candidate": "cand-a", "status": "FAST_PASS", "candidate_commit": sh(self.linux, "rev-parse", "seed")},
             {"id": "row-bad", "candidate": "cand-b", "status": "FAST_REJECT", "candidate_commit": "b" * 40}]))
         self.prep("new1")
         base = "old:cand-b"
@@ -256,12 +256,64 @@ class OpenCloseTests(Fixture):
         self.open_dir("old", status="closed", closed="2026-10-26")
         (self.campaigns / "old/ledger").mkdir()
         (self.campaigns / "old/ledger/ledger.json").write_text(json.dumps([
-            {"id": "row-ok", "candidate": "cand-a", "status": "FAST_PASS", "candidate_commit": "a" * 40}]))
+            {"id": "row-ok", "candidate": "cand-a", "status": "FAST_PASS", "candidate_commit": sh(self.linux, "rev-parse", "seed")}]))
         self.prep("new1")
         rc, out = self.open("new1", "--baseline-from", "old:cand-a", "--evidence-row", "row-ok")
         self.assertEqual(rc, 0, out)
         b = cs.load("new1")["baseline_from"]
-        self.assertEqual((b["commit"], b["evidence"]), ("a" * 40, {"kind": "fast_pass", "ledger_row": "row-ok"}))
+        self.assertEqual((b["commit"], b["evidence"]), (sh(self.linux, "rev-parse", "seed"), {"kind": "fast_pass", "ledger_row": "row-ok"}))
+
+    def test_inheritance_requires_same_line_and_exact_destination_baseline(self):
+        self.open_dir("old", status="closed", closed="2026-10-26", line="other")
+        ledger = self.campaigns / "old/ledger"
+        ledger.mkdir()
+        row = {"id": "r", "candidate": "parent", "status": "FAST_PASS",
+               "candidate_commit": sh(self.linux, "rev-parse", "seed")}
+        (ledger / "ledger.json").write_text(json.dumps([row]))
+        self.prep("new")
+        args = ("--baseline-from", "old:parent", "--evidence-row", "r")
+        rc, out = self.open("new", *args)
+        self.assertEqual(rc, 2, out)
+        self.assertIn("same line", out["error"])
+        cs.write("old", dict(cs.load("old"), line="swap"))
+        row["candidate_commit"] = "a" * 40
+        (ledger / "ledger.json").write_text(json.dumps([row]))
+        self.assertEqual(self.open("new", *args)[0], 2)
+        self.commit_change(self.linux)
+        row["candidate_commit"] = sh(self.linux, "rev-parse", "HEAD")
+        (ledger / "ledger.json").write_text(json.dumps([row]))
+        rc, out = self.open("new", *args)
+        self.assertEqual(rc, 2, out)
+        self.assertIn("destination baseline", out["error"])
+        self.assertFalse((self.campaigns / "new/campaign.json").exists())
+        self.assertIsNone(cs.read_claim())
+
+    def test_open_rejects_protocol_identity_and_baseline_drift(self):
+        self.prep("one")
+        path = self.campaigns / "one/protocol.json"
+        protocol = json.loads(path.read_text())
+        for change in ({"campaign": "another"}, {"baseline_commit": "a" * 40}):
+            path.write_text(json.dumps(dict(protocol, **change)))
+            rc, out = self.open("one")
+            self.assertEqual(rc, 2, out)
+            self.assertIsNone(cs.read_claim())
+
+    def test_correctness_report_cannot_escape_repository(self):
+        self.open_dir("old", status="closed", closed="2026-10-26")
+        self.prep("new")
+        sh(self.linux, "branch", "agents/parent", "seed")
+        with tempfile.TemporaryDirectory() as external:
+            report = pathlib.Path(external) / "report.md"
+            report.write_text("external evidence")
+            args = ("--baseline-from", "old:parent", "--evidence-report", str(report))
+            rc, out = self.open("new", *args)
+            self.assertEqual(rc, 2, out)
+            self.assertIn("inside the repository", out["error"])
+            link = self.project / "outside-report.md"
+            link.symlink_to(report)
+            rc, out = self.open("new", "--baseline-from", "old:parent", "--evidence-report", str(link))
+            self.assertEqual(rc, 2, out)
+            self.assertIn("inside the repository", out["error"])
 
     def test_close_campaign_requires_exported_patches(self):
         self.open_dir("demo")

@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 """Campaign directories: layout, campaign.json, budget cap, hosts, claim."""
+from contextlib import contextmanager, nullcontext
+import fcntl
 import json
 import logging
 import os
@@ -63,6 +65,9 @@ def _check(name, r):
     for k in BUDGET[:3]:
         if not isinstance(bud[k], int) or isinstance(bud[k], bool) or bud[k] < 0:
             raise CampaignError(f"budget.{k} must be a non-negative integer")
+    approval = bud["approved_over_cap"]
+    if approval is not None and (not isinstance(approval, str) or not approval.strip()):
+        raise CampaignError("budget.approved_over_cap must be null or a non-empty approval reference")
     if (r["status"] == "closed") != (r["closed"] is not None):
         raise CampaignError("closed must be set exactly when status is closed")
     return r
@@ -142,7 +147,22 @@ def read_claim():
     except FileNotFoundError:
         return None
 
-def take_claim(name):
+@contextmanager
+def claim_lock():
+    """Serialize host-wide open/close/claim transitions across processes."""
+    path = claim_path().with_suffix(".lock")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a") as stream:
+        fcntl.flock(stream, fcntl.LOCK_EX)
+        yield
+
+
+def take_claim(name, *, locked=False):
+    with nullcontext() if locked else claim_lock():
+        _take_claim(name)
+
+
+def _take_claim(name):
     _name(name)
     held = read_claim()
     if held not in (None, name):
@@ -161,7 +181,12 @@ def _dump_text(path, text):
     tmp.write_text(text)
     os.replace(tmp, path)
 
-def release_claim(name, reason):
+def release_claim(name, reason, *, locked=False):
+    with nullcontext() if locked else claim_lock():
+        _release_claim(name, reason)
+
+
+def _release_claim(name, reason):
     held = read_claim()
     if name is not None and held != name:
         raise CampaignError(f"claim is {held!r}, not {name!r}")
@@ -175,3 +200,26 @@ def require_claim(name):
     held = read_claim()
     if held != name:
         raise CampaignError(f"claim is {held!r}, expected {name!r}; run open-campaign")
+
+
+def require_execution(name, protocol=None):
+    """Validate every guest entry point before creating runtime evidence or launching."""
+    if not name:
+        raise CampaignError("guest execution needs an explicit campaign")
+    record = require_open(name)
+    machine = current_machine()
+    if record["machine"] != machine:
+        raise CampaignError(f"campaign {name} belongs to {record['machine']}, not {machine}")
+    if GLOBAL_STOP.exists() or (campaign_dir(name) / "STOP").exists():
+        raise CampaignError("STOP")
+    require_claim(name)
+    errors = budget_errors(record)
+    if protocol is not None:
+        if protocol.get("campaign") != name:
+            errors.append("protocol campaign does not match campaign.json")
+        for key in ("guest_attempts", "wall_seconds", "probe_guest_attempts"):
+            if protocol.get("budget", {}).get(key, 0) != record["budget"][key]:
+                errors.append(f"protocol budget.{key} does not match campaign.json")
+    if errors:
+        raise CampaignError("; ".join(errors))
+    return record

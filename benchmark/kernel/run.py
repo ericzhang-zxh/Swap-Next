@@ -5,6 +5,9 @@ import argparse,datetime,fcntl,hashlib,json,math,os,pathlib,re,signal,subprocess
 from lifetime import bind_child_to_parent
 BASE=pathlib.Path(__file__).resolve().parent
 PROJECT=BASE.parents[1]
+import sys
+sys.path.insert(0, str(PROJECT / "evolve/control"))
+import campaign_store
 STOP=PROJECT/"campaigns/STOP"
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def percentile(a,p):return sorted(a)[math.ceil(len(a)*p)-1]/1000
@@ -44,12 +47,13 @@ def parse(log):
        "minor_faults":int(hdr[3]) if hdr else None,"major_faults":int(hdr[4]) if hdr else None,
        "diagnostics":diagnostics,"boot_id":bootids[0].strip() if len(bootids)==1 else None}
 def main():
-    p=argparse.ArgumentParser();p.add_argument("--build",required=True);p.add_argument("--backend",choices=["disk","zswap"],required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument("--campaign",required=True);p.add_argument("--build",required=True);p.add_argument("--backend",choices=["disk","zswap"],required=True);a=p.parse_args()
     # KVM-only runner. A TCG environment (Grok Bot's cloud box) must not start KVM.
     if os.environ.get("SWAP_NEXT_ACCEL", "kvm") != "kvm":
         raise SystemExit("KVM-only runner; refusing SWAP_NEXT_ACCEL=" + os.environ["SWAP_NEXT_ACCEL"])
     if not re.fullmatch("[a-z0-9-]{1,48}",a.build):raise SystemExit("invalid build name")
     if STOP.exists():raise SystemExit("STOP")
+    campaign_store.require_execution(a.campaign)
     BASE.joinpath("runs").mkdir(exist_ok=True)
     with (BASE/".runtime.lock").open("a") as lock:
       fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)

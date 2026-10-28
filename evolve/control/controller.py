@@ -294,29 +294,47 @@ def check_candidate(name, static=False):
     return result
 
 
-def baseline_from(args):
+def baseline_from(args, protocol):
     """Check the evidence named on the command line; return campaign.json's baseline_from."""
     source, _, cand = args.baseline_from.partition(":")
     require(source and cand and bool(args.evidence_row) != bool(args.evidence_report),
             "--baseline-from CAMPAIGN:CANDIDATE needs exactly one of --evidence-row, --evidence-report")
     source_dir = campaign_store.campaign_dir(source)
+    require(campaign_store.load(source)["line"] == args.line,
+            "inherited baseline must come from the same line")
+    expected = seed()
+    require(protocol.get("baseline_commit") == expected,
+            "protocol baseline_commit does not match the campaign policy seed")
     if args.evidence_row:
         rows = load_json(source_dir / "ledger/ledger.json")
         row = next((r for r in rows if r.get("id") == args.evidence_row), None)
         require(row and row.get("candidate") == cand, "no ledger row for that candidate")
         require(row.get("status") == "FAST_PASS", "ledger row is not FAST_PASS")
-        require(row.get("candidate_commit"), "ledger row has no candidate_commit")
+        commit = row.get("candidate_commit")
+        require(isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit),
+                "ledger row has no full candidate_commit")
+        require(git(ROOT, "rev-parse", "--verify", commit + "^{commit}") == commit,
+                "inherited commit is not an exact existing commit")
+        require(commit == expected, "inherited commit does not match destination baseline")
         return {"campaign": source, "candidate": cand, "commit": row["candidate_commit"],
                 "evidence": {"kind": "fast_pass", "ledger_row": args.evidence_row}}
-    report = PROJECT / args.evidence_report
+    report = (PROJECT / args.evidence_report).resolve()
+    require(report.is_relative_to(PROJECT.resolve()), "evidence report must be inside the repository")
     require(report.is_file(), "evidence report does not exist")
     commit = git(ROOT, "rev-parse", "--verify", f"refs/heads/agents/{cand}^{{commit}}")
-    path = report.relative_to(PROJECT) if report.is_relative_to(PROJECT) else report
+    require(commit == expected, "inherited correctness commit does not match destination baseline")
+    path = report.relative_to(PROJECT.resolve())
     return {"campaign": source, "candidate": cand, "commit": commit,
             "evidence": {"kind": "correctness_fix", "report": str(path)}}
 
 
 def open_campaign(args):
+    # The scan, claim and record write share one machine lock, across campaign locks.
+    with campaign_store.claim_lock():
+        return _open_campaign(args)
+
+
+def _open_campaign(args):
     require(CAMPAIGN, "open-campaign needs --campaign")
     directory = campaign_store.campaign_dir(CAMPAIGN)
     require((directory / "protocol.json").is_file(), "protocol.json is missing")
@@ -331,9 +349,12 @@ def open_campaign(args):
         known = campaign_store.load(other.parent.name)
         require(not (known["status"] == "open" and known["machine"] == args.machine),
                 f"campaign {known['campaign']} is already open on {args.machine}")
-    budget = dict(load_json(directory / "protocol.json")["budget"])
+    protocol = load_json(directory / "protocol.json")
+    require(protocol.get("campaign") == CAMPAIGN, "protocol campaign does not match directory")
+    require(protocol.get("baseline_commit") == seed(), "protocol baseline_commit does not match policy seed")
+    budget = dict(protocol["budget"])
     record = {"campaign": CAMPAIGN, "status": "open", "line": args.line,
-              "baseline_from": baseline_from(args) if args.baseline_from else None,
+              "baseline_from": baseline_from(args, protocol) if args.baseline_from else None,
               "machine": args.machine, "opened": time.strftime("%Y-%m-%d", time.gmtime()),
               "closed": None,
               "budget": {"guest_attempts": budget["guest_attempts"],
@@ -342,16 +363,21 @@ def open_campaign(args):
                          "approved_over_cap": args.over_cap_approval or None}}
     errors = campaign_store.budget_errors(record)
     require(not errors, "; ".join(errors))
-    campaign_store.take_claim(CAMPAIGN)
+    campaign_store.take_claim(CAMPAIGN, locked=True)
     try:
         campaign_store.write(CAMPAIGN, record)
-    except ValueError:
-        campaign_store.release_claim(CAMPAIGN, "open-campaign failed")
+    except (OSError, ValueError):
+        campaign_store.release_claim(CAMPAIGN, "open-campaign failed", locked=True)
         raise
     return record
 
 
 def close_campaign(reason):
+    with campaign_store.claim_lock():
+        return _close_campaign(reason)
+
+
+def _close_campaign(reason):
     require(CAMPAIGN, "close-campaign needs --campaign")
     record = campaign_store.require_open(CAMPAIGN)
     with lock():
@@ -367,7 +393,7 @@ def close_campaign(reason):
         record.update(status="closed", closed=time.strftime("%Y-%m-%d", time.gmtime()))
         campaign_store.write(CAMPAIGN, record)
         if campaign_store.read_claim() == CAMPAIGN:
-            campaign_store.release_claim(CAMPAIGN, reason)
+            campaign_store.release_claim(CAMPAIGN, reason, locked=True)
     return record
 
 
