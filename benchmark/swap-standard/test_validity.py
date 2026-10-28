@@ -82,6 +82,21 @@ class ValidityTests(unittest.TestCase):
         self.assertTrue(protocol["preallocate_swap"])
         self.assertNotIn("slow", protocol["tiers"])
 
+    def test_revision4_kvm_shape_and_probe_runs_are_not_latency_pairs(self):
+        p = json.loads((Path(__file__).parent / "revision4-protocol-template.json").read_text())
+        rules = protocol_rules(p)
+        self.assertEqual(rules["protocol_revision"], 4)
+        self.assertTrue(rules["enforce_validity"])
+        self.assertEqual(rules["max_reruns"], 1)
+        for key, value in (("vcpus", 4), ("mem_mib", 4096), ("swap_gib", 8)):
+            wrong = json.loads(json.dumps(p))
+            wrong["guest"][key] = value
+            with self.assertRaises(ValueError):
+                protocol_rules(wrong)
+        p["accelerator"]["require"] = "tcg"
+        with self.assertRaisesRegex(ValueError, "requires KVM"):
+            protocol_rules(p)
+
     @unittest.skipUnless((NEXT_REPORT / "protocol-revision1.json").exists(), "before migration")
     def test_revision1_and_2_protocol_shape(self):
         rev1 = json.loads((NEXT_REPORT / "protocol-revision1.json").read_text())

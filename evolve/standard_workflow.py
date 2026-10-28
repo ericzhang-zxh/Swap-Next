@@ -25,6 +25,11 @@ from lifetime import bind_child_to_parent
 _spec = importlib.util.spec_from_file_location("campaign_store", ROOT / "evolve/control/campaign_store.py")
 campaign_store = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(campaign_store)
+sys.path.insert(0, str(ROOT / "evolve/control"))
+_spec = importlib.util.spec_from_file_location("standard_guest_budget", ROOT / "evolve/control/guest_budget.py")
+guest_budget = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(guest_budget)
+guest_budget.store = campaign_store
 
 
 # Module defaults name the standard campaign; select_campaign switches all of them.
@@ -76,15 +81,22 @@ def validity_module():
     return module
 
 
+def probe_module():
+    spec = importlib.util.spec_from_file_location("standard_probe", WORKFLOW_FILE.parents[1] / "benchmark/swap-standard/probe.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def child_env(protocol):
     """Pin the revision 3 guest. A TCG protocol forces SWAP_NEXT_ACCEL=tcg."""
     guest = protocol.get("guest") if isinstance(protocol.get("guest"), dict) else {}
     require = (protocol.get("accelerator") or {}).get("require") if isinstance(protocol.get("accelerator"), dict) else None
-    if not guest and require != "tcg":
+    if not guest and require not in ("tcg", "kvm"):
         return None
     env = os.environ.copy()
-    if require == "tcg":
-        env["SWAP_NEXT_ACCEL"] = "tcg"
+    if require in ("tcg", "kvm"):
+        env["SWAP_NEXT_ACCEL"] = require
     if "mem_mib" in guest:
         env["SWAP_NEXT_TCG_MEM_MIB"] = str(int(guest["mem_mib"]))
     if "vcpus" in guest:
@@ -116,16 +128,37 @@ def contract_errors(p):
     fast = [cases.get(name, {}) for name in tiers.get("fast", {}).get("cases", [])]
     if not any(c.get("workload") == "swapin" and c.get("primary") in SWAPIN_PRIMARIES for c in fast):
         errors.append("fast tier needs a swapin case whose primary is a swap-in latency mean")
-    if not any(c.get("workload") == "metadata" and c.get("metrics", {}).get(METADATA_METRIC) == "lower"
-               for c in fast):
-        errors.append("fast tier needs a metadata case scoring " + METADATA_METRIC)
+    probe = tiers.get("probe", {})
+    if probe.get("kind") != "probe" or not any(cases.get(n, {}).get("workload") == "swapin" for n in probe.get("cases", [])):
+        errors.append("probe tier needs a swapin case")
+    names = probe.get("cases", [])
+    if any(cases.get(n, {}).get("workload") == "swapin" and cases[n].get("mode", "plain") == "plain" for n in names):
+        if not any(cases.get(n, {}).get("workload") == "metadata" and
+                   cases[n].get("backend") == "brd" and
+                   cases[n].get("metrics", {}).get(METADATA_METRIC) == "lower" for n in names):
+            errors.append("plain probe tier needs a metadata case scoring " + METADATA_METRIC)
+    try:
+        module = probe_module()
+        module.constants(p)
+        for name in names:
+            module.signals(p, name)
+        if (type(probe.get("calibration_runs")) is not int or type(probe.get("candidate_runs")) is not int or
+                probe.get("calibration_runs") != 3 or probe.get("candidate_runs") != 1):
+            errors.append("probe tier requires three calibration runs and one candidate run")
+        for key in ("max_probe_candidates", "max_candidates"):
+            if isinstance(p.get(key), bool) or not isinstance(p.get(key), int) or p[key] < 1:
+                errors.append(key + " must be a positive integer")
+        if p.get("budget", {}).get("probe_guest_attempts", 0) < 1:
+            errors.append("probe_guest_attempts must be positive")
+    except (KeyError, TypeError, ValueError) as exc:
+        errors.append(str(exc))
     return errors
 
 
 def fingerprint(p):
     paths = [PROTOCOL, BENCH / "image.json", ROOT / "evolve/loop.py", Path(__file__),
              ROOT / "evolve/control/controller.py", ROOT / "evolve/control/analysis.py",
-             ROOT / "evolve/control/campaign_store.py",
+             ROOT / "evolve/control/campaign_store.py", ROOT / "evolve/control/guest_budget.py",
              CAMPAIGN / "policy.json",
              ROOT / "benchmark/config/swap-standard.config"]
     paths += list(BENCH.glob("*.py")) + list(BENCH.glob("*.sh"))
@@ -189,13 +222,38 @@ class Workflow:
         if time.time() > self.budget["created"] + self.p["budget"]["wall_seconds"]:
             raise RuntimeError("campaign deadline")
 
-    def reserve(self, kind):
+    def budget_pools(self):
+        pools = {}
+        for name, key, limit in (("fast", "guests", "guest_attempts"), ("probe", "probe_guests", "probe_guest_attempts")):
+            spent, ceiling = self.budget.get(key, 0), self.p["budget"].get(limit, 0)
+            pools[name] = {"spent": spent, "ceiling": ceiling, "remaining": max(0, ceiling - spent)}
+        pools["total"] = {"spent": sum(p["spent"] for p in pools.values()),
+                          "ceiling": sum(p["ceiling"] for p in pools.values())}
+        return pools
+
+    def reserve(self, kind, pool="fast"):
+        # Guest launch reservations use _reserve_guest with a one-use identity ticket.
+        with guest_budget.budget_lock(self.p["campaign"]):
+            self.budget = guest_budget.read_budget(self.p["campaign"])
+            self.check()
+            if kind == "guest":
+                key, cap = ("probe_guests", "probe_guest_attempts") if pool == "probe" else ("guests", "guest_attempts")
+            else:
+                key, cap = "builds", "build_attempts"
+            if self.budget.get(key, 0) >= self.p["budget"].get(cap, 0):
+                raise RuntimeError("campaign " + key + " budget")
+            self.budget[key] = self.budget.get(key, 0) + 1
+            save(self.budget_path, self.budget)
+
+    def _reserve_guest(self, run_id, build, case, pool="fast"):
         self.check()
-        key, cap = ("guests", "guest_attempts") if kind == "guest" else ("builds", "build_attempts")
-        if self.budget[key] >= self.p["budget"][cap]:
-            raise RuntimeError("campaign " + key + " budget")
-        self.budget[key] += 1
-        save(self.budget_path, self.budget)
+        try:
+            ticket = guest_budget.reserve_guest(self.p["campaign"], run_id, build, case["backend"],
+                                                case.get("mode", "plain"), case["workload"], pool)
+        except campaign_store.CampaignError as exc:
+            raise RuntimeError("BLOCKED: " + str(exc))
+        self.budget = guest_budget.read_budget(self.p["campaign"])
+        return ticket
 
     def command(self, command, logfile, timeout, accept_failure=False, env=None):
         self.check()
@@ -266,7 +324,198 @@ class Workflow:
         except campaign_store.CampaignError as exc:
             return [str(exc)]
 
-    def run(self, action, tier, candidate=None, correctness=None):
+    def candidate_tree(self, commit, record):
+        tree = subprocess.check_output(["git", "-C", str(ROOT / record["worktree"]),
+                                        "rev-parse", commit + "^{tree}"], text=True).strip()
+        if not re.fullmatch(r"[0-9a-f]{40}", tree):
+            raise RuntimeError("invalid candidate content identity")
+        return tree
+
+    def probe_prerequisite(self, commit, tree, fp, record, selection_reason):
+        probe_module().validate_mechanism(self.p, record.get("mechanism"))
+        if any(r.get("candidate_tree") == tree and r.get("tier") == "probe" and
+               r.get("status") == "PROBE_REJECT" for r in self.ledger):
+            raise RuntimeError("BLOCKED: candidate content has a final PROBE_REJECT")
+        matches = [r for r in self.ledger if r.get("candidate_commit") == commit and
+                   r.get("candidate_tree") == tree and r.get("fingerprint") == fp and
+                   r.get("status") == "PROBE_PASS" and r.get("tier") == "probe" and
+                   r.get("action") == "evaluate" and r.get("execution_started") and
+                   r.get("analysis", {}).get("passed") is True and
+                   r.get("analysis", {}).get("status") == "PROBE_PASS" and
+                   isinstance(r.get("probe_signals"), dict) and
+                   r.get("mechanism") == record.get("mechanism")]
+        if not matches:
+            raise RuntimeError("BLOCKED: fast requires an exact commit/tree current-fingerprint PROBE_PASS")
+        selected = matches[-1]
+        module = probe_module()
+        for name in self.p["tiers"]["probe"]["cases"]:
+            for key in module.signals(self.p, name):
+                values = selected["probe_signals"].get(name, {}).get(key)
+                if not isinstance(values, list) or len(values) != self.p["tiers"]["probe"]["candidate_runs"]:
+                    raise RuntimeError("BLOCKED: incomplete probe signal evidence")
+                for value in values:
+                    module.numeric(value, name + ":" + key)
+        if not isinstance(selection_reason, str) or not selection_reason.strip():
+            raise RuntimeError("BLOCKED: fast admission requires --selection-reason from the agent")
+        return selected
+
+    def probe_attempt_guard(self, commit, tree, fp):
+        prior = [r for r in self.ledger[:-1] if r.get("action") == "evaluate" and r.get("tier") == "probe" and
+                 (r.get("candidate_tree") == tree or r.get("candidate_commit") == commit)]
+        if any(r.get("status") == "PROBE_REJECT" for r in prior):
+            raise RuntimeError("BLOCKED: candidate content has a final PROBE_REJECT")
+        if any(r.get("fingerprint") == fp and r.get("execution_started") for r in prior):
+            raise RuntimeError("BLOCKED: duplicate probe content attempt under this fingerprint")
+        probed = {r.get("candidate_tree", r.get("candidate_commit")) for r in self.ledger[:-1]
+                  if r.get("action") == "evaluate" and r.get("tier") == "probe" and r.get("execution_started")}
+        if tree not in probed and len(probed) >= self.p["max_probe_candidates"]:
+            raise RuntimeError("BLOCKED: probe candidate budget")
+
+    def probe_build(self, candidate, commit, row, dest):
+        checklog = dest / "controller-check.log"
+        self.command([sys.executable, "evolve/control/controller.py", "--campaign", self.p["campaign"],
+                      "check", candidate], checklog, 180)
+        checked = read(checklog)
+        if checked.get("status") != "SCOPE_PASS" or checked.get("candidate_commit") != commit or checked.get("parent") != self.p["baseline_commit"]:
+            raise RuntimeError("controller scope check missing")
+        row["controller_check"] = checked
+        build = self.p.get("candidate_builds", {}).get(candidate, "std-" + commit[:12])
+        if not re.fullmatch(r"[a-z0-9-]{1,48}", build):
+            raise RuntimeError("invalid protocol candidate build name")
+        path = ROOT / "benchmark/kernel/builds" / build / "result.json"
+        if not path.exists():
+            self.reserve("build")
+            row["execution_started"] = True
+            save(dest / "report.json", row)
+            self.command([sys.executable, "benchmark/kernel/build.py", "--commit", commit, "--name", build,
+                          "--config", "benchmark/config/swap-standard.config", "--no-instrumentation"], dest / "build.log", 1200)
+        built = read(path)
+        if (built.get("commit") != commit or built.get("passed") is not True or
+                built.get("input_config_sha256") != sha(ROOT / "benchmark/config/swap-standard.config") or
+                built.get("instrument_sha256", "missing") is not None):
+            raise RuntimeError("candidate build provenance mismatch")
+        return build
+
+    def run_probe(self, action, candidate=None, correctness=None):
+        ident = uuid.uuid4().hex
+        row = {"id": ident, "action": action, "tier": "probe", "candidate": candidate, "pool": "probe",
+               "status": "RUNNING", "started": time.time(), "runs": [], "performance_accepted": False, "auto_promote": False}
+        errors = self.campaign_errors()
+        if errors:
+            row.update(status="BLOCKED", reason="BLOCKED: campaign: " + "; ".join(errors), finished=time.time())
+            print(json.dumps({k: row.get(k) for k in ("id", "action", "tier", "status", "reason")}), flush=True)
+            return row
+        dest = EVALUATIONS / ident
+        dest.mkdir(parents=True)
+        self.ledger.append(row)
+        save(self.ledger_path, self.ledger)
+        try:
+            self.check()
+            if self.p.get("template_only"):
+                raise RuntimeError("BLOCKED: protocol template cannot execute")
+            if action not in ("calibrate", "evaluate"):
+                raise RuntimeError("BLOCKED: probe supports calibration and candidate evaluation only")
+            if contract_errors(self.p):
+                raise RuntimeError("BLOCKED: protocol contract: " + "; ".join(contract_errors(self.p)))
+            rules, module = validity_module().protocol_rules(self.p), probe_module()
+            fp = fingerprint(self.p)
+            row.update(fingerprint=fp, protocol_revision=rules["protocol_revision"],
+                       protocol=str(PROTOCOL.relative_to(ROOT)))
+            spec = self.p["tiers"]["probe"]
+            count = spec["calibration_runs" if action == "calibrate" else "candidate_runs"]
+            needed = count * len(spec["cases"])
+            if self.budget.get("probe_guests", 0) + needed > self.p["budget"].get("probe_guest_attempts", 0):
+                raise RuntimeError("insufficient probe guest budget for the complete tier")
+            build, commit, calibration = self.p["baseline_build"], self.p["baseline_commit"], None
+            if action == "calibrate":
+                prior = [r for r in self.ledger[:-1] if r.get("action") == action and r.get("tier") == "probe" and
+                         r.get("fingerprint") == fp and r.get("execution_started")]
+                if prior and not (all(r.get("analysis", {}).get("passed") is True for r in prior) and
+                                  time.time() - prior[-1].get("finished", time.time()) > self.p["calibration_max_age_seconds"]):
+                    raise RuntimeError("probe calibration already attempted; retained evidence forbids a silent retry")
+            else:
+                commit, record, proof = self.candidate(candidate, correctness)
+                tree = self.candidate_tree(commit, record)
+                row.update(candidate_commit=commit, candidate_tree=tree, correctness=proof, mechanism=record.get("mechanism"),
+                           parent_comparison={"parent_id": record.get("parent_id"), "baseline_commit": self.p["baseline_commit"], "role": "descriptive_only"})
+                module.validate_mechanism(self.p, record.get("mechanism"))
+                self.probe_attempt_guard(commit, tree, fp)
+                calibration = self.calibration("probe", fp)
+                build = self.probe_build(candidate, commit, row, dest)
+                row["calibration_id"] = calibration["id"]
+            row["candidate_commit"] = commit
+            samples = {case: [] for case in spec["cases"]}
+            for case_name in spec["cases"]:
+                case = self.p["cases"][case_name]
+                for index in range(count):
+                    prior_walls = [r["wall_seconds"] for r in (calibration or {}).get("runs", [])
+                                   if r.get("case") == case_name and r.get("run_valid") is True]
+                    prior_walls += [r["wall_seconds"] for r in row["runs"] if r.get("case") == case_name and r.get("run_valid") is True]
+                    for rerun in range(rules["max_reruns"] + 1 if rules["enforce_validity"] else 1):
+                        if fingerprint(self.p) != fp:
+                            raise RuntimeError("trusted inputs changed during probe")
+                        run_id = f"{ident}-{case_name}-{index}" + (f"-r{rerun}" if rerun else "")
+                        ticket = self._reserve_guest(run_id, build, case, pool="probe")
+                        row["execution_started"] = True
+                        attempt = {"id": run_id, "case": case_name, "index": index, "attempt": rerun,
+                                   "pool": "probe", "reservation": ticket["reservation"], "status": "STARTED"}
+                        row["runs"].append(attempt)
+                        save(dest / "report.json", row)
+                        self.command([sys.executable, str(BENCH / "run.py"), "--build", build,
+                                      "--backend", case["backend"], "--mode", case.get("mode", "plain"),
+                                      "--workload", case["workload"], "--run-id", run_id, "--campaign", self.p["campaign"],
+                                      "--reservation", ticket["reservation"], "--run-root", str(RUNS),
+                                      "--stop-file", str(self.stop), "--timeout", str(self.p["budget"]["guest_timeout"]),
+                                      *runner_extra(self.p)], dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60,
+                                     accept_failure=True, env=child_env(self.p))
+                        result_path = RUNS / run_id / "result.json"
+                        result = read(result_path)
+                        attempt.update(result=str(result_path.relative_to(ROOT)), result_sha256=sha(result_path))
+                        json.dumps(result, allow_nan=False)
+                        if result.get("run_id") != run_id or result.get("source_commit") != commit or result.get("integration_pass") is not True:
+                            raise RuntimeError("probe run identity or correctness failed")
+                        guest = self.p.get("guest", {})
+                        if (result.get("accelerator") != self.p.get("accelerator", {}).get("require") or
+                                result.get("guest_vcpus") != guest.get("vcpus") or result.get("guest_mem_mib") != guest.get("mem_mib") or
+                                (self.p.get("preallocate_swap") and result.get("swap_image_allocation") != "preallocated")):
+                            raise RuntimeError("probe guest shape, accelerator or allocation mismatch")
+                        attempt.update(result=str(result_path.relative_to(ROOT)), result_sha256=sha(result_path),
+                                       wall_seconds=result.get("wall_seconds"), pre_qemu_seconds=result.get("pre_qemu_seconds"),
+                                       host_load=result.get("host_load"), accelerator=result.get("accelerator"),
+                                       guest_mem_mib=result.get("guest_mem_mib"), guest_vcpus=result.get("guest_vcpus"))
+                        valid, reason = validity_module().classify_attempt(result, prior_walls, rules) if rules["enforce_validity"] else (True, None)
+                        if not valid:
+                            attempt.update(status="INVALID", run_valid=False, invalid_reason=reason)
+                            save(dest / "report.json", row)
+                            continue
+                        metrics = result["metrics"]
+                        json.dumps(metrics, allow_nan=False)
+                        for key in module.signals(self.p, case_name):
+                            module.signal(metrics, key)
+                        attempt.update(status="PASS", run_valid=True, metrics=metrics)
+                        samples[case_name].append(metrics)
+                        save(dest / "report.json", row)
+                        break
+                    else:
+                        raise RuntimeError("probe validity reruns exhausted: " + str(reason))
+            if fingerprint(self.p) != fp:
+                raise RuntimeError("trusted inputs changed before probe analysis")
+            analysis = module.calibrate(self.p, samples) if action == "calibrate" else module.compare(self.p, calibration["analysis"], samples, row["mechanism"])
+            row.update(analysis=analysis, status=analysis["status"], finished=time.time(),
+                       probe_signals=analysis.get("probe_signals", samples), budget_pools=self.budget_pools())
+            if action == "calibrate":
+                save(STATE / "calibration-probe.json", row)
+        except (Exception, KeyboardInterrupt) as exc:
+            row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=str(exc), finished=time.time())
+        finally:
+            save(dest / "report.json", row)
+            save(self.ledger_path, self.ledger)
+        print(json.dumps({k: row.get(k) for k in ("id", "action", "tier", "status", "reason", "budget_pools")}), flush=True)
+        return row
+
+    def run(self, action, tier, candidate=None, correctness=None, selection_reason=None):
+        if tier == "probe":
+            return self.run_probe(action, candidate, correctness)
         ident = uuid.uuid4().hex
         row = {"id": ident, "action": action, "tier": tier, "candidate": candidate,
                "status": "RUNNING", "started": time.time(), "runs": [], "pairs": [],
@@ -283,6 +532,8 @@ class Workflow:
         save(dest / "report.json", row)
         try:
             self.check()
+            if self.p.get("template_only"):
+                raise RuntimeError("BLOCKED: protocol template cannot execute")
             if self.p["campaign"] not in CONTRACT_EXEMPT and contract_errors(self.p):
                 raise RuntimeError("BLOCKED: protocol contract: " + "; ".join(contract_errors(self.p)))
             fp = fingerprint(self.p)
@@ -306,12 +557,24 @@ class Workflow:
             if action == "evaluate":
                 commit, record, proof = self.candidate(candidate, correctness)
                 row.update(candidate_commit=commit, correctness=proof)
+                if self.p["campaign"] not in CONTRACT_EXEMPT:
+                    tree = self.candidate_tree(commit, record)
+                    row.update(candidate_tree=tree, mechanism=record.get("mechanism"),
+                               parent_comparison={"parent_id": record.get("parent_id"), "baseline_commit": self.p["baseline_commit"], "role": "descriptive_only"})
+                    if tier == "fast":
+                        prior_probe = self.probe_prerequisite(commit, tree, fp, record, selection_reason)
+                        row.update(probe_id=prior_probe["id"], probe_signals=prior_probe.get("probe_signals"),
+                                   selection_reason=selection_reason.strip())
+                    same_tree = [r for r in self.ledger[:-1] if r.get("candidate_tree") == tree and
+                                 r.get("action") == action and r.get("tier") == tier and r.get("execution_started")]
+                    if same_tree:
+                        raise RuntimeError("duplicate candidate content tier attempt; prior tree retained")
                 save(dest / "report.json", row)
                 save(self.ledger_path, self.ledger)
                 attempts = [r for r in self.ledger[:-1] if r.get("candidate_commit") == commit and r["tier"] == tier and r["action"] == action and r.get("execution_started")]
                 if attempts:
                     raise RuntimeError("duplicate candidate tier attempt; retained prior result")
-                candidates = {r.get("candidate_commit") for r in self.ledger[:-1] if r["action"] == action and r.get("candidate_commit")}
+                candidates = {r.get("candidate_commit") for r in self.ledger[:-1] if r["action"] == action and r.get("candidate_commit") and r.get("tier") != "probe" and (self.p["campaign"] in CONTRACT_EXEMPT or r.get("execution_started"))}
                 if commit not in candidates and len(candidates) >= self.p["max_candidates"]:
                     raise RuntimeError("candidate budget")
                 if tier == "slow" and not any(r.get("candidate_commit") == commit and r.get("fingerprint") == fp and r.get("analysis", {}).get("eligible_for_slow") is True and r["tier"] == "fast" and r["action"] == "evaluate" for r in self.ledger[:-1]):
@@ -364,17 +627,17 @@ class Workflow:
                             suffix = "" if attempt_index == 0 else "-r" + str(attempt_index)
                             run_id = ident + "-" + str(pair_index) + "-" + case_name + "-" + arm + suffix
                             chosen = self.p["baseline_build"] if arm == "a" else build
-                            self.reserve("guest")
+                            ticket = self._reserve_guest(run_id, chosen, case)
                             row["execution_started"] = True
                             attempt = {"id": run_id, "pair": pair_index, "case": case_name, "arm": arm,
-                                       "attempt": attempt_index, "status": "STARTED"}
+                                       "attempt": attempt_index, "status": "STARTED", "pool": "fast", "reservation": ticket["reservation"]}
                             row["runs"].append(attempt)
                             save(dest / "report.json", row)
                             self.command([sys.executable, str(BENCH / "run.py"), "--build", chosen,
                                           "--backend", case["backend"], "--mode", case.get("mode", "plain"),
                                           "--workload", case["workload"], "--run-id", run_id,
                                           "--stop-file", str(self.stop), "--run-root", str(RUNS),
-                                          "--campaign", self.p["campaign"],
+                                          "--campaign", self.p["campaign"], "--reservation", ticket["reservation"],
                                           "--timeout", str(self.p["budget"]["guest_timeout"]), *extra],
                                          dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60,
                                          accept_failure=True, env=env)
@@ -382,6 +645,8 @@ class Workflow:
                             if not result_path.is_file():
                                 raise RuntimeError("missing run result")
                             result = read(result_path)
+                            attempt.update(result=str(result_path.relative_to(ROOT)), result_sha256=sha(result_path))
+                            json.dumps(result, allow_nan=False)
                             expected = self.p["baseline_commit"] if arm == "a" else commit
                             if result.get("source_commit") != expected or result.get("run_id") != run_id:
                                 raise RuntimeError("run identity failed")
@@ -481,9 +746,10 @@ def state_lock():
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["status", "plan", "next", "calibrate", "evaluate", "reference-check"])
-    parser.add_argument("--tier", choices=["fast", "slow", "auto"], default="fast",
+    parser.add_argument("--tier", choices=["probe", "fast", "slow", "auto"], default="fast",
                         help="slow (and auto, which continues into slow) needs explicit owner approval; see AGENTS.md")
     parser.add_argument("--candidate")
+    parser.add_argument("--selection-reason", help="agent rationale for admitting an exact probe pass to the fast screen")
     parser.add_argument("--correctness", type=Path)
     parser.add_argument("--campaign", default=CAMPAIGN.name,
                         help="campaign directory under campaigns/; revision 3 is xswap-tcg-rev3-2026-10-25")
@@ -504,7 +770,7 @@ def main(argv=None):
                     ready[tier] = workflow.calibration(tier, fp)["id"]
                 except RuntimeError as exc:
                     ready[tier] = str(exc)
-            output = {"campaign": p["campaign"], "fingerprint": fp, "budget": workflow.budget, "limits": p["budget"], "tiers": p["tiers"], "calibration": ready, "ledger": [{k: r.get(k) for k in ["id", "action", "tier", "candidate", "status"]} for r in workflow.ledger]}
+            output = {"campaign": p["campaign"], "fingerprint": fp, "budget": workflow.budget, "budget_pools": workflow.budget_pools(), "limits": p["budget"], "tiers": p["tiers"], "calibration": ready, "ledger": [{k: r.get(k) for k in ["id", "action", "tier", "candidate", "status"]} for r in workflow.ledger]}
             if args.action == "next":
                 output["instruction"] = "Resolve correctness holds, then calibrate missing/noisy tiers. Only a calibrated fast tier may screen a controller candidate. Slow requires the exact fast-pass commit and explicit owner approval; no automatic promotion."
                 output["references"] = []
@@ -533,7 +799,7 @@ def main(argv=None):
                 parser.error("protocol has no " + args.tier + " tier")
             tiers = [args.tier]
         for tier in tiers:
-            row = workflow.run(args.action, tier, args.candidate, args.correctness)
+            row = workflow.run(args.action, tier, args.candidate, args.correctness, args.selection_reason)
             if row["status"] in ("INCOMPLETE", "BLOCKED"):
                 raise SystemExit(1)
             if args.action == "evaluate" and tier == "fast" and not row.get("analysis", {}).get("eligible_for_slow"):

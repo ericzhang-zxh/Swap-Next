@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "template_only": true,
+  "campaign": "plain-cascade-template",
+  "protocol_revision": 4,
+  "protocol_id": "swap-standard-plain-kvm-revision4-template",
+  "baseline_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "baseline_build": "unbuilt-revision4-baseline",
+  "max_probe_candidates": 8,
+  "max_candidates": 2,
+  "budget": {
+    "probe_guest_attempts": 36,
+    "guest_attempts": 84,
+    "build_attempts": 10,
+    "wall_seconds": 64800,
+    "guest_timeout": 900
+  },
+  "planned_guest_counts": {
+    "probe_calibration": 9,
+    "eight_candidate_probes": 24,
+    "fast_calibration": 40,
+    "two_fast_candidates": 32,
+    "minimum_total": 105,
+    "reserved_for_correctness_and_validity": 15,
+    "probe_ceiling": 36,
+    "fast_ceiling": 84,
+    "total_ceiling": 120,
+    "status": "Planned ceilings and arithmetic only; no runtime evidence."
+  },
+  "guest": {
+    "vcpus": 8,
+    "mem_mib": 8192,
+    "swap_gib": 16
+  },
+  "accelerator": {
+    "require": "kvm"
+  },
+  "cases": {
+    "swapin-disk": {
+      "workload": "swapin",
+      "backend": "disk",
+      "mode": "plain",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns",
+      "probe_signals": [
+        "swapin_vmstat_delta.pswpin",
+        "swapin_vmstat_delta.zswpin",
+        "swapin_vmstat_delta.swap_ra",
+        "swapin_vmstat_delta.swap_ra_hit",
+        "swapin_vmstat_delta.pgmajfault",
+        "swapin_vmstat_delta.zswpwb"
+      ]
+    },
+    "swapin-zswap": {
+      "workload": "swapin",
+      "backend": "zswap",
+      "mode": "plain",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns",
+      "probe_signals": [
+        "swapin_vmstat_delta.pswpin",
+        "swapin_vmstat_delta.zswpin",
+        "swapin_vmstat_delta.swap_ra",
+        "swapin_vmstat_delta.swap_ra_hit",
+        "swapin_vmstat_delta.pgmajfault",
+        "swapin_vmstat_delta.zswpwb"
+      ]
+    },
+    "metadata-brd": {
+      "workload": "metadata",
+      "backend": "brd",
+      "mode": "plain",
+      "metrics": {
+        "metadata_delta_bytes_per_capacity_slot": "lower"
+      },
+      "primary": null,
+      "probe_signals": [
+        "metadata_delta_bytes_per_capacity_slot"
+      ]
+    }
+  },
+  "tiers": {
+    "probe": {
+      "kind": "probe",
+      "cases": [
+        "swapin-disk",
+        "swapin-zswap",
+        "metadata-brd"
+      ],
+      "calibration_runs": 3,
+      "candidate_runs": 1
+    },
+    "fast": {
+      "cases": [
+        "swapin-disk",
+        "swapin-zswap"
+      ],
+      "calibration_pairs": 10,
+      "comparison_pairs": 4
+    }
+  },
+  "probe_band": {
+    "relative_padding": 0.01,
+    "integer_padding_floor": 1,
+    "metadata_spread_fraction": 0.01
+  },
+  "calibration_max_age_seconds": 86400,
+  "noise_floor": 0.03,
+  "noise_ceiling": 0.25,
+  "noise_envelope": "p90",
+  "comparison_decision": "median",
+  "advisory_metric_suffixes": [
+    ".p99_ns"
+  ],
+  "preallocate_swap": true,
+  "validity": {
+    "pre_qemu_seconds_max": 60,
+    "wall_time_factor": 1.5,
+    "wall_median_min_samples": 3,
+    "reruns_per_arm": 1
+  },
+  "required_correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings"
+  ],
+  "correctness_capability": "BLOCKED: the existing correctness runner is xswap-only. This template grants no plain-mode correctness proof and opens no campaign.",
+  "blocked_commits": {},
+  "candidate_builds": {},
+  "promotion": "human_review_only"
+}

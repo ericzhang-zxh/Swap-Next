@@ -126,6 +126,9 @@ def classify_attempt(result, prior_walls, rules):
     before = host.get("before_launch") if isinstance(host, dict) else None
     if not isinstance(before, dict) or "loadavg_1m" not in before:
         raise ValueError("host_load")
+    load = before["loadavg_1m"]
+    if isinstance(load, bool) or not isinstance(load, (int, float)) or not math.isfinite(load) or load < 0:
+        raise ValueError("host_load")
     reasons = []
     if result["clocksource_invalid"]:
         reasons.append("clocksource_fallback")
@@ -170,6 +173,8 @@ def protocol_rules(protocol):
     if rules["envelope"] not in ("max", "p90") or rules["decision"] not in ("legacy", "median"):
         raise ValueError("unknown envelope or decision")
     if revision >= 3:
+        if revision not in (3, 4):
+            raise ValueError("unapproved protocol revision")
         if rules["envelope"] != "p90" or rules["decision"] != "median":
             raise ValueError("revision 3 uses a p90 envelope and a median comparison")
         if not 0.25 - 1e-12 <= rules["noise_ceiling"] <= 0.30 + 1e-12:
@@ -178,11 +183,22 @@ def protocol_rules(protocol):
             raise ValueError("revision 3 validity gates")
         guest = protocol.get("guest") if isinstance(protocol.get("guest"), dict) else {}
         accelerator = protocol.get("accelerator") if isinstance(protocol.get("accelerator"), dict) else {}
-        if guest.get("vcpus") != 4 or guest.get("mem_mib") != 4096 or guest.get("swap_gib") != 16:
-            raise ValueError("revision 3 guest is 4 vCPU, 4096 MiB, 16 GiB swap")
-        if accelerator.get("require") != "tcg":
-            raise ValueError("revision 3 requires TCG")
-        for spec in protocol.get("tiers", {}).values():
+        cpus, memory, accel = (4, 4096, "tcg") if revision == 3 else (8, 8192, "kvm")
+        if guest.get("vcpus") != cpus or guest.get("mem_mib") != memory or guest.get("swap_gib") != 16:
+            raise ValueError(f"revision {revision} guest is {cpus} vCPU, {memory} MiB, 16 GiB swap")
+        if accelerator.get("require") != accel:
+            raise ValueError(f"revision {revision} requires {accel.upper()}")
+        if revision == 4 and (protocol.get("preallocate_swap") is not True or
+                              any(c.get("mode", "plain") != "plain" for c in protocol.get("cases", {}).values())):
+            raise ValueError("revision 4 requires plain mode and preallocated swap")
+        for name, spec in protocol.get("tiers", {}).items():
+            if spec.get("kind") == "probe":
+                if name != "probe":
+                    raise ValueError("probe run counts apply only to the probe tier")
+                if (type(spec.get("calibration_runs")) is not int or type(spec.get("candidate_runs")) is not int or
+                        spec.get("calibration_runs") != 3 or spec.get("candidate_runs") != 1):
+                    raise ValueError("probe tier requires three calibration runs and one candidate run")
+                continue
             if spec.get("calibration_pairs", 0) < 10 or spec.get("comparison_pairs", 0) < 4:
-                raise ValueError("revision 3 needs >=10 A/A pairs and >=4 comparison pairs")
+                raise ValueError(f"revision {revision} needs >=10 A/A pairs and >=4 comparison pairs")
     return rules

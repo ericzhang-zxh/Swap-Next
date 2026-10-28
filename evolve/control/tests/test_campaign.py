@@ -165,6 +165,61 @@ class CandidateCloseTests(Fixture):
         self.assertFalse((self.campaigns / "demo/ledger/events.jsonl").exists())
 
 
+class MechanismAndResumeTests(Fixture):
+    def test_mechanism_required_syntax_and_record(self):
+        self.open_dir("demo")
+        self.policy("demo", mechanism_required=True)
+        args = ("--campaign", "demo", "new", "cand-a", "--hypothesis", "a long enough mechanism hypothesis")
+        rc, out = self.run_cli(*args)
+        self.assertEqual(rc, 2, out)
+        self.assertIn("requires --mechanism", out["error"])
+        self.assertFalse((self.project / "worktrees").exists())
+        for bad in ("a:bad:up", "../x:swapin_vmstat_delta.swap_ra:up", "a:metadata_delta_bytes_per_capacity_slot:sideways"):
+            with self.assertRaises(c.argparse.ArgumentTypeError):
+                c.parse_mechanism(bad)
+        mechanism = "swapin-disk:swapin_vmstat_delta.swap_ra_hit:up"
+        rc, out = self.run_cli(*args, "--mechanism", mechanism)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(cs.candidates("demo")["cand-a"]["mechanism"], mechanism)
+
+    def test_resume_preserves_campaign_ledger_stop_and_budget(self):
+        self.prep("one")
+        self.assertEqual(self.run_cli("--campaign", "one", "open-campaign", "--line", "swap", "--machine", "hurricpc")[0], 0)
+        cs.release_claim("one", "simulated disconnect")
+        directory = self.campaigns / "one"
+        (directory / "STOP").touch()
+        (directory / "ledger").mkdir()
+        (directory / "ledger/budget.json").write_text('{"guests": 3, "created": 10}')
+        before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+        rc, out = self.run_cli("--campaign", "one", "resume-campaign", "--reason", "recover existing machine claim")
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(cs.read_claim(), "one")
+        self.assertEqual(before, {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()})
+        self.assertIn("recover existing machine claim", cs.claim_path().with_suffix(".log").read_text())
+
+    def test_resume_refuses_closed_foreign_conflicting_or_drifted(self):
+        self.prep("one")
+        cs.write("one", self.record("one"))
+        args = ("--campaign", "one", "resume-campaign", "--reason", "recover")
+        for changes, error in (({"status": "closed", "closed": "2026-10-28"}, "closed"),
+                               ({"machine": "grok-cloud"}, "another machine")):
+            cs.write("one", self.record("one", **changes))
+            rc, out = self.run_cli(*args)
+            self.assertEqual(rc, 2, out)
+            self.assertIn(error, out["error"])
+        cs.write("one", self.record("one"))
+        protocol = self.campaigns / "one/protocol.json"
+        p = json.loads(protocol.read_text())
+        p["budget"]["guest_attempts"] = 11
+        protocol.write_text(json.dumps(p))
+        self.assertIn("budget.guest_attempts", self.run_cli(*args)[1]["error"])
+        p["budget"]["guest_attempts"] = 10
+        protocol.write_text(json.dumps(p))
+        self.open_dir("other")
+        self.assertIn("another campaign", self.run_cli(*args)[1]["error"])
+        self.assertIsNone(cs.read_claim())
+
+
 class OpenCloseTests(Fixture):
     def open(self, name, *extra, machine="hurricpc"):
         return self.run_cli("--campaign", name, "open-campaign", "--line", "swap",

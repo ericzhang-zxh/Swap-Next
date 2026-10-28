@@ -224,12 +224,24 @@ def doctor():
             "note": "KVM access alone does not verify nested virtualization or boot."}
 
 
-def create(name, hypothesis):
+def parse_mechanism(value):
+    pattern = (r"[a-z][a-z0-9-]{0,47}:(?:metadata_delta_bytes_per_capacity_slot|"
+               r"swapin_vmstat_delta\.[a-z][a-z0-9_]*|xswap\.[a-z][a-z0-9_]*):(up|down)")
+    if not isinstance(value, str) or not re.fullmatch(pattern, value):
+        raise argparse.ArgumentTypeError("mechanism must be CASE:KEY:up|down")
+    return value
+
+
+def create(name, hypothesis, mechanism=None):
     require(re.fullmatch(r"[a-z][a-z0-9-]{0,47}", name), "invalid candidate name")
     require(10 <= len(hypothesis) <= 2000, "hypothesis must be 10..2000 characters")
     trusted_control()
     active()
     config = policy()
+    require(not config.get("mechanism_required") or mechanism is not None,
+            "campaign policy requires --mechanism CASE:KEY:up|down")
+    if mechanism is not None:
+        mechanism = parse_mechanism(mechanism)
     with lock():
         active()
         records = registry()
@@ -245,6 +257,8 @@ def create(name, hypothesis):
         record = {"id": name, "parent": parent, "worktree": str(root.relative_to(PROJECT)),
                   "status": "active", "hypothesis": hypothesis,
                   "created_unix": time.time(), "protocol_sha256": protocol_hash()}
+        if mechanism is not None:
+            record["mechanism"] = mechanism
         records[name] = record
         save(records, record)
         names = ("CODE_PATTERNS.md", "PRINCIPLES.md", "METRICS.md")
@@ -353,6 +367,9 @@ def _open_campaign(args):
     require(protocol.get("campaign") == CAMPAIGN, "protocol campaign does not match directory")
     require(protocol.get("baseline_commit") == seed(), "protocol baseline_commit does not match policy seed")
     budget = dict(protocol["budget"])
+    if "probe" in protocol.get("tiers", {}):
+        require(config["budget"]["max_candidates"] >= protocol["max_probe_candidates"],
+                "controller max_candidates must cover max_probe_candidates")
     record = {"campaign": CAMPAIGN, "status": "open", "line": args.line,
               "baseline_from": baseline_from(args, protocol) if args.baseline_from else None,
               "machine": args.machine, "opened": time.strftime("%Y-%m-%d", time.gmtime()),
@@ -370,6 +387,34 @@ def _open_campaign(args):
         campaign_store.release_claim(CAMPAIGN, "open-campaign failed", locked=True)
         raise
     return record
+
+
+def resume_campaign(reason):
+    """Recover the existing campaign's claim without changing its scientific state."""
+    require(CAMPAIGN, "resume-campaign needs --campaign")
+    require(reason.strip(), "resume-campaign requires a reason")
+    with campaign_store.claim_lock():
+        record = campaign_store.require_open(CAMPAIGN)
+        require(record["machine"] == campaign_store.current_machine(), "campaign belongs to another machine")
+        directory = campaign_store.campaign_dir(CAMPAIGN)
+        protocol, config, base = load_json(directory / "protocol.json"), policy(), load_json(BASE_POLICY)
+        require(protocol.get("campaign") == CAMPAIGN, "protocol campaign does not match directory")
+        require(protocol.get("baseline_commit") == seed(), "protocol baseline_commit does not match policy seed")
+        require(set(config["allowed_modify"]) <= set(base["allowed_modify"]) and
+                set(config["allowed_add"]) <= set(base["allowed_add"]), "campaign policy widens the base scope")
+        for key in ("guest_attempts", "probe_guest_attempts", "wall_seconds"):
+            require(protocol.get("budget", {}).get(key, 0) == record["budget"][key],
+                    "protocol budget." + key + " does not match campaign.json")
+        errors = campaign_store.budget_errors(record)
+        require(not errors, "; ".join(errors))
+        for path in campaign_store.CAMPAIGNS.glob("*/campaign.json"):
+            other = campaign_store.load(path.parent.name)
+            require(other["campaign"] == CAMPAIGN or other["status"] != "open" or
+                    other["machine"] != record["machine"], "another campaign is open on this machine")
+        campaign_store.take_claim(CAMPAIGN, locked=True)
+        with campaign_store.claim_path().with_suffix(".log").open("a") as stream:
+            stream.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')} resumed {CAMPAIGN}: {reason}\n")
+    return dict(record, claim_recovered=True)
 
 
 def close_campaign(reason):
@@ -406,6 +451,7 @@ def main():
     p = commands.add_parser("new")
     p.add_argument("name")
     p.add_argument("--hypothesis", required=True)
+    p.add_argument("--mechanism", type=parse_mechanism)
     for name in ("guard", "check"):
         commands.add_parser(name).add_argument("name")
     p = commands.add_parser("close")
@@ -418,7 +464,7 @@ def main():
     p.add_argument("--evidence-report")
     p.add_argument("--evidence-row")
     p.add_argument("--over-cap-approval")
-    for name in ("close-campaign", "release-claim"):
+    for name in ("close-campaign", "release-claim", "resume-campaign"):
         commands.add_parser(name).add_argument("--reason", required=True)
     p = commands.add_parser("analyze")
     p.add_argument("name")
@@ -441,11 +487,13 @@ def main():
             result = open_campaign(args)
         elif args.command == "close-campaign":
             result = close_campaign(args.reason)
+        elif args.command == "resume-campaign":
+            result = resume_campaign(args.reason)
         elif args.command == "release-claim":
             campaign_store.release_claim(None, args.reason)
             result = {"status": "RELEASED"}
         elif args.command == "new":
-            result = create(args.name, args.hypothesis)
+            result = create(args.name, args.hypothesis, args.mechanism)
         elif args.command in ("guard", "check"):
             result = check_candidate(args.name, args.command == "check")
         elif args.command == "close":
