@@ -18,7 +18,7 @@
 - Campaign names match `[a-z][a-z0-9-]{0,47}`; line names match the same pattern.
 - Moved files keep their bytes (`git mv`). Frozen protocols stay byte identical.
 - Published page URLs stay `/<name>/` exactly as today.
-- The global emergency stop stays at `evolve/control/state/STOP` (eight runners read it). Per-campaign STOP becomes `campaigns/<c>/STOP`.
+- The global emergency stop moves to `campaigns/STOP` (`campaign_store.GLOBAL_STOP`). Both it and `campaigns/<c>/STOP` are always checked; a campaign STOP adds to the global one and can never replace or disable it.
 - The candidate file list (eight MAINTAINERS files) and `diff_guard` are unchanged.
 - After every task, the full Checks list passes:
   ```sh
@@ -50,7 +50,7 @@
 **Interfaces:**
 - Produces (all in `campaign_store`):
   - `class CampaignError(ValueError)`
-  - `PROJECT: Path` (repo root), `CAMPAIGNS = PROJECT / "campaigns"`, `HOSTS = CAMPAIGNS / "hosts.json"`
+  - `PROJECT: Path` (repo root), `CAMPAIGNS = PROJECT / "campaigns"`, `HOSTS = CAMPAIGNS / "hosts.json"`, `GLOBAL_STOP = CAMPAIGNS / "STOP"`
   - `CAP_GUEST_ATTEMPTS = 120`, `CAP_WALL_SECONDS = 64800`
   - `campaign_dir(name: str) -> Path` — validates the name, returns `CAMPAIGNS / name` (may not exist)
   - `load(name: str) -> dict` — reads and validates `campaign.json`
@@ -84,7 +84,7 @@
 
 **Interfaces:**
 - Consumes: Task 1 `campaign_store` (all names).
-- Produces, with `--campaign <c>`: `POLICY = campaigns/<c>/policy.json`; candidate records in `campaigns/<c>/candidates/<id>.json`; per-candidate artifacts (`task.json`, `scope.json`, `static.json`, `analysis.json`, `*.log`) in `campaigns/<c>/candidates/<id>/`; `check` writes the patch to `campaigns/<c>/patches/<id>.patch`; events to `campaigns/<c>/ledger/events.jsonl`; lock file `campaigns/<c>/.lock`; `stopped()` checks `evolve/control/state/STOP` and `campaigns/<c>/STOP`. Recorded `worktree` values are repository-relative (`worktrees/<c>/<id>`) and resolved against `PROJECT` when used. Without `--campaign` the unscoped base-policy mode keeps today's `evolve/control/state` paths.
+- Produces, with `--campaign <c>`: `POLICY = campaigns/<c>/policy.json`; candidate records in `campaigns/<c>/candidates/<id>.json`; per-candidate artifacts (`task.json`, `scope.json`, `static.json`, `analysis.json`, `*.log`) in `campaigns/<c>/candidates/<id>/`; `check` writes the patch to `campaigns/<c>/patches/<id>.patch`; events to `campaigns/<c>/ledger/events.jsonl`; lock file `campaigns/<c>/.lock`; `stopped()` checks `campaign_store.GLOBAL_STOP` and `campaigns/<c>/STOP`; unscoped mode checks `GLOBAL_STOP`. Recorded `worktree` values are repository-relative (`worktrees/<c>/<id>`) and resolved against `PROJECT` when used. Without `--campaign` the unscoped base-policy mode keeps today's `evolve/control/state` paths.
 - New subcommands (all require `--campaign`):
   - `open-campaign --line L --machine M [--baseline-from CAMPAIGN:CANDIDATE] [--evidence-report PATH | --evidence-row ID] [--over-cap-approval TEXT]` — requires `policy.json` and `protocol.json` already in the directory and no `campaign.json`; checks the policy keeps or narrows the base list, `budget_errors` on the protocol's `budget` (`guest_attempts`, `wall_seconds`, `probe_guest_attempts` default 0), `M == current_machine()`, the baseline evidence (a `fast_pass` row must exist in that campaign's `ledger/ledger.json` with `status == "FAST_PASS"` and matching `candidate_commit`; a `correctness_fix` report must exist), then writes `campaign.json` (`status: open`, `opened` = UTC date) and takes the claim.
   - `close-campaign --reason TEXT` — refuses if any candidate is `active` without `patches/<id>.patch`; otherwise closes active candidates with the reason, sets `status: closed`, `closed` date, releases the claim.
@@ -138,17 +138,17 @@
 ### Task 4: Older entry points follow the new layout
 
 **Files:**
-- Modify: `evolve/loop.py` (`Suite.candidates`), `evolve/confirm.py` (state directory), `benchmark/xswap/import-reference.py` (`PATCHES`, policy paths), and the per-campaign STOP paths in `benchmark/xswap/run.py`, `benchmark/xswap/evaluate_kernel.py`, `benchmark/xswap-structure/run.py`, `benchmark/xswap-structure/evaluate_kernel.py`, `benchmark/xswap-hole-probe/run.py`
+- Modify: `evolve/loop.py` (`Suite.candidates`), `evolve/confirm.py` (state directory, STOP), `benchmark/xswap/import-reference.py` (`PATCHES`, policy paths), and the global and per-campaign STOP paths in `benchmark/kernel/build.py`, `benchmark/kernel/run.py`, `benchmark/swap-standard/run.py`, `benchmark/xswap-p123/run.py`, `benchmark/xswap/run.py`, `benchmark/xswap/evaluate_kernel.py`, `benchmark/xswap-structure/run.py`, `benchmark/xswap-structure/evaluate_kernel.py`, `benchmark/xswap-hole-probe/run.py`
 - Modify: `benchmark/xswap-structure/test_campaign.py`, `benchmark/tests/test_layout.py`
 - Create: `benchmark/tests/test_no_old_paths.py`
 
 **Interfaces:**
 - Consumes: Task 1 `campaign_store.candidates`, `campaign_dir`.
-- Produces: `Suite.candidates()` returns `campaign_store.candidates(self.campaign)`; `confirm.py` keeps its ledger in `campaigns/<c>/ledger/confirmation.json`; `import-reference.py` reads `campaigns/xswap-2026-10-21/import-policy.json` and writes the replay campaign into `campaigns/xswap-reference-replay/`, patches from `campaigns/_unassigned/patches/xswap-reference/`; per-campaign STOP is `campaigns/<c>/STOP`. Legacy suites keep their own `state-layout-v1` directories and their whole-suite `protocol.json` files in place.
+- Produces: `Suite.candidates()` returns `campaign_store.candidates(self.campaign)`; `confirm.py` keeps its ledger in `campaigns/<c>/ledger/confirmation.json`; `import-reference.py` reads `campaigns/xswap-2026-10-21/import-policy.json` and writes the replay campaign into `campaigns/xswap-reference-replay/`, patches from `campaigns/_unassigned/patches/xswap-reference/`; the global STOP is `PROJECT / "campaigns/STOP"` and per-campaign STOP is `campaigns/<c>/STOP` in every runner (runners hard-code the two paths rather than import `campaign_store`, as they hard-code the old ones today). Legacy suites keep their own `state-layout-v1` directories and their whole-suite `protocol.json` files in place.
 
-- [ ] **Step 1: Write the failing test** `test_no_old_paths.py::test_code_uses_campaign_layout`: `git grep -n -E "evolve/control/campaigns|evolve/control/state/[a-z]|evolve/control/state\" */|evolve/swap-standard/state|confirmations|results/|patches/"` over tracked `*.py`, `*.sh`, `*.yml`, excluding `campaigns/*/report/**` (historical report scripts) and `linux/`, returns no lines. The global `evolve/control/state/STOP` is allowed.
+- [ ] **Step 1: Write the failing test** `test_no_old_paths.py::test_code_uses_campaign_layout`: `git grep -n -E "evolve/control/campaigns|evolve/control/state/[a-z]|evolve/control/state\" */|evolve/swap-standard/state|confirmations|results/|patches/"` over tracked `*.py`, `*.sh`, `*.yml`, excluding `campaigns/*/report/**` (historical report scripts) and `linux/`, returns no lines, and no tracked code mentions `evolve/control/state/STOP`. Add `test_every_runner_honours_global_stop`: for each of the nine files above, the source contains `campaigns/STOP` or `campaign_store.GLOBAL_STOP`.
 - [ ] **Step 2: Run** `python3 -m unittest benchmark/tests/test_no_old_paths.py -v` — expected: FAIL listing the files above.
-- [ ] **Step 3: Update** each file to the interfaces above; `test_layout.py` and `benchmark/xswap-structure/test_campaign.py` assert the new STOP path.
+- [ ] **Step 3: Update** each file to the interfaces above; `test_layout.py` and `benchmark/xswap-structure/test_campaign.py` assert the new STOP paths; `test_campaign.py::test_global_and_campaign_stop` asserts that either file alone halts the controller.
 - [ ] **Step 4: Run** the full Checks list — expected: PASS except `test_no_old_paths` for `build_site.py` and `pages.yml`, which Task 5 fixes.
 - [ ] **Step 5: Commit** `evolve, benchmark: older entry points use the campaign directory`.
 
@@ -217,7 +217,7 @@
 
 - [ ] **Step 1: Write the failing test** `test_lines.py::test_line_index`: two fixture campaigns on line `xswap` produce `lines/xswap.md` listing both in date order with their candidates, and `README.md` lists both rows; regenerating twice gives identical bytes.
 - [ ] **Step 2: Run** it — expected: FAIL. **Step 3: Implement** `lines.py`; call it from `close-campaign`. **Step 4: Run** — PASS. **Step 5: Commit** `controller: generate campaign and line indexes`.
-- [ ] **Step 6: Migrate the real repo.** Run `python3 evolve/control/migrate.py plan > /tmp/migration-plan.txt`; read it; confirm every directory under `evolve/control/campaigns`, `results`, `patches` appears. Run `python3 evolve/control/migrate.py apply`. Add to `.gitignore`: `campaigns/*/runs/`, `campaigns/*/.lock`, `campaigns/*/STOP`, `campaigns/*/ledger/*.tmp`. Verify `grep -rl /home/ campaigns` prints nothing and `git status` shows only renames, additions under `campaigns/`, and the two README stubs. Run the full Checks list — PASS. Commit `campaigns: move every campaign into campaigns/<c>/` with the body naming the pre-migration commit.
+- [ ] **Step 6: Migrate the real repo.** Run `python3 evolve/control/migrate.py plan > /tmp/migration-plan.txt`; read it; confirm every directory under `evolve/control/campaigns`, `results`, `patches` appears. Run `python3 evolve/control/migrate.py apply`. Add to `.gitignore`: `campaigns/STOP`, `campaigns/*/runs/`, `campaigns/*/.lock`, `campaigns/*/STOP`, `campaigns/*/ledger/*.tmp`. If `evolve/control/state/STOP` exists on this machine, move it to `campaigns/STOP` before running anything. Verify `grep -rl /home/ campaigns` prints nothing and `git status` shows only renames, additions under `campaigns/`, and the two README stubs. Run the full Checks list — PASS. Commit `campaigns: move every campaign into campaigns/<c>/` with the body naming the pre-migration commit.
 - [ ] **Step 7: Rewrite links.** Run `python3 evolve/control/migrate.py links`; `git diff --stat` touches only `campaigns/*/report/**`; `git diff -U0 | grep '^[-+][^-+]'` shows only changed link targets. Commit `campaigns: point report links at the moved files` noting that pinned hashes of these files verify at the pre-migration commit.
 - [ ] **Step 8: Regenerate indexes and the site.** Run `python3 evolve/control/lines.py` and `python3 .agents/skills/explaining-campaign-results/scripts/build_site.py campaigns /tmp/site`; compare `ls /tmp/site` with the six names published before (`swap-standard-evolve-2026-10-22`, `swap-standard-integration-2026-10-22`, `xswap-2026-10-21`, `xswap-next-2026-10-24`, `xswap-structure-2026-10-22`, `xswap-swapin-2026-10-23`). Commit `campaigns: generated campaign and line indexes`.
 - [ ] **Step 9: Push** `git push origin main`; after the Pages run, open `https://ericzhang-zxh.github.io/Swap-Next/xswap-next-2026-10-24/` and `https://ericzhang-zxh.github.io/Swap-Next/swap-standard-evolve-2026-10-22/` and confirm both load.
