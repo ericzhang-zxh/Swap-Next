@@ -1,10 +1,14 @@
 # SPDX-License-Identifier: GPL-2.0-only
 """Migration preserves scientific inputs and recovers interrupted filesystem work."""
 import contextlib
+import fcntl
 import hashlib
 import importlib.util
 import io
 import json
+import multiprocessing
+import os
+import queue
 import shutil
 from pathlib import Path
 import subprocess
@@ -15,6 +19,40 @@ from unittest import mock
 SPEC = importlib.util.spec_from_file_location("campaign_migration", Path(__file__).parents[1] / "migrate.py")
 migration = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(migration)
+
+
+def import_in_process(root, output, started):
+    """Real subprocess importer; all files and locks belong to the temp fixture."""
+    started.set()
+    try:
+        migration.Migration(root).import_state()
+        output.put(("ok", None))
+    except Exception as exc:
+        output.put((type(exc).__name__, str(exc)))
+
+
+def locked_runtime_writer(lock, target, acquired, release, finished):
+    lock, target = Path(lock), Path(target)
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    with lock.open("a") as stream:
+        fcntl.flock(stream, fcntl.LOCK_EX)
+        acquired.set()
+        if not release.wait(10):
+            raise RuntimeError("test writer was not released")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_name(target.name + ".writer.tmp")
+        temporary.write_text('{"created": 10, "guests": 1, "probe_guests": 0, "builds": 0}')
+        os.replace(temporary, target)
+    finished.set()
+
+
+def racing_unlocked_writer(target, request, finished):
+    if not request.wait(10):
+        raise RuntimeError("exclusive-create race was not requested")
+    target = Path(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text('{"created": 10, "guests": 1, "probe_guests": 0, "builds": 0}')
+    finished.set()
 
 
 class MigrationTests(unittest.TestCase):
@@ -255,6 +293,147 @@ class MachineStateImportTests(unittest.TestCase):
         self.tool.import_state()
         self.assertEqual(before, self.snapshot())
         self.assertEqual(received, receipt.read_bytes())
+
+    def add_budget_source(self):
+        self.write(f"evolve/swap-standard/state-{self.campaign}/budget.json",
+                   {"created": 10, "guests": 0, "probe_guests": 0, "builds": 0})
+        return self.root / f"campaigns/{self.campaign}/ledger/budget.json"
+
+    def test_receipt_replay_preserves_legitimate_destination_growth(self):
+        budget = self.add_budget_source()
+        self.tool.import_state()
+        receipt, journal = self.tool.state_paths("grok-cloud")
+        receipt_before = receipt.read_bytes()
+        self.write(str(budget.relative_to(self.root)), {"created": 10, "guests": 1, "probe_guests": 0, "builds": 1})
+        ledger = self.root / f"campaigns/{self.campaign}/ledger/ledger.json"
+        rows = json.loads(ledger.read_text()) + [{"id": "later-evaluation", "status": "FAST_REJECT"}]
+        ledger.write_text(json.dumps(rows))
+        candidate = self.root / f"campaigns/{self.campaign}/candidates/new.json"
+        record = json.loads(candidate.read_text())
+        record.update(status="closed", reason="later candidate decision")
+        candidate.write_text(json.dumps(record))
+        before, index_before = self.snapshot(), self.git("diff", "--cached")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.tool.import_state()
+        self.assertIn("already imported", output.getvalue())
+        self.assertEqual(before, self.snapshot())
+        self.assertEqual(index_before, self.git("diff", "--cached"))
+        self.assertEqual(receipt_before, receipt.read_bytes())
+        self.assertFalse(journal.exists())
+
+    def test_changed_legacy_source_after_receipt_refuses_without_resetting_capacity(self):
+        budget = self.add_budget_source()
+        self.tool.import_state()
+        receipt, journal = self.tool.state_paths("grok-cloud")
+        receipt_before = receipt.read_bytes()
+        self.write(str(budget.relative_to(self.root)), {"created": 10, "guests": 1, "probe_guests": 0, "builds": 0})
+        self.write(f"evolve/swap-standard/state-{self.campaign}/budget.json",
+                   {"created": 10, "guests": 2, "probe_guests": 0, "builds": 0})
+        before = self.snapshot()
+        with self.assertRaisesRegex(migration.MigrationError, "legacy sources changed after import"):
+            self.tool.import_state()
+        self.assertEqual(before, self.snapshot())
+        self.assertEqual(json.loads(budget.read_text())["guests"], 1)
+        self.assertEqual(receipt_before, receipt.read_bytes())
+        self.assertFalse(journal.exists())
+
+    def test_receipt_does_not_restore_a_deleted_budget_from_stale_legacy_state(self):
+        budget = self.add_budget_source()
+        self.tool.import_state()
+        receipt, _ = self.tool.state_paths("grok-cloud")
+        saved = receipt.read_bytes()
+        budget.unlink()
+        before = self.snapshot()
+        with self.assertRaisesRegex(migration.MigrationError, "destinations are missing"):
+            self.tool.import_state()
+        self.assertEqual(before, self.snapshot())
+        self.assertEqual(saved, receipt.read_bytes())
+        self.assertFalse(budget.exists())
+
+    def test_runtime_writer_locks_serialize_import_before_final_preflight(self):
+        budget = self.add_budget_source()
+        ctx = multiprocessing.get_context("fork")
+        for suffix in ("ledger/.lock", ".lock", "ledger/.budget.lock"):
+            with self.subTest(lock=suffix):
+                acquired, release, finished, started = [ctx.Event() for _ in range(4)]
+                output = ctx.Queue()
+                lock = self.root / f"campaigns/{self.campaign}" / suffix
+                writer = ctx.Process(target=locked_runtime_writer, args=(lock, budget, acquired, release, finished))
+                importer = ctx.Process(target=import_in_process, args=(self.root, output, started))
+                writer.start()
+                self.assertTrue(acquired.wait(5))
+                importer.start()
+                try:
+                    self.assertTrue(started.wait(5))
+                    with self.assertRaises(queue.Empty):
+                        output.get(timeout=.15)
+                    release.set()
+                    self.assertTrue(finished.wait(5))
+                    kind, message = output.get(timeout=10)
+                    self.assertEqual(kind, "MigrationError", message)
+                    self.assertIn("conflict", message)
+                    self.assertEqual(json.loads(budget.read_text())["guests"], 1)
+                finally:
+                    release.set()
+                    for process in (writer, importer):
+                        process.join(10)
+                        if process.is_alive():
+                            process.terminate()
+                            process.join(5)
+                        self.assertEqual(process.exitcode, 0)
+                self.assertFalse(self.tool.state_paths("grok-cloud")[0].exists())
+                budget.unlink()
+
+    def test_exclusive_publication_preserves_an_unlocked_writer_winning_the_race(self):
+        budget = self.add_budget_source()
+        ctx = multiprocessing.get_context("fork")
+        request, finished = ctx.Event(), ctx.Event()
+        writer = ctx.Process(target=racing_unlocked_writer, args=(budget, request, finished))
+        writer.start()
+        real_link = migration.os.link
+        def publish(source, target, *args, **kwargs):
+            if Path(target) == budget:
+                request.set()
+                if not finished.wait(5):
+                    raise RuntimeError("race writer failed")
+            return real_link(source, target, *args, **kwargs)
+        try:
+            with mock.patch.object(migration.os, "link", side_effect=publish):
+                with self.assertRaisesRegex(migration.MigrationError, "appeared during import"):
+                    self.tool.import_state()
+        finally:
+            request.set()
+            writer.join(10)
+            if writer.is_alive():
+                writer.terminate()
+                writer.join(5)
+        self.assertEqual(writer.exitcode, 0)
+        self.assertEqual(json.loads(budget.read_text())["guests"], 1)
+        receipt, journal = self.tool.state_paths("grok-cloud")
+        self.assertFalse(receipt.exists())
+        self.assertTrue(journal.exists())
+        self.assertEqual(list(budget.parent.glob(".migration-*.tmp")), [])
+
+    def test_receipt_before_journal_cleanup_recovers_without_replaying_old_budget(self):
+        budget = self.add_budget_source()
+        receipt, journal = self.tool.state_paths("grok-cloud")
+        unlink = Path.unlink
+        def interrupt(path, *args, **kwargs):
+            if path == journal:
+                raise RuntimeError("crash after receipt")
+            return unlink(path, *args, **kwargs)
+        with mock.patch.object(Path, "unlink", interrupt):
+            with self.assertRaisesRegex(RuntimeError, "crash after receipt"):
+                self.tool.import_state()
+        self.assertTrue(receipt.exists())
+        self.assertTrue(journal.exists())
+        self.write(str(budget.relative_to(self.root)), {"created": 10, "guests": 1, "probe_guests": 0, "builds": 0})
+        saved = receipt.read_bytes()
+        self.tool.import_state()
+        self.assertEqual(json.loads(budget.read_text())["guests"], 1)
+        self.assertEqual(saved, receipt.read_bytes())
+        self.assertFalse(journal.exists())
 
     def test_cloud_paths_are_normalized_without_changing_device_names(self):
         tool = migration.Migration(self.root)

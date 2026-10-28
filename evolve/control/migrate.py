@@ -10,8 +10,9 @@ state. It records a private per-machine receipt under Git metadata. Stop local
 legacy runners first; different existing evidence must be reconciled explicitly.
 """
 import argparse
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from datetime import datetime, timezone
+import fcntl
 import hashlib
 import json
 import os
@@ -20,6 +21,7 @@ import posixpath
 import re
 import subprocess
 import sys
+import tempfile
 from urllib.parse import unquote, urlsplit, urlunsplit
 
 try:
@@ -343,7 +345,7 @@ class Migration:
             if isinstance(row, dict) and row.get("campaign", campaign) != campaign:
                 raise MigrationError(f"campaign identity mismatch in {source}")
 
-    def local_state_moves(self, machine):
+    def local_state_moves(self, machine, *, check_destinations=True):
         """Plan local imports without replacing any different migrated evidence."""
         moves = []
         identities = {}
@@ -407,14 +409,14 @@ class Migration:
                         add(path, f"campaigns/{campaign}/candidates/{cid}/" + str(path.relative_to(directory / cid)))
             if events.exists(): add(events, f"campaigns/{campaign}/ledger/events.jsonl")
             if stop.exists(): add(stop, f"campaigns/{campaign}/STOP", exact=True, ignored=True)
-        self.preflight_state(moves, machine)
+        self.preflight_state(moves, machine, check_destinations=check_destinations)
         return moves
 
     def state_equivalent(self, op, data):
         expected = self.content(op)
         return (data if op["how"] == "copy" else self.clean_paths(data)) == expected
 
-    def preflight_state(self, moves, machine):
+    def preflight_state(self, moves, machine, *, check_destinations=True):
         targets = set()
         for op in moves:
             target = self.project / op["to"]
@@ -427,62 +429,147 @@ class Migration:
             if record["machine"] != machine: raise MigrationError(f"state destination belongs to another machine: {op['to']}")
             if digest(source.read_bytes()) != op["sha256"]:
                 raise MigrationError(f"local state source changed during import: {op['from']}")
-            if target.exists() and (not target.is_file() or not self.state_equivalent(op, target.read_bytes())):
-                raise MigrationError(f"local state conflicts with migrated destination: {op['to']}; reconcile evidence before importing")
+            if check_destinations and (target.exists() or target.is_symlink()):
+                if target.is_symlink() or not target.is_file() or not self.state_equivalent(op, target.read_bytes()):
+                    raise MigrationError(f"local state conflicts with migrated destination: {op['to']}; reconcile evidence before importing")
+
+    @staticmethod
+    def source_identity(moves):
+        """Receipt identity excludes observations of destinations that may evolve."""
+        keys = ("from", "to", "how", "sha256", "output_sha256", "candidate_id", "ignored")
+        return sorted(({key: op[key] for key in keys if key in op} for op in moves),
+                      key=lambda op: (op["from"], op["to"]))
+
+    @contextmanager
+    def state_import_locks(self, moves, machine):
+        """Lock order: private import lock, all workflow locks, controller locks,
+        then budget locks, with campaign names sorted within each level. Runtime
+        writers acquire the same subsequence (workflow -> controller -> budget),
+        so import never holds a budget lock while waiting for a workflow. Legacy
+        runners must already be stopped; they do not follow these new locks.
+
+        Source ownership/path checks precede every lock-file or directory write.
+        """
+        self.preflight_state(moves, machine, check_destinations=False)
+        receipt, _ = self.state_paths(machine)
+        campaigns = sorted({Path(op["to"]).parts[1] for op in moves})
+        paths = [receipt.parent / "import-state.lock"]
+        paths += [self.campaigns / name / "ledger/.lock" for name in campaigns]
+        paths += [self.campaigns / name / ".lock" for name in campaigns]
+        paths += [self.campaigns / name / "ledger/.budget.lock" for name in campaigns]
+        with ExitStack() as stack:
+            for index, path in enumerate(paths):
+                if index and not path.resolve().is_relative_to(self.campaigns.resolve()):
+                    raise MigrationError("state import lock escapes campaigns")
+                path.parent.mkdir(parents=True, exist_ok=True)
+                descriptor = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+                stream = stack.enter_context(os.fdopen(descriptor, "a"))
+                fcntl.flock(stream, fcntl.LOCK_EX)
+            yield
 
     def import_state_file(self, op):
-        """Write a missing artifact atomically; equivalent existing bytes stay put."""
+        """Publish complete missing evidence without ever replacing a new writer.
+
+        A same-directory temp plus link is atomic and exclusive. If a writer
+        wins creation after preflight, equivalent bytes are retained; different
+        bytes cause failure. The private journal permits recovery after either
+        publishing or staging, without exposing a partial destination file.
+        """
         source, target = self.project / op["from"], self.project / op["to"]
         if digest(source.read_bytes()) != op["sha256"]:
             raise MigrationError(f"local state source changed during import: {op['from']}")
         data = self.content(op)
-        if target.exists():
-            if not self.state_equivalent(op, target.read_bytes()):
+        if digest(data) != op["output_sha256"]:
+            raise MigrationError(f"local state output changed during import: {op['from']}")
+        if target.exists() or target.is_symlink():
+            if target.is_symlink() or not target.is_file() or not self.state_equivalent(op, target.read_bytes()):
                 raise MigrationError(f"local state destination changed during import: {op['to']}")
         else:
             target.parent.mkdir(parents=True, exist_ok=True)
-            tmp = target.with_name(target.name + ".migration-tmp")
-            tmp.write_bytes(data)
-            os.replace(tmp, target)
+            temporary = None
+            try:
+                with tempfile.NamedTemporaryFile(dir=target.parent, prefix=".migration-", suffix=".tmp", delete=False) as stream:
+                    temporary = Path(stream.name)
+                    stream.write(data)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                try:
+                    os.link(temporary, target)
+                except FileExistsError:
+                    if target.is_symlink() or not target.is_file() or not self.state_equivalent(op, target.read_bytes()):
+                        raise MigrationError(f"local state destination appeared during import: {op['to']}; newer evidence retained")
+            finally:
+                if temporary is not None: temporary.unlink(missing_ok=True)
         # Recovery may encounter bytes copied just before the prior process
         # died at git-add. Stage equivalent files as well as newly copied ones.
         if not op.get("ignored"): self.git("add", "-f", "--", op["to"])
 
     def import_state(self):
-        """Import this worker's ignored state even after MOVED arrives via git."""
+        """Import this worker's legacy state once, preserving later new-layout work."""
         if not self.done.exists(): raise MigrationError("apply tracked layout migration before import-state")
-        manifest = json.loads(self.done.read_text())
         with self.store_root(): machine = store.current_machine()
-        receipt_path, journal = self.state_paths(machine)
-        if journal.exists():
-            job = json.loads(journal.read_text())
-            if job.get("machine") != machine or job.get("pre_migration_commit") != manifest["pre_migration_commit"]:
-                raise MigrationError("state import journal has mismatched machine or layout identity")
-            moves = job["sources"]
+        # Inventory only sources first: an earlier import's destinations are
+        # allowed to grow. No receipt, journal or runtime lock is written until
+        # ownership, paths, and every source identity have been checked.
+        moves = self.local_state_moves(machine, check_destinations=False)
+        receipt_path, _ = self.state_paths(machine)
+        # First imports can reject known conflicts before creating runtime lock
+        # files. A completed receipt defers this destination check: new ledgers
+        # may legitimately have advanced since the original import.
+        if not receipt_path.exists():
             self.preflight_state(moves, machine)
-        else:
-            moves = self.local_state_moves(machine)
-            job = {"machine": machine, "pre_migration_commit": manifest["pre_migration_commit"], "sources": moves}
-            if receipt_path.exists() and json.loads(receipt_path.read_text()) == job:
-                print("already imported local state")
+        with self.state_import_locks(moves, machine):
+            manifest = json.loads(self.done.read_text())
+            receipt_path, journal = self.state_paths(machine)
+            current = self.local_state_moves(machine, check_destinations=False)
+            if self.source_identity(current) != self.source_identity(moves):
+                raise MigrationError("local state sources changed while waiting for import locks; reconcile before retrying")
+            identity = {"machine": machine, "pre_migration_commit": manifest["pre_migration_commit"]}
+            if receipt_path.exists():
+                receipt = json.loads(receipt_path.read_text())
+                if any(receipt.get(key) != value for key, value in identity.items()):
+                    raise MigrationError("state import receipt has mismatched machine or layout identity")
+                if self.source_identity(receipt["sources"]) != self.source_identity(current):
+                    raise MigrationError("legacy sources changed after import; reconcile evidence before importing again")
+                missing = [op["to"] for op in current if not op.get("ignored") and
+                           (not (self.project / op["to"]).is_file() or (self.project / op["to"]).is_symlink())]
+                if missing:
+                    raise MigrationError("imported destinations are missing or invalid; reconcile evidence: " + ", ".join(missing))
+                if journal.exists():
+                    pending = json.loads(journal.read_text())
+                    if (any(pending.get(key) != value for key, value in identity.items()) or
+                            self.source_identity(pending["sources"]) != self.source_identity(current)):
+                        raise MigrationError("state import journal differs from the completed receipt")
+                    journal.unlink()
+                print("already imported local state; evolved destinations retained")
                 return
-            # No receipt or journal is written until all local source identities
-            # and every destination have passed conflict checks.
-            dump(journal, job)
-        new = [op for op in moves if not (self.project / op["to"]).exists()]
-        for op in moves: self.import_state_file(op)
-        # Keep provenance for new tracked imports alongside the immutable layout
-        # mapping. The receipt/journal remain private Git metadata per machine.
-        imported = {"machine": machine, "sources": [op for op in moves if not op.get("ignored")]}
-        imports = manifest.get("state_imports", [])
-        if imported["sources"] and imported not in imports:
-            imports.append(imported)
-            manifest["state_imports"] = imports
-            dump(self.done, manifest)
-            self.git("add", "--", "campaigns/MOVED.json")
-        dump(receipt_path, job)
-        journal.unlink()
-        print(f"imported {len(new)} machine-local state files for {machine}")
+            if journal.exists():
+                job = json.loads(journal.read_text())
+                if any(job.get(key) != value for key, value in identity.items()):
+                    raise MigrationError("state import journal has mismatched machine or layout identity")
+                if self.source_identity(job["sources"]) != self.source_identity(current):
+                    raise MigrationError("legacy sources changed during partial import; reconcile before retrying")
+                moves = job["sources"]
+            else:
+                moves = current
+                job = dict(identity, sources=moves)
+            self.preflight_state(moves, machine)
+            if not journal.exists(): dump(journal, job)
+            new = [op for op in moves if not (self.project / op["to"]).exists()]
+            for op in moves: self.import_state_file(op)
+            self.preflight_state(moves, machine)
+            # MOVED and receipts are protected by the private import lock too,
+            # so imports on another campaign cannot lose a provenance update.
+            imported = {"machine": machine, "sources": [op for op in moves if not op.get("ignored")]}
+            imports = manifest.get("state_imports", [])
+            if imported["sources"] and imported not in imports:
+                imports.append(imported)
+                manifest["state_imports"] = imports
+                dump(self.done, manifest)
+                self.git("add", "--", "campaigns/MOVED.json")
+            dump(receipt_path, job)
+            journal.unlink()
+            print(f"imported {len(new)} machine-local state files for {machine}")
 
     def links(self):
         if not self.done.exists():
