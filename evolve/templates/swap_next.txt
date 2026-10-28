@@ -1,0 +1,26 @@
+Campaign proposal binding
+{binding}
+
+Choose the campaign baseline or the sampled exact parent commit. State the choice,
+hypothesis, expected mechanism and falsifier. Preserve the cumulative scope and
+compare every child with the frozen campaign baseline. A neutral screen may be an
+exploratory parent; advancing a campaign baseline requires improvement beyond its
+calibrated noise. Screens are not acceptance or permission for a slow run.
+
+Sampled parent and cumulative patch evidence
+{parent_evidence}
+
+Inspirations (negative examples are never eligible parents)
+{inspiration_evidence}
+
+Last three outcomes
+{outcomes}
+
+Relevant earlier failures
+{older_failures}
+
+Line history
+{line_history}
+
+Remaining guest pools and build budget
+{remaining}
