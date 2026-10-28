@@ -270,7 +270,8 @@ class Migration:
                     raise MigrationError(f"source changed since migration was planned: {op['from']}")
                 if target.exists():
                     expected = op.get("output_sha256", op["sha256"])
-                    if not self.pending.exists() or digest(target.read_bytes()) != expected:
+                    copied = op["how"] in ("copy", "copy-rewritten")
+                    if (not self.pending.exists() and not copied) or digest(target.read_bytes()) != expected:
                         raise MigrationError(f"destination already exists: {op['to']}")
             elif op["how"] != "git-mv" or not target.is_file() or digest(target.read_bytes()) != op["sha256"]:
                 raise MigrationError(f"missing source and verified destination: {op['from']}")

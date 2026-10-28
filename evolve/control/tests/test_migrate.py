@@ -116,6 +116,22 @@ class MigrationTests(unittest.TestCase):
         self.assertEqual(before, self.snapshot())
         self.assertEqual(self.git("status", "--porcelain"), "")
 
+    def test_identical_existing_stop_is_preserved(self):
+        name = "xswap-next-2026-10-24"
+        self.write(f"evolve/control/state/{name}/STOP", "preserve owner stop\n")
+        self.write(f"campaigns/{name}/STOP", "preserve owner stop\n")
+        self.tool.apply()
+        self.assertEqual((self.root / f"campaigns/{name}/STOP").read_text(), "preserve owner stop\n")
+
+    def test_conflicting_existing_stop_refuses_before_moves(self):
+        name = "xswap-next-2026-10-24"
+        self.write(f"evolve/control/state/{name}/STOP", "old stop\n")
+        self.write(f"campaigns/{name}/STOP", "different stop\n")
+        before = self.snapshot()
+        with self.assertRaisesRegex(migration.MigrationError, "destination already exists"):
+            self.tool.apply()
+        self.assertEqual(before, self.snapshot())
+
     def test_idempotent(self):
         self.tool.apply()
         before = self.snapshot()
