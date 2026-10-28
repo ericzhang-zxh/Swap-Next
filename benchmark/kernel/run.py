@@ -5,7 +5,7 @@ import argparse,datetime,fcntl,hashlib,json,math,os,pathlib,re,signal,subprocess
 from lifetime import bind_child_to_parent
 BASE=pathlib.Path(__file__).resolve().parent
 PROJECT=BASE.parents[1]
-STOP=PROJECT/"evolve/control/state/STOP"
+STOP=PROJECT/"campaigns/STOP"
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def percentile(a,p):return sorted(a)[math.ceil(len(a)*p)-1]/1000
 def parse(log):

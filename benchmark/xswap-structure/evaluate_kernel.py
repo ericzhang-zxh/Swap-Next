@@ -25,8 +25,8 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 def bounded(protocol):
-    for path in (PROJECT / 'evolve/control/state/STOP',
-                 PROJECT / 'evolve/control/state' / protocol['campaign'] / 'STOP'):
+    for path in (PROJECT / 'campaigns/STOP',
+                 PROJECT / 'campaigns' / protocol['campaign'] / 'STOP'):
         if path.exists():
             raise ValueError('STOP')
     if datetime.datetime.now(datetime.timezone.utc) >= datetime.datetime.fromisoformat(protocol['deadline_utc']):

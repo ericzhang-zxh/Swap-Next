@@ -61,5 +61,21 @@ class LayoutTests(unittest.TestCase):
         self.assertFalse(policy["runtime_enabled"])
         self.assertFalse(policy["thresholds_calibrated"])
 
+    def test_stop_paths_follow_campaign_layout(self):
+        run = (ROOT / "benchmark/xswap/run.py").read_text()
+        self.assertIn('PROJECT/"campaigns/STOP"', run)
+        self.assertIn('PROJECT/"campaigns/xswap-2026-10-21/STOP"', run)
+        for path in ("kernel/build.py", "kernel/run.py", "swap-standard/run.py", "xswap-p123/run.py"):
+            with self.subTest(path=path):
+                self.assertRegex((ROOT / "benchmark" / path).read_text(), r'PROJECT ?/ ?"campaigns/STOP"')
+
+    def test_adapter_reads_campaign_candidates(self):
+        loop = load_adapter()
+        seen = []
+        loop.campaign_store.candidates = lambda name: seen.append(name) or {"c": {"worktree": "w"}}
+        self.assertEqual(loop.Suite("xswap").candidates(), {"c": {"worktree": "w"}})
+        self.assertEqual(seen, ["xswap-2026-10-21"])
+
+
 if __name__ == "__main__":
     unittest.main()

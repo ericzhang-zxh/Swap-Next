@@ -20,7 +20,7 @@ PROJECT = BASE.parents[1]
 sys.path.insert(0, str(PROJECT / "benchmark/kernel"))
 from lifetime import bind_child_to_parent
 from evidence import parse, DIAGNOSTIC
-STOP = PROJECT / "evolve/control/state/STOP"
+STOP = PROJECT / "campaigns/STOP"
 
 
 def run_id(value):

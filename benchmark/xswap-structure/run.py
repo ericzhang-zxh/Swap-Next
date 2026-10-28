@@ -6,8 +6,8 @@ from lifetime import bind_child_to_parent
 BASE=pathlib.Path(__file__).resolve().parent
 PROJECT=BASE.parents[1]
 def campaign_stop(protocol):
-    return PROJECT/"evolve/control/state"/protocol["campaign"]/"STOP"
-STOP=PROJECT/"evolve/control/state/STOP"
+    return PROJECT/"campaigns"/protocol["campaign"]/"STOP"
+STOP=PROJECT/"campaigns/STOP"
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def percentile(a,p):return sorted(a)[math.ceil(len(a)*p)-1]/1000
 from evidence import parse

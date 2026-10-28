@@ -36,7 +36,7 @@ def main():
         if not result['pilot_pass']:
             failures.append(dict(build=result['build'], backend=result['backend'], serial_sha256=result['serial_sha256'], failed_gates=[k for k, v in result['gates'].items() if not v]))
     summary = dict(created_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(), scope='Phase I v4 + Phase II v1 xswap discovery; Phase III excluded', evaluations=evaluations, guest_attempts=len(attempts), guest_pilot_passes=passed, failed_attempts=failures, performance_accepted=False, auto_promote=False, statistical_limit='Two AB/BA pairs per backend; initial A/A shows large mapped-cluster state variation. Scores and mean differences do not establish an optimization.', raw_evidence='Retained privately on the Linux worker; hashes published here. No guest disks, binaries, local paths or raw serial logs are exported.')
-    destination = PROJECT / 'results/xswap-2026-10-21/summary.json'
+    destination = PROJECT / 'campaigns/xswap-2026-10-21/report/summary.json'
     destination.write_text(json.dumps(summary, indent=2) + '\n')
     print(json.dumps(dict(evaluations=len(evaluations), guest_attempts=len(attempts), guest_pilot_passes=passed, exported=str(destination.relative_to(PROJECT))), indent=2))
 

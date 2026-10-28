@@ -27,8 +27,7 @@ def sha(path):
 
 
 def stop_paths(protocol):
-    state = PROJECT / 'evolve/control/state'
-    return (state / 'STOP', state / protocol['campaign'] / 'STOP')
+    return (PROJECT / 'campaigns/STOP', PROJECT / 'campaigns' / protocol['campaign'] / 'STOP')
 
 
 def expired(protocol):

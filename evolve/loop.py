@@ -10,6 +10,7 @@ evolve/<suite>/state-layout-v1.
 import argparse
 import asyncio
 import fcntl
+import importlib.util
 import json
 import os
 import pathlib
@@ -20,6 +21,9 @@ import time
 import uuid
 
 PROJECT = pathlib.Path(__file__).resolve().parents[1]
+_spec = importlib.util.spec_from_file_location("campaign_store", PROJECT / "evolve/control/campaign_store.py")
+campaign_store = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(campaign_store)
 # Suite name -> whether its evaluator implements an A/A calibration request.
 SUITES = {"kernel": False, "xswap": True, "xswap-structure": True}
 INSTRUCTION = ("Propose one hypothesis and create a new controller worktree. "
@@ -44,9 +48,10 @@ class Suite:
         self.baseline_id = "baseline-" + self.protocol["baseline_commit"][:12]
 
     def candidates(self):
-        state = PROJECT / "evolve/control/state"
         if self.campaign:
-            state = state / self.campaign
+            return campaign_store.candidates(self.campaign)
+        # A suite without a campaign uses the controller's unscoped mode.
+        state = PROJECT / "evolve/control/state"
         return json.loads((state / "candidates.json").read_text())
 
     def report_path(self, ident):
@@ -98,7 +103,7 @@ def evaluate_candidate(suite, db, ledger, name):
     if name not in records:
         raise SystemExit("unknown candidate")
     record = records[name]
-    worktree = record["worktree"]
+    worktree = str(PROJECT / record["worktree"])  # repository-relative; absolute stays absolute
     commit = subprocess.check_output(["git", "-C", worktree, "rev-parse", "HEAD"],
                                      text=True).strip()
     if any(row["commit"] == commit for row in ledger):

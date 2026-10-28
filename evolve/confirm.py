@@ -16,7 +16,7 @@ import time
 
 PROJECT = Path(__file__).resolve().parents[1]
 BASE = PROJECT / "benchmark/swap-standard"
-STOP = PROJECT / "evolve/control/state/STOP"
+STOP = PROJECT / "campaigns/STOP"
 
 
 def save(path, data):
@@ -71,9 +71,9 @@ def main():
     args = parser.parse_args()
     p = json.loads(args.protocol.read_text())
     proto_sha = hashlib.sha256(args.protocol.read_bytes()).hexdigest()
-    state = BASE / "confirmations" / p["campaign"]
+    state = PROJECT / "campaigns" / p["campaign"] / "ledger"
     state.mkdir(parents=True, exist_ok=True)
-    ledger_path = state / "ledger.json"
+    ledger_path = state / "confirmation.json"
     ledger = json.loads(ledger_path.read_text()) if ledger_path.exists() else {
         "campaign": p["campaign"], "protocol_sha256": proto_sha, "attempts": [], "rounds": []}
     if ledger["protocol_sha256"] != proto_sha:
@@ -111,7 +111,7 @@ def main():
             ledger["rounds"].append(rnd)
             save(ledger_path, ledger)
     analysis = analyze(p, ledger["rounds"])
-    save(state / "analysis.json", {"campaign": p["campaign"], "protocol_sha256": proto_sha,
+    save(state / "confirmation-analysis.json", {"campaign": p["campaign"], "protocol_sha256": proto_sha,
                                    "rounds": len(ledger["rounds"]), "performance_accepted": False,
                                    "auto_promote": False, "metrics": analysis})
     for key, row in analysis.items():

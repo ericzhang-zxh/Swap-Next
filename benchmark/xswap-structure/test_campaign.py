@@ -16,15 +16,23 @@ class CampaignTests(unittest.TestCase):
     def test_campaign_stop_comes_from_protocol(self):
         protocol = json.loads((BASE/'protocol.json').read_text())
         with tempfile.TemporaryDirectory() as tmp, patch.object(run, 'PROJECT', pathlib.Path(tmp)), patch.object(evaluate_kernel, 'PROJECT', pathlib.Path(tmp)):
-            old = pathlib.Path(tmp)/'evolve/control/state/xswap-2026-10-21/STOP'
+            # A stop file in the retired state directory must not halt anything.
+            old = pathlib.Path(tmp)/'evolve'/'control'/'state'/'xswap-2026-10-21'/'STOP'
             old.parent.mkdir(parents=True)
             old.touch()
             protocol['deadline_utc'] = '2100-01-01T00:00:00+00:00'
             evaluate_kernel.bounded(protocol)
             stop = run.campaign_stop(protocol)
             self.assertNotEqual(stop, old)
+            self.assertEqual(stop, pathlib.Path(tmp)/'campaigns'/protocol['campaign']/'STOP')
             stop.parent.mkdir(parents=True)
             stop.touch()
+            with self.assertRaisesRegex(ValueError, 'STOP'):
+                evaluate_kernel.bounded(protocol)
+            # The global stop halts on its own, without the campaign file.
+            stop.unlink()
+            evaluate_kernel.bounded(protocol)
+            (pathlib.Path(tmp)/'campaigns/STOP').touch()
             with self.assertRaisesRegex(ValueError, 'STOP'):
                 evaluate_kernel.bounded(protocol)
 

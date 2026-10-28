@@ -27,7 +27,7 @@ sys.path.insert(0, str(PROJECT / "benchmark/kernel"))
 from lifetime import bind_child_to_parent
 from evidence import parse, DIAGNOSTIC
 from validity import clocksource_invalid, launch_blocked, read_host_load
-STOP = PROJECT / "evolve/control/state/STOP"
+STOP = PROJECT / "campaigns/STOP"
 # xs-desc-lifetime-v1: unpinned cluster lookups survive an xswap shrink.
 LIFETIME_FIX = "5e84ca928deeacb4eee656806a003f27d1eca82f"
 SWAP_BYTES = 16 * 1024**3

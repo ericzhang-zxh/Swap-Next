@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 
 PROJECT = Path(__file__).resolve().parents[2]
-PATCHES = PROJECT / 'patches/xswap-reference'
+PATCHES = PROJECT / 'campaigns/_unassigned/patches/xswap-reference'
 NAME = 'xswap-reference-replay'
 
 def command(*args, env=None):
@@ -25,8 +25,8 @@ def main():
             raise SystemExit('patch hash mismatch')
     # Fetch the public base explicitly first if this local object is absent.
     command('git', '-C', str(PROJECT / 'linux'), 'cat-file', '-e', manifest['base_commit'] + '^{commit}')
-    campaign = PROJECT / 'evolve/control/campaigns' / NAME
-    policy = json.loads((PROJECT / 'evolve/control/campaigns/xswap-2026-10-21/import-policy.json').read_text())
+    campaign = PROJECT / 'campaigns' / NAME
+    policy = json.loads((PROJECT / 'campaigns/xswap-2026-10-21/import-policy.json').read_text())
     campaign.mkdir(exist_ok=False)
     (campaign / 'policy.json').write_text(json.dumps(policy, indent=2)+'\n')
     controller = ['python3', str(PROJECT / 'evolve/control/controller.py'), '--campaign', NAME]
