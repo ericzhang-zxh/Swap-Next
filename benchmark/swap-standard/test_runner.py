@@ -121,6 +121,20 @@ class RunnerValidationTests(unittest.TestCase):
                 launch.assert_not_called()
             self.assertEqual(list(project.iterdir()), [])
 
+    def test_unreserved_guest_refuses_before_any_runtime_write(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            argv = ["run.py", "--build", "b", "--backend", "disk", "--workload", "swapin", "--campaign", "demo"]
+            with patch.object(runner, "PROJECT", project), patch.object(sys, "argv", argv), \
+                 patch.object(runner.os, "geteuid", return_value=1000), \
+                 patch.object(runner.campaign_store, "require_execution"), \
+                 patch.object(runner, "validate") as validate, patch.object(runner.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(SystemExit, "counted --reservation"):
+                    runner.main()
+                validate.assert_not_called()
+                launch.assert_not_called()
+            self.assertEqual(list(project.iterdir()), [])
+
     def test_either_stop_file_stops_run(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -26,6 +26,7 @@ PROJECT = BASE.parents[1]
 sys.path.insert(0, str(PROJECT / "benchmark/kernel"))
 sys.path.insert(0, str(PROJECT / "evolve/control"))
 import campaign_store
+import guest_budget
 from lifetime import bind_child_to_parent
 from evidence import parse, DIAGNOSTIC
 from validity import clocksource_invalid, launch_blocked, read_host_load
@@ -201,6 +202,7 @@ def main():
                         help="Preallocate the private swap image before guest launch")
     parser.add_argument("--protocol-revision", type=int, default=1)
     parser.add_argument("--campaign", help="explicit campaign for guest execution")
+    parser.add_argument("--reservation", type=Path, help="counted guest reservation from guest_budget.py")
     parser.add_argument("--build", required=True)
     parser.add_argument("--backend", choices=["disk", "zswap", "zram", "brd"], required=True)
     parser.add_argument("--mode", choices=["plain", "xswap"], default="plain")
@@ -237,6 +239,25 @@ def main():
         except campaign_store.CampaignError as exc:
             raise SystemExit("BLOCKED: " + str(exc))
         args.campaign_stop = PROJECT / "campaigns" / args.campaign / "STOP"
+        if not args.reservation or not args.run_id:
+            raise SystemExit("BLOCKED: execution requires an explicit --run-id and counted --reservation")
+        try:
+            frozen = guest_budget.protocol(args.campaign)
+            if args.protocol_revision != frozen.get("protocol_revision", 1):
+                raise campaign_store.CampaignError("runner revision does not match protocol")
+            if args.preallocate_swap != bool(frozen.get("preallocate_swap")):
+                raise campaign_store.CampaignError("swap allocation does not match protocol")
+            tcg, memory, cpus, _ = guest_shape(os.environ)
+            expected_accel = frozen.get("accelerator", {}).get("require")
+            if expected_accel and expected_accel != ("tcg" if tcg else "kvm"):
+                raise campaign_store.CampaignError("runner accelerator does not match protocol")
+            guest = frozen.get("guest", {})
+            if guest and (guest.get("mem_mib") != memory or guest.get("vcpus") != int(cpus)):
+                raise campaign_store.CampaignError("runner guest size does not match protocol")
+            guest_budget.consume_guest(args.campaign, args.run_id, args.reservation,
+                                       {key: getattr(args, key) for key in guest_budget.IDENTITY_KEYS})
+        except (campaign_store.CampaignError, OSError, ValueError) as exc:
+            raise SystemExit("BLOCKED: " + str(exc))
     if stop_requested(args.stop_file, args.campaign_stop):
         raise SystemExit("STOP")
     with (PROJECT / "benchmark/kernel/.runtime.lock").open("a") as lock:
