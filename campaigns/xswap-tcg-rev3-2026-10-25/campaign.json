@@ -19,5 +19,6 @@
     "wall_seconds": 64800,
     "probe_guest_attempts": 0,
     "approved_over_cap": null
-  }
+  },
+  "line_anchor_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed"
 }

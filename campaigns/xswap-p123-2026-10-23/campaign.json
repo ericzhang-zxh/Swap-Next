@@ -13,5 +13,6 @@
     "approved_over_cap": null
   },
   "protocol_ref": "benchmark/xswap-p123/protocol.json",
-  "protocol_sha256": "642d455d57807e4ad6b0bd7a099f6a87f9a7ea9043cbb89bd7fc675a664818c9"
+  "protocol_sha256": "642d455d57807e4ad6b0bd7a099f6a87f9a7ea9043cbb89bd7fc675a664818c9",
+  "line_anchor_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed"
 }

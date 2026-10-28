@@ -78,7 +78,13 @@ def render(project=None):
     outputs = {"campaigns/README.md": "\n".join(index) + "\n"}
     for line in line_names:
         history = [r for r in records if r["line"] == line]
+        anchors = {r["line_anchor_commit"] for r in history if r.get("line_anchor_commit")}
+        if len(anchors) > 1:
+            raise store.CampaignError(f"conflicting anchors on line {line}")
+        anchor = next(iter(anchors), None)
         text = [f"# {line} line", "", "Campaigns in opening order, with their recorded baselines and outcomes.", ""]
+        if anchor:
+            text += [f"Fixed line anchor: `{anchor}`. This is an identity, not an inferred root-relative performance result.", ""]
         for record in history:
             name = record["campaign"]
             text += [f"## {name}", "", f"Status: {record['status']}; machine: {record['machine']}; opened: {record['opened']}; closed: {record['closed'] or '—'}.", "",
