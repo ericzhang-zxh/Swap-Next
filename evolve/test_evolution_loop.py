@@ -195,7 +195,7 @@ class EvolutionLoopTests(Fixture):
         entry = self.flow.archive(fast, parent)
         self.assertTrue(entry["parent_eligible"])
         self.assertFalse(entry["advancement"]["eligible"])
-        self.assertEqual(entry["patch"], (self.directory / "patches/parent.patch").read_text())
+        self.assertEqual(entry["patch"], (self.directory / "patches" / "parent.patch").read_text())
         from openevolve.config import DatabaseConfig
         from openevolve.database import ProgramDatabase
         database = ProgramDatabase(DatabaseConfig(in_memory=True, num_islands=1))
@@ -214,7 +214,7 @@ class EvolutionLoopTests(Fixture):
             self.assertEqual(rc, 2, blocked)
             self.assertIn("unchanged", blocked["error"])
         child, child_scope, child_tree = self.edit_candidate("child", "int fixture_child = 2;")
-        patch_text = (self.directory / "patches/child.patch").read_text()
+        patch_text = (self.directory / "patches" / "child.patch").read_text()
         self.assertIn("+int fixture_parent = 1;", patch_text)
         self.assertIn("+int fixture_child = 2;", patch_text)
         self.assertNotEqual(patch_text.rstrip(), sh(root, "diff", commit, "HEAD"))
