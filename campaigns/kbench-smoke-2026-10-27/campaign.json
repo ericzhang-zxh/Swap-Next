@@ -1,0 +1,24 @@
+{
+  "campaign": "kbench-smoke-2026-10-27",
+  "status": "closed",
+  "line": "xswap",
+  "baseline_from": {
+    "campaign": "xswap-p123-2026-10-23",
+    "candidate": "xs-desc-lifetime-v1",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "evidence": {
+      "kind": "correctness_fix",
+      "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+    }
+  },
+  "machine": "hurricpc",
+  "opened": "2026-10-28",
+  "closed": "2026-10-28",
+  "line_anchor_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "budget": {
+    "guest_attempts": 6,
+    "wall_seconds": 21600,
+    "probe_guest_attempts": 0,
+    "approved_over_cap": null
+  }
+}

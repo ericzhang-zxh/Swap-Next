@@ -1,0 +1,15 @@
+{
+  "id": "smoke-swapin-zram-64k-1",
+  "campaign": "kbench-smoke-2026-10-27",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793166466.2620192,
+  "identity": {
+    "build": "kb-xs-desc-v1",
+    "backend": "zram-64k",
+    "mode": "plain",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "d0d1a48365b2ae2fb464dafd8a3cfb2276ec62cb3486cbd2f08051b37e5c95cd",
+  "started_unix": 1793166466.2985053
+}

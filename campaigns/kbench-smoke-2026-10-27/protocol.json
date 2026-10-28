@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "campaign": "kbench-smoke-2026-10-27",
+  "protocol_revision": 5,
+  "protocol_id": "swap-standard-kbench-smoke",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_build": "kb-xs-desc-v1",
+  "max_candidates": 0,
+  "budget": {
+    "guest_attempts": 6,
+    "build_attempts": 1,
+    "wall_seconds": 21600,
+    "guest_timeout": 3600,
+    "note": "Three smoke guests plus one rerun each."
+  },
+  "guest": {
+    "vcpus": 8,
+    "mem_mib": 8192,
+    "swap_gib": 16
+  },
+  "accelerator": {
+    "require": "kvm",
+    "qemu": [
+      "-enable-kvm",
+      "-machine",
+      "pc",
+      "-cpu",
+      "host,migratable=off"
+    ]
+  },
+  "cases": {
+    "build-zram": {
+      "workload": "build",
+      "backend": "zram",
+      "mode": "plain",
+      "metrics": {
+        "build_real_usec": "lower",
+        "build_system_usec": "lower"
+      },
+      "primary": "build_real_usec"
+    },
+    "usemem-zswap": {
+      "workload": "usemem",
+      "backend": "zswap",
+      "mode": "plain",
+      "metrics": {
+        "throughput_kbps_sum": "higher"
+      },
+      "primary": "throughput_kbps_sum"
+    },
+    "swapin-zram-64k": {
+      "workload": "swapin",
+      "backend": "zram-64k",
+      "mode": "plain",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_rand.mean_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns"
+    }
+  },
+  "tiers": {
+    "fast": {
+      "cases": [
+        "build-zram",
+        "usemem-zswap",
+        "swapin-zram-64k"
+      ],
+      "calibration_pairs": 0,
+      "comparison_pairs": 0
+    }
+  },
+  "order": "alternating AB then BA; same order in calibration",
+  "calibration_max_age_seconds": 86400,
+  "noise_floor": 0.03,
+  "noise_ceiling": 0.25,
+  "noise_envelope": "p90",
+  "comparison_decision": "median",
+  "advisory_metric_suffixes": [
+    ".p99_ns"
+  ],
+  "bootstrap_resamples": 10000,
+  "promotion": "human_review_only",
+  "preallocate_swap": false,
+  "validity": {
+    "clocksource_fallback": "invalid_and_rerun",
+    "pre_qemu_seconds_max": 60,
+    "wall_time_factor": 1.5,
+    "wall_median_min_samples": 3,
+    "reruns_per_arm": 2,
+    "host_load": "loadavg and PSI when /proc/pressure exists, stored on every attempt"
+  },
+  "screen": "Integration smoke only; no verdicts.",
+  "excluded": {
+    "usemem-rand": "OOM and synchronization hang in integration"
+  },
+  "blocked_commits": {
+    "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4": "Unresolved descriptor lifetime review; dependent experiment held",
+    "157c4a178c587add1d22f4b483629b49a6ff0eca": "Unresolved descriptor lifetime review; dependent experiment held",
+    "b674f0d1e90c5b158f0a31d4ea877c4876535c2a": "Unresolved descriptor lifetime review; dependent experiment held",
+    "8f02472031fb71b9791a5199872701c645afd276": "Unresolved descriptor lifetime review; dependent experiment held",
+    "615f839bb6653ffd56dbb66ebdc855dea0823d54": "Unresolved descriptor lifetime review; dependent experiment held"
+  },
+  "required_correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings"
+  ],
+  "purpose": "Boot the kbench swap-standard setup once per new backend and check every gate parses.",
+  "state_directory": "evolve/swap-standard/state-kbench-smoke-2026-10-27",
+  "mechanism_evidence": [
+    "swap_ra and swap_ra_hit deltas",
+    "zswpin/pswpin path counters",
+    "xswap occupancy/grow/shrink snapshots"
+  ],
+  "limitations": [
+    "One guest per case; no noise estimate and no comparison."
+  ],
+  "candidate_builds": {}
+}
