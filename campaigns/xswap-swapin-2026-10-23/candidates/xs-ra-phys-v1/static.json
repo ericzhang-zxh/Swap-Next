@@ -1,0 +1,21 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "e401f1314d81d3990de62af0ba37fc5df79193f6",
+  "changed_paths": [
+    "mm/memory.c",
+    "mm/swap.h",
+    "mm/swap_state.c"
+  ],
+  "changed_lines": 64,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/checkpatch.log",
+    "sha256": "f25e5f15775c9ef8820c1021684db89c6b3c031fc9e307a461503a2da59021c1"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "xs-tailcache-v1",
+  "parent": "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4",
+  "worktree": "worktrees/xswap-structure-2026-10-22/xs-tailcache-v1",
+  "status": "active",
+  "hypothesis": "Opportunistically reclaim cache-only slots in a bounded tail window under the mapping mutex using existing folio/writeback/reference guards, then preserve original shrink isolation. May expose a contiguous free tail; unchanged retention indicates this bounded event-triggered pass did not resolve it. Risks are lock hold time and future compression or I/O cost.",
+  "created_unix": 1792658794.3799295,
+  "protocol_sha256": "be35347b2b44356eb46e95a2fb79792674125b37784f64f3b4e73e9f6cff2069",
+  "allowed_modify": [
+    "mm/swapfile.c",
+    "mm/swap.h",
+    "include/linux/swap.h",
+    "mm/swap_state.c",
+    "mm/page_io.c",
+    "mm/zswap.c"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "budget": {
+    "max_candidates": 4,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 2,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 8,
+    "run_wall_seconds": 600,
+    "max_total_campaign_seconds": 28800,
+    "max_build_attempts": 8
+  },
+  "primary_metric": "mapped_clusters_after_settle",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

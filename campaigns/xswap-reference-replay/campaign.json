@@ -1,0 +1,15 @@
+{
+  "campaign": "xswap-reference-replay",
+  "status": "closed",
+  "line": "xswap",
+  "baseline_from": null,
+  "machine": "hurricpc",
+  "opened": "2026-10-21",
+  "closed": "2026-10-21",
+  "budget": {
+    "guest_attempts": 0,
+    "wall_seconds": 0,
+    "probe_guest_attempts": 0,
+    "approved_over_cap": null
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "p123-lifetime-rcu",
+  "parent": "b2beda7fe460f911b88d27890993347588d70748",
+  "worktree": "worktrees/xswap-p123-lifetime-20261023/p123-lifetime-rcu",
+  "status": "closed",
+  "hypothesis": "Repair P123 descriptor retirement by release-publishing visibility before an RCU grace period and guarding speculative lookups; rederive descriptors after allocations sleep. This prerequisite preserves shrinking and fails stale saved entries safely before two separate performance architecture experiments.",
+  "created_unix": 1792745048.2274957,
+  "protocol_sha256": "0c1d637ea374a9e043c1ce176bbdbbe4a18d25df94f8bc8b214c6bab7a4c4f9d",
+  "reason": "Lifecycle cleanup, no performance conclusion. Never checked; the descriptor lifetime repair in 5e84ca92 was adopted as the baseline instead."
+}

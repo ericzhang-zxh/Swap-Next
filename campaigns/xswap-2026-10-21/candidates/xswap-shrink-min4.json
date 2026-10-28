@@ -1,0 +1,10 @@
+{
+  "id": "xswap-shrink-min4",
+  "parent": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "worktree": "worktrees/xswap-2026-10-21/xswap-shrink-min4",
+  "status": "closed",
+  "hypothesis": "Reduce the automatic tail-shrink minimum from eight to four growth chunks: baseline smoke retained 429/471 free tail clusters without shrinking. Test lower mapped-cluster retention against extra RCU/unmap cost; preserve one-chunk slack and all lifetime handling.",
+  "created_unix": 1792573882.7043507,
+  "protocol_sha256": "cf440dbc2c1fcb57dd7623f9a908a0fafb4da43aaf6086d6d3eb76c7e08c9cb9",
+  "reason": "Eight pilot boots passed; no promotion: mixed metadata effects and large A/A state variation. Zswap retained more mapped clusters on average."
+}

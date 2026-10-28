@@ -1,0 +1,17 @@
+{
+  "campaign": "xswap-2026-10-21",
+  "status": "closed",
+  "line": "xswap",
+  "baseline_from": null,
+  "machine": "hurricpc",
+  "opened": "2026-10-21",
+  "closed": "2026-10-21",
+  "budget": {
+    "guest_attempts": 0,
+    "wall_seconds": 0,
+    "probe_guest_attempts": 0,
+    "approved_over_cap": null
+  },
+  "protocol_ref": "benchmark/xswap/protocol.json",
+  "protocol_sha256": "aa3a260f9459a5646b651fdf236e82481e25788b7416a199f04ef3d5cba88fd8"
+}

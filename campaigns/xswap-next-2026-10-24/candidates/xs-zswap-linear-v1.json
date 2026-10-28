@@ -1,0 +1,10 @@
+{
+  "id": "xs-zswap-linear-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "worktree": "worktrees/xswap-next-2026-10-24/xs-zswap-linear-v1",
+  "status": "closed",
+  "hypothesis": "Copy only split compressed zsmalloc objects into the existing mutex-owned buffer for synchronous transforms, exposing contiguous input to one-shot zstd decode instead of streaming. Expect lower zswap mean/tails, neutral disk; falsified by correctness failure, calibrated guard regression, or improvement inside noise.",
+  "created_unix": 1792832392.5801473,
+  "protocol_sha256": "d2f3d5b976cbdf8976584df4988c7adeca6606454509d1bb57159797ae8c3ca0",
+  "reason": "REJECT_FAST: report 15ded9c2bdf44b5fae1b3e83f0f75daf fails all four compressed latency guards; zswap seq mean +24.39%. Both release correctness backends and targeted KASAN/lockdep correctness pass. Disk-path movement has no matching mechanism and is not credited. Retain evidence, no slow tier or promotion."
+}

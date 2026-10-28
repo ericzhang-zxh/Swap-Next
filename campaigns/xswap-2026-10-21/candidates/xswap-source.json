@@ -1,0 +1,10 @@
+{
+  "id": "xswap-source",
+  "parent": "9a0542b19a541eda3f82934ee747c61ec3f18847",
+  "worktree": "worktrees/xswap-2026-10-21/xswap-source",
+  "status": "closed",
+  "hypothesis": "Import the public Phase I v4 and Phase II v1 series on their published upstream base as an experimental reference; no optimization or performance claim. Preserve original authors and trailers.",
+  "created_unix": 1792573132.06698,
+  "protocol_sha256": "50643256c07ee3a226d541a5983d2946b3bd68e4935e5798182de466ca6ee33c",
+  "reason": "Upstream series imported and built as independent reference; not an optimized candidate or performance acceptance"
+}

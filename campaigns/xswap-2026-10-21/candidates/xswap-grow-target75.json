@@ -1,0 +1,10 @@
+{
+  "id": "xswap-grow-target75",
+  "parent": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "worktree": "worktrees/xswap-2026-10-21/xswap-grow-target75",
+  "status": "closed",
+  "hypothesis": "Evolve round two: retain the eight-chunk growth cap that reduced zswap growth episodes, but raise the occupancy target from 65 to 75 percent to request less mapping headroom. Measure mapping retention against extra growth calls and latency; retain frozen-seed patch base.",
+  "created_unix": 1792574677.9021137,
+  "protocol_sha256": "cf440dbc2c1fcb57dd7623f9a908a0fafb4da43aaf6086d6d3eb76c7e08c9cb9",
+  "reason": "Eight pilot boots passed. Tighter target increased growth operations to 18-19 disk and 23 zswap, with mixed mapping/latency outcomes. No performance acceptance or promotion."
+}

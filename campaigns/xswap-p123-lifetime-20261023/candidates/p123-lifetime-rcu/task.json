@@ -1,0 +1,40 @@
+{
+  "id": "p123-lifetime-rcu",
+  "parent": "b2beda7fe460f911b88d27890993347588d70748",
+  "worktree": "worktrees/xswap-p123-lifetime-20261023/p123-lifetime-rcu",
+  "status": "active",
+  "hypothesis": "Repair P123 descriptor retirement by release-publishing visibility before an RCU grace period and guarding speculative lookups; rederive descriptors after allocations sleep. This prerequisite preserves shrinking and fails stale saved entries safely before two separate performance architecture experiments.",
+  "created_unix": 1792745048.2274957,
+  "protocol_sha256": "0c1d637ea374a9e043c1ce176bbdbbe4a18d25df94f8bc8b214c6bab7a4c4f9d",
+  "allowed_modify": [
+    "mm/swap.h",
+    "mm/swapfile.c",
+    "mm/swap_state.c",
+    "include/linux/swap.h",
+    "mm/zswap.c"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "budget": {
+    "max_candidates": 3,
+    "max_active_candidates": 2,
+    "worker_wall_seconds": 900,
+    "build_jobs": 4,
+    "guest_vcpus": 8,
+    "guest_memory_mib": 8192,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 600,
+    "max_total_campaign_seconds": 21600,
+    "max_build_attempts": 6
+  },
+  "primary_metric": "correctness and lifetime",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

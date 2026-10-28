@@ -1,0 +1,15 @@
+mm: xswap: test tighter headroom with the larger growth cap
+
+The eight-chunk experiment reduced zswap growth episodes from 15-16 to
+13, but neither retention nor tail latency justified adoption under the
+observed A/A variability. Retain that cap and test a 75 percent growth
+occupancy target instead of 65 percent to request less spare mapping.
+
+The target remains between the 50 percent shrink trigger and 85 percent
+grow trigger. Keep the chunk rounding, maximum clamp, stale-range
+validation, locks, no-reclaim allocation and failure handling unchanged.
+
+This trades less requested headroom for potentially more growth calls.
+It is an evolution of the preceding experiment, expressed as a complete
+independent patch against the same frozen reference. It is not a proven
+performance improvement or a correctness certification.

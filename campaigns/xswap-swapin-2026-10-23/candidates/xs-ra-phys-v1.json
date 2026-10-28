@@ -1,0 +1,10 @@
+{
+  "id": "xs-ra-phys-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "worktree": "worktrees/xswap-swapin-2026-10-23/xs-ra-phys-v1",
+  "status": "closed",
+  "hypothesis": "H1 residency-aware readahead, physical. xswap is SWP_SYNCHRONOUS_IO, so faults bypass readahead and read physically backed slots one 4 KiB bio at a time. Route an xswap fault whose slot has a physical backend through swapin_readahead, and read ahead only neighbours that are physically backed. Expected: lower sequential swap-in latency on xswap+disk; xswap+zswap unchanged. Regression risk: wasted IO and latency on random access. Falsifier: swapin_seq.mean_ns on xswap+disk not below baseline beyond calibrated noise, or a swapin_rand regression beyond noise.",
+  "created_unix": 1792779353.6264431,
+  "protocol_sha256": "219ef4b1f1f360534b9e4ed27448cfce347c8c4dbc7db8fa44095b64a2e8447c",
+  "reason": "Fast evaluation 8a4b89fc0c8e44dd80c7675ef9c8c0fb REGRESSION: disk random p99 baseline/candidate 0.90495 below calibrated guard; no slow evaluation or promotion."
+}

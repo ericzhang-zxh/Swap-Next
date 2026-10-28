@@ -1,0 +1,50 @@
+{
+  "id": "xswap-phase3-import",
+  "parent": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "worktree": "worktrees/xswap-phase3-import/xswap-phase3-import",
+  "status": "active",
+  "hypothesis": "Import public xswap Phase III (charge xswap for physical backing, 6 patches, 2026-10-03) onto the Phase I v4 + Phase II v1 reference; no optimization or performance acceptance.",
+  "created_unix": 1792743090.4896047,
+  "protocol_sha256": "dd61e9a0dc01c4388ee1d4477cfb0f35566bcfc739a369726bdb61f1fc524450",
+  "allowed_modify": [
+    "include/linux/swap.h",
+    "include/linux/swap_ops.h",
+    "include/linux/zswap.h",
+    "mm/Kconfig",
+    "mm/memory.c",
+    "mm/page_io.c",
+    "mm/swap.h",
+    "mm/swap_state.c",
+    "mm/swap_table.h",
+    "mm/swapfile.c",
+    "mm/vmscan.c",
+    "mm/zswap.c",
+    "include/linux/memcontrol.h",
+    "mm/memcontrol.c",
+    "mm/memcontrol-v1.c",
+    "Documentation/admin-guide/cgroup-v1/memcg_test.rst"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "budget": {
+    "max_candidates": 1,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 900,
+    "build_jobs": 4,
+    "guest_vcpus": 2,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 600,
+    "max_total_campaign_seconds": 14400
+  },
+  "primary_metric": "throughput_ops_s",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

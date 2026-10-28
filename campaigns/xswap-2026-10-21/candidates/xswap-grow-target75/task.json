@@ -1,0 +1,33 @@
+{
+  "id": "xswap-grow-target75",
+  "parent": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "worktree": "worktrees/xswap-2026-10-21/xswap-grow-target75",
+  "status": "active",
+  "hypothesis": "Evolve round two: retain the eight-chunk growth cap that reduced zswap growth episodes, but raise the occupancy target from 65 to 75 percent to request less mapping headroom. Measure mapping retention against extra growth calls and latency; retain frozen-seed patch base.",
+  "created_unix": 1792574677.9021137,
+  "protocol_sha256": "cf440dbc2c1fcb57dd7623f9a908a0fafb4da43aaf6086d6d3eb76c7e08c9cb9",
+  "allowed_modify": [
+    "mm/swapfile.c"
+  ],
+  "allowed_add": [],
+  "budget": {
+    "max_candidates": 4,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 900,
+    "build_jobs": 4,
+    "guest_vcpus": 2,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 8,
+    "run_wall_seconds": 600,
+    "max_total_campaign_seconds": 14400
+  },
+  "primary_metric": "mapped_clusters_after_settle",
+  "required_reading": [
+    "AGENTS.md",
+    "system/CODE_PATTERNS.md",
+    "system/PRINCIPLES.md",
+    "system/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

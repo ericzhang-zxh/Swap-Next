@@ -1,0 +1,10 @@
+{
+  "id": "xs-desc-lifetime-v1",
+  "parent": "b2beda7fe460f911b88d27890993347588d70748",
+  "worktree": "worktrees/xswap-p123-2026-10-23/xs-desc-lifetime-v1",
+  "status": "closed",
+  "hypothesis": "Descriptor-lifetime fix. Mechanism: shrink publishes the lowered nr_clusters_mapped before synchronize_rcu and drains each removed cluster lock before unmapping; every lookup that may hold a stale entry (swap cache RCU readers, swp_swapcount, swap_entry_swapped, swap_retry_table_alloc, __swap_cache_alloc around its sleeping allocation) goes through an RCU-bounded checked lookup and treats an unmapped cluster as a freed slot. Expected: no descriptor access after unmap; no measurable swap-in latency change. Falsifier: KASAN/lockdep report or data mismatch under a shrink-vs-writeback stress, or >5% swap-in latency regression vs b2beda7f.",
+  "created_unix": 1792773405.4579568,
+  "protocol_sha256": "cbc54c6053eddc9af08bab8db38a251985f6bd71dc3a7f756d692810f91bf93a",
+  "reason": "Lifecycle cleanup, no performance conclusion. Commit 5e84ca92 became the baseline of xswap-next-2026-10-24 and xswap-tcg-rev3-2026-10-25, which superseded this campaign."
+}

@@ -1,0 +1,5191 @@
+[
+  {
+    "id": "7ef0bcb1918d4209954fc4929c7fe379",
+    "action": "calibrate",
+    "tier": "fast",
+    "candidate": null,
+    "status": "CALIBRATION_NOISY",
+    "started": 1792831186.544364,
+    "runs": [
+      {
+        "id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-a/result.json",
+        "result_sha256": "9460d82a5c5cdbe5c675a7c979cb4d43a737fa5073d7993a3f81478e258550b2",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262163,
+            "pswpout": 262202,
+            "pgmajfault": 262181,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048768,
+            "xswap1": 1048768
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 166561.0,
+            "p50_ns": 138063.0,
+            "p90_ns": 200119.0,
+            "p99_ns": 343474.0,
+            "p999_ns": 5176708.0,
+            "max_ns": 58696281.0,
+            "total_ms": 21831.483
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 189129.0,
+            "p50_ns": 172297.0,
+            "p90_ns": 230162.0,
+            "p99_ns": 339621.0,
+            "p999_ns": 855039.0,
+            "max_ns": 25271259.0,
+            "total_ms": 24789.454
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262159,
+            "pswpout": 262202,
+            "pgmajfault": 262161,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 1,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ef0bcb1918d4209954fc4929c7fe379-0-swapin-disk-b/result.json",
+        "result_sha256": "fb925ec936b01b208800f3556059ca09ec822ba02774aba82a30082b830c614d",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262165,
+            "pswpout": 262201,
+            "pgmajfault": 262183,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048724,
+            "xswap1": 1048724
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 155075.0,
+            "p50_ns": 139190.0,
+            "p90_ns": 202012.0,
+            "p99_ns": 302115.0,
+            "p999_ns": 667331.0,
+            "max_ns": 3759440.0,
+            "total_ms": 20326.009
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 234090.0,
+            "p50_ns": 229271.0,
+            "p90_ns": 283987.0,
+            "p99_ns": 372754.0,
+            "p999_ns": 877743.0,
+            "max_ns": 5775617.0,
+            "total_ms": 30682.626
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262163,
+            "pswpout": 262201,
+            "pgmajfault": 262165,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-a/result.json",
+        "result_sha256": "285bc1088603dd73fdd08688830e36668bfac4452068bfc10af8590c80a763db",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262189,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262171,
+            "zswpout": 262176,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048684
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11676.0,
+            "p50_ns": 13496.0,
+            "p90_ns": 13940.0,
+            "p99_ns": 25930.0,
+            "p999_ns": 82892.0,
+            "max_ns": 568090.0,
+            "total_ms": 1530.347
+          },
+          "swapin_rand": {
+            "samples": 131059.0,
+            "mean_ns": 13658.0,
+            "p50_ns": 14220.0,
+            "p90_ns": 14987.0,
+            "p99_ns": 27853.0,
+            "p999_ns": 511906.0,
+            "max_ns": 1239557.0,
+            "total_ms": 1790.016
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262131.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262171,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262169,
+            "zswpout": 262176,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ef0bcb1918d4209954fc4929c7fe379-0-swapin-zswap-b/result.json",
+        "result_sha256": "c6e31c4fd2aa68ccb5022dcfd049af70b2e0c4d567b975a6094e068e7ae13aee",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048648
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11846.0,
+            "p50_ns": 13524.0,
+            "p90_ns": 13992.0,
+            "p99_ns": 28007.0,
+            "p999_ns": 106916.0,
+            "max_ns": 747453.0,
+            "total_ms": 1552.727
+          },
+          "swapin_rand": {
+            "samples": 131059.0,
+            "mean_ns": 13920.0,
+            "p50_ns": 14263.0,
+            "p90_ns": 15029.0,
+            "p99_ns": 31650.0,
+            "p999_ns": 577240.0,
+            "max_ns": 1438640.0,
+            "total_ms": 1824.356
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262131.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-b/result.json",
+        "result_sha256": "907b9e1eb44c906355029957bd76dc5d028934fe682ae9d5f3785d99838fe16a",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262136,
+            "pswpout": 262202,
+            "pgmajfault": 262154,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048808,
+            "xswap1": 1048808
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 148921.0,
+            "p50_ns": 134181.0,
+            "p90_ns": 196816.0,
+            "p99_ns": 313770.0,
+            "p999_ns": 649215.0,
+            "max_ns": 1982022.0,
+            "total_ms": 19519.435
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 224862.0,
+            "p50_ns": 221164.0,
+            "p90_ns": 280193.0,
+            "p99_ns": 398294.0,
+            "p999_ns": 756684.0,
+            "max_ns": 2488244.0,
+            "total_ms": 29473.135
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262132,
+            "pswpout": 262202,
+            "pgmajfault": 262134,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 1,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ef0bcb1918d4209954fc4929c7fe379-1-swapin-disk-a/result.json",
+        "result_sha256": "065deaa54f507afc7b504d319412f7a103e78c4207260186fc1c74d331230b74",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262163,
+            "pswpout": 262191,
+            "pgmajfault": 262181,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048744,
+            "xswap1": 1048744
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 145092.0,
+            "p50_ns": 129355.0,
+            "p90_ns": 193265.0,
+            "p99_ns": 316708.0,
+            "p999_ns": 617158.0,
+            "max_ns": 4323000.0,
+            "total_ms": 19017.453
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 229776.0,
+            "p50_ns": 224877.0,
+            "p90_ns": 282589.0,
+            "p99_ns": 397376.0,
+            "p999_ns": 783104.0,
+            "max_ns": 4211543.0,
+            "total_ms": 30117.217
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262161,
+            "pswpout": 262191,
+            "pgmajfault": 262163,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-b/result.json",
+        "result_sha256": "d7dde3170de38f94fa26c99898da8c30f37004a6fa045a901d1a5ac31a0c2bc7",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262186,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262168,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048672
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11758.0,
+            "p50_ns": 13527.0,
+            "p90_ns": 14001.0,
+            "p99_ns": 28005.0,
+            "p999_ns": 86386.0,
+            "max_ns": 532897.0,
+            "total_ms": 1541.103
+          },
+          "swapin_rand": {
+            "samples": 131056.0,
+            "mean_ns": 13673.0,
+            "p50_ns": 14266.0,
+            "p90_ns": 15032.0,
+            "p99_ns": 28149.0,
+            "p999_ns": 519047.0,
+            "max_ns": 804668.0,
+            "total_ms": 1791.993
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262128.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262168,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262166,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ef0bcb1918d4209954fc4929c7fe379-1-swapin-zswap-a/result.json",
+        "result_sha256": "e6e78e1fc5dd49c58bffdce6077e8b4736563ac41ea985d5178d8bdf7c64b758",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262189,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262171,
+            "zswpout": 262176,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048684
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11848.0,
+            "p50_ns": 13483.0,
+            "p90_ns": 13942.0,
+            "p99_ns": 29655.0,
+            "p999_ns": 92438.0,
+            "max_ns": 793582.0,
+            "total_ms": 1552.928
+          },
+          "swapin_rand": {
+            "samples": 131059.0,
+            "mean_ns": 13839.0,
+            "p50_ns": 14265.0,
+            "p90_ns": 15043.0,
+            "p99_ns": 31295.0,
+            "p999_ns": 579254.0,
+            "max_ns": 818615.0,
+            "total_ms": 1813.739
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262131.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262171,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262169,
+            "zswpout": 262176,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      }
+    ],
+    "pairs": [
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 166561.0,
+          "swapin-disk.swapin_seq.p99_ns": 343474.0,
+          "swapin-disk.swapin_rand.mean_ns": 189129.0,
+          "swapin-disk.swapin_rand.p99_ns": 339621.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11676.0,
+          "swapin-zswap.swapin_seq.p99_ns": 25930.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13658.0,
+          "swapin-zswap.swapin_rand.p99_ns": 27853.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 155075.0,
+          "swapin-disk.swapin_seq.p99_ns": 302115.0,
+          "swapin-disk.swapin_rand.mean_ns": 234090.0,
+          "swapin-disk.swapin_rand.p99_ns": 372754.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11846.0,
+          "swapin-zswap.swapin_seq.p99_ns": 28007.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13920.0,
+          "swapin-zswap.swapin_rand.p99_ns": 31650.0
+        },
+        "order": "AB"
+      },
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 145092.0,
+          "swapin-disk.swapin_seq.p99_ns": 316708.0,
+          "swapin-disk.swapin_rand.mean_ns": 229776.0,
+          "swapin-disk.swapin_rand.p99_ns": 397376.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11848.0,
+          "swapin-zswap.swapin_seq.p99_ns": 29655.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13839.0,
+          "swapin-zswap.swapin_rand.p99_ns": 31295.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 148921.0,
+          "swapin-disk.swapin_seq.p99_ns": 313770.0,
+          "swapin-disk.swapin_rand.mean_ns": 224862.0,
+          "swapin-disk.swapin_rand.p99_ns": 398294.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11758.0,
+          "swapin-zswap.swapin_seq.p99_ns": 28005.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13673.0,
+          "swapin-zswap.swapin_rand.p99_ns": 28149.0
+        },
+        "order": "BA"
+      }
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "fingerprint": "46c2b15d39db13b84c2c954ba909f6f3f1fd7f10075471bd1ab258a2d51aad95",
+    "candidate_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "execution_started": true,
+    "analysis": {
+      "schema_version": 1,
+      "status": "CALIBRATION_NOISY",
+      "passed": false,
+      "directions": {
+        "swapin-disk.swapin_seq.mean_ns": "lower",
+        "swapin-disk.swapin_seq.p99_ns": "lower",
+        "swapin-disk.swapin_rand.mean_ns": "lower",
+        "swapin-disk.swapin_rand.p99_ns": "lower",
+        "swapin-zswap.swapin_seq.mean_ns": "lower",
+        "swapin-zswap.swapin_seq.p99_ns": "lower",
+        "swapin-zswap.swapin_rand.mean_ns": "lower",
+        "swapin-zswap.swapin_rand.p99_ns": "lower"
+      },
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zswap.swapin_seq.mean_ns"
+      ],
+      "pair_count": 2,
+      "noise_log": {
+        "swapin-disk.swapin_seq.mean_ns": 0.07145273783191364,
+        "swapin-disk.swapin_seq.p99_ns": 0.12830367779277374,
+        "swapin-disk.swapin_rand.mean_ns": 0.21327633487887176,
+        "swapin-disk.swapin_rand.p99_ns": 0.09308839465908925,
+        "swapin-zswap.swapin_seq.mean_ns": 0.02955880224154443,
+        "swapin-zswap.swapin_seq.p99_ns": 0.07705387937983943,
+        "swapin-zswap.swapin_rand.mean_ns": 0.02955880224154443,
+        "swapin-zswap.swapin_rand.p99_ns": 0.12779746809008152
+      },
+      "noise_relative": {
+        "swapin-disk.swapin_seq.mean_ns": 0.07406738674834745,
+        "swapin-disk.swapin_seq.p99_ns": 0.13689820101616856,
+        "swapin-disk.swapin_rand.mean_ns": 0.2377266310296151,
+        "swapin-disk.swapin_rand.p99_ns": 0.09755874931173292,
+        "swapin-zswap.swapin_seq.mean_ns": 0.030000000000000027,
+        "swapin-zswap.swapin_seq.p99_ns": 0.08010026995757946,
+        "swapin-zswap.swapin_rand.mean_ns": 0.030000000000000027,
+        "swapin-zswap.swapin_rand.p99_ns": 0.1363228377553598
+      },
+      "rejected_metrics": [
+        "swapin-disk.swapin_rand.mean_ns"
+      ],
+      "performance_accepted": false,
+      "auto_promote": false
+    },
+    "finished": 1792831469.3062596
+  },
+  {
+    "id": "aux-23d5cee4b41548e5b523b6abc2073cd5",
+    "action": "auxiliary",
+    "kind": "build",
+    "tier": "correctness",
+    "candidate": "xs-ra-sequential-v1",
+    "candidate_commit": "7322aadd18b6030c692265693b8dfd29afa3ee6f",
+    "status": "PASS",
+    "started": 1792831536.6445062,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "7322aadd18b6030c692265693b8dfd29afa3ee6f",
+      "--name",
+      "std-7322aadd1100",
+      "--config",
+      "benchmark/config/swap-standard.config",
+      "--no-instrumentation"
+    ],
+    "result": "benchmark/kernel/builds/std-7322aadd1100/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "77000939a016096ac1c00857c25f038aa85cb1880ad899bbc18eb5b2dd306149",
+    "finished": 1792831641.6882246
+  },
+  {
+    "id": "aux-1fbd7677659347d1bc96b4668c2237b8",
+    "action": "auxiliary",
+    "kind": "guest",
+    "tier": "correctness",
+    "candidate": "xs-ra-sequential-v1",
+    "candidate_commit": "7322aadd18b6030c692265693b8dfd29afa3ee6f",
+    "status": "PASS",
+    "started": 1792831665.462483,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "std-7322aadd1100",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "aux-1fbd7677659347d1bc96b4668c2237b8",
+      "--timeout",
+      "900",
+      "--stop-file",
+      "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "--preallocate-swap"
+    ],
+    "result": "benchmark/swap-standard/runs/aux-1fbd7677659347d1bc96b4668c2237b8/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "60ac96807c44f2258dd853df6bfa628ffd9311223dd0bba9f93cda75a09a56c5",
+    "finished": 1792831683.97838
+  },
+  {
+    "id": "aux-e815bbd1237a45578e743c1c6bcc61b8",
+    "action": "auxiliary",
+    "kind": "guest",
+    "tier": "correctness",
+    "candidate": "xs-ra-sequential-v1",
+    "candidate_commit": "7322aadd18b6030c692265693b8dfd29afa3ee6f",
+    "status": "PASS",
+    "started": 1792831684.01899,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "std-7322aadd1100",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "aux-e815bbd1237a45578e743c1c6bcc61b8",
+      "--timeout",
+      "900",
+      "--stop-file",
+      "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "--preallocate-swap"
+    ],
+    "result": "benchmark/swap-standard/runs/aux-e815bbd1237a45578e743c1c6bcc61b8/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "90abd7fca1ff76fa40745d58059b2b03663d53640a0098b3b9b97d182ca4a744",
+    "finished": 1792831696.0346432
+  },
+  {
+    "id": "7ac434b0aad649298d7c0282b29a10c1",
+    "action": "calibrate",
+    "tier": "fast",
+    "candidate": null,
+    "status": "CALIBRATED",
+    "started": 1792831696.461444,
+    "runs": [
+      {
+        "id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-a/result.json",
+        "result_sha256": "576e57f274497bc1d639c8878cb673351ba7b943c9d0062fbc992fd61f9342f8",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262155,
+            "pswpout": 262200,
+            "pgmajfault": 262173,
+            "swap_ra": 0,
+            "swap_ra_hit": 2,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048064,
+            "xswap1": 1048064
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 164789.0,
+            "p50_ns": 146256.0,
+            "p90_ns": 225958.0,
+            "p99_ns": 336485.0,
+            "p999_ns": 681056.0,
+            "max_ns": 4185556.0,
+            "total_ms": 21599.265
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 201225.0,
+            "p50_ns": 185994.0,
+            "p90_ns": 258233.0,
+            "p99_ns": 383836.0,
+            "p999_ns": 740122.0,
+            "max_ns": 2199802.0,
+            "total_ms": 26375.013
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262152,
+            "pswpout": 262200,
+            "pgmajfault": 262154,
+            "swap_ra": 0,
+            "swap_ra_hit": 2,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ac434b0aad649298d7c0282b29a10c1-0-swapin-disk-b/result.json",
+        "result_sha256": "f4fe7f8243471b9569d6887e06190dc14507f3e1148cb0e6e37e10275f932169",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262154,
+            "pswpout": 262201,
+            "pgmajfault": 262172,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048764,
+            "xswap1": 1048764
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 156279.0,
+            "p50_ns": 139337.0,
+            "p90_ns": 209814.0,
+            "p99_ns": 318250.0,
+            "p999_ns": 696679.0,
+            "max_ns": 4147485.0,
+            "total_ms": 20483.806
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 225849.0,
+            "p50_ns": 220850.0,
+            "p90_ns": 278115.0,
+            "p99_ns": 390077.0,
+            "p999_ns": 754116.0,
+            "max_ns": 4273878.0,
+            "total_ms": 29602.483
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262152,
+            "pswpout": 262201,
+            "pgmajfault": 262154,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-a/result.json",
+        "result_sha256": "f98c48f5f2c312b903ae466cb801ae0a332a6aba0a219b4a7a5684d2b640f9d0",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048648
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11735.0,
+            "p50_ns": 13557.0,
+            "p90_ns": 14007.0,
+            "p99_ns": 26259.0,
+            "p999_ns": 82341.0,
+            "max_ns": 693120.0,
+            "total_ms": 1538.135
+          },
+          "swapin_rand": {
+            "samples": 131051.0,
+            "mean_ns": 13672.0,
+            "p50_ns": 14289.0,
+            "p90_ns": 15027.0,
+            "p99_ns": 29351.0,
+            "p999_ns": 522593.0,
+            "max_ns": 813386.0,
+            "total_ms": 1791.683
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262123.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ac434b0aad649298d7c0282b29a10c1-0-swapin-zswap-b/result.json",
+        "result_sha256": "22f3c7754dfdac35f5af7d13a8436be533515d6f87f4a7cf8c1b33bdd474197a",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1047420
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11887.0,
+            "p50_ns": 13494.0,
+            "p90_ns": 13983.0,
+            "p99_ns": 30056.0,
+            "p999_ns": 105867.0,
+            "max_ns": 692311.0,
+            "total_ms": 1558.069
+          },
+          "swapin_rand": {
+            "samples": 131050.0,
+            "mean_ns": 13844.0,
+            "p50_ns": 14237.0,
+            "p90_ns": 14999.0,
+            "p99_ns": 34106.0,
+            "p999_ns": 532678.0,
+            "max_ns": 1093586.0,
+            "total_ms": 1814.251
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262122.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-b/result.json",
+        "result_sha256": "ae14fd08d1e7297e51b3d75e70a5b9339c58eeff2fda1db5e6548278a5047fb3",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262166,
+            "pswpout": 262181,
+            "pgmajfault": 262184,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048724,
+            "xswap1": 1048724
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 138402.0,
+            "p50_ns": 125651.0,
+            "p90_ns": 176684.0,
+            "p99_ns": 277831.0,
+            "p999_ns": 663735.0,
+            "max_ns": 4585527.0,
+            "total_ms": 18140.657
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 209764.0,
+            "p50_ns": 203547.0,
+            "p90_ns": 262678.0,
+            "p99_ns": 340181.0,
+            "p999_ns": 742685.0,
+            "max_ns": 3229308.0,
+            "total_ms": 27494.184
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262164,
+            "pswpout": 262181,
+            "pgmajfault": 262166,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ac434b0aad649298d7c0282b29a10c1-1-swapin-disk-a/result.json",
+        "result_sha256": "dcd9bc917ed2f0d4a4abe2994370898cd856e3c96a0d3164171c0360da1583ad",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262137,
+            "pswpout": 262180,
+            "pgmajfault": 262155,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048720,
+            "xswap1": 1048720
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 149603.0,
+            "p50_ns": 136774.0,
+            "p90_ns": 192636.0,
+            "p99_ns": 294689.0,
+            "p999_ns": 706557.0,
+            "max_ns": 4464581.0,
+            "total_ms": 19608.815
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 209844.0,
+            "p50_ns": 204253.0,
+            "p90_ns": 262856.0,
+            "p99_ns": 344218.0,
+            "p999_ns": 760251.0,
+            "max_ns": 4308264.0,
+            "total_ms": 27504.625
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262135,
+            "pswpout": 262180,
+            "pgmajfault": 262137,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-b/result.json",
+        "result_sha256": "8b50ab630e854a70df80a68903b9c76558e0171f2512113a9949bfab86e61746",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048648
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11719.0,
+            "p50_ns": 13494.0,
+            "p90_ns": 13946.0,
+            "p99_ns": 27272.0,
+            "p999_ns": 85769.0,
+            "max_ns": 547371.0,
+            "total_ms": 1536.088
+          },
+          "swapin_rand": {
+            "samples": 131060.0,
+            "mean_ns": 13596.0,
+            "p50_ns": 14236.0,
+            "p90_ns": 14990.0,
+            "p99_ns": 27727.0,
+            "p999_ns": 510285.0,
+            "max_ns": 756399.0,
+            "total_ms": 1781.952
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262132.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/7ac434b0aad649298d7c0282b29a10c1-1-swapin-zswap-a/result.json",
+        "result_sha256": "25e3cfa2a1fdf34b0b0126b1fc10d2912b1a6ffdd55ada940ba0f51d97aa5ce2",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048648
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11754.0,
+            "p50_ns": 13514.0,
+            "p90_ns": 13949.0,
+            "p99_ns": 27440.0,
+            "p999_ns": 96671.0,
+            "max_ns": 601275.0,
+            "total_ms": 1540.583
+          },
+          "swapin_rand": {
+            "samples": 131059.0,
+            "mean_ns": 13854.0,
+            "p50_ns": 14317.0,
+            "p90_ns": 15139.0,
+            "p99_ns": 29748.0,
+            "p999_ns": 517072.0,
+            "max_ns": 1559322.0,
+            "total_ms": 1815.643
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262131.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262166,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      }
+    ],
+    "pairs": [
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 164789.0,
+          "swapin-disk.swapin_seq.p99_ns": 336485.0,
+          "swapin-disk.swapin_rand.mean_ns": 201225.0,
+          "swapin-disk.swapin_rand.p99_ns": 383836.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11735.0,
+          "swapin-zswap.swapin_seq.p99_ns": 26259.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13672.0,
+          "swapin-zswap.swapin_rand.p99_ns": 29351.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 156279.0,
+          "swapin-disk.swapin_seq.p99_ns": 318250.0,
+          "swapin-disk.swapin_rand.mean_ns": 225849.0,
+          "swapin-disk.swapin_rand.p99_ns": 390077.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11887.0,
+          "swapin-zswap.swapin_seq.p99_ns": 30056.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13844.0,
+          "swapin-zswap.swapin_rand.p99_ns": 34106.0
+        },
+        "order": "AB"
+      },
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 149603.0,
+          "swapin-disk.swapin_seq.p99_ns": 294689.0,
+          "swapin-disk.swapin_rand.mean_ns": 209844.0,
+          "swapin-disk.swapin_rand.p99_ns": 344218.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11754.0,
+          "swapin-zswap.swapin_seq.p99_ns": 27440.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13854.0,
+          "swapin-zswap.swapin_rand.p99_ns": 29748.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 138402.0,
+          "swapin-disk.swapin_seq.p99_ns": 277831.0,
+          "swapin-disk.swapin_rand.mean_ns": 209764.0,
+          "swapin-disk.swapin_rand.p99_ns": 340181.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11719.0,
+          "swapin-zswap.swapin_seq.p99_ns": 27272.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13596.0,
+          "swapin-zswap.swapin_rand.p99_ns": 27727.0
+        },
+        "order": "BA"
+      }
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "fingerprint": "24f5a85f6376d3f90de869af3ed699d04cc539e406b34ae63aba15686ba21849",
+    "candidate_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "execution_started": true,
+    "analysis": {
+      "schema_version": 1,
+      "status": "CALIBRATED",
+      "passed": true,
+      "directions": {
+        "swapin-disk.swapin_seq.mean_ns": "lower",
+        "swapin-disk.swapin_seq.p99_ns": "lower",
+        "swapin-disk.swapin_rand.mean_ns": "lower",
+        "swapin-disk.swapin_rand.p99_ns": "lower",
+        "swapin-zswap.swapin_seq.mean_ns": "lower",
+        "swapin-zswap.swapin_seq.p99_ns": "lower",
+        "swapin-zswap.swapin_rand.mean_ns": "lower",
+        "swapin-zswap.swapin_rand.p99_ns": "lower"
+      },
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zswap.swapin_seq.mean_ns"
+      ],
+      "pair_count": 2,
+      "noise_log": {
+        "swapin-disk.swapin_seq.mean_ns": 0.0778226248690359,
+        "swapin-disk.swapin_seq.p99_ns": 0.058907547785542747,
+        "swapin-disk.swapin_rand.mean_ns": 0.1154429493935023,
+        "swapin-disk.swapin_rand.p99_ns": 0.02955880224154443,
+        "swapin-zswap.swapin_seq.mean_ns": 0.02955880224154443,
+        "swapin-zswap.swapin_seq.p99_ns": 0.13505352085325661,
+        "swapin-zswap.swapin_rand.mean_ns": 0.02955880224154443,
+        "swapin-zswap.swapin_rand.p99_ns": 0.1501467046467848
+      },
+      "noise_relative": {
+        "swapin-disk.swapin_seq.mean_ns": 0.08093091140301434,
+        "swapin-disk.swapin_seq.p99_ns": 0.0606771742534129,
+        "swapin-disk.swapin_rand.mean_ns": 0.12237048080506963,
+        "swapin-disk.swapin_rand.p99_ns": 0.030000000000000027,
+        "swapin-zswap.swapin_seq.mean_ns": 0.030000000000000027,
+        "swapin-zswap.swapin_seq.p99_ns": 0.14459804257587816,
+        "swapin-zswap.swapin_rand.mean_ns": 0.030000000000000027,
+        "swapin-zswap.swapin_rand.p99_ns": 0.16200470171374204
+      },
+      "rejected_metrics": [],
+      "performance_accepted": false,
+      "auto_promote": false
+    },
+    "finished": 1792831977.1809936
+  },
+  {
+    "id": "49add9b084d04941a459281838bbf3f3",
+    "action": "evaluate",
+    "tier": "fast",
+    "candidate": "xs-ra-sequential-v1",
+    "status": "REGRESSION",
+    "started": 1792831999.5525625,
+    "runs": [
+      {
+        "id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-a",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/49add9b084d04941a459281838bbf3f3-0-swapin-disk-a/result.json",
+        "result_sha256": "fe834e1126c50fcb213f8302fbfc655fcf365cfab33ff87d8001584f88f9fb39",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262162,
+            "pswpout": 262202,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048724,
+            "xswap1": 1048724
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 155503.0,
+            "p50_ns": 140719.0,
+            "p90_ns": 204026.0,
+            "p99_ns": 308872.0,
+            "p999_ns": 667243.0,
+            "max_ns": 1863506.0,
+            "total_ms": 20382.036
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 221868.0,
+            "p50_ns": 219188.0,
+            "p90_ns": 270949.0,
+            "p99_ns": 356087.0,
+            "p999_ns": 777800.0,
+            "max_ns": 4700427.0,
+            "total_ms": 29080.741
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262159,
+            "pswpout": 262202,
+            "pgmajfault": 262161,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 1,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "49add9b084d04941a459281838bbf3f3-0-swapin-disk-b",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/49add9b084d04941a459281838bbf3f3-0-swapin-disk-b/result.json",
+        "result_sha256": "633b4f5671afbd3ccfb1cb49e7bffd3b544139e40b8a8919fe5bd9bafeea2b05",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262139,
+            "pswpout": 262187,
+            "pgmajfault": 262157,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048728,
+            "xswap1": 1048728
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 164330.0,
+            "p50_ns": 146217.0,
+            "p90_ns": 225406.0,
+            "p99_ns": 335764.0,
+            "p999_ns": 658559.0,
+            "max_ns": 2272212.0,
+            "total_ms": 21539.029
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 210378.0,
+            "p50_ns": 201227.0,
+            "p90_ns": 269605.0,
+            "p99_ns": 386589.0,
+            "p999_ns": 750216.0,
+            "max_ns": 3496903.0,
+            "total_ms": 27574.684
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262137,
+            "pswpout": 262187,
+            "pgmajfault": 262139,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/49add9b084d04941a459281838bbf3f3-0-swapin-zswap-a/result.json",
+        "result_sha256": "609f1bbd04108502d4c49764a7430722b235d2dfce1457652ac664412b9c9cf6",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262186,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262168,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048672
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11866.0,
+            "p50_ns": 13501.0,
+            "p90_ns": 13947.0,
+            "p99_ns": 28413.0,
+            "p999_ns": 114996.0,
+            "max_ns": 1070938.0,
+            "total_ms": 1555.293
+          },
+          "swapin_rand": {
+            "samples": 131046.0,
+            "mean_ns": 13744.0,
+            "p50_ns": 14255.0,
+            "p90_ns": 15044.0,
+            "p99_ns": 31194.0,
+            "p999_ns": 513998.0,
+            "max_ns": 1073649.0,
+            "total_ms": 1801.09
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262118.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262167,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262165,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/49add9b084d04941a459281838bbf3f3-0-swapin-zswap-b/result.json",
+        "result_sha256": "4a4c33662b88dc94ce326dd0a1c1eed4f55e0e3a3c28d00b78bd4c2ff74f21a8",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262186,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262168,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048672
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11827.0,
+            "p50_ns": 13520.0,
+            "p90_ns": 13959.0,
+            "p99_ns": 28134.0,
+            "p999_ns": 104893.0,
+            "max_ns": 604235.0,
+            "total_ms": 1550.235
+          },
+          "swapin_rand": {
+            "samples": 131067.0,
+            "mean_ns": 13745.0,
+            "p50_ns": 14237.0,
+            "p90_ns": 14991.0,
+            "p99_ns": 32748.0,
+            "p999_ns": 513746.0,
+            "max_ns": 1127125.0,
+            "total_ms": 1801.503
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262139.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262168,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262166,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-b",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/49add9b084d04941a459281838bbf3f3-1-swapin-disk-b/result.json",
+        "result_sha256": "d2048e0a598c1133d465655e1ee9c90cbaaaa01d54bc0bb45760653cea2a17eb",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262162,
+            "pswpout": 262201,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048764,
+            "xswap1": 1048764
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 159380.0,
+            "p50_ns": 142233.0,
+            "p90_ns": 214989.0,
+            "p99_ns": 325239.0,
+            "p999_ns": 659170.0,
+            "max_ns": 2901465.0,
+            "total_ms": 20890.248
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 225073.0,
+            "p50_ns": 220932.0,
+            "p90_ns": 275534.0,
+            "p99_ns": 380790.0,
+            "p999_ns": 744973.0,
+            "max_ns": 4193559.0,
+            "total_ms": 29500.732
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262159,
+            "pswpout": 262201,
+            "pgmajfault": 262161,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "49add9b084d04941a459281838bbf3f3-1-swapin-disk-a",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/49add9b084d04941a459281838bbf3f3-1-swapin-disk-a/result.json",
+        "result_sha256": "26cd64844bc4c656e7ad223c5b85b41be6f4751d06d76cb5ad9c612d5eaed137",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262179,
+            "pswpout": 262188,
+            "pgmajfault": 262197,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048732,
+            "xswap1": 1048732
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 154112.0,
+            "p50_ns": 139549.0,
+            "p90_ns": 200114.0,
+            "p99_ns": 303688.0,
+            "p999_ns": 693291.0,
+            "max_ns": 4241834.0,
+            "total_ms": 20199.789
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 215375.0,
+            "p50_ns": 211755.0,
+            "p90_ns": 264910.0,
+            "p99_ns": 345788.0,
+            "p999_ns": 768826.0,
+            "max_ns": 4201743.0,
+            "total_ms": 28229.646
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262177,
+            "pswpout": 262188,
+            "pgmajfault": 262179,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/49add9b084d04941a459281838bbf3f3-1-swapin-zswap-b/result.json",
+        "result_sha256": "de8aa762f3e3cdc49d3db62c0b0412b783f476a5d02b916d195852e0913ce8d2",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048648
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11995.0,
+            "p50_ns": 13503.0,
+            "p90_ns": 13952.0,
+            "p99_ns": 32687.0,
+            "p999_ns": 126743.0,
+            "max_ns": 569214.0,
+            "total_ms": 1572.221
+          },
+          "swapin_rand": {
+            "samples": 131055.0,
+            "mean_ns": 13930.0,
+            "p50_ns": 14305.0,
+            "p90_ns": 15155.0,
+            "p99_ns": 36006.0,
+            "p999_ns": 517075.0,
+            "max_ns": 1039700.0,
+            "total_ms": 1825.551
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262127.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/49add9b084d04941a459281838bbf3f3-1-swapin-zswap-a/result.json",
+        "result_sha256": "12bf9f944105e8efadbf992bb56f601c28c4a10ef46d812254bbeb3c0669c2a9",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262167,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262149,
+            "zswpout": 262154,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048596
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11714.0,
+            "p50_ns": 13514.0,
+            "p90_ns": 13949.0,
+            "p99_ns": 26999.0,
+            "p999_ns": 78983.0,
+            "max_ns": 668610.0,
+            "total_ms": 1535.402
+          },
+          "swapin_rand": {
+            "samples": 131041.0,
+            "mean_ns": 13695.0,
+            "p50_ns": 14276.0,
+            "p90_ns": 15047.0,
+            "p99_ns": 29646.0,
+            "p999_ns": 514502.0,
+            "max_ns": 1363463.0,
+            "total_ms": 1794.641
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262113.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262149,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262147,
+            "zswpout": 262154,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      }
+    ],
+    "pairs": [
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 155503.0,
+          "swapin-disk.swapin_seq.p99_ns": 308872.0,
+          "swapin-disk.swapin_rand.mean_ns": 221868.0,
+          "swapin-disk.swapin_rand.p99_ns": 356087.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11866.0,
+          "swapin-zswap.swapin_seq.p99_ns": 28413.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13744.0,
+          "swapin-zswap.swapin_rand.p99_ns": 31194.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 164330.0,
+          "swapin-disk.swapin_seq.p99_ns": 335764.0,
+          "swapin-disk.swapin_rand.mean_ns": 210378.0,
+          "swapin-disk.swapin_rand.p99_ns": 386589.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11827.0,
+          "swapin-zswap.swapin_seq.p99_ns": 28134.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13745.0,
+          "swapin-zswap.swapin_rand.p99_ns": 32748.0
+        },
+        "order": "AB"
+      },
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 154112.0,
+          "swapin-disk.swapin_seq.p99_ns": 303688.0,
+          "swapin-disk.swapin_rand.mean_ns": 215375.0,
+          "swapin-disk.swapin_rand.p99_ns": 345788.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11714.0,
+          "swapin-zswap.swapin_seq.p99_ns": 26999.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13695.0,
+          "swapin-zswap.swapin_rand.p99_ns": 29646.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 159380.0,
+          "swapin-disk.swapin_seq.p99_ns": 325239.0,
+          "swapin-disk.swapin_rand.mean_ns": 225073.0,
+          "swapin-disk.swapin_rand.p99_ns": 380790.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11995.0,
+          "swapin-zswap.swapin_seq.p99_ns": 32687.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13930.0,
+          "swapin-zswap.swapin_rand.p99_ns": 36006.0
+        },
+        "order": "BA"
+      }
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "fingerprint": "24f5a85f6376d3f90de869af3ed699d04cc539e406b34ae63aba15686ba21849",
+    "candidate_commit": "7322aadd18b6030c692265693b8dfd29afa3ee6f",
+    "correctness": {
+      "swap_image_allocation": "preallocated",
+      "run_id": "aux-1fbd7677659347d1bc96b4668c2237b8",
+      "stop_file": "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "build": "std-7322aadd1100",
+      "backend": "disk",
+      "mode": "xswap",
+      "workload": "correctness",
+      "source_commit": "7322aadd18b6030c692265693b8dfd29afa3ee6f",
+      "image_sha256": "85a4fa1afa82079de53536b242982704a94f5e470a57c9d59db24da41f21d28f",
+      "config_sha256": "9652dbf3b072394660f801f684cc9faa7689b70d3d31ed7f65bbf094329e006a",
+      "guest_provenance": {
+        "image_sha256": "2545d9c83b91a00ccb93b8d7ee344302f501e9a6f37c707340025dbd3183ce5b",
+        "image_mib": 3742,
+        "initrd_sha256": "0f92a18d061b3399d86621a9ee382fe738caf75f3944e4d9fdbaeee9843fc8e6",
+        "sources": {
+          "guest-init": "381fd710634085de78ab8f432e87154f7144115fbdc13b8a514822b84735120d",
+          "bench.sh": "4588b1aa3731ae25eeccfaef58dd16bbd6d41efb67a42179d68a9680c5e2c905",
+          "params.sh": "e4ea0f5b2b39390e42c58196fff9ab9828625ed0edd43fcda7703a3df82ac063",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "churn.c": "0c81e556b7c8c374687523a09241f73aa15fcd331531e099bb85747e9d380ddb",
+          "correctness.c": "cc459f2daacff59fda3d82e0dba1ee2da90f609998bcb4b44f2f30613c14a6a2",
+          "console-drain.c": "76b7bf5d6e0ab346416a273b25a9c851043d476d054a3a51d97984f870a7e2e1",
+          "prepare-image.py": "d3c4782e447390635728f03207f9a839a6e7f0b812acba54ad94825d078f06d4",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+        },
+        "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "tools": {
+          "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+          "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+        },
+        "calibrated": false,
+        "host_dirs": [
+          "etc/alternatives",
+          "usr/bin",
+          "usr/sbin",
+          "usr/include",
+          "usr/lib/x86_64-linux-gnu",
+          "usr/lib/gcc",
+          "usr/libexec",
+          "usr/lib/bfd-plugins",
+          "usr/lib/locale",
+          "usr/share/perl",
+          "usr/share/perl5",
+          "usr/share/misc",
+          "usr/share/bison"
+        ],
+        "binary_sha256": {
+          "usemem": "483f667793aae0a0bfaa1de195215e0dba0df9c7937c4e31f3d3a784fe4c61b7",
+          "valkey-server": "af47389214e6d3b90f8d5440ec6d10389472a7b6be3c1fe0f65e1ff0a2406efa",
+          "valkey-benchmark": "b421de51fd66daeefcda8782e95d0b3055360c61de2c1a024bd0cb4cd05ffd05",
+          "valkey-cli": "d374aebfc8e043b750165aaacba999f2082d045de529e3acf6419a105155c5c5",
+          "swapin": "d791b74a5b0a658cbaafc4e4eeb9756d1ecc5efbd9d5e4a85c733f7f7db70948",
+          "churn": "c6e78e703ee3ccbdc4f3c528ca15972507f771e217cd9c6a34bd215d652c48a8",
+          "correctness": "840679e5b63008444040379ce3dd7db374793684cdd113e241ad77cecdae10be",
+          "console-drain": "b955085dab6e59797d1b6dd221d0c14a68610ff79ddeafca648a35ef1de30a71"
+        },
+        "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+      },
+      "command": [
+        "qemu-system-x86_64",
+        "-enable-kvm",
+        "-machine",
+        "pc",
+        "-cpu",
+        "host,migratable=off",
+        "-smp",
+        "8",
+        "-m",
+        "8192",
+        "-nodefaults",
+        "-display",
+        "none",
+        "-serial",
+        "stdio",
+        "-monitor",
+        "none",
+        "-nic",
+        "none",
+        "-no-reboot",
+        "-sandbox",
+        "on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny",
+        "-kernel",
+        "benchmark/kernel/builds/std-7322aadd1100/output/arch/x86/boot/bzImage",
+        "-initrd",
+        "benchmark/swap-standard/initramfs.cpio.gz",
+        "-append",
+        "console=ttyS0 rdinit=/init panic=-1 loglevel=4 zswap.enabled=1 zswap.compressor=zstd brd.rd_size=1073741824 bench.backend=disk bench.mode=xswap bench.workload=correctness bench.image_sha=85a4fa1afa82079de53536b242982704a94f5e470a57c9d59db24da41f21d28f",
+        "-drive",
+        "file=benchmark/swap-standard/runs/aux-1fbd7677659347d1bc96b4668c2237b8/swap.raw,format=raw,if=virtio,cache=none",
+        "-drive",
+        "file=benchmark/swap-standard/bench.img,format=raw,if=virtio,readonly=on"
+      ],
+      "performance_accepted": false,
+      "calibrated": false,
+      "auto_promote": false,
+      "harness_sha256": {
+        "evidence.py": "8f6446fe4c5d04f25fb07856e0ffcfb2e18056251b12098318a97e5b3367837d",
+        "run.py": "b17cff9e7e41a86cbbe4ee48706025124ea04d175f499777bb0549c8393fd86b",
+        "protocol-xswap-swapin-2026-10-23.json": "17086695fc2446c0c2db57a8e76e9f57e807f33050b4e9e6aed03922c797ee04",
+        "test_evidence.py": "5f349188275a21e2a63afc9baa0714df34c8e3cdd2ab82ae559d542510da86fb",
+        "protocol-xswap-next-2026-10-24.json": "c549e26a4d839020fbba4126ba2a9d484576c2acec5e904672f4d1e4d7496c09",
+        "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+        "params.sh": "e4ea0f5b2b39390e42c58196fff9ab9828625ed0edd43fcda7703a3df82ac063",
+        "test_runner.py": "b662c4667c75964249c193d8610d69ad284b73b4aee7d91499256b3ea74e2d59",
+        "churn.c": "0c81e556b7c8c374687523a09241f73aa15fcd331531e099bb85747e9d380ddb",
+        "correctness.c": "cc459f2daacff59fda3d82e0dba1ee2da90f609998bcb4b44f2f30613c14a6a2",
+        "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+        "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+        "protocol-confirm-h1-2026-10-23.json": "ce9e2994064cc8a11446cef1cf6c3851c915f256981ff1df53fdd49db237b297",
+        "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+        "console-drain.c": "76b7bf5d6e0ab346416a273b25a9c851043d476d054a3a51d97984f870a7e2e1",
+        "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+        "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+        "bench.sh": "4588b1aa3731ae25eeccfaef58dd16bbd6d41efb67a42179d68a9680c5e2c905",
+        "prepare-image.py": "d3c4782e447390635728f03207f9a839a6e7f0b812acba54ad94825d078f06d4"
+      },
+      "exit_code": 0,
+      "stop_reason": null,
+      "wall_seconds": 16.53023829101585,
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 49191,
+          "pswpout": 49365,
+          "pgmajfault": 16445,
+          "swap_ra": 4100,
+          "swap_ra_hit": 6,
+          "swpin_zero": 34,
+          "swpout_zero": 34,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 61456,
+          "xswap1": 65948
+        },
+        "correctness_vmstat_delta": {
+          "pswpin": 49191,
+          "pswpout": 49365,
+          "pgmajfault": 16428,
+          "swap_ra": 4100,
+          "swap_ra_hit": 6,
+          "swpin_zero": 34,
+          "swpout_zero": 34,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "correctness_snapshots": {
+          "before": {
+            "clusters_max": 15956,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "after_pressure": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 16487,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "fork_shared": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 16486,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "after_children": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 16486,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "after_reads": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 37,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "after_settle": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 37,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          }
+        },
+        "correctness_samples": 16384,
+        "physical_swapoff_live_ptes": 16357,
+        "physical_swapoff_used_kib": 65960
+      },
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "integration_pass": true,
+      "serial_sha256": "63eb728f925ebb965a14c0e2a8d8728f7ff8bd06d8aeb602640f976479732119"
+    },
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7322aadd18b6030c692265693b8dfd29afa3ee6f",
+      "changed_paths": [
+        "mm/memory.c",
+        "mm/swap.h",
+        "mm/swap_state.c"
+      ],
+      "changed_lines": 98,
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-next-2026-10-24/xs-ra-sequential-v1/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-next-2026-10-24/xs-ra-sequential-v1/checkpatch.log",
+        "sha256": "ce42ee85f1d780d82108c80d7f25ed0a4136e612b23d49937048c96921b93c3b"
+      }
+    },
+    "execution_started": true,
+    "calibration_id": "7ac434b0aad649298d7c0282b29a10c1",
+    "analysis": {
+      "tier": "fast",
+      "pair_count": 2,
+      "metrics": {
+        "swapin-disk.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            0.9462849145013074,
+            0.9669469193123357
+          ],
+          "geomean_ratio": 0.9565601302943668,
+          "median_ratio": 0.9565601302943668,
+          "noise_relative": 0.08093091140301434,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            0.919908030640568,
+            0.9337379588548739
+          ],
+          "geomean_ratio": 0.9267971983473681,
+          "median_ratio": 0.9267971983473681,
+          "noise_relative": 0.0606771742534129,
+          "guard_pass": false
+        },
+        "swapin-disk.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            1.0546159769557661,
+            0.9569117575186713
+          ],
+          "geomean_ratio": 1.004576740730151,
+          "median_ratio": 1.004576740730151,
+          "noise_relative": 0.12237048080506963,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            0.921099669157684,
+            0.9080805693426826
+          ],
+          "geomean_ratio": 0.9145669532571501,
+          "median_ratio": 0.9145669532571501,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": false
+        },
+        "swapin-zswap.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            1.0032975395281967,
+            0.976573572321801
+          ],
+          "geomean_ratio": 0.9898453729137316,
+          "median_ratio": 0.9898453729137316,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            1.0099168266154839,
+            0.8259858659405888
+          ],
+          "geomean_ratio": 0.9133329209877207,
+          "median_ratio": 0.9133329209877207,
+          "noise_relative": 0.14459804257587816,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            0.9999272462713724,
+            0.9831299353912417
+          ],
+          "geomean_ratio": 0.9914930201583452,
+          "median_ratio": 0.9914930201583452,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            0.9525467204104073,
+            0.8233627728711879
+          ],
+          "geomean_ratio": 0.8856023424802292,
+          "median_ratio": 0.8856023424802292,
+          "noise_relative": 0.16200470171374204,
+          "guard_pass": true
+        }
+      },
+      "overall_geomean_ratio": 0.9730604394823763,
+      "combined_score": 0.9730604394823763,
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zswap.swapin_seq.mean_ns"
+      ],
+      "reference": false,
+      "performance_accepted": false,
+      "auto_promote": false,
+      "eligible_for_slow": false,
+      "needs_review": false,
+      "status": "REGRESSION"
+    },
+    "finished": 1792832288.3123682
+  },
+  {
+    "id": "aux-435d46c5189d48a3abf342ddf0de4eb9",
+    "action": "auxiliary",
+    "kind": "build",
+    "tier": "correctness",
+    "candidate": "xs-zswap-linear-v1",
+    "candidate_commit": "218750fed80a7ac099d46c5a3a26799a5d185d14",
+    "status": "PASS",
+    "started": 1792832413.8832915,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "218750fed80a7ac099d46c5a3a26799a5d185d14",
+      "--name",
+      "std-218750fed80a",
+      "--config",
+      "benchmark/config/swap-standard.config",
+      "--no-instrumentation"
+    ],
+    "result": "benchmark/kernel/builds/std-218750fed80a/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "1cb2e44a028fac12ccb20f65a4638aceddf8f747b7df1385ef6d686c2916f426",
+    "finished": 1792832518.9319332
+  },
+  {
+    "id": "aux-1c1fcaf0fdf64a09b95d3963eaf7f5f0",
+    "action": "auxiliary",
+    "kind": "guest",
+    "tier": "correctness",
+    "candidate": "xs-zswap-linear-v1",
+    "candidate_commit": "218750fed80a7ac099d46c5a3a26799a5d185d14",
+    "status": "PASS",
+    "started": 1792832518.973744,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "std-218750fed80a",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "aux-1c1fcaf0fdf64a09b95d3963eaf7f5f0",
+      "--timeout",
+      "900",
+      "--stop-file",
+      "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "--preallocate-swap"
+    ],
+    "result": "benchmark/swap-standard/runs/aux-1c1fcaf0fdf64a09b95d3963eaf7f5f0/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "64785d85df1206744e09b57900e66274533acd8f8f1e6c83cac89b16d3985e13",
+    "finished": 1792832538.990851
+  },
+  {
+    "id": "aux-e8cdc9dc2daa431092f35c9a1b389772",
+    "action": "auxiliary",
+    "kind": "guest",
+    "tier": "correctness",
+    "candidate": "xs-zswap-linear-v1",
+    "candidate_commit": "218750fed80a7ac099d46c5a3a26799a5d185d14",
+    "status": "PASS",
+    "started": 1792832539.0401769,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "std-218750fed80a",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "aux-e8cdc9dc2daa431092f35c9a1b389772",
+      "--timeout",
+      "900",
+      "--stop-file",
+      "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "--preallocate-swap"
+    ],
+    "result": "benchmark/swap-standard/runs/aux-e8cdc9dc2daa431092f35c9a1b389772/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "8bb58a4b75ff2ed29ea80c2f2a0a1f33247cbf6065d7b4a9a493e87ef7caa9e0",
+    "finished": 1792832551.0556166
+  },
+  {
+    "id": "aux-26fdaae6ba9943759dd5c66f6f882089",
+    "action": "auxiliary",
+    "kind": "build",
+    "tier": "correctness",
+    "candidate": "xs-zswap-linear-v1",
+    "candidate_commit": "218750fed80a7ac099d46c5a3a26799a5d185d14",
+    "status": "PASS",
+    "started": 1792832551.10187,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "218750fed80a7ac099d46c5a3a26799a5d185d14",
+      "--name",
+      "xs-zswap-linear-v1-kasan",
+      "--config",
+      "benchmark/config/swap-standard-kasan.config",
+      "--no-instrumentation"
+    ],
+    "result": "benchmark/kernel/builds/xs-zswap-linear-v1-kasan/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "532d01fbaca0dd04969334a7b558b802c7dbaf06d56929f907037b2a0e56268b",
+    "finished": 1792832697.1637897
+  },
+  {
+    "id": "aux-c6e3aad7af8a4cd7b38edad7b2772b34",
+    "action": "auxiliary",
+    "kind": "guest",
+    "tier": "correctness",
+    "candidate": "xs-zswap-linear-v1",
+    "candidate_commit": "218750fed80a7ac099d46c5a3a26799a5d185d14",
+    "status": "PASS",
+    "started": 1792832697.2050138,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-zswap-linear-v1-kasan",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "aux-c6e3aad7af8a4cd7b38edad7b2772b34",
+      "--timeout",
+      "900",
+      "--stop-file",
+      "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "--preallocate-swap"
+    ],
+    "result": "benchmark/swap-standard/runs/aux-c6e3aad7af8a4cd7b38edad7b2772b34/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "50db51a09548b7b9f2cf3b12db6c5d9ca55d821a5af189548ede9d29bc4e67d6",
+    "finished": 1792832716.7219858
+  },
+  {
+    "id": "15ded9c2bdf44b5fae1b3e83f0f75daf",
+    "action": "evaluate",
+    "tier": "fast",
+    "candidate": "xs-zswap-linear-v1",
+    "status": "REGRESSION",
+    "started": 1792832781.3031042,
+    "runs": [
+      {
+        "id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-a/result.json",
+        "result_sha256": "89f51b5a6504fa02e55aa694187c6ed965909c18fdd52af09fbe4bc3e3bfddd8",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262140,
+            "pswpout": 262201,
+            "pgmajfault": 262158,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048804,
+            "xswap1": 1048804
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 154543.0,
+            "p50_ns": 136109.0,
+            "p90_ns": 216795.0,
+            "p99_ns": 333230.0,
+            "p999_ns": 639847.0,
+            "max_ns": 4135958.0,
+            "total_ms": 20256.229
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 213119.0,
+            "p50_ns": 204351.0,
+            "p90_ns": 274815.0,
+            "p99_ns": 398987.0,
+            "p999_ns": 725601.0,
+            "max_ns": 4153354.0,
+            "total_ms": 27933.93
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262137,
+            "pswpout": 262201,
+            "pgmajfault": 262139,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-disk-b/result.json",
+        "result_sha256": "773da15c82e9b8b3309c13a0d19b106f841991050a58ada02448e89a57924084",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262164,
+            "pswpout": 262188,
+            "pgmajfault": 262182,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048752,
+            "xswap1": 1048752
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 140254.0,
+            "p50_ns": 124715.0,
+            "p90_ns": 184959.0,
+            "p99_ns": 299063.0,
+            "p999_ns": 622332.0,
+            "max_ns": 2608797.0,
+            "total_ms": 18383.355
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 188841.0,
+            "p50_ns": 173041.0,
+            "p90_ns": 240382.0,
+            "p99_ns": 356033.0,
+            "p999_ns": 708830.0,
+            "max_ns": 3041151.0,
+            "total_ms": 24751.723
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262162,
+            "pswpout": 262188,
+            "pgmajfault": 262164,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-a/result.json",
+        "result_sha256": "878d026bb2c52df1357cec2864fe6451db5da8e81c0f9621c82ada2c6ea6fb84",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262181,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262163,
+            "zswpout": 262168,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1047516
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11755.0,
+            "p50_ns": 13517.0,
+            "p90_ns": 13954.0,
+            "p99_ns": 27032.0,
+            "p999_ns": 87729.0,
+            "max_ns": 663070.0,
+            "total_ms": 1540.786
+          },
+          "swapin_rand": {
+            "samples": 131062.0,
+            "mean_ns": 13675.0,
+            "p50_ns": 14253.0,
+            "p90_ns": 15053.0,
+            "p99_ns": 29361.0,
+            "p999_ns": 507662.0,
+            "max_ns": 746697.0,
+            "total_ms": 1792.289
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262134.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262168,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/15ded9c2bdf44b5fae1b3e83f0f75daf-0-swapin-zswap-b/result.json",
+        "result_sha256": "024344bc8e96408857cf1ddf30fd130c3dcd508d32c87acef7c9acc5c2558aa5",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262181,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262163,
+            "zswpout": 262168,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1042692
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 14586.0,
+            "p50_ns": 13630.0,
+            "p90_ns": 14495.0,
+            "p99_ns": 33189.0,
+            "p999_ns": 109128.0,
+            "max_ns": 799757.0,
+            "total_ms": 1911.814
+          },
+          "swapin_rand": {
+            "samples": 131060.0,
+            "mean_ns": 16860.0,
+            "p50_ns": 14680.0,
+            "p90_ns": 15534.0,
+            "p99_ns": 40313.0,
+            "p999_ns": 690330.0,
+            "max_ns": 1015641.0,
+            "total_ms": 2209.702
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262132.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262163,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262161,
+            "zswpout": 262168,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-b/result.json",
+        "result_sha256": "1795dc6494b7b80c53961850490028548fc4bf8491ae6297c67ecf0b71ddc58b",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262139,
+            "pswpout": 262187,
+            "pgmajfault": 262157,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048728,
+            "xswap1": 1048728
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 139724.0,
+            "p50_ns": 126768.0,
+            "p90_ns": 178971.0,
+            "p99_ns": 281075.0,
+            "p999_ns": 695587.0,
+            "max_ns": 3096669.0,
+            "total_ms": 18313.961
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 184114.0,
+            "p50_ns": 170831.0,
+            "p90_ns": 228959.0,
+            "p99_ns": 332898.0,
+            "p999_ns": 689858.0,
+            "max_ns": 4683187.0,
+            "total_ms": 24132.244
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262137,
+            "pswpout": 262187,
+            "pgmajfault": 262139,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-disk-a/result.json",
+        "result_sha256": "8fe9bbe43cb53d1f0f8e868c182ce42537abe2f632ba0e806b229e66de45e6b4",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262135,
+            "pswpout": 262201,
+            "pgmajfault": 262153,
+            "swap_ra": 0,
+            "swap_ra_hit": 3,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048804,
+            "xswap1": 1048804
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 148223.0,
+            "p50_ns": 135177.0,
+            "p90_ns": 192433.0,
+            "p99_ns": 304344.0,
+            "p999_ns": 732236.0,
+            "max_ns": 4948148.0,
+            "total_ms": 19427.869
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 184241.0,
+            "p50_ns": 172176.0,
+            "p90_ns": 227112.0,
+            "p99_ns": 319034.0,
+            "p999_ns": 709406.0,
+            "max_ns": 4095573.0,
+            "total_ms": 24148.898
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262133,
+            "pswpout": 262201,
+            "pgmajfault": 262135,
+            "swap_ra": 0,
+            "swap_ra_hit": 3,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-b/result.json",
+        "result_sha256": "bffd3210cbafe190c51e8dc6b9f794def28a396cf132e13f7f348e3d9a74770a",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262186,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262168,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1033320
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 14651.0,
+            "p50_ns": 13660.0,
+            "p90_ns": 14604.0,
+            "p99_ns": 32988.0,
+            "p999_ns": 112887.0,
+            "max_ns": 746807.0,
+            "total_ms": 1920.368
+          },
+          "swapin_rand": {
+            "samples": 131046.0,
+            "mean_ns": 16892.0,
+            "p50_ns": 14721.0,
+            "p90_ns": 15534.0,
+            "p99_ns": 36661.0,
+            "p999_ns": 717371.0,
+            "max_ns": 1404300.0,
+            "total_ms": 2213.655
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262118.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262167,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262165,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/15ded9c2bdf44b5fae1b3e83f0f75daf-1-swapin-zswap-a/result.json",
+        "result_sha256": "b19d3e026e59aeee21601f4d1d260bf391d5490acc3345351f0477ef73f5c20e",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262186,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262168,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048672
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11749.0,
+            "p50_ns": 13502.0,
+            "p90_ns": 13941.0,
+            "p99_ns": 27581.0,
+            "p999_ns": 93269.0,
+            "max_ns": 609092.0,
+            "total_ms": 1540.005
+          },
+          "swapin_rand": {
+            "samples": 131055.0,
+            "mean_ns": 13701.0,
+            "p50_ns": 14251.0,
+            "p90_ns": 15030.0,
+            "p99_ns": 30190.0,
+            "p999_ns": 516637.0,
+            "max_ns": 771757.0,
+            "total_ms": 1795.591
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262127.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262168,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262166,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      }
+    ],
+    "pairs": [
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 154543.0,
+          "swapin-disk.swapin_seq.p99_ns": 333230.0,
+          "swapin-disk.swapin_rand.mean_ns": 213119.0,
+          "swapin-disk.swapin_rand.p99_ns": 398987.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11755.0,
+          "swapin-zswap.swapin_seq.p99_ns": 27032.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13675.0,
+          "swapin-zswap.swapin_rand.p99_ns": 29361.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 140254.0,
+          "swapin-disk.swapin_seq.p99_ns": 299063.0,
+          "swapin-disk.swapin_rand.mean_ns": 188841.0,
+          "swapin-disk.swapin_rand.p99_ns": 356033.0,
+          "swapin-zswap.swapin_seq.mean_ns": 14586.0,
+          "swapin-zswap.swapin_seq.p99_ns": 33189.0,
+          "swapin-zswap.swapin_rand.mean_ns": 16860.0,
+          "swapin-zswap.swapin_rand.p99_ns": 40313.0
+        },
+        "order": "AB"
+      },
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 148223.0,
+          "swapin-disk.swapin_seq.p99_ns": 304344.0,
+          "swapin-disk.swapin_rand.mean_ns": 184241.0,
+          "swapin-disk.swapin_rand.p99_ns": 319034.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11749.0,
+          "swapin-zswap.swapin_seq.p99_ns": 27581.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13701.0,
+          "swapin-zswap.swapin_rand.p99_ns": 30190.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 139724.0,
+          "swapin-disk.swapin_seq.p99_ns": 281075.0,
+          "swapin-disk.swapin_rand.mean_ns": 184114.0,
+          "swapin-disk.swapin_rand.p99_ns": 332898.0,
+          "swapin-zswap.swapin_seq.mean_ns": 14651.0,
+          "swapin-zswap.swapin_seq.p99_ns": 32988.0,
+          "swapin-zswap.swapin_rand.mean_ns": 16892.0,
+          "swapin-zswap.swapin_rand.p99_ns": 36661.0
+        },
+        "order": "BA"
+      }
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "fingerprint": "24f5a85f6376d3f90de869af3ed699d04cc539e406b34ae63aba15686ba21849",
+    "candidate_commit": "218750fed80a7ac099d46c5a3a26799a5d185d14",
+    "correctness": {
+      "swap_image_allocation": "preallocated",
+      "run_id": "aux-e8cdc9dc2daa431092f35c9a1b389772",
+      "stop_file": "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "build": "std-218750fed80a",
+      "backend": "zswap",
+      "mode": "xswap",
+      "workload": "correctness",
+      "source_commit": "218750fed80a7ac099d46c5a3a26799a5d185d14",
+      "image_sha256": "0d100dadf8482a30dd49d7d8c22aa10aeb194a0e9a85ceb22fcec5759a9f6c9b",
+      "config_sha256": "9652dbf3b072394660f801f684cc9faa7689b70d3d31ed7f65bbf094329e006a",
+      "guest_provenance": {
+        "image_sha256": "2545d9c83b91a00ccb93b8d7ee344302f501e9a6f37c707340025dbd3183ce5b",
+        "image_mib": 3742,
+        "initrd_sha256": "0f92a18d061b3399d86621a9ee382fe738caf75f3944e4d9fdbaeee9843fc8e6",
+        "sources": {
+          "guest-init": "381fd710634085de78ab8f432e87154f7144115fbdc13b8a514822b84735120d",
+          "bench.sh": "4588b1aa3731ae25eeccfaef58dd16bbd6d41efb67a42179d68a9680c5e2c905",
+          "params.sh": "e4ea0f5b2b39390e42c58196fff9ab9828625ed0edd43fcda7703a3df82ac063",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "churn.c": "0c81e556b7c8c374687523a09241f73aa15fcd331531e099bb85747e9d380ddb",
+          "correctness.c": "cc459f2daacff59fda3d82e0dba1ee2da90f609998bcb4b44f2f30613c14a6a2",
+          "console-drain.c": "76b7bf5d6e0ab346416a273b25a9c851043d476d054a3a51d97984f870a7e2e1",
+          "prepare-image.py": "d3c4782e447390635728f03207f9a839a6e7f0b812acba54ad94825d078f06d4",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+        },
+        "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "tools": {
+          "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+          "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+        },
+        "calibrated": false,
+        "host_dirs": [
+          "etc/alternatives",
+          "usr/bin",
+          "usr/sbin",
+          "usr/include",
+          "usr/lib/x86_64-linux-gnu",
+          "usr/lib/gcc",
+          "usr/libexec",
+          "usr/lib/bfd-plugins",
+          "usr/lib/locale",
+          "usr/share/perl",
+          "usr/share/perl5",
+          "usr/share/misc",
+          "usr/share/bison"
+        ],
+        "binary_sha256": {
+          "usemem": "483f667793aae0a0bfaa1de195215e0dba0df9c7937c4e31f3d3a784fe4c61b7",
+          "valkey-server": "af47389214e6d3b90f8d5440ec6d10389472a7b6be3c1fe0f65e1ff0a2406efa",
+          "valkey-benchmark": "b421de51fd66daeefcda8782e95d0b3055360c61de2c1a024bd0cb4cd05ffd05",
+          "valkey-cli": "d374aebfc8e043b750165aaacba999f2082d045de529e3acf6419a105155c5c5",
+          "swapin": "d791b74a5b0a658cbaafc4e4eeb9756d1ecc5efbd9d5e4a85c733f7f7db70948",
+          "churn": "c6e78e703ee3ccbdc4f3c528ca15972507f771e217cd9c6a34bd215d652c48a8",
+          "correctness": "840679e5b63008444040379ce3dd7db374793684cdd113e241ad77cecdae10be",
+          "console-drain": "b955085dab6e59797d1b6dd221d0c14a68610ff79ddeafca648a35ef1de30a71"
+        },
+        "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+      },
+      "command": [
+        "qemu-system-x86_64",
+        "-enable-kvm",
+        "-machine",
+        "pc",
+        "-cpu",
+        "host,migratable=off",
+        "-smp",
+        "8",
+        "-m",
+        "8192",
+        "-nodefaults",
+        "-display",
+        "none",
+        "-serial",
+        "stdio",
+        "-monitor",
+        "none",
+        "-nic",
+        "none",
+        "-no-reboot",
+        "-sandbox",
+        "on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny",
+        "-kernel",
+        "benchmark/kernel/builds/std-218750fed80a/output/arch/x86/boot/bzImage",
+        "-initrd",
+        "benchmark/swap-standard/initramfs.cpio.gz",
+        "-append",
+        "console=ttyS0 rdinit=/init panic=-1 loglevel=4 zswap.enabled=1 zswap.compressor=zstd brd.rd_size=1073741824 bench.backend=zswap bench.mode=xswap bench.workload=correctness bench.image_sha=0d100dadf8482a30dd49d7d8c22aa10aeb194a0e9a85ceb22fcec5759a9f6c9b",
+        "-drive",
+        "file=benchmark/swap-standard/runs/aux-e8cdc9dc2daa431092f35c9a1b389772/swap.raw,format=raw,if=virtio,cache=none",
+        "-drive",
+        "file=benchmark/swap-standard/bench.img,format=raw,if=virtio,readonly=on"
+      ],
+      "performance_accepted": false,
+      "calibrated": false,
+      "auto_promote": false,
+      "harness_sha256": {
+        "evidence.py": "8f6446fe4c5d04f25fb07856e0ffcfb2e18056251b12098318a97e5b3367837d",
+        "run.py": "b17cff9e7e41a86cbbe4ee48706025124ea04d175f499777bb0549c8393fd86b",
+        "protocol-xswap-swapin-2026-10-23.json": "17086695fc2446c0c2db57a8e76e9f57e807f33050b4e9e6aed03922c797ee04",
+        "test_evidence.py": "5f349188275a21e2a63afc9baa0714df34c8e3cdd2ab82ae559d542510da86fb",
+        "protocol-xswap-next-2026-10-24.json": "c549e26a4d839020fbba4126ba2a9d484576c2acec5e904672f4d1e4d7496c09",
+        "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+        "params.sh": "e4ea0f5b2b39390e42c58196fff9ab9828625ed0edd43fcda7703a3df82ac063",
+        "test_runner.py": "b662c4667c75964249c193d8610d69ad284b73b4aee7d91499256b3ea74e2d59",
+        "churn.c": "0c81e556b7c8c374687523a09241f73aa15fcd331531e099bb85747e9d380ddb",
+        "correctness.c": "cc459f2daacff59fda3d82e0dba1ee2da90f609998bcb4b44f2f30613c14a6a2",
+        "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+        "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+        "protocol-confirm-h1-2026-10-23.json": "ce9e2994064cc8a11446cef1cf6c3851c915f256981ff1df53fdd49db237b297",
+        "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+        "console-drain.c": "76b7bf5d6e0ab346416a273b25a9c851043d476d054a3a51d97984f870a7e2e1",
+        "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+        "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+        "bench.sh": "4588b1aa3731ae25eeccfaef58dd16bbd6d41efb67a42179d68a9680c5e2c905",
+        "prepare-image.py": "d3c4782e447390635728f03207f9a839a6e7f0b812acba54ad94825d078f06d4"
+      },
+      "exit_code": 0,
+      "stop_reason": null,
+      "wall_seconds": 10.02047208294971,
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 0,
+          "pswpout": 0,
+          "pgmajfault": 32903,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 35,
+          "swpout_zero": 35,
+          "zswpin": 49361,
+          "zswpout": 49361,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 0,
+          "xswap1": 66060
+        },
+        "correctness_vmstat_delta": {
+          "pswpin": 0,
+          "pswpout": 0,
+          "pgmajfault": 32886,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 35,
+          "swpout_zero": 35,
+          "zswpin": 49361,
+          "zswpout": 49361,
+          "zswpwb": 0
+        },
+        "correctness_snapshots": {
+          "before": {
+            "clusters_max": 15956,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "after_pressure": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 16485,
+            "tail_free": 80,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "fork_shared": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 16485,
+            "tail_free": 80,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "after_children": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 16485,
+            "tail_free": 80,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "after_reads": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 36,
+            "tail_free": 80,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "after_settle": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 36,
+            "tail_free": 80,
+            "grows": 1,
+            "shrinks": 0
+          }
+        },
+        "correctness_samples": 16384,
+        "physical_swapoff_live_ptes": 16384,
+        "physical_swapoff_used_kib": 0
+      },
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "integration_pass": true,
+      "serial_sha256": "f0abc1e7b2233114f8621bf21f599f61947c738e80019ca8edbf3d7497de803c"
+    },
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "218750fed80a7ac099d46c5a3a26799a5d185d14",
+      "changed_paths": [
+        "mm/zswap.c"
+      ],
+      "changed_lines": 7,
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-next-2026-10-24/xs-zswap-linear-v1/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-next-2026-10-24/xs-zswap-linear-v1/checkpatch.log",
+        "sha256": "940471d6fa717ffb2c0aa32ab1aa553547fded1380e0e064b8b88143c563c119"
+      }
+    },
+    "execution_started": true,
+    "calibration_id": "7ac434b0aad649298d7c0282b29a10c1",
+    "analysis": {
+      "tier": "fast",
+      "pair_count": 2,
+      "metrics": {
+        "swapin-disk.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            1.1018794472884903,
+            1.060827059059288
+          ],
+          "geomean_ratio": 1.0811584220200678,
+          "median_ratio": 1.0811584220200678,
+          "noise_relative": 0.08093091140301434,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            1.1142468309352862,
+            1.0827857333451925
+          ],
+          "geomean_ratio": 1.0984036470996537,
+          "median_ratio": 1.0984036470996537,
+          "noise_relative": 0.0606771742534129,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            1.1285631827834008,
+            1.0006897900213991
+          ],
+          "geomean_ratio": 1.0627048764381404,
+          "median_ratio": 1.0627048764381404,
+          "noise_relative": 0.12237048080506963,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            1.1206461198821462,
+            0.9583536098144168
+          ],
+          "geomean_ratio": 1.0363277735897916,
+          "median_ratio": 1.0363277735897916,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            0.8059097764980114,
+            0.8019247832912431
+          ],
+          "geomean_ratio": 0.8039148107047549,
+          "median_ratio": 0.8039148107047549,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": false
+        },
+        "swapin-zswap.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            0.8144867275302049,
+            0.8360919122105008
+          ],
+          "geomean_ratio": 0.8252186167863654,
+          "median_ratio": 0.8252186167863654,
+          "noise_relative": 0.14459804257587816,
+          "guard_pass": false
+        },
+        "swapin-zswap.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            0.8110913404507702,
+            0.8110940089983428
+          ],
+          "geomean_ratio": 0.8110926747234591,
+          "median_ratio": 0.8110926747234591,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": false
+        },
+        "swapin-zswap.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            0.7283258502220136,
+            0.8234909031395765
+          ],
+          "geomean_ratio": 0.7744480048261638,
+          "median_ratio": 0.7744480048261638,
+          "noise_relative": 0.16200470171374204,
+          "guard_pass": false
+        }
+      },
+      "overall_geomean_ratio": 0.9322871168154767,
+      "combined_score": 0.9322871168154767,
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zswap.swapin_seq.mean_ns"
+      ],
+      "reference": false,
+      "performance_accepted": false,
+      "auto_promote": false,
+      "eligible_for_slow": false,
+      "needs_review": false,
+      "status": "REGRESSION"
+    },
+    "finished": 1792833059.0627673
+  },
+  {
+    "id": "aux-62524f884b784170b7640a05e264d55a",
+    "action": "auxiliary",
+    "kind": "build",
+    "tier": "correctness",
+    "candidate": "xs-ra-cluster-v1",
+    "candidate_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+    "status": "PASS",
+    "started": 1792833113.056354,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+      "--name",
+      "std-25e1feb2b74f",
+      "--config",
+      "benchmark/config/swap-standard.config",
+      "--no-instrumentation"
+    ],
+    "result": "benchmark/kernel/builds/std-25e1feb2b74f/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "6f7a160edc5e667f067c5d6702a8d4318cb61710d53e44121eadef9e65b4109f",
+    "finished": 1792833218.6036155
+  },
+  {
+    "id": "aux-4e8ff1ac9157410880e59e484b77a80c",
+    "action": "auxiliary",
+    "kind": "guest",
+    "tier": "correctness",
+    "candidate": "xs-ra-cluster-v1",
+    "candidate_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+    "status": "PASS",
+    "started": 1792833218.6513083,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "std-25e1feb2b74f",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "aux-4e8ff1ac9157410880e59e484b77a80c",
+      "--timeout",
+      "900",
+      "--stop-file",
+      "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "--preallocate-swap"
+    ],
+    "result": "benchmark/swap-standard/runs/aux-4e8ff1ac9157410880e59e484b77a80c/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "fd39cec2a58ea6d8da28e8efbeba64208380df76417561bd3552f63ee44e6c16",
+    "finished": 1792833238.169516
+  },
+  {
+    "id": "aux-8a86fe4e2e2d47b4bb4e4b357598b079",
+    "action": "auxiliary",
+    "kind": "guest",
+    "tier": "correctness",
+    "candidate": "xs-ra-cluster-v1",
+    "candidate_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+    "status": "PASS",
+    "started": 1792833238.2333152,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "std-25e1feb2b74f",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "aux-8a86fe4e2e2d47b4bb4e4b357598b079",
+      "--timeout",
+      "900",
+      "--stop-file",
+      "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "--preallocate-swap"
+    ],
+    "result": "benchmark/swap-standard/runs/aux-8a86fe4e2e2d47b4bb4e4b357598b079/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "de722b0ccfaa1e4734d21460d334d1b2378a66ccb4135fea96aa26f7734b1ee1",
+    "finished": 1792833250.7505512
+  },
+  {
+    "id": "aux-922ec26f42894464ad56f0945a625709",
+    "action": "auxiliary",
+    "kind": "build",
+    "tier": "correctness",
+    "candidate": "xs-ra-cluster-v1",
+    "candidate_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+    "status": "PASS",
+    "started": 1792833250.7998602,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+      "--name",
+      "xs-ra-cluster-v1-kasan",
+      "--config",
+      "benchmark/config/swap-standard-kasan.config",
+      "--no-instrumentation"
+    ],
+    "result": "benchmark/kernel/builds/xs-ra-cluster-v1-kasan/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "ed18c0f91f127930e0f1954213d60a9f41bf62c9623bb57dfffa6307a5f2f73a",
+    "finished": 1792833397.3598628
+  },
+  {
+    "id": "aux-a6329e199d1f4657b85b1b5f2b199b37",
+    "action": "auxiliary",
+    "kind": "guest",
+    "tier": "correctness",
+    "candidate": "xs-ra-cluster-v1",
+    "candidate_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+    "status": "PASS",
+    "started": 1792833397.405445,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-ra-cluster-v1-kasan",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "aux-a6329e199d1f4657b85b1b5f2b199b37",
+      "--timeout",
+      "900",
+      "--stop-file",
+      "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "--preallocate-swap"
+    ],
+    "result": "benchmark/swap-standard/runs/aux-a6329e199d1f4657b85b1b5f2b199b37/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "76446acea9c97429cbcf2e1e4f3c1201bf7b7efd94f3556b63e64d3dc29e7d94",
+    "finished": 1792833428.4275792
+  },
+  {
+    "id": "aux-050766084c70401f93d15beab339bcc4",
+    "action": "auxiliary",
+    "kind": "build",
+    "tier": "correctness",
+    "candidate": "xs-ra-cluster-v1",
+    "candidate_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+    "status": "PASS",
+    "started": 1792833444.9745958,
+    "command": [
+      "/usr/bin/python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+      "--name",
+      "xs-ra-cluster-v1-noswap",
+      "--config",
+      "benchmark/kernel/builds/xswap-next-inputs/swap-disabled.config",
+      "--no-instrumentation"
+    ],
+    "result": "benchmark/kernel/builds/xs-ra-cluster-v1-noswap/result.json",
+    "performance_accepted": false,
+    "execution_started": true,
+    "result_sha256": "7aebd6c44f7beeaed7c4b039859106b692c6ca7e7361286de65a0b008c73fa29",
+    "finished": 1792833554.0302937
+  },
+  {
+    "id": "9ec21a04b74b4d46a7931c16112a6bdb",
+    "action": "evaluate",
+    "tier": "fast",
+    "candidate": "xs-ra-cluster-v1",
+    "status": "REGRESSION",
+    "started": 1792833554.9400811,
+    "runs": [
+      {
+        "id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-a/result.json",
+        "result_sha256": "34a6653983d2ffee7dabf37316c75e5a62f1aa24cbec7bbee3b373e61f1f1faa",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262157,
+            "pswpout": 262196,
+            "pgmajfault": 262175,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048784,
+            "xswap1": 1048784
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 145972.0,
+            "p50_ns": 131653.0,
+            "p90_ns": 184715.0,
+            "p99_ns": 337344.0,
+            "p999_ns": 837056.0,
+            "max_ns": 18834528.0,
+            "total_ms": 19132.881
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 216106.0,
+            "p50_ns": 211063.0,
+            "p90_ns": 269088.0,
+            "p99_ns": 376586.0,
+            "p999_ns": 808083.0,
+            "max_ns": 3531853.0,
+            "total_ms": 28325.448
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262155,
+            "pswpout": 262196,
+            "pgmajfault": 262157,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-disk-b/result.json",
+        "result_sha256": "1ce2ee7f0e700ceffa80ea18fbb9a9dce47dfde162bad8a1068ffe27dccb635b",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262166,
+            "pswpout": 262202,
+            "pgmajfault": 229401,
+            "swap_ra": 32783,
+            "swap_ra_hit": 32780,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048808,
+            "xswap1": 1048808
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 118379.0,
+            "p50_ns": 132474.0,
+            "p90_ns": 192677.0,
+            "p99_ns": 307771.0,
+            "p999_ns": 701435.0,
+            "max_ns": 4729512.0,
+            "total_ms": 15516.141
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 216159.0,
+            "p50_ns": 203718.0,
+            "p90_ns": 268607.0,
+            "p99_ns": 415013.0,
+            "p999_ns": 1637160.0,
+            "max_ns": 6588537.0,
+            "total_ms": 28332.354
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262164,
+            "pswpout": 262202,
+            "pgmajfault": 229383,
+            "swap_ra": 32783,
+            "swap_ra_hit": 32778,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 2
+            }
+          }
+        }
+      },
+      {
+        "id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-a/result.json",
+        "result_sha256": "46f18de86636bd6df2264fe0e461376df35d78ac5ed6a7e4f0b68491ca6886ca",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262179,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262161,
+            "zswpout": 262166,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1021868
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11818.0,
+            "p50_ns": 13491.0,
+            "p90_ns": 14075.0,
+            "p99_ns": 28317.0,
+            "p999_ns": 86173.0,
+            "max_ns": 709201.0,
+            "total_ms": 1548.993
+          },
+          "swapin_rand": {
+            "samples": 131058.0,
+            "mean_ns": 20971.0,
+            "p50_ns": 18737.0,
+            "p90_ns": 21503.0,
+            "p99_ns": 43275.0,
+            "p999_ns": 189030.0,
+            "max_ns": 53133314.0,
+            "total_ms": 2748.361
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262130.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262161,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262159,
+            "zswpout": 262166,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/9ec21a04b74b4d46a7931c16112a6bdb-0-swapin-zswap-b/result.json",
+        "result_sha256": "f24565a95941393b6568602a0f8e9c2b25a8a8d48c6418eb8fec692dc73f0588",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1041644
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11838.0,
+            "p50_ns": 13545.0,
+            "p90_ns": 14111.0,
+            "p99_ns": 27893.0,
+            "p999_ns": 80527.0,
+            "max_ns": 791308.0,
+            "total_ms": 1551.685
+          },
+          "swapin_rand": {
+            "samples": 131060.0,
+            "mean_ns": 19831.0,
+            "p50_ns": 15691.0,
+            "p90_ns": 21336.0,
+            "p99_ns": 41259.0,
+            "p999_ns": 347027.0,
+            "max_ns": 73475797.0,
+            "total_ms": 2599.035
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262132.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-b/result.json",
+        "result_sha256": "bbbbb060f54c62faa0926df2d159d8e18582d54454ba4c407b34596daf143b09",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262167,
+            "pswpout": 262201,
+            "pgmajfault": 196637,
+            "swap_ra": 65548,
+            "swap_ra_hit": 65545,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048804,
+            "xswap1": 1048808
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 77223.0,
+            "p50_ns": 104673.0,
+            "p90_ns": 167975.0,
+            "p99_ns": 313517.0,
+            "p999_ns": 611067.0,
+            "max_ns": 2971072.0,
+            "total_ms": 10121.738
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 224292.0,
+            "p50_ns": 205077.0,
+            "p90_ns": 277529.0,
+            "p99_ns": 592882.0,
+            "p999_ns": 1391292.0,
+            "max_ns": 4036492.0,
+            "total_ms": 29398.451
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262166,
+            "pswpout": 262201,
+            "pgmajfault": 196620,
+            "swap_ra": 65548,
+            "swap_ra_hit": 65544,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 1,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-disk-a/result.json",
+        "result_sha256": "3c844b0f447e7ad102e62598ad020d03590cf01ca14723d257c36015edd1b471",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262167,
+            "pswpout": 262201,
+            "pgmajfault": 262185,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048764,
+            "xswap1": 1048764
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 175072.0,
+            "p50_ns": 157956.0,
+            "p90_ns": 234390.0,
+            "p99_ns": 366360.0,
+            "p999_ns": 870270.0,
+            "max_ns": 4192835.0,
+            "total_ms": 22947.088
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 200102.0,
+            "p50_ns": 185162.0,
+            "p90_ns": 250750.0,
+            "p99_ns": 389872.0,
+            "p999_ns": 938961.0,
+            "max_ns": 4634894.0,
+            "total_ms": 26227.806
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262164,
+            "pswpout": 262201,
+            "pgmajfault": 262166,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-b/result.json",
+        "result_sha256": "252b7abbdb8d6e7176b97e41b55898e3e20a483e7b08942bd6b55a1bc485ecf4",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048628
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11981.0,
+            "p50_ns": 13559.0,
+            "p90_ns": 14265.0,
+            "p99_ns": 28335.0,
+            "p999_ns": 95893.0,
+            "max_ns": 1160184.0,
+            "total_ms": 1570.437
+          },
+          "swapin_rand": {
+            "samples": 131060.0,
+            "mean_ns": 22592.0,
+            "p50_ns": 18768.0,
+            "p90_ns": 23289.0,
+            "p99_ns": 51410.0,
+            "p999_ns": 1212556.0,
+            "max_ns": 39098103.0,
+            "total_ms": 2960.886
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262132.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/9ec21a04b74b4d46a7931c16112a6bdb-1-swapin-zswap-a/result.json",
+        "result_sha256": "7f419e0674da87efcc8234fe4521eb5b760184b5ce9b43f8a33ec1a20da118ff",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262160,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262142,
+            "zswpout": 262147,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1024132
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 12056.0,
+            "p50_ns": 13532.0,
+            "p90_ns": 14043.0,
+            "p99_ns": 27887.0,
+            "p999_ns": 105705.0,
+            "max_ns": 1650318.0,
+            "total_ms": 1580.179
+          },
+          "swapin_rand": {
+            "samples": 131020.0,
+            "mean_ns": 18330.0,
+            "p50_ns": 14591.0,
+            "p90_ns": 19988.0,
+            "p99_ns": 39489.0,
+            "p999_ns": 1478476.0,
+            "max_ns": 55775494.0,
+            "total_ms": 2401.63
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262092.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262141,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262139,
+            "zswpout": 262147,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      }
+    ],
+    "pairs": [
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 145972.0,
+          "swapin-disk.swapin_seq.p99_ns": 337344.0,
+          "swapin-disk.swapin_rand.mean_ns": 216106.0,
+          "swapin-disk.swapin_rand.p99_ns": 376586.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11818.0,
+          "swapin-zswap.swapin_seq.p99_ns": 28317.0,
+          "swapin-zswap.swapin_rand.mean_ns": 20971.0,
+          "swapin-zswap.swapin_rand.p99_ns": 43275.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 118379.0,
+          "swapin-disk.swapin_seq.p99_ns": 307771.0,
+          "swapin-disk.swapin_rand.mean_ns": 216159.0,
+          "swapin-disk.swapin_rand.p99_ns": 415013.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11838.0,
+          "swapin-zswap.swapin_seq.p99_ns": 27893.0,
+          "swapin-zswap.swapin_rand.mean_ns": 19831.0,
+          "swapin-zswap.swapin_rand.p99_ns": 41259.0
+        },
+        "order": "AB"
+      },
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 175072.0,
+          "swapin-disk.swapin_seq.p99_ns": 366360.0,
+          "swapin-disk.swapin_rand.mean_ns": 200102.0,
+          "swapin-disk.swapin_rand.p99_ns": 389872.0,
+          "swapin-zswap.swapin_seq.mean_ns": 12056.0,
+          "swapin-zswap.swapin_seq.p99_ns": 27887.0,
+          "swapin-zswap.swapin_rand.mean_ns": 18330.0,
+          "swapin-zswap.swapin_rand.p99_ns": 39489.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 77223.0,
+          "swapin-disk.swapin_seq.p99_ns": 313517.0,
+          "swapin-disk.swapin_rand.mean_ns": 224292.0,
+          "swapin-disk.swapin_rand.p99_ns": 592882.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11981.0,
+          "swapin-zswap.swapin_seq.p99_ns": 28335.0,
+          "swapin-zswap.swapin_rand.mean_ns": 22592.0,
+          "swapin-zswap.swapin_rand.p99_ns": 51410.0
+        },
+        "order": "BA"
+      }
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "fingerprint": "24f5a85f6376d3f90de869af3ed699d04cc539e406b34ae63aba15686ba21849",
+    "candidate_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+    "correctness": {
+      "swap_image_allocation": "preallocated",
+      "run_id": "aux-4e8ff1ac9157410880e59e484b77a80c",
+      "stop_file": "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "build": "std-25e1feb2b74f",
+      "backend": "disk",
+      "mode": "xswap",
+      "workload": "correctness",
+      "source_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+      "image_sha256": "4858ec6dfc7876c4523c45e324aa0681a874b8792588cbf61830bbc3b09dabe9",
+      "config_sha256": "9652dbf3b072394660f801f684cc9faa7689b70d3d31ed7f65bbf094329e006a",
+      "guest_provenance": {
+        "image_sha256": "2545d9c83b91a00ccb93b8d7ee344302f501e9a6f37c707340025dbd3183ce5b",
+        "image_mib": 3742,
+        "initrd_sha256": "0f92a18d061b3399d86621a9ee382fe738caf75f3944e4d9fdbaeee9843fc8e6",
+        "sources": {
+          "guest-init": "381fd710634085de78ab8f432e87154f7144115fbdc13b8a514822b84735120d",
+          "bench.sh": "4588b1aa3731ae25eeccfaef58dd16bbd6d41efb67a42179d68a9680c5e2c905",
+          "params.sh": "e4ea0f5b2b39390e42c58196fff9ab9828625ed0edd43fcda7703a3df82ac063",
+          "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+          "churn.c": "0c81e556b7c8c374687523a09241f73aa15fcd331531e099bb85747e9d380ddb",
+          "correctness.c": "cc459f2daacff59fda3d82e0dba1ee2da90f609998bcb4b44f2f30613c14a6a2",
+          "console-drain.c": "76b7bf5d6e0ab346416a273b25a9c851043d476d054a3a51d97984f870a7e2e1",
+          "prepare-image.py": "d3c4782e447390635728f03207f9a839a6e7f0b812acba54ad94825d078f06d4",
+          "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+        },
+        "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+        "tools": {
+          "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+          "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+        },
+        "calibrated": false,
+        "host_dirs": [
+          "etc/alternatives",
+          "usr/bin",
+          "usr/sbin",
+          "usr/include",
+          "usr/lib/x86_64-linux-gnu",
+          "usr/lib/gcc",
+          "usr/libexec",
+          "usr/lib/bfd-plugins",
+          "usr/lib/locale",
+          "usr/share/perl",
+          "usr/share/perl5",
+          "usr/share/misc",
+          "usr/share/bison"
+        ],
+        "binary_sha256": {
+          "usemem": "483f667793aae0a0bfaa1de195215e0dba0df9c7937c4e31f3d3a784fe4c61b7",
+          "valkey-server": "af47389214e6d3b90f8d5440ec6d10389472a7b6be3c1fe0f65e1ff0a2406efa",
+          "valkey-benchmark": "b421de51fd66daeefcda8782e95d0b3055360c61de2c1a024bd0cb4cd05ffd05",
+          "valkey-cli": "d374aebfc8e043b750165aaacba999f2082d045de529e3acf6419a105155c5c5",
+          "swapin": "d791b74a5b0a658cbaafc4e4eeb9756d1ecc5efbd9d5e4a85c733f7f7db70948",
+          "churn": "c6e78e703ee3ccbdc4f3c528ca15972507f771e217cd9c6a34bd215d652c48a8",
+          "correctness": "840679e5b63008444040379ce3dd7db374793684cdd113e241ad77cecdae10be",
+          "console-drain": "b955085dab6e59797d1b6dd221d0c14a68610ff79ddeafca648a35ef1de30a71"
+        },
+        "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+      },
+      "command": [
+        "qemu-system-x86_64",
+        "-enable-kvm",
+        "-machine",
+        "pc",
+        "-cpu",
+        "host,migratable=off",
+        "-smp",
+        "8",
+        "-m",
+        "8192",
+        "-nodefaults",
+        "-display",
+        "none",
+        "-serial",
+        "stdio",
+        "-monitor",
+        "none",
+        "-nic",
+        "none",
+        "-no-reboot",
+        "-sandbox",
+        "on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny",
+        "-kernel",
+        "benchmark/kernel/builds/std-25e1feb2b74f/output/arch/x86/boot/bzImage",
+        "-initrd",
+        "benchmark/swap-standard/initramfs.cpio.gz",
+        "-append",
+        "console=ttyS0 rdinit=/init panic=-1 loglevel=4 zswap.enabled=1 zswap.compressor=zstd brd.rd_size=1073741824 bench.backend=disk bench.mode=xswap bench.workload=correctness bench.image_sha=4858ec6dfc7876c4523c45e324aa0681a874b8792588cbf61830bbc3b09dabe9",
+        "-drive",
+        "file=benchmark/swap-standard/runs/aux-4e8ff1ac9157410880e59e484b77a80c/swap.raw,format=raw,if=virtio,cache=none",
+        "-drive",
+        "file=benchmark/swap-standard/bench.img,format=raw,if=virtio,readonly=on"
+      ],
+      "performance_accepted": false,
+      "calibrated": false,
+      "auto_promote": false,
+      "harness_sha256": {
+        "evidence.py": "8f6446fe4c5d04f25fb07856e0ffcfb2e18056251b12098318a97e5b3367837d",
+        "run.py": "b17cff9e7e41a86cbbe4ee48706025124ea04d175f499777bb0549c8393fd86b",
+        "protocol-xswap-swapin-2026-10-23.json": "17086695fc2446c0c2db57a8e76e9f57e807f33050b4e9e6aed03922c797ee04",
+        "test_evidence.py": "5f349188275a21e2a63afc9baa0714df34c8e3cdd2ab82ae559d542510da86fb",
+        "protocol-xswap-next-2026-10-24.json": "c549e26a4d839020fbba4126ba2a9d484576c2acec5e904672f4d1e4d7496c09",
+        "analysis.py": "fa3c4ec3310cb93fa27f1a70218425b9695f3f3f6b37b6fc9e6e550736fa9a6d",
+        "params.sh": "e4ea0f5b2b39390e42c58196fff9ab9828625ed0edd43fcda7703a3df82ac063",
+        "test_runner.py": "b662c4667c75964249c193d8610d69ad284b73b4aee7d91499256b3ea74e2d59",
+        "churn.c": "0c81e556b7c8c374687523a09241f73aa15fcd331531e099bb85747e9d380ddb",
+        "correctness.c": "cc459f2daacff59fda3d82e0dba1ee2da90f609998bcb4b44f2f30613c14a6a2",
+        "protocol.json": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa",
+        "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+        "protocol-confirm-h1-2026-10-23.json": "ce9e2994064cc8a11446cef1cf6c3851c915f256981ff1df53fdd49db237b297",
+        "test_analysis.py": "1cc6b724235fb9c540b8c4470347c4593d501d621c25b7ed4ae224f3282fa5c9",
+        "console-drain.c": "76b7bf5d6e0ab346416a273b25a9c851043d476d054a3a51d97984f870a7e2e1",
+        "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+        "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+        "bench.sh": "4588b1aa3731ae25eeccfaef58dd16bbd6d41efb67a42179d68a9680c5e2c905",
+        "prepare-image.py": "d3c4782e447390635728f03207f9a839a6e7f0b812acba54ad94825d078f06d4"
+      },
+      "exit_code": 0,
+      "stop_reason": null,
+      "wall_seconds": 17.031762966013048,
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 49178,
+          "pswpout": 49329,
+          "pgmajfault": 16418,
+          "swap_ra": 4111,
+          "swap_ra_hit": 10,
+          "swpin_zero": 33,
+          "swpout_zero": 33,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swap_peak_kib": {
+          "/dev/vda": 65624,
+          "xswap1": 65624
+        },
+        "correctness_vmstat_delta": {
+          "pswpin": 49178,
+          "pswpout": 49329,
+          "pgmajfault": 16401,
+          "swap_ra": 4111,
+          "swap_ra_hit": 10,
+          "swpin_zero": 33,
+          "swpout_zero": 33,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "correctness_snapshots": {
+          "before": {
+            "clusters_max": 15956,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "after_pressure": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 16472,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "fork_shared": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 16471,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "after_children": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 16471,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "after_reads": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 22,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          },
+          "after_settle": {
+            "clusters_max": 15956,
+            "clusters_mapped": 146,
+            "usage_pages": 22,
+            "tail_free": 81,
+            "grows": 1,
+            "shrinks": 0
+          }
+        },
+        "correctness_samples": 16384,
+        "physical_swapoff_live_ptes": 16384,
+        "physical_swapoff_used_kib": 65624
+      },
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "integration_pass": true,
+      "serial_sha256": "d50f3bd7933b9336dbefc8602496874d8857a7b48432cd3d25928c957666da23"
+    },
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "25e1feb2b74f8ab30db0816e194294b7a6085a7f",
+      "changed_paths": [
+        "mm/memory.c",
+        "mm/swap.h",
+        "mm/swap_state.c"
+      ],
+      "changed_lines": 103,
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-next-2026-10-24/xs-ra-cluster-v1/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-next-2026-10-24/xs-ra-cluster-v1/checkpatch.log",
+        "sha256": "2e20b85c0df21c4df21da2afbb80d3d80f8f14646c5c4aed8904fa45528ff071"
+      }
+    },
+    "execution_started": true,
+    "calibration_id": "7ac434b0aad649298d7c0282b29a10c1",
+    "analysis": {
+      "tier": "fast",
+      "pair_count": 2,
+      "metrics": {
+        "swapin-disk.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            1.2330903285211074,
+            2.267096590394056
+          ],
+          "geomean_ratio": 1.6719853107722236,
+          "median_ratio": 1.6719853107722236,
+          "noise_relative": 0.08093091140301434,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            1.0960876755769708,
+            1.1685490738939186
+          ],
+          "geomean_ratio": 1.1317385909307887,
+          "median_ratio": 1.1317385909307887,
+          "noise_relative": 0.0606771742534129,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            0.999754810116628,
+            0.8921495193765268
+          ],
+          "geomean_ratio": 0.944420866637285,
+          "median_ratio": 0.944420866637285,
+          "noise_relative": 0.12237048080506963,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            0.907407719758176,
+            0.657587850533495
+          ],
+          "geomean_ratio": 0.7724637803763222,
+          "median_ratio": 0.7724637803763222,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": false
+        },
+        "swapin-zswap.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            0.9983105254265925,
+            1.006259911526583
+          ],
+          "geomean_ratio": 1.0022773373631768,
+          "median_ratio": 1.0022773373631768,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            1.015200946474026,
+            0.9841891653432165
+          ],
+          "geomean_ratio": 0.9995747956836022,
+          "median_ratio": 0.9995747956836022,
+          "noise_relative": 0.14459804257587816,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            1.0574857546265948,
+            0.8113491501416434
+          ],
+          "geomean_ratio": 0.9262775870672798,
+          "median_ratio": 0.9262775870672798,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": false
+        },
+        "swapin-zswap.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            1.0488620664582282,
+            0.7681190429877459
+          ],
+          "geomean_ratio": 0.8975805962218901,
+          "median_ratio": 0.8975805962218901,
+          "noise_relative": 0.16200470171374204,
+          "guard_pass": true
+        }
+      },
+      "overall_geomean_ratio": 1.2945242312877454,
+      "combined_score": 1.2945242312877454,
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zswap.swapin_seq.mean_ns"
+      ],
+      "reference": false,
+      "performance_accepted": false,
+      "auto_promote": false,
+      "eligible_for_slow": false,
+      "needs_review": false,
+      "status": "REGRESSION"
+    },
+    "finished": 1792833841.7147129
+  }
+]

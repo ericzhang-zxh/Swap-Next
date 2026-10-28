@@ -1,0 +1,10 @@
+{
+  "id": "xs-lockassert-v1",
+  "parent": "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4",
+  "worktree": "worktrees/xswap-structure-2026-10-22/xs-lockassert-v1",
+  "status": "closed",
+  "hypothesis": "Repair the xswap_grow lockdep assertion to inspect the current CPU local lock, matching existing swap_cluster_populate. Same-config baseline control reproduced warning; expected disappearance without disabling lockdep or changing locking behavior.",
+  "created_unix": 1792659385.8438156,
+  "protocol_sha256": "be35347b2b44356eb46e95a2fb79792674125b37784f64f3b4e73e9f6cff2069",
+  "reason": "Isolated one-line assertion repair passed same-config lockdep disk control with all data/lifecycle/no-warning gates; baseline and tailcache v1 reproduced original warning. Retain repair, no performance or promotion claim."
+}

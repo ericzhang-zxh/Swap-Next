@@ -1,0 +1,10 @@
+{
+  "id": "xs-ra-zswap-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "worktree": "worktrees/xswap-swapin-2026-10-23/xs-ra-zswap-v1",
+  "status": "closed",
+  "hypothesis": "H2 independently based on repaired descriptor baseline: route compressed-resident xswap faults through ordinary order-0 swap-cache readahead, filtering speculative neighbours with an advisory actual zswap-residency query. Physical targets retain baseline synchronous path. Expected reduced sequential zswap fault overhead; this is prefetch, not batched decompression. Falsifier: no calibrated sequential gain or any random/tail guard regression. Device refs and normal read paths must revalidate hints.",
+  "created_unix": 1792784854.571174,
+  "protocol_sha256": "cdffb8d3b74b555fb408eb7a7aeac4f103dfcb6702639ca79d252a27ad9e49d9",
+  "reason": "Fast evaluation 31cced4875f8470dbdde1dd557fca236 REGRESSION: zswap sequential p99 baseline/candidate0.262609; sequential mean gain0.407% below3%noise. No slow evaluation or promotion."
+}

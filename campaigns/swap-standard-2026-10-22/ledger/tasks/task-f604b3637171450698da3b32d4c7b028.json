@@ -1,0 +1,46 @@
+{
+  "campaign": "swap-standard-2026-10-22",
+  "fingerprint": "ee6a0bd7780fae71150aa40c2775114e4ec8909b66bcc6e7203433e9cfaed4db",
+  "budget": {
+    "created": 1792701729.9665754,
+    "guests": 0,
+    "builds": 0
+  },
+  "limits": {
+    "guest_attempts": 240,
+    "build_attempts": 4,
+    "wall_seconds": 28800,
+    "guest_timeout": 600
+  },
+  "tiers": {
+    "fast": {
+      "cases": [
+        "usemem-disk",
+        "redis-zram",
+        "swapin-disk"
+      ],
+      "calibration_pairs": 2,
+      "comparison_pairs": 2
+    },
+    "slow": {
+      "cases": [
+        "usemem-disk",
+        "redis-zram",
+        "swapin-disk",
+        "build-zswap",
+        "metadata-brd"
+      ],
+      "calibration_pairs": 4,
+      "comparison_pairs": 10
+    }
+  },
+  "calibration": {
+    "fast": "missing fast calibration",
+    "slow": "missing slow calibration"
+  },
+  "ledger": [],
+  "instruction": "Resolve correctness holds, then calibrate missing/noisy tiers. Only a calibrated fast tier may screen a controller candidate. Slow requires the exact fast-pass commit; no automatic promotion.",
+  "references": [],
+  "required_patch_base": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "controller_campaign": "swap-standard-2026-10-22"
+}

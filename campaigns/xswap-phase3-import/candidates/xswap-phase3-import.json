@@ -1,0 +1,10 @@
+{
+  "id": "xswap-phase3-import",
+  "parent": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "worktree": "worktrees/xswap-phase3-import/xswap-phase3-import",
+  "status": "closed",
+  "hypothesis": "Import public xswap Phase III (charge xswap for physical backing, 6 patches, 2026-10-03) onto the Phase I v4 + Phase II v1 reference; no optimization or performance acceptance.",
+  "created_unix": 1792743090.4896047,
+  "protocol_sha256": "dd61e9a0dc01c4388ee1d4477cfb0f35566bcfc739a369726bdb61f1fc524450",
+  "reason": "Phase III applied cleanly on 37de636c; tree 187cfe49 verified; scope, diff-check and checkpatch pass. Reference remains experimental."
+}

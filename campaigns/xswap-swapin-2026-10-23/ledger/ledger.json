@@ -1,0 +1,3494 @@
+[
+  {
+    "id": "aux-0901563aa3384381924f11e09d01a23d",
+    "action": "auxiliary-build",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792781040.0913017,
+    "label": "h1-standard",
+    "command": [
+      "python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "e401f1314",
+      "--name",
+      "std-e401f1314",
+      "--config",
+      "benchmark/config/swap-standard.config",
+      "--no-instrumentation"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792781145.1356745,
+    "log": "benchmark/swap-standard/evaluations/aux-0901563aa3384381924f11e09d01a23d/command.log"
+  },
+  {
+    "id": "aux-f25b868c051d43b59c334ca0de3efcba",
+    "action": "auxiliary-build",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792781174.681901,
+    "label": "h1-debug",
+    "command": [
+      "python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "e401f1314",
+      "--name",
+      "xs-ra-phys-v1-debug",
+      "--config",
+      "benchmark/config/swap-standard-debug.config",
+      "--no-instrumentation"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792781291.7310953,
+    "log": "benchmark/swap-standard/evaluations/aux-f25b868c051d43b59c334ca0de3efcba/command.log"
+  },
+  {
+    "id": "aux-d702dcbeb4174c318405a2868430c082",
+    "action": "auxiliary-build",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792781343.8039885,
+    "label": "h1-noxswap",
+    "command": [
+      "python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "e401f1314",
+      "--name",
+      "xs-ra-phys-v1-noxswap",
+      "--config",
+      "benchmark/config/swap-standard-noxswap.config",
+      "--no-instrumentation"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792781448.3497632,
+    "log": "benchmark/swap-standard/evaluations/aux-d702dcbeb4174c318405a2868430c082/command.log"
+  },
+  {
+    "id": "aux-5bb788d8052d4c47b8ce9b84851df4e8",
+    "action": "auxiliary-build",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792781468.2925003,
+    "label": "h1-kasan",
+    "command": [
+      "python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "e401f1314",
+      "--name",
+      "xs-ra-phys-v1-kasan",
+      "--config",
+      "benchmark/config/swap-standard-kasan.config",
+      "--no-instrumentation"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792781621.3588722,
+    "log": "benchmark/swap-standard/evaluations/aux-5bb788d8052d4c47b8ce9b84851df4e8/command.log"
+  },
+  {
+    "id": "aux-19f123062de64a20842c5606b56a965e",
+    "action": "auxiliary-build",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792781666.2622197,
+    "label": "baseline-kasan",
+    "command": [
+      "python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "5e84ca928",
+      "--name",
+      "xs-desc-v1-kasan",
+      "--config",
+      "benchmark/config/swap-standard-kasan.config",
+      "--no-instrumentation"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792781813.824171,
+    "log": "benchmark/swap-standard/evaluations/aux-19f123062de64a20842c5606b56a965e/command.log"
+  },
+  {
+    "id": "aux-7806c2d1ce5d40a49955079f6614018b",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "INCOMPLETE",
+    "started": 1792781863.5175796,
+    "label": "baseline-standard-disk-correctness",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-std-correctness-disk-v6",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "reason": "process failed; see benchmark/swap-standard/evaluations/aux-7806c2d1ce5d40a49955079f6614018b/command.log",
+    "finished": 1792781867.531768
+  },
+  {
+    "id": "aux-7a3675d3e49649759e9ff585fe7d33c5",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "INCOMPLETE",
+    "started": 1792781998.458537,
+    "label": "baseline-standard-disk-correctness-v7",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-std-correctness-disk-v7",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "reason": "process failed; see benchmark/swap-standard/evaluations/aux-7a3675d3e49649759e9ff585fe7d33c5/command.log",
+    "finished": 1792782009.4781146
+  },
+  {
+    "id": "aux-6de14e200cfc4682986ef6d5d6e5efca",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782116.9386578,
+    "label": "baseline-standard-disk-correctness-v8",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-std-correctness-disk-v8",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782137.9561903,
+    "log": "benchmark/swap-standard/evaluations/aux-6de14e200cfc4682986ef6d5d6e5efca/command.log"
+  },
+  {
+    "id": "aux-7eebb2584b904561911a23f310e69bab",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "INCOMPLETE",
+    "started": 1792782167.178781,
+    "label": "resume-base-std-correctness-zswap-v8",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-std-correctness-zswap-v8",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "reason": "process failed; see benchmark/swap-standard/evaluations/aux-7eebb2584b904561911a23f310e69bab/command.log",
+    "finished": 1792782180.1927211
+  },
+  {
+    "id": "aux-f0cc41f9e06e4adb986135f6141c94a8",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782321.0026588,
+    "label": "resume-base-std-correctness-disk-v9",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-std-correctness-disk-v9",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782341.5184689,
+    "log": "benchmark/swap-standard/evaluations/aux-f0cc41f9e06e4adb986135f6141c94a8/command.log"
+  },
+  {
+    "id": "aux-e082e9e7b2594dbea361ec66b5a9ffa7",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782415.7306924,
+    "label": "resume-base-std-correctness-zswap-v9",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-std-correctness-zswap-v9",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782428.7442079,
+    "log": "benchmark/swap-standard/evaluations/aux-e082e9e7b2594dbea361ec66b5a9ffa7/command.log"
+  },
+  {
+    "id": "aux-a9f50db5f8d44ba08025767d12e6ed32",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "INCOMPLETE",
+    "started": 1792782428.7936714,
+    "label": "resume-base-kasan-correctness-disk-v9",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1-kasan",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-kasan-correctness-disk-v9",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "reason": "process failed; see benchmark/swap-standard/evaluations/aux-a9f50db5f8d44ba08025767d12e6ed32/command.log",
+    "finished": 1792782457.8133776
+  },
+  {
+    "id": "aux-8693573952314562ae669739f6225a6d",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782750.9241762,
+    "label": "resume-base-std-correctness-disk-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-std-correctness-disk-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782771.4436653,
+    "log": "benchmark/swap-standard/evaluations/aux-8693573952314562ae669739f6225a6d/command.log"
+  },
+  {
+    "id": "aux-8f549d8db99343c1bbf4532650565f9e",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782771.4813344,
+    "label": "resume-base-std-correctness-zswap-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-std-correctness-zswap-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782783.9959369,
+    "log": "benchmark/swap-standard/evaluations/aux-8f549d8db99343c1bbf4532650565f9e/command.log"
+  },
+  {
+    "id": "aux-4dee326a58c848408ebe92b687fd917b",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782784.0316608,
+    "label": "resume-base-kasan-correctness-disk-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1-kasan",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-kasan-correctness-disk-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782811.5501966,
+    "log": "benchmark/swap-standard/evaluations/aux-4dee326a58c848408ebe92b687fd917b/command.log"
+  },
+  {
+    "id": "aux-ac1a11b3a1384970b5ee2b989866cda6",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782811.5867734,
+    "label": "resume-base-kasan-correctness-zswap-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1-kasan",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-base-kasan-correctness-zswap-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782831.103334,
+    "log": "benchmark/swap-standard/evaluations/aux-ac1a11b3a1384970b5ee2b989866cda6/command.log"
+  },
+  {
+    "id": "aux-4e8d00e65c704fda84789bf4cbe6f5af",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782831.1395535,
+    "label": "resume-h1-std-correctness-disk-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "std-e401f1314",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-h1-std-correctness-disk-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782850.6564214,
+    "log": "benchmark/swap-standard/evaluations/aux-4e8d00e65c704fda84789bf4cbe6f5af/command.log"
+  },
+  {
+    "id": "aux-4e8d4b3d8203438fb7db1b565ce43fd8",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782850.691165,
+    "label": "resume-h1-std-correctness-zswap-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "std-e401f1314",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-h1-std-correctness-zswap-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782864.7055666,
+    "log": "benchmark/swap-standard/evaluations/aux-4e8d4b3d8203438fb7db1b565ce43fd8/command.log"
+  },
+  {
+    "id": "aux-cf5dad81d44a4040894ec3844c8a81ab",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782864.7397547,
+    "label": "resume-h1-kasan-correctness-disk-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-ra-phys-v1-kasan",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-h1-kasan-correctness-disk-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782891.75746,
+    "log": "benchmark/swap-standard/evaluations/aux-cf5dad81d44a4040894ec3844c8a81ab/command.log"
+  },
+  {
+    "id": "aux-039d0f559a8a46bba1c7b06f68db3d80",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782891.7905903,
+    "label": "resume-h1-kasan-correctness-zswap-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-ra-phys-v1-kasan",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-h1-kasan-correctness-zswap-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792782912.3089774,
+    "log": "benchmark/swap-standard/evaluations/aux-039d0f559a8a46bba1c7b06f68db3d80/command.log"
+  },
+  {
+    "id": "aux-6510a359c992490aa9a261d643fe65d0",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792782926.5909612,
+    "label": "resume-base-kasan-lifetime-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-desc-v1-kasan",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "lifetime",
+      "--run-id",
+      "resume-base-kasan-lifetime-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792783588.7881343,
+    "log": "benchmark/swap-standard/evaluations/aux-6510a359c992490aa9a261d643fe65d0/command.log"
+  },
+  {
+    "id": "aux-6803d2bffa834fdaa34220e6fa2c6fdd",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792783588.8463817,
+    "label": "resume-h1-kasan-lifetime-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-ra-phys-v1-kasan",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "lifetime",
+      "--run-id",
+      "resume-h1-kasan-lifetime-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792784217.0553823,
+    "log": "benchmark/swap-standard/evaluations/aux-6803d2bffa834fdaa34220e6fa2c6fdd/command.log"
+  },
+  {
+    "id": "ea868d13979340a780fc5c28fee161da",
+    "action": "calibrate",
+    "tier": "fast",
+    "candidate": null,
+    "status": "CALIBRATED",
+    "started": 1792784267.1062758,
+    "runs": [
+      {
+        "id": "ea868d13979340a780fc5c28fee161da-0-swapin-disk-a",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/ea868d13979340a780fc5c28fee161da-0-swapin-disk-a/result.json",
+        "result_sha256": "ca6c07e5c93e4d8cd209c789c3997b77e3905b5cba2727e1300ade167d50b038",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262142,
+            "pswpout": 262188,
+            "pgmajfault": 262160,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048752,
+            "xswap1": 1048752
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 150930.0,
+            "p50_ns": 138159.0,
+            "p90_ns": 189331.0,
+            "p99_ns": 309639.0,
+            "p999_ns": 691223.0,
+            "max_ns": 4229577.0,
+            "total_ms": 19782.738
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 217749.0,
+            "p50_ns": 212884.0,
+            "p90_ns": 266949.0,
+            "p99_ns": 354513.0,
+            "p999_ns": 759937.0,
+            "max_ns": 2537676.0,
+            "total_ms": 28540.781
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262140,
+            "pswpout": 262188,
+            "pgmajfault": 262142,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "ea868d13979340a780fc5c28fee161da-0-swapin-disk-b",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/ea868d13979340a780fc5c28fee161da-0-swapin-disk-b/result.json",
+        "result_sha256": "2cabecb645774850dc87e595730f4aaacd2e6731b7f98d761920339d0e7e5e0f",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262169,
+            "pswpout": 262181,
+            "pgmajfault": 262187,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048724,
+            "xswap1": 1048724
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 155493.0,
+            "p50_ns": 140389.0,
+            "p90_ns": 200888.0,
+            "p99_ns": 312129.0,
+            "p999_ns": 689773.0,
+            "max_ns": 4184850.0,
+            "total_ms": 20380.812
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 215626.0,
+            "p50_ns": 211323.0,
+            "p90_ns": 268000.0,
+            "p99_ns": 354040.0,
+            "p999_ns": 740204.0,
+            "max_ns": 1538613.0,
+            "total_ms": 28262.487
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262167,
+            "pswpout": 262181,
+            "pgmajfault": 262169,
+            "swap_ra": 0,
+            "swap_ra_hit": 1,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "ea868d13979340a780fc5c28fee161da-0-swapin-zswap-a",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/ea868d13979340a780fc5c28fee161da-0-swapin-zswap-a/result.json",
+        "result_sha256": "45bbe95e8b463ef328d7b1f91803a1230cd2e154f929a0dddf5966cc63c2be0c",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262187,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262169,
+            "zswpout": 262174,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048676
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11687.0,
+            "p50_ns": 13512.0,
+            "p90_ns": 13934.0,
+            "p99_ns": 26530.0,
+            "p999_ns": 86182.0,
+            "max_ns": 598821.0,
+            "total_ms": 1531.807
+          },
+          "swapin_rand": {
+            "samples": 131066.0,
+            "mean_ns": 13583.0,
+            "p50_ns": 14266.0,
+            "p90_ns": 14968.0,
+            "p99_ns": 26640.0,
+            "p999_ns": 506170.0,
+            "max_ns": 1854040.0,
+            "total_ms": 1780.294
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262138.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262168,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262166,
+            "zswpout": 262174,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 1,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "ea868d13979340a780fc5c28fee161da-0-swapin-zswap-b",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/ea868d13979340a780fc5c28fee161da-0-swapin-zswap-b/result.json",
+        "result_sha256": "8526d16d461b8f5079b72f13c0b5f1a6efa71536d021e23b6d545b7dc39b1037",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048652
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11872.0,
+            "p50_ns": 13514.0,
+            "p90_ns": 13957.0,
+            "p99_ns": 28581.0,
+            "p999_ns": 96393.0,
+            "max_ns": 711882.0,
+            "total_ms": 1556.07
+          },
+          "swapin_rand": {
+            "samples": 131052.0,
+            "mean_ns": 13749.0,
+            "p50_ns": 14275.0,
+            "p90_ns": 14978.0,
+            "p99_ns": 29538.0,
+            "p999_ns": 574093.0,
+            "max_ns": 1013728.0,
+            "total_ms": 1801.817
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262124.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 1,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "ea868d13979340a780fc5c28fee161da-1-swapin-disk-b",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/ea868d13979340a780fc5c28fee161da-1-swapin-disk-b/result.json",
+        "result_sha256": "df1cc29c0f8a0ddfd724b51149d36970ccc349783ab88b623fc2e4d05a5c9617",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262157,
+            "pswpout": 262201,
+            "pgmajfault": 262175,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048752,
+            "xswap1": 1048752
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 156811.0,
+            "p50_ns": 141545.0,
+            "p90_ns": 203944.0,
+            "p99_ns": 311738.0,
+            "p999_ns": 693125.0,
+            "max_ns": 4203287.0,
+            "total_ms": 20553.575
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 216541.0,
+            "p50_ns": 212567.0,
+            "p90_ns": 267600.0,
+            "p99_ns": 348412.0,
+            "p999_ns": 736946.0,
+            "max_ns": 4184536.0,
+            "total_ms": 28382.486
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262155,
+            "pswpout": 262201,
+            "pgmajfault": 262157,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "ea868d13979340a780fc5c28fee161da-1-swapin-disk-a",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/ea868d13979340a780fc5c28fee161da-1-swapin-disk-a/result.json",
+        "result_sha256": "0437ef7c98b710d5718cc962acfa0ef7bcaa24f5901f28b9db2645e06ee9360d",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262154,
+            "pswpout": 262181,
+            "pgmajfault": 262172,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048704,
+            "xswap1": 1048704
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 150091.0,
+            "p50_ns": 137253.0,
+            "p90_ns": 193283.0,
+            "p99_ns": 302480.0,
+            "p999_ns": 690743.0,
+            "max_ns": 3019072.0,
+            "total_ms": 19672.674
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 220694.0,
+            "p50_ns": 217436.0,
+            "p90_ns": 271038.0,
+            "p99_ns": 355172.0,
+            "p999_ns": 740994.0,
+            "max_ns": 2826602.0,
+            "total_ms": 28926.79
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262152,
+            "pswpout": 262181,
+            "pgmajfault": 262154,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "ea868d13979340a780fc5c28fee161da-1-swapin-zswap-b",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/ea868d13979340a780fc5c28fee161da-1-swapin-zswap-b/result.json",
+        "result_sha256": "98bc351921c86392733856d861ee26773d312aa72d68be5835e0435e5255449f",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048628
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11781.0,
+            "p50_ns": 13493.0,
+            "p90_ns": 13914.0,
+            "p99_ns": 25619.0,
+            "p999_ns": 99072.0,
+            "max_ns": 886463.0,
+            "total_ms": 1544.113
+          },
+          "swapin_rand": {
+            "samples": 131060.0,
+            "mean_ns": 13648.0,
+            "p50_ns": 14263.0,
+            "p90_ns": 15030.0,
+            "p99_ns": 27299.0,
+            "p999_ns": 510913.0,
+            "max_ns": 1365460.0,
+            "total_ms": 1788.761
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262132.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "ea868d13979340a780fc5c28fee161da-1-swapin-zswap-a",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/ea868d13979340a780fc5c28fee161da-1-swapin-zswap-a/result.json",
+        "result_sha256": "59fae4c6109c91267c19d5ce7fe85e47a596f3181a38b2719c85c5e4964e9685",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262187,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262169,
+            "zswpout": 262174,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048676
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11654.0,
+            "p50_ns": 13476.0,
+            "p90_ns": 13890.0,
+            "p99_ns": 25591.0,
+            "p999_ns": 88093.0,
+            "max_ns": 640773.0,
+            "total_ms": 1527.46
+          },
+          "swapin_rand": {
+            "samples": 131058.0,
+            "mean_ns": 13592.0,
+            "p50_ns": 14234.0,
+            "p90_ns": 14945.0,
+            "p99_ns": 26200.0,
+            "p999_ns": 515174.0,
+            "max_ns": 1842420.0,
+            "total_ms": 1781.322
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262130.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262169,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262167,
+            "zswpout": 262174,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      }
+    ],
+    "pairs": [
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 150930.0,
+          "swapin-disk.swapin_seq.p99_ns": 309639.0,
+          "swapin-disk.swapin_rand.mean_ns": 217749.0,
+          "swapin-disk.swapin_rand.p99_ns": 354513.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11687.0,
+          "swapin-zswap.swapin_seq.p99_ns": 26530.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13583.0,
+          "swapin-zswap.swapin_rand.p99_ns": 26640.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 155493.0,
+          "swapin-disk.swapin_seq.p99_ns": 312129.0,
+          "swapin-disk.swapin_rand.mean_ns": 215626.0,
+          "swapin-disk.swapin_rand.p99_ns": 354040.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11872.0,
+          "swapin-zswap.swapin_seq.p99_ns": 28581.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13749.0,
+          "swapin-zswap.swapin_rand.p99_ns": 29538.0
+        },
+        "order": "AB"
+      },
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 150091.0,
+          "swapin-disk.swapin_seq.p99_ns": 302480.0,
+          "swapin-disk.swapin_rand.mean_ns": 220694.0,
+          "swapin-disk.swapin_rand.p99_ns": 355172.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11654.0,
+          "swapin-zswap.swapin_seq.p99_ns": 25591.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13592.0,
+          "swapin-zswap.swapin_rand.p99_ns": 26200.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 156811.0,
+          "swapin-disk.swapin_seq.p99_ns": 311738.0,
+          "swapin-disk.swapin_rand.mean_ns": 216541.0,
+          "swapin-disk.swapin_rand.p99_ns": 348412.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11781.0,
+          "swapin-zswap.swapin_seq.p99_ns": 25619.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13648.0,
+          "swapin-zswap.swapin_rand.p99_ns": 27299.0
+        },
+        "order": "BA"
+      }
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "fingerprint": "9594c32ed2f1f340c379f3be63f95919cdbfcb1fc1ae9675901394b6afcf03ec",
+    "candidate_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "execution_started": true,
+    "analysis": {
+      "schema_version": 1,
+      "status": "CALIBRATED",
+      "passed": true,
+      "directions": {
+        "swapin-disk.swapin_seq.mean_ns": "lower",
+        "swapin-disk.swapin_seq.p99_ns": "lower",
+        "swapin-disk.swapin_rand.mean_ns": "lower",
+        "swapin-disk.swapin_rand.p99_ns": "lower",
+        "swapin-zswap.swapin_seq.mean_ns": "lower",
+        "swapin-zswap.swapin_seq.p99_ns": "lower",
+        "swapin-zswap.swapin_rand.mean_ns": "lower",
+        "swapin-zswap.swapin_rand.p99_ns": "lower"
+      },
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zswap.swapin_seq.mean_ns"
+      ],
+      "pair_count": 2,
+      "noise_log": {
+        "swapin-disk.swapin_seq.mean_ns": 0.04379948170182679,
+        "swapin-disk.swapin_seq.p99_ns": 0.030147931854902055,
+        "swapin-disk.swapin_rand.mean_ns": 0.02955880224154443,
+        "swapin-disk.swapin_rand.p99_ns": 0.02955880224154443,
+        "swapin-zswap.swapin_seq.mean_ns": 0.02955880224154443,
+        "swapin-zswap.swapin_seq.p99_ns": 0.07446599324310377,
+        "swapin-zswap.swapin_rand.mean_ns": 0.02955880224154443,
+        "swapin-zswap.swapin_rand.p99_ns": 0.10326372433192965
+      },
+      "noise_relative": {
+        "swapin-disk.swapin_seq.mean_ns": 0.044772837811726474,
+        "swapin-disk.swapin_seq.p99_ns": 0.030606982279820727,
+        "swapin-disk.swapin_rand.mean_ns": 0.030000000000000027,
+        "swapin-disk.swapin_rand.p99_ns": 0.030000000000000027,
+        "swapin-zswap.swapin_seq.mean_ns": 0.030000000000000027,
+        "swapin-zswap.swapin_seq.p99_ns": 0.07730870712401061,
+        "swapin-zswap.swapin_rand.mean_ns": 0.030000000000000027,
+        "swapin-zswap.swapin_rand.p99_ns": 0.10878378378378328
+      },
+      "rejected_metrics": [],
+      "performance_accepted": false,
+      "auto_promote": false
+    },
+    "finished": 1792784545.8505104
+  },
+  {
+    "id": "8a4b89fc0c8e44dd80c7675ef9c8c0fb",
+    "action": "evaluate",
+    "tier": "fast",
+    "candidate": "xs-ra-phys-v1",
+    "status": "REGRESSION",
+    "started": 1792784581.7425041,
+    "runs": [
+      {
+        "id": "8a4b89fc0c8e44dd80c7675ef9c8c0fb-0-swapin-disk-a",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/8a4b89fc0c8e44dd80c7675ef9c8c0fb-0-swapin-disk-a/result.json",
+        "result_sha256": "5c35369641334948a7e2259f66ddbab6a3ff020081eb0f2b2628c647a54ff282",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262172,
+            "pswpout": 262188,
+            "pgmajfault": 262190,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048752,
+            "xswap1": 1048752
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 146156.0,
+            "p50_ns": 132890.0,
+            "p90_ns": 189188.0,
+            "p99_ns": 306596.0,
+            "p999_ns": 669996.0,
+            "max_ns": 4284797.0,
+            "total_ms": 19156.91
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 185325.0,
+            "p50_ns": 172902.0,
+            "p90_ns": 227759.0,
+            "p99_ns": 325870.0,
+            "p999_ns": 761548.0,
+            "max_ns": 2200071.0,
+            "total_ms": 24290.939
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262170,
+            "pswpout": 262188,
+            "pgmajfault": 262172,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "8a4b89fc0c8e44dd80c7675ef9c8c0fb-0-swapin-disk-b",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/8a4b89fc0c8e44dd80c7675ef9c8c0fb-0-swapin-disk-b/result.json",
+        "result_sha256": "79b082d29e2ff9f018943f2ecac2a889e43f680a090ca9ecdeac2c1d66536569",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262176,
+            "pswpout": 262193,
+            "pgmajfault": 147251,
+            "swap_ra": 114943,
+            "swap_ra_hit": 114938,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048752,
+            "xswap1": 1048752
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 21780.0,
+            "p50_ns": 639.0,
+            "p90_ns": 130800.0,
+            "p99_ns": 259617.0,
+            "p999_ns": 363945.0,
+            "max_ns": 1329939.0,
+            "total_ms": 2854.781
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 184528.0,
+            "p50_ns": 173159.0,
+            "p90_ns": 225189.0,
+            "p99_ns": 329470.0,
+            "p999_ns": 730340.0,
+            "max_ns": 4217672.0,
+            "total_ms": 24186.477
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262176,
+            "pswpout": 262193,
+            "pgmajfault": 147237,
+            "swap_ra": 114943,
+            "swap_ra_hit": 114936,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "8a4b89fc0c8e44dd80c7675ef9c8c0fb-0-swapin-zswap-a",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/8a4b89fc0c8e44dd80c7675ef9c8c0fb-0-swapin-zswap-a/result.json",
+        "result_sha256": "8e4aad236e85a9ec0ae8deb9111ffcb7cd589117501618fe966d3a7d3bc0fe0d",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048648
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11819.0,
+            "p50_ns": 13544.0,
+            "p90_ns": 13965.0,
+            "p99_ns": 27322.0,
+            "p999_ns": 90473.0,
+            "max_ns": 2030011.0,
+            "total_ms": 1549.188
+          },
+          "swapin_rand": {
+            "samples": 131059.0,
+            "mean_ns": 13822.0,
+            "p50_ns": 14305.0,
+            "p90_ns": 15053.0,
+            "p99_ns": 33776.0,
+            "p999_ns": 506198.0,
+            "max_ns": 1070405.0,
+            "total_ms": 1811.501
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262131.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "8a4b89fc0c8e44dd80c7675ef9c8c0fb-0-swapin-zswap-b",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/8a4b89fc0c8e44dd80c7675ef9c8c0fb-0-swapin-zswap-b/result.json",
+        "result_sha256": "cf638eae44198f6ddc25377aad277f8317208e70c85535140dd7c17de8d21645",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048648
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11680.0,
+            "p50_ns": 13512.0,
+            "p90_ns": 13923.0,
+            "p99_ns": 25828.0,
+            "p999_ns": 80649.0,
+            "max_ns": 624035.0,
+            "total_ms": 1530.905
+          },
+          "swapin_rand": {
+            "samples": 131059.0,
+            "mean_ns": 13614.0,
+            "p50_ns": 14280.0,
+            "p90_ns": 14975.0,
+            "p99_ns": 27020.0,
+            "p999_ns": 510402.0,
+            "max_ns": 1390999.0,
+            "total_ms": 1784.248
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262131.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "8a4b89fc0c8e44dd80c7675ef9c8c0fb-1-swapin-disk-b",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/8a4b89fc0c8e44dd80c7675ef9c8c0fb-1-swapin-disk-b/result.json",
+        "result_sha256": "6097798432e66e0a2716af33ed8ef6ef677c605b43e74f8db174897573da30ff",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262152,
+            "pswpout": 262181,
+            "pgmajfault": 147338,
+            "swap_ra": 114832,
+            "swap_ra_hit": 114829,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048704,
+            "xswap1": 1048704
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 24013.0,
+            "p50_ns": 640.0,
+            "p90_ns": 141473.0,
+            "p99_ns": 292923.0,
+            "p999_ns": 385902.0,
+            "max_ns": 1049528.0,
+            "total_ms": 3147.453
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 222682.0,
+            "p50_ns": 218097.0,
+            "p90_ns": 272507.0,
+            "p99_ns": 425053.0,
+            "p999_ns": 792842.0,
+            "max_ns": 2648899.0,
+            "total_ms": 29187.405
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262152,
+            "pswpout": 262181,
+            "pgmajfault": 147322,
+            "swap_ra": 114832,
+            "swap_ra_hit": 114827,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "8a4b89fc0c8e44dd80c7675ef9c8c0fb-1-swapin-disk-a",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/8a4b89fc0c8e44dd80c7675ef9c8c0fb-1-swapin-disk-a/result.json",
+        "result_sha256": "358afcbd8643349d1e19f92ac2c0ff792ddefd0bc952851b3754ec84ac5302d6",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262165,
+            "pswpout": 262201,
+            "pgmajfault": 262183,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048784,
+            "xswap1": 1048784
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 152731.0,
+            "p50_ns": 137993.0,
+            "p90_ns": 197880.0,
+            "p99_ns": 307410.0,
+            "p999_ns": 713146.0,
+            "max_ns": 1555790.0,
+            "total_ms": 20018.812
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 216153.0,
+            "p50_ns": 211949.0,
+            "p90_ns": 267158.0,
+            "p99_ns": 351938.0,
+            "p999_ns": 737241.0,
+            "max_ns": 1764724.0,
+            "total_ms": 28331.55
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262163,
+            "pswpout": 262201,
+            "pgmajfault": 262165,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 146,
+              "usage_pages": 0,
+              "tail_free": 145,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "8a4b89fc0c8e44dd80c7675ef9c8c0fb-1-swapin-zswap-b",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/8a4b89fc0c8e44dd80c7675ef9c8c0fb-1-swapin-zswap-b/result.json",
+        "result_sha256": "dcf0664987de7729798cb601b6d8598d19f4d018556ae133b46f0f0281780106",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262186,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262168,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048672
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11784.0,
+            "p50_ns": 13620.0,
+            "p90_ns": 14038.0,
+            "p99_ns": 26713.0,
+            "p999_ns": 87256.0,
+            "max_ns": 566278.0,
+            "total_ms": 1544.61
+          },
+          "swapin_rand": {
+            "samples": 131066.0,
+            "mean_ns": 13747.0,
+            "p50_ns": 14381.0,
+            "p90_ns": 15125.0,
+            "p99_ns": 28584.0,
+            "p999_ns": 507582.0,
+            "max_ns": 1274628.0,
+            "total_ms": 1801.746
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262138.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262168,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262166,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "8a4b89fc0c8e44dd80c7675ef9c8c0fb-1-swapin-zswap-a",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/8a4b89fc0c8e44dd80c7675ef9c8c0fb-1-swapin-zswap-a/result.json",
+        "result_sha256": "4b261a2d0504b5e60a1e20b2e7bdd6eb9702044178841e1f724a8694b5bdbecd",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262180,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262162,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048648
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11791.0,
+            "p50_ns": 13526.0,
+            "p90_ns": 13942.0,
+            "p99_ns": 28180.0,
+            "p999_ns": 96169.0,
+            "max_ns": 1011270.0,
+            "total_ms": 1545.49
+          },
+          "swapin_rand": {
+            "samples": 131059.0,
+            "mean_ns": 18289.0,
+            "p50_ns": 14478.0,
+            "p90_ns": 20508.0,
+            "p99_ns": 162509.0,
+            "p999_ns": 622181.0,
+            "max_ns": 6409146.0,
+            "total_ms": 2396.918
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262131.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262162,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262160,
+            "zswpout": 262167,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      }
+    ],
+    "pairs": [
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 146156.0,
+          "swapin-disk.swapin_seq.p99_ns": 306596.0,
+          "swapin-disk.swapin_rand.mean_ns": 185325.0,
+          "swapin-disk.swapin_rand.p99_ns": 325870.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11819.0,
+          "swapin-zswap.swapin_seq.p99_ns": 27322.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13822.0,
+          "swapin-zswap.swapin_rand.p99_ns": 33776.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 21780.0,
+          "swapin-disk.swapin_seq.p99_ns": 259617.0,
+          "swapin-disk.swapin_rand.mean_ns": 184528.0,
+          "swapin-disk.swapin_rand.p99_ns": 329470.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11680.0,
+          "swapin-zswap.swapin_seq.p99_ns": 25828.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13614.0,
+          "swapin-zswap.swapin_rand.p99_ns": 27020.0
+        },
+        "order": "AB"
+      },
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 152731.0,
+          "swapin-disk.swapin_seq.p99_ns": 307410.0,
+          "swapin-disk.swapin_rand.mean_ns": 216153.0,
+          "swapin-disk.swapin_rand.p99_ns": 351938.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11791.0,
+          "swapin-zswap.swapin_seq.p99_ns": 28180.0,
+          "swapin-zswap.swapin_rand.mean_ns": 18289.0,
+          "swapin-zswap.swapin_rand.p99_ns": 162509.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 24013.0,
+          "swapin-disk.swapin_seq.p99_ns": 292923.0,
+          "swapin-disk.swapin_rand.mean_ns": 222682.0,
+          "swapin-disk.swapin_rand.p99_ns": 425053.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11784.0,
+          "swapin-zswap.swapin_seq.p99_ns": 26713.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13747.0,
+          "swapin-zswap.swapin_rand.p99_ns": 28584.0
+        },
+        "order": "BA"
+      }
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "fingerprint": "9594c32ed2f1f340c379f3be63f95919cdbfcb1fc1ae9675901394b6afcf03ec",
+    "candidate_commit": "e401f1314d81d3990de62af0ba37fc5df79193f6",
+    "correctness": {
+      "candidate": "xs-ra-phys-v1",
+      "candidate_commit": "e401f1314d81d3990de62af0ba37fc5df79193f6",
+      "integration_pass": true,
+      "gates": {
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true
+      },
+      "evidence": [
+        {
+          "path": "benchmark/swap-standard/runs/resume-h1-std-correctness-disk-v10/result.json",
+          "sha256": "db58647cb63086efa04b5c52ad1a918c7e0ea41806093bec6a73fa3954a03484",
+          "serial_sha256": "b44379430e4f82883db7edb521d59486771605dbe390460736fab0b7f1df2ba4"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-h1-std-correctness-zswap-v10/result.json",
+          "sha256": "20fc124bcc68c798dd24204f1c1da7ed70d5f6ba47ed222f8e74291acefd5b30",
+          "serial_sha256": "fe42a8ae1f96cc44038580efdf4eb1735c3733b45d645d38c384122693d9eaef"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-h1-kasan-correctness-disk-v10/result.json",
+          "sha256": "d284f0a4fd7d64cd876d63d3628297683b7eddd31ac5c3b4f771d053a049fac7",
+          "serial_sha256": "2f109caa39c22762f95174b0d7b5cdbb45c910f1375b30eb2fcdd5a23d955b77"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-h1-kasan-correctness-zswap-v10/result.json",
+          "sha256": "5c24e130cd35b9f6eba7a527aff37fa25840efbe460bd78884c5edf88a2fcfc9",
+          "serial_sha256": "4f7c5588def7258fbf2e305ecdd6e875fd219197d283c88fb2530e35ed59201a"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-base-kasan-lifetime-v10/result.json",
+          "sha256": "c86e9e7b60f0f22e455f51ecd0a1c73256eb321869bc176c6dc79a3e8fd9cd0c",
+          "serial_sha256": "325076f3331d9316ca1af149276c30d678a042d3aeb8a7091b002f4df6054b13"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-h1-kasan-lifetime-v10/result.json",
+          "sha256": "c03bbb21a1824d84e33dff28ad0aa2d88621d6663a7624503b398cb1185f7b23",
+          "serial_sha256": "af14cb70d0966ef66c276ea81900b930e2e65ab3e7ac19ab9a0de5beed4c8e2b"
+        }
+      ],
+      "scope": "4 KiB discovery: standard and KASAN disk/zswap correctness plus baseline/candidate KASAN lifetime; not formal promotion acceptance"
+    },
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "e401f1314d81d3990de62af0ba37fc5df79193f6",
+      "changed_paths": [
+        "mm/memory.c",
+        "mm/swap.h",
+        "mm/swap_state.c"
+      ],
+      "changed_lines": 64,
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/checkpatch.log",
+        "sha256": "f25e5f15775c9ef8820c1021684db89c6b3c031fc9e307a461503a2da59021c1"
+      }
+    },
+    "execution_started": true,
+    "calibration_id": "ea868d13979340a780fc5c28fee161da",
+    "analysis": {
+      "tier": "fast",
+      "pair_count": 2,
+      "metrics": {
+        "swapin-disk.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            6.7105601469237826,
+            6.360346478990547
+          ],
+          "geomean_ratio": 6.533107040493134,
+          "median_ratio": 6.533107040493134,
+          "noise_relative": 0.044772837811726474,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            1.1809550222057874,
+            1.049456683155643
+          ],
+          "geomean_ratio": 1.1132659792520763,
+          "median_ratio": 1.1132659792520763,
+          "noise_relative": 0.030606982279820727,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            1.0043191277204546,
+            0.9706801627432835
+          ],
+          "geomean_ratio": 0.9873563968202583,
+          "median_ratio": 0.9873563968202583,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            0.9890733602452428,
+            0.8279861570204181
+          ],
+          "geomean_ratio": 0.9049525128760791,
+          "median_ratio": 0.9049525128760791,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": false
+        },
+        "swapin-zswap.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            1.011900684931508,
+            1.0005940257976915
+          ],
+          "geomean_ratio": 1.0062314743850238,
+          "median_ratio": 1.0062314743850238,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            1.057844200092921,
+            1.054917081570771
+          ],
+          "geomean_ratio": 1.0563796269895547,
+          "median_ratio": 1.0563796269895547,
+          "noise_relative": 0.07730870712401061,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            1.0152783898927584,
+            1.3303993598603334
+          ],
+          "geomean_ratio": 1.1622072620635941,
+          "median_ratio": 1.1622072620635941,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            1.2500370096225022,
+            5.685313462076688
+          ],
+          "geomean_ratio": 2.665868008529473,
+          "median_ratio": 2.665868008529473,
+          "noise_relative": 0.10878378378378328,
+          "guard_pass": true
+        }
+      },
+      "overall_geomean_ratio": 2.563945773543307,
+      "combined_score": 2.563945773543307,
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zswap.swapin_seq.mean_ns"
+      ],
+      "reference": false,
+      "performance_accepted": false,
+      "auto_promote": false,
+      "eligible_for_slow": false,
+      "needs_review": false,
+      "status": "REGRESSION"
+    },
+    "finished": 1792784818.450634
+  },
+  {
+    "id": "aux-23213d4343ee41e9b6b351077cd47fd5",
+    "action": "auxiliary-build",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792784968.5489452,
+    "label": "xs-ra-zswap-v1",
+    "command": [
+      "python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "f7093a0732ae9b46e31a9ceb90c2b14eb8038c16",
+      "--name",
+      "xs-ra-zswap-v1",
+      "--config",
+      "benchmark/config/swap-standard.config",
+      "--no-instrumentation"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792785074.5941734,
+    "log": "benchmark/swap-standard/evaluations/aux-23213d4343ee41e9b6b351077cd47fd5/command.log"
+  },
+  {
+    "id": "aux-d4fcc32884ca4168aa92a9124e43b048",
+    "action": "auxiliary-build",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792785074.6344852,
+    "label": "xs-ra-zswap-v1-kasan",
+    "command": [
+      "python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "f7093a0732ae9b46e31a9ceb90c2b14eb8038c16",
+      "--name",
+      "xs-ra-zswap-v1-kasan",
+      "--config",
+      "benchmark/config/swap-standard-kasan.config",
+      "--no-instrumentation"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792785222.2000802,
+    "log": "benchmark/swap-standard/evaluations/aux-d4fcc32884ca4168aa92a9124e43b048/command.log"
+  },
+  {
+    "id": "aux-d6ef4dedde9b470da70bc30f1fb744de",
+    "action": "auxiliary-build",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792785222.2422638,
+    "label": "xs-ra-zswap-v1-noxswap",
+    "command": [
+      "python3",
+      "benchmark/kernel/build.py",
+      "--commit",
+      "f7093a0732ae9b46e31a9ceb90c2b14eb8038c16",
+      "--name",
+      "xs-ra-zswap-v1-noxswap",
+      "--config",
+      "benchmark/config/swap-standard-noxswap.config",
+      "--no-instrumentation"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792785328.2875223,
+    "log": "benchmark/swap-standard/evaluations/aux-d6ef4dedde9b470da70bc30f1fb744de/command.log"
+  },
+  {
+    "id": "aux-8304875188274efc8e37fb9aca29e204",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792785368.6685545,
+    "label": "resume-h2-std-correctness-disk-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-ra-zswap-v1",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-h2-std-correctness-disk-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792785387.6863775,
+    "log": "benchmark/swap-standard/evaluations/aux-8304875188274efc8e37fb9aca29e204/command.log"
+  },
+  {
+    "id": "aux-84bcfbef8d9e4c4d98a8d2f4f134576a",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792785387.728229,
+    "label": "resume-h2-std-correctness-zswap-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-ra-zswap-v1",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-h2-std-correctness-zswap-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792785400.743625,
+    "log": "benchmark/swap-standard/evaluations/aux-84bcfbef8d9e4c4d98a8d2f4f134576a/command.log"
+  },
+  {
+    "id": "aux-7a889bacd1dd4349bd9d8888d82102cc",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792785400.797716,
+    "label": "resume-h2-kasan-correctness-disk-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-ra-zswap-v1-kasan",
+      "--backend",
+      "disk",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-h2-kasan-correctness-disk-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792785429.820768,
+    "log": "benchmark/swap-standard/evaluations/aux-7a889bacd1dd4349bd9d8888d82102cc/command.log"
+  },
+  {
+    "id": "aux-1b4e4f387e1c46a29456550d7f5fcb12",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792785429.8611066,
+    "label": "resume-h2-kasan-correctness-zswap-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-ra-zswap-v1-kasan",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "correctness",
+      "--run-id",
+      "resume-h2-kasan-correctness-zswap-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792785448.8785782,
+    "log": "benchmark/swap-standard/evaluations/aux-1b4e4f387e1c46a29456550d7f5fcb12/command.log"
+  },
+  {
+    "id": "aux-907c390045f2420fb4c01128afba5c47",
+    "action": "auxiliary-guest",
+    "tier": null,
+    "candidate": null,
+    "status": "COMPLETE",
+    "started": 1792785454.3987966,
+    "label": "resume-h2-kasan-lifetime-v10",
+    "command": [
+      "python3",
+      "benchmark/swap-standard/run.py",
+      "--build",
+      "xs-ra-zswap-v1-kasan",
+      "--backend",
+      "zswap",
+      "--mode",
+      "xswap",
+      "--workload",
+      "lifetime",
+      "--run-id",
+      "resume-h2-kasan-lifetime-v10",
+      "--stop-file",
+      "evolve/control/state/xswap-swapin-2026-10-23/STOP",
+      "--timeout",
+      "900"
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "runner_sha256": "2d85e689fb0cd6cd9a5aba5f7432f14957d1271967cb36de3361e72580f119d0",
+    "execution_started": true,
+    "finished": 1792786123.0991213,
+    "log": "benchmark/swap-standard/evaluations/aux-907c390045f2420fb4c01128afba5c47/command.log"
+  },
+  {
+    "id": "31cced4875f8470dbdde1dd557fca236",
+    "action": "evaluate",
+    "tier": "fast",
+    "candidate": "xs-ra-zswap-v1",
+    "status": "REGRESSION",
+    "started": 1792786167.1218255,
+    "runs": [
+      {
+        "id": "31cced4875f8470dbdde1dd557fca236-0-swapin-disk-a",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/31cced4875f8470dbdde1dd557fca236-0-swapin-disk-a/result.json",
+        "result_sha256": "c17ed1b69cb799c2212f0008e0e92278d8bfc550b3c950de370b94d50d4fe9ce",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262135,
+            "pswpout": 262199,
+            "pgmajfault": 262153,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048796,
+            "xswap1": 1048800
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 154554.0,
+            "p50_ns": 140543.0,
+            "p90_ns": 198668.0,
+            "p99_ns": 307145.0,
+            "p999_ns": 686474.0,
+            "max_ns": 3567675.0,
+            "total_ms": 20257.639
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 226277.0,
+            "p50_ns": 221394.0,
+            "p90_ns": 275535.0,
+            "p99_ns": 361453.0,
+            "p999_ns": 745792.0,
+            "max_ns": 3042336.0,
+            "total_ms": 29658.622
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262132,
+            "pswpout": 262199,
+            "pgmajfault": 262134,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 1,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "31cced4875f8470dbdde1dd557fca236-0-swapin-disk-b",
+        "pair": 0,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/31cced4875f8470dbdde1dd557fca236-0-swapin-disk-b/result.json",
+        "result_sha256": "5d2d09758f1bda131f3b877a9cf8726f60494cb1c402ce44f81254711cac072a",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262148,
+            "pswpout": 262181,
+            "pgmajfault": 262166,
+            "swap_ra": 0,
+            "swap_ra_hit": 2,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048724,
+            "xswap1": 1048724
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 152173.0,
+            "p50_ns": 138441.0,
+            "p90_ns": 196956.0,
+            "p99_ns": 300174.0,
+            "p999_ns": 704951.0,
+            "max_ns": 5182654.0,
+            "total_ms": 19945.589
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 185421.0,
+            "p50_ns": 173817.0,
+            "p90_ns": 227249.0,
+            "p99_ns": 312546.0,
+            "p999_ns": 713914.0,
+            "max_ns": 1801528.0,
+            "total_ms": 24303.561
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262146,
+            "pswpout": 262181,
+            "pgmajfault": 262148,
+            "swap_ra": 0,
+            "swap_ra_hit": 2,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "31cced4875f8470dbdde1dd557fca236-0-swapin-zswap-a",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/31cced4875f8470dbdde1dd557fca236-0-swapin-zswap-a/result.json",
+        "result_sha256": "7f78e7807a839a3d019fcb9d82ed63683456fb572a4136696656d8e91ec2c5da",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262186,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262168,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048672
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11683.0,
+            "p50_ns": 13509.0,
+            "p90_ns": 13932.0,
+            "p99_ns": 25374.0,
+            "p999_ns": 96086.0,
+            "max_ns": 718480.0,
+            "total_ms": 1531.249
+          },
+          "swapin_rand": {
+            "samples": 131066.0,
+            "mean_ns": 13697.0,
+            "p50_ns": 14297.0,
+            "p90_ns": 15074.0,
+            "p99_ns": 26498.0,
+            "p999_ns": 513287.0,
+            "max_ns": 806871.0,
+            "total_ms": 1795.259
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262138.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262171,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262166,
+            "zswpout": 262173,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "31cced4875f8470dbdde1dd557fca236-0-swapin-zswap-b",
+        "pair": 0,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/31cced4875f8470dbdde1dd557fca236-0-swapin-zswap-b/result.json",
+        "result_sha256": "3dc3b112cd7cf8ee9bf6e76a82c748dd3aa43eb18e9791e785729b735415d421",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 147408,
+            "swap_ra": 114780,
+            "swap_ra_hit": 114775,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262170,
+            "zswpout": 262170,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048660
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11633.0,
+            "p50_ns": 528.0,
+            "p90_ns": 82369.0,
+            "p99_ns": 97538.0,
+            "p999_ns": 190524.0,
+            "max_ns": 1042216.0,
+            "total_ms": 1524.743
+          },
+          "swapin_rand": {
+            "samples": 131063.0,
+            "mean_ns": 13718.0,
+            "p50_ns": 14245.0,
+            "p90_ns": 14936.0,
+            "p99_ns": 26010.0,
+            "p999_ns": 590086.0,
+            "max_ns": 1646878.0,
+            "total_ms": 1797.897
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262135.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 147392,
+            "swap_ra": 114780,
+            "swap_ra_hit": 114773,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262170,
+            "zswpout": 262170,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "31cced4875f8470dbdde1dd557fca236-1-swapin-disk-b",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/31cced4875f8470dbdde1dd557fca236-1-swapin-disk-b/result.json",
+        "result_sha256": "3e64cdfc78784065fe5955f8da6759a95c41c6952861bf3693c844d90d0219f7",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262147,
+            "pswpout": 262180,
+            "pgmajfault": 262165,
+            "swap_ra": 0,
+            "swap_ra_hit": 2,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048720,
+            "xswap1": 1048720
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 156191.0,
+            "p50_ns": 142001.0,
+            "p90_ns": 201750.0,
+            "p99_ns": 305172.0,
+            "p999_ns": 688510.0,
+            "max_ns": 4955911.0,
+            "total_ms": 20472.281
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 223433.0,
+            "p50_ns": 217575.0,
+            "p90_ns": 275235.0,
+            "p99_ns": 392916.0,
+            "p999_ns": 746643.0,
+            "max_ns": 4580088.0,
+            "total_ms": 29285.814
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262145,
+            "pswpout": 262180,
+            "pgmajfault": 262155,
+            "swap_ra": 0,
+            "swap_ra_hit": 2,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "31cced4875f8470dbdde1dd557fca236-1-swapin-disk-a",
+        "pair": 1,
+        "case": "swapin-disk",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/31cced4875f8470dbdde1dd557fca236-1-swapin-disk-a/result.json",
+        "result_sha256": "0b71461e8ce18ae27600ce8649a3aa447857a984967a75913d0f510d8cb9c947",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 262148,
+            "pswpout": 262180,
+            "pgmajfault": 262166,
+            "swap_ra": 0,
+            "swap_ra_hit": 2,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 1048720,
+            "xswap1": 1048720
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 158672.0,
+            "p50_ns": 141968.0,
+            "p90_ns": 209737.0,
+            "p99_ns": 327694.0,
+            "p999_ns": 724546.0,
+            "max_ns": 2860714.0,
+            "total_ms": 20797.482
+          },
+          "swapin_rand": {
+            "samples": 131072.0,
+            "mean_ns": 217999.0,
+            "p50_ns": 212898.0,
+            "p90_ns": 268866.0,
+            "p99_ns": 376841.0,
+            "p999_ns": 760744.0,
+            "max_ns": 2488851.0,
+            "total_ms": 28573.569
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262144.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 262146,
+            "pswpout": 262180,
+            "pgmajfault": 262148,
+            "swap_ra": 0,
+            "swap_ra_hit": 2,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 0,
+            "zswpout": 0,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "31cced4875f8470dbdde1dd557fca236-1-swapin-zswap-b",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "b",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/31cced4875f8470dbdde1dd557fca236-1-swapin-zswap-b/result.json",
+        "result_sha256": "3ae8fea2297ead8b73acc277ff6bdc78b31395809d87b3d1dcebb52d42860c65",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 147448,
+            "swap_ra": 114736,
+            "swap_ra_hit": 114731,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262166,
+            "zswpout": 262166,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048644
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11629.0,
+            "p50_ns": 528.0,
+            "p90_ns": 82680.0,
+            "p99_ns": 98270.0,
+            "p999_ns": 162115.0,
+            "max_ns": 867471.0,
+            "total_ms": 1524.298
+          },
+          "swapin_rand": {
+            "samples": 131059.0,
+            "mean_ns": 13599.0,
+            "p50_ns": 14310.0,
+            "p90_ns": 15009.0,
+            "p99_ns": 26537.0,
+            "p999_ns": 506080.0,
+            "max_ns": 728189.0,
+            "total_ms": 1782.216
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262131.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 147432,
+            "swap_ra": 114736,
+            "swap_ra_hit": 114729,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262166,
+            "zswpout": 262166,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      },
+      {
+        "id": "31cced4875f8470dbdde1dd557fca236-1-swapin-zswap-a",
+        "pair": 1,
+        "case": "swapin-zswap",
+        "arm": "a",
+        "status": "PASS",
+        "result": "benchmark/swap-standard/runs/31cced4875f8470dbdde1dd557fca236-1-swapin-zswap-a/result.json",
+        "result_sha256": "deb117707855dac204b60794734e4db3043c87be397b46c0241c18c56691a9b4",
+        "metrics": {
+          "vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262185,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262167,
+            "zswpout": 262172,
+            "zswpwb": 0
+          },
+          "kernel_diagnostics": [],
+          "swap_peak_kib": {
+            "/dev/vda": 0,
+            "xswap1": 1048668
+          },
+          "swapin_seq": {
+            "samples": 131072.0,
+            "mean_ns": 11674.0,
+            "p50_ns": 13535.0,
+            "p90_ns": 13941.0,
+            "p99_ns": 26051.0,
+            "p999_ns": 80687.0,
+            "max_ns": 723446.0,
+            "total_ms": 1530.121
+          },
+          "swapin_rand": {
+            "samples": 131047.0,
+            "mean_ns": 13783.0,
+            "p50_ns": 14292.0,
+            "p90_ns": 15023.0,
+            "p99_ns": 26405.0,
+            "p999_ns": 607524.0,
+            "max_ns": 1495068.0,
+            "total_ms": 1806.205
+          },
+          "swapin_swapped": {
+            "pages": 262144.0,
+            "swapped": 262119.0,
+            "reclaim_rounds": 1.0
+          },
+          "swapin_vmstat_delta": {
+            "pswpin": 0,
+            "pswpout": 0,
+            "pgmajfault": 262165,
+            "swap_ra": 0,
+            "swap_ra_hit": 0,
+            "swpin_zero": 0,
+            "swpout_zero": 0,
+            "zswpin": 262163,
+            "zswpout": 262172,
+            "zswpwb": 0
+          },
+          "swapin_xswap_snapshots": {
+            "swapin_start": {
+              "clusters_max": 15956,
+              "clusters_mapped": 73,
+              "usage_pages": 0,
+              "tail_free": 72,
+              "grows": 0,
+              "shrinks": 0
+            },
+            "swapin_end": {
+              "clusters_max": 15956,
+              "clusters_mapped": 657,
+              "usage_pages": 0,
+              "tail_free": 656,
+              "grows": 10,
+              "shrinks": 1
+            }
+          }
+        }
+      }
+    ],
+    "pairs": [
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 154554.0,
+          "swapin-disk.swapin_seq.p99_ns": 307145.0,
+          "swapin-disk.swapin_rand.mean_ns": 226277.0,
+          "swapin-disk.swapin_rand.p99_ns": 361453.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11683.0,
+          "swapin-zswap.swapin_seq.p99_ns": 25374.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13697.0,
+          "swapin-zswap.swapin_rand.p99_ns": 26498.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 152173.0,
+          "swapin-disk.swapin_seq.p99_ns": 300174.0,
+          "swapin-disk.swapin_rand.mean_ns": 185421.0,
+          "swapin-disk.swapin_rand.p99_ns": 312546.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11633.0,
+          "swapin-zswap.swapin_seq.p99_ns": 97538.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13718.0,
+          "swapin-zswap.swapin_rand.p99_ns": 26010.0
+        },
+        "order": "AB"
+      },
+      {
+        "a": {
+          "swapin-disk.swapin_seq.mean_ns": 158672.0,
+          "swapin-disk.swapin_seq.p99_ns": 327694.0,
+          "swapin-disk.swapin_rand.mean_ns": 217999.0,
+          "swapin-disk.swapin_rand.p99_ns": 376841.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11674.0,
+          "swapin-zswap.swapin_seq.p99_ns": 26051.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13783.0,
+          "swapin-zswap.swapin_rand.p99_ns": 26405.0
+        },
+        "b": {
+          "swapin-disk.swapin_seq.mean_ns": 156191.0,
+          "swapin-disk.swapin_seq.p99_ns": 305172.0,
+          "swapin-disk.swapin_rand.mean_ns": 223433.0,
+          "swapin-disk.swapin_rand.p99_ns": 392916.0,
+          "swapin-zswap.swapin_seq.mean_ns": 11629.0,
+          "swapin-zswap.swapin_seq.p99_ns": 98270.0,
+          "swapin-zswap.swapin_rand.mean_ns": 13599.0,
+          "swapin-zswap.swapin_rand.p99_ns": 26537.0
+        },
+        "order": "BA"
+      }
+    ],
+    "performance_accepted": false,
+    "auto_promote": false,
+    "fingerprint": "9594c32ed2f1f340c379f3be63f95919cdbfcb1fc1ae9675901394b6afcf03ec",
+    "candidate_commit": "f7093a0732ae9b46e31a9ceb90c2b14eb8038c16",
+    "correctness": {
+      "candidate": "xs-ra-zswap-v1",
+      "candidate_commit": "f7093a0732ae9b46e31a9ceb90c2b14eb8038c16",
+      "integration_pass": true,
+      "gates": {
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true
+      },
+      "evidence": [
+        {
+          "path": "benchmark/swap-standard/runs/resume-h2-std-correctness-disk-v10/result.json",
+          "sha256": "fd7240e7a44fc269c163589dafa32703d60bc619ac0a582d5f31c76492b846ba",
+          "serial_sha256": "b63acee7cbc8e6baa8af354fb717b87b116d0ba8920dcee5172b724490d8083d"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-h2-std-correctness-zswap-v10/result.json",
+          "sha256": "9cf6b5838fe5adfc39044d68ca0ee63c0f4eae141db0d6972bc70128adbeb209",
+          "serial_sha256": "1a786e37937fef691f4e370e286c31d9da3b9f89ab219d4baede095c2d12749e"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-h2-kasan-correctness-disk-v10/result.json",
+          "sha256": "2a0b92e2372a2e46d1f744df8520912e4d16f19c769a243e07d2b195a025c08d",
+          "serial_sha256": "2ae21ae78fe642cf2a7b92c5cc8546aae5b12ed9ab8ae3a30775bb955d32b964"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-h2-kasan-correctness-zswap-v10/result.json",
+          "sha256": "d299948d17c85c404df569688ee45192dc542bce4a2a77cb92834d4dc31ffbd1",
+          "serial_sha256": "eebe25864f9ca8e00f639cf0abc5052dd8751488d7b44a778f0303a7173ce4a0"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-base-kasan-lifetime-v10/result.json",
+          "sha256": "c86e9e7b60f0f22e455f51ecd0a1c73256eb321869bc176c6dc79a3e8fd9cd0c",
+          "serial_sha256": "325076f3331d9316ca1af149276c30d678a042d3aeb8a7091b002f4df6054b13"
+        },
+        {
+          "path": "benchmark/swap-standard/runs/resume-h2-kasan-lifetime-v10/result.json",
+          "sha256": "fbfee9132a0dc40e1584b0710fd4b1d66fec07b334f1bbcb00c0050303360f1f",
+          "serial_sha256": "0c68e292777e9a4f1742bbb033c5987b976b5c09d3f529a168840ef7f4542c6f"
+        }
+      ],
+      "scope": "4 KiB discovery: standard and KASAN disk/zswap correctness plus baseline/candidate KASAN lifetime; not formal promotion acceptance"
+    },
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "f7093a0732ae9b46e31a9ceb90c2b14eb8038c16",
+      "changed_paths": [
+        "mm/memory.c",
+        "mm/swap.h",
+        "mm/swap_state.c",
+        "mm/zswap.c"
+      ],
+      "changed_lines": 54,
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-zswap-v1/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 0,
+        "evidence": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-zswap-v1/checkpatch.log",
+        "sha256": "382171867dd4c811e9f939b7c8338e40c4cca8e5235f610b1624d8e7cf460778"
+      }
+    },
+    "execution_started": true,
+    "calibration_id": "ea868d13979340a780fc5c28fee161da",
+    "analysis": {
+      "tier": "fast",
+      "pair_count": 2,
+      "metrics": {
+        "swapin-disk.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            1.0156466653085618,
+            1.0158843979486654
+          ],
+          "geomean_ratio": 1.015765524673661,
+          "median_ratio": 1.015765524673661,
+          "noise_relative": 0.044772837811726474,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            1.0232231972122838,
+            1.0738010040239603
+          ],
+          "geomean_ratio": 1.0482070866518491,
+          "median_ratio": 1.0482070866518491,
+          "noise_relative": 0.030606982279820727,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            1.2203418167305748,
+            0.9756795101887374
+          ],
+          "geomean_ratio": 1.091174828343525,
+          "median_ratio": 1.091174828343525,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            1.156479366237291,
+            0.9590879475511306
+          ],
+          "geomean_ratio": 1.053169227498485,
+          "median_ratio": 1.053169227498485,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            1.0042981174245673,
+            1.0038696362541921
+          ],
+          "geomean_ratio": 1.004083853983207,
+          "median_ratio": 1.004083853983207,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            0.26014476409194376,
+            0.2650961636308131
+          ],
+          "geomean_ratio": 0.2626087945012832,
+          "median_ratio": 0.2626087945012832,
+          "noise_relative": 0.07730870712401061,
+          "guard_pass": false
+        },
+        "swapin-zswap.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            0.998469164601255,
+            1.013530406647548
+          ],
+          "geomean_ratio": 1.0059715992130929,
+          "median_ratio": 1.0059715992130929,
+          "noise_relative": 0.030000000000000027,
+          "guard_pass": true
+        },
+        "swapin-zswap.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            1.018762014609766,
+            0.9950258130157897
+          ],
+          "geomean_ratio": 1.0068239676610238,
+          "median_ratio": 1.0068239676610238,
+          "noise_relative": 0.10878378378378328,
+          "guard_pass": true
+        }
+      },
+      "overall_geomean_ratio": 1.0099077991369332,
+      "combined_score": 1.0099077991369332,
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zswap.swapin_seq.mean_ns"
+      ],
+      "reference": false,
+      "performance_accepted": false,
+      "auto_promote": false,
+      "eligible_for_slow": false,
+      "needs_review": false,
+      "status": "REGRESSION"
+    },
+    "finished": 1792786447.8821557
+  }
+]

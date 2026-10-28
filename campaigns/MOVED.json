@@ -1,0 +1,2860 @@
+{
+  "pre_migration_commit": "9539210362e704f9b138d00fe29901dae38f19bb",
+  "moves": [
+    {
+      "from": "benchmark/swap-standard/confirmations/confirm-h1-ra-phys-2026-10-23/ledger.json",
+      "to": "campaigns/confirm-h1-ra-phys-2026-10-23/ledger/confirmation.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "71c18faffdc90550181e362c70c6e36074fd7ba3378bd46d0d23fe30479f0049"
+    },
+    {
+      "from": "benchmark/swap-standard/protocol-confirm-h1-2026-10-23.json",
+      "to": "campaigns/confirm-h1-ra-phys-2026-10-23/protocol.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "ce9e2994064cc8a11446cef1cf6c3851c915f256981ff1df53fdd49db237b297"
+    },
+    {
+      "from": "benchmark/swap-standard/protocol-tcg-revision3.json",
+      "to": "campaigns/xswap-tcg-rev3-2026-10-25/protocol.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "748e7d2fdf11dfbef5a6f958440829d5bf268d0a4c370c81cfc771510ee49e16"
+    },
+    {
+      "from": "benchmark/swap-standard/protocol-xswap-next-2026-10-24.json",
+      "to": "campaigns/xswap-next-2026-10-24/protocol.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "c549e26a4d839020fbba4126ba2a9d484576c2acec5e904672f4d1e4d7496c09"
+    },
+    {
+      "from": "benchmark/swap-standard/protocol-xswap-swapin-2026-10-23.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/protocol.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "17086695fc2446c0c2db57a8e76e9f57e807f33050b4e9e6aed03922c797ee04"
+    },
+    {
+      "from": "benchmark/swap-standard/protocol.json",
+      "to": "campaigns/swap-standard-2026-10-22/protocol.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "291ebb83a1d5218bc19be1f14f292a4756846d65594fa38442167c08bf3794aa"
+    },
+    {
+      "from": "evolve/control/campaigns/swap-standard-2026-10-22/policy.json",
+      "to": "campaigns/swap-standard-2026-10-22/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "138d8be1a0d1d7cea5e0f345ad05ae9ee9fe31ea080b798da077700a2c1670b6"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-2026-10-21/import-policy.json",
+      "to": "campaigns/xswap-2026-10-21/import-policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "c59c6cb8e2b8410c5e2dcb5336d41d1be1b0898c00950481cdc2e484ebb00716"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-2026-10-21/policy.json",
+      "to": "campaigns/xswap-2026-10-21/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "f4fac6b4473ff1466bfd086e1fba35609a2ea8cc6b25f450dfb776889ecd090b"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-next-2026-10-24/policy.json",
+      "to": "campaigns/xswap-next-2026-10-24/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "623ba2ba45eb70ad7271645c3829016c8d42d17a0d41d6a3cb4d9f96ab164582"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-observe-2026-10-22/policy.json",
+      "to": "campaigns/xswap-observe-2026-10-22/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "eb5ea247ae06e62a97d861af2e13a297cd10a7da26edac019617017c461aad92"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-p123-2026-10-23/policy.json",
+      "to": "campaigns/xswap-p123-2026-10-23/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "bbc0c3ff17d38acf217c1e4ef351f026d52e77b91dd2885254b2becea07e9381"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-p123-lifetime-20261023/policy.json",
+      "to": "campaigns/xswap-p123-lifetime-20261023/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "1ca12ea64e78aa3285d494ad326abc7393ab1274ef3b81c07a3711dc5d9d30b6"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-phase3-import/policy.json",
+      "to": "campaigns/xswap-phase3-import/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "3faf625e4d1e1d87ec9dddae5e4b43b94f416a1feeee467b8ff7f4d3f898856a"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-structure-2026-10-22/policy.json",
+      "to": "campaigns/xswap-structure-2026-10-22/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7e31aaa3bcd62cee68d373fae3946321f0f926827bee2865f01e3324872f3c23"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-swapin-2026-10-23/policy.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "77af3bea3cb187a839ba6619165bf81625da23c0215f9ca648324c99ec6c6dc2"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-tcg-rev3-2026-10-25/policy.json",
+      "to": "campaigns/xswap-tcg-rev3-2026-10-25/policy.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "bfbe2d98f2c9e78bc80d9e37866b9cfb3c506ae90ac1925764630ffe2d1a9843"
+    },
+    {
+      "from": "patches/extend-early-return.patch",
+      "to": "campaigns/_unassigned/patches/extend-early-return.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "4fe0e5c1607fe60f698246ab569af43a41db63c2c8d336ef60c630c7c05ae8f6"
+    },
+    {
+      "from": "patches/put-reuse-early-return.patch",
+      "to": "campaigns/_unassigned/patches/put-reuse-early-return.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "d476a4200dc37f2ab18bfc4f5df443bd14a404a2e8238caee68a0e17818d279c"
+    },
+    {
+      "from": "patches/put-reuse-entry.patch",
+      "to": "campaigns/_unassigned/patches/put-reuse-entry.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "cd1ef61821e69e005f0940a64352cd19a663d5772067b03940e42198f34d32ca"
+    },
+    {
+      "from": "patches/xswap-2026-10-21/xswap-grow-cap8.patch",
+      "to": "campaigns/xswap-2026-10-21/patches/xswap-grow-cap8.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "90ae1452e2183d2e3bea324f250c3fa2a26dd57ef482dd7a1a4d1f032c341639"
+    },
+    {
+      "from": "patches/xswap-2026-10-21/xswap-grow-target75.patch",
+      "to": "campaigns/xswap-2026-10-21/patches/xswap-grow-target75.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "6db3cbf89cb1ae955cab2781624dc3f3f90c0473dae8fb9f73a92c635dc27ed2"
+    },
+    {
+      "from": "patches/xswap-2026-10-21/xswap-shrink-min4.patch",
+      "to": "campaigns/xswap-2026-10-21/patches/xswap-shrink-min4.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7f617a5f1f5461e6e077b3186b51e42091f93d959c9504b023ff60773ff35fc5"
+    },
+    {
+      "from": "patches/xswap-2026-10-21/xswap-source.patch",
+      "to": "campaigns/xswap-2026-10-21/patches/xswap-source.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "f5eb61b585781999fdba05d1813dcc8b7ed1b60b2907b6f01c0c7684e89a5a18"
+    },
+    {
+      "from": "patches/xswap-experiments/manifest.json",
+      "to": "campaigns/_unassigned/patches/xswap-experiments/manifest.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "08891c517562a306be0d7b985f4e705514ed29a6aec68982d25b5f9df19a1bc9"
+    },
+    {
+      "from": "patches/xswap-experiments/xswap-grow-cap8.patch",
+      "to": "campaigns/_unassigned/patches/xswap-experiments/xswap-grow-cap8.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "0daecad161320ff0202140f89180d9fb11aade2e3663f8bedb8a79b4911ff046"
+    },
+    {
+      "from": "patches/xswap-experiments/xswap-grow-target75.patch",
+      "to": "campaigns/_unassigned/patches/xswap-experiments/xswap-grow-target75.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "d24e2ed40a370f114a47b4b9802d2e0aff11c0f104fd83cec14b98e6027a2564"
+    },
+    {
+      "from": "patches/xswap-experiments/xswap-shrink-min4.patch",
+      "to": "campaigns/_unassigned/patches/xswap-experiments/xswap-shrink-min4.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "2780ae576e369120f2ee43b82bc8e9bcabd9ddbd9e5839e409977bb67b21719d"
+    },
+    {
+      "from": "patches/xswap-next-2026-10-24/xs-ra-cluster-v1.patch",
+      "to": "campaigns/xswap-next-2026-10-24/patches/xs-ra-cluster-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "bfb488d37e044638b0c4f4588200d4745f86ff5a037a6501cbc79f1540795c09"
+    },
+    {
+      "from": "patches/xswap-next-2026-10-24/xs-ra-sequential-v1.patch",
+      "to": "campaigns/xswap-next-2026-10-24/patches/xs-ra-sequential-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "5523d92a93634d215fd60dc3ed6dded64d663f757d696e1802a5e76f8cc00dfc"
+    },
+    {
+      "from": "patches/xswap-next-2026-10-24/xs-zswap-linear-v1.patch",
+      "to": "campaigns/xswap-next-2026-10-24/patches/xs-zswap-linear-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "e6231f3050675350516501f00a1d91f1a2be0159d0802009838997ad9ab37cd9"
+    },
+    {
+      "from": "patches/xswap-observe-2026-10-22/xs-observe-v1.patch",
+      "to": "campaigns/xswap-observe-2026-10-22/patches/xs-observe-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "32117fde1215089141b5e1b8417ca9bd8ac0937241037433950cab1a847a56a2"
+    },
+    {
+      "from": "patches/xswap-p123-2026-10-23/xs-desc-lifetime-v1.patch",
+      "to": "campaigns/xswap-p123-2026-10-23/patches/xs-desc-lifetime-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "81e1b33de803c04e4e7f00acdcd16e4c7963b3b55db3a18b059d2b079bc1a658"
+    },
+    {
+      "from": "patches/xswap-p123-lifetime-20261023/p123-lifetime-rcu.patch",
+      "to": "campaigns/xswap-p123-lifetime-20261023/patches/p123-lifetime-rcu.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "bd8504a51ba083e6b6b71d9b35307f303150b4a513d398fa271d52d4adb9155e"
+    },
+    {
+      "from": "patches/xswap-p123/0001-mm-swap-assert-the-per-cpu-cluster-lock-xswap_grow-r.patch",
+      "to": "campaigns/_unassigned/patches/xswap-p123/0001-mm-swap-assert-the-per-cpu-cluster-lock-xswap_grow-r.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "3b4b84339176188c6733aa2ff665cb379ce98f4a27cdc9ac97cef1a41f69bfdb"
+    },
+    {
+      "from": "patches/xswap-p123/0002-mm-swap-keep-xswap-cluster_info-mapped-for-unpinned-.patch",
+      "to": "campaigns/_unassigned/patches/xswap-p123/0002-mm-swap-keep-xswap-cluster_info-mapped-for-unpinned-.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "0a94204d86fc5066daba1418a03a34b1e4212c83d31ed08116396900fbcd1622"
+    },
+    {
+      "from": "patches/xswap-p123/debug-wb-delay.patch",
+      "to": "campaigns/_unassigned/patches/xswap-p123/debug-wb-delay.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "b9b010340e845456cd4bade13655104e0ff044df993d3a9e5ef544c54249c197"
+    },
+    {
+      "from": "patches/xswap-phase3-import/xswap-phase3-import.patch",
+      "to": "campaigns/xswap-phase3-import/patches/xswap-phase3-import.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "732d94a23e17ac213c9228b70bf69210f6690b36963ff15f3e9a5a7c09d4a530"
+    },
+    {
+      "from": "patches/xswap-phase3/01.patch",
+      "to": "campaigns/_unassigned/patches/xswap-phase3/01.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "f4ee3991bffc48bc9a27dd018be8b5f1e0bebc720011a0c0d45b80754b4ba693"
+    },
+    {
+      "from": "patches/xswap-phase3/02.patch",
+      "to": "campaigns/_unassigned/patches/xswap-phase3/02.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "3cf6706519ad9adaf19a3e497e5c4ca0e4b3207686597ff59f463f54c09845ee"
+    },
+    {
+      "from": "patches/xswap-phase3/03.patch",
+      "to": "campaigns/_unassigned/patches/xswap-phase3/03.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "62a5d8d7681e2b231cec07a5ba03dbbb97e7730fb8faa6fe7d47f17f08840cf8"
+    },
+    {
+      "from": "patches/xswap-phase3/04.patch",
+      "to": "campaigns/_unassigned/patches/xswap-phase3/04.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "822545cca44d31b65251cebc63a2dace30d1ade94bd2f541421ffa2d6030747f"
+    },
+    {
+      "from": "patches/xswap-phase3/05.patch",
+      "to": "campaigns/_unassigned/patches/xswap-phase3/05.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "dc98a1c6926d13f24f18e4aa1ff6f4343cf6a91136bc6ee2fd17806ca349e7a4"
+    },
+    {
+      "from": "patches/xswap-phase3/06.patch",
+      "to": "campaigns/_unassigned/patches/xswap-phase3/06.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "ec9d7edc24cebe144f7c307cd7993f243d1f28a7e746ed3cbb1946322416be86"
+    },
+    {
+      "from": "patches/xswap-phase3/README.md",
+      "to": "campaigns/_unassigned/patches/xswap-phase3/README.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "27b44e3be3898ab8c41432dc7bb72e070617ac3c8772a6ac29d1a7ed305f0597"
+    },
+    {
+      "from": "patches/xswap-phase3/manifest.json",
+      "to": "campaigns/_unassigned/patches/xswap-phase3/manifest.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "56da09e2696738a66bbd14f5fb276a300d37303699e85988bf1f3a85996cdd1e"
+    },
+    {
+      "from": "patches/xswap-reference-replay/xswap-reference-replay.patch",
+      "to": "campaigns/xswap-reference-replay/patches/xswap-reference-replay.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "f5eb61b585781999fdba05d1813dcc8b7ed1b60b2907b6f01c0c7684e89a5a18"
+    },
+    {
+      "from": "patches/xswap-reference/01.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/01.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "1e7c25bf1a5c494c0286fe20d349b6441180260e6696332a5ca52a403d599519"
+    },
+    {
+      "from": "patches/xswap-reference/02.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/02.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "41458c379869dc44eb4a0378e4bceb76aa34be9ddcde4fd73c737135b3e62100"
+    },
+    {
+      "from": "patches/xswap-reference/03.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/03.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "8f141cac69f8ee9eab3e31706d23ba5e3cf9b846276f4be3136ccc3e91b94d5f"
+    },
+    {
+      "from": "patches/xswap-reference/04.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/04.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "4a8283e17a67ab1746cf4d6831499e93ddc97d594d521897de16f7442ee0077b"
+    },
+    {
+      "from": "patches/xswap-reference/05.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/05.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "43c669e7ccbee3e71bcfeb9c154b290be420c33639275e5213de896a2830bafb"
+    },
+    {
+      "from": "patches/xswap-reference/06.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/06.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "3226f44580cee347efa7b196edf820cb36d1d9d1a9d08aa0a3f35a3affb8b136"
+    },
+    {
+      "from": "patches/xswap-reference/07.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/07.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "e126a9c6e481f5ee6191414d40fdb2ffe2610254b1b2a69ee46ed8def59e8765"
+    },
+    {
+      "from": "patches/xswap-reference/08.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/08.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "301c4f0626b6b59567b73fcc2e96dd6e8fbc1857b65ec9cb6522c64705a00817"
+    },
+    {
+      "from": "patches/xswap-reference/09.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/09.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "d6fb34ec26cd35092d4098025c41d0009b0b7cb9eae281e9a2ee35b99c9ac839"
+    },
+    {
+      "from": "patches/xswap-reference/10.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/10.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "aa61d273317917e4fd76564f967a24849c8860336e5f2354f316e3c6e364e889"
+    },
+    {
+      "from": "patches/xswap-reference/11.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/11.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "a0097e01b957f5d9781a35c076ec7561b7fae2e7701f0bfad113f8bdb3451a81"
+    },
+    {
+      "from": "patches/xswap-reference/12.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/12.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "6ce38c2ca6499c0f2c3b74916b169fe2e6f2820f798db6eab920629de1c16611"
+    },
+    {
+      "from": "patches/xswap-reference/13.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/13.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "d48640477cbe2d912836c5b6fb2cd4357f3ec13b2818309d573fa91e17db146f"
+    },
+    {
+      "from": "patches/xswap-reference/14.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/14.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "cda54c4afa91b28b23e936a1401e2c9966b3e70a5f1388f2613c32c09db568b7"
+    },
+    {
+      "from": "patches/xswap-reference/15.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/15.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "2041f87aa24467b6f07b2db84338193ae6f21147d86e893d602a2b3ae5286161"
+    },
+    {
+      "from": "patches/xswap-reference/16.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/16.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "cd8a1c5d31cd24a2142a508e8482571db516bb307a47cf07bdae4ff1b9eb3548"
+    },
+    {
+      "from": "patches/xswap-reference/17.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/17.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "5e81941f7dba8137d5ce3c1c267a81ab0c67b77bfac770e6760085f8742b634c"
+    },
+    {
+      "from": "patches/xswap-reference/18.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/18.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7fae05b8bda8490b6cd9ef6ad50eba1735b02f954fee99abd7ff7076e0ee6707"
+    },
+    {
+      "from": "patches/xswap-reference/19.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/19.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "8f53ed3e0628c10cd5fbdbe6bc7f6fc4bc39044e9cdcbc7cce2ffc9c97588ac5"
+    },
+    {
+      "from": "patches/xswap-reference/20.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/20.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "217bff75a05da50ca05c177978ca10232572196c538c77bb72e887baa4e7bfb4"
+    },
+    {
+      "from": "patches/xswap-reference/21.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/21.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "a26bdf989ad64268c0946c74e374634da3ce2aec0a3672d864758ee7bd267c02"
+    },
+    {
+      "from": "patches/xswap-reference/22.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/22.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "b2a217d050d16381ea07edc091c166a48e6db07c0e80c12c759b7201ed8e3019"
+    },
+    {
+      "from": "patches/xswap-reference/23.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/23.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "f471777615d59b76c9463031f672587cafdab3b8b6d219dac3c4559eab25b786"
+    },
+    {
+      "from": "patches/xswap-reference/24.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/24.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "ee07cd414cf9d7f7ff697b2b09555bd1113a3488542b7b72e30d7c768d07b5aa"
+    },
+    {
+      "from": "patches/xswap-reference/25.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/25.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "4510ce766715284f11a3623de02c025182250d914018f1f8355478d5ed66640c"
+    },
+    {
+      "from": "patches/xswap-reference/26.patch",
+      "to": "campaigns/_unassigned/patches/xswap-reference/26.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "4f0144634890d02a3dfa8c124c3e1142aa260a3e6b5b46c78e2d34bd25788555"
+    },
+    {
+      "from": "patches/xswap-reference/README.md",
+      "to": "campaigns/_unassigned/patches/xswap-reference/README.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7f6e3b13018382206c6f3edfffc686f140730d47eae638ef0c100375795a0124"
+    },
+    {
+      "from": "patches/xswap-reference/manifest.json",
+      "to": "campaigns/_unassigned/patches/xswap-reference/manifest.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "8fe3e523186f26abe150d16c1148aa04489ff9ed2c2adb5bb314c3980d987643"
+    },
+    {
+      "from": "patches/xswap-structure-2026-10-22/xs-lockassert-v1.patch",
+      "to": "campaigns/xswap-structure-2026-10-22/patches/xs-lockassert-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "5497c3f85bd13a1a8efce347632708addb29be72151063f9a0032a510133ceb4"
+    },
+    {
+      "from": "patches/xswap-structure-2026-10-22/xs-lowfree-v1.patch",
+      "to": "campaigns/xswap-structure-2026-10-22/patches/xs-lowfree-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "03ee25da3f5d27ba2bea9f2c21eaa438de4f493ccfc4e28b440ee31f60a80a15"
+    },
+    {
+      "from": "patches/xswap-structure-2026-10-22/xs-tailcache-v1.patch",
+      "to": "campaigns/xswap-structure-2026-10-22/patches/xs-tailcache-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "a2ac66549b9eb2e5940024eb069d0e4171ed77052965730a4b8d3b34eef56c5d"
+    },
+    {
+      "from": "patches/xswap-structure-2026-10-22/xs-tailcache-v2.patch",
+      "to": "campaigns/xswap-structure-2026-10-22/patches/xs-tailcache-v2.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "9ac67fa848543e66e4d6a463b0a477dc3562bbb683a6993f674d2590f8818d73"
+    },
+    {
+      "from": "patches/xswap-structure/0001-observe-topology.patch",
+      "to": "campaigns/_unassigned/patches/xswap-structure/0001-observe-topology.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "ca2999eedb4afac2c138779b15260945951e00e54a029a29ebab9ef8892db1be"
+    },
+    {
+      "from": "patches/xswap-structure/0002-lowfree-candidate.patch",
+      "to": "campaigns/_unassigned/patches/xswap-structure/0002-lowfree-candidate.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "03ee25da3f5d27ba2bea9f2c21eaa438de4f493ccfc4e28b440ee31f60a80a15"
+    },
+    {
+      "from": "patches/xswap-structure/0003-tailcache-candidate.patch",
+      "to": "campaigns/_unassigned/patches/xswap-structure/0003-tailcache-candidate.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "a2ac66549b9eb2e5940024eb069d0e4171ed77052965730a4b8d3b34eef56c5d"
+    },
+    {
+      "from": "patches/xswap-structure/0004-lockassert-repair.patch",
+      "to": "campaigns/_unassigned/patches/xswap-structure/0004-lockassert-repair.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "5497c3f85bd13a1a8efce347632708addb29be72151063f9a0032a510133ceb4"
+    },
+    {
+      "from": "patches/xswap-structure/0005-tailcache-v2-candidate.patch",
+      "to": "campaigns/_unassigned/patches/xswap-structure/0005-tailcache-v2-candidate.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "9ac67fa848543e66e4d6a463b0a477dc3562bbb683a6993f674d2590f8818d73"
+    },
+    {
+      "from": "patches/xswap-swapin-2026-10-23/xs-ra-phys-v1.patch",
+      "to": "campaigns/xswap-swapin-2026-10-23/patches/xs-ra-phys-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "e6c00ca69b0eab3af19e669050b482ea692ce8e0b065fe88ea7171e0c5555005"
+    },
+    {
+      "from": "patches/xswap-swapin-2026-10-23/xs-ra-zswap-v1.patch",
+      "to": "campaigns/xswap-swapin-2026-10-23/patches/xs-ra-zswap-v1.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7757e205bc368560b5c33ff17577745c0f38859e5cfec83a10907d8168a5bf09"
+    },
+    {
+      "from": "patches/xswap-swapin/0001-mm-xswap-enable-readahead-for-physically-backed-slot.patch",
+      "to": "campaigns/_unassigned/patches/xswap-swapin/0001-mm-xswap-enable-readahead-for-physically-backed-slot.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "cecef43eb82a1780a93083b4aa3044deb517f47c0af40f465a9e3cd7108a0543"
+    },
+    {
+      "from": "patches/xswap-swapin/0002-mm-xswap-prefetch-zswap-resident-slots.patch",
+      "to": "campaigns/_unassigned/patches/xswap-swapin/0002-mm-xswap-prefetch-zswap-resident-slots.patch",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "23ef589417b5ff2c05dfeedbad7138b0c4ac5644001b916bcd85da44793b38bd"
+    },
+    {
+      "from": "results/pilot-summary.json",
+      "to": "campaigns/_unassigned/report/pilot-summary.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "d12199a55c9ea5f951f99333c5845a7b8c53bd86482487968fa377ecfc8aff00"
+    },
+    {
+      "from": "results/swap-standard-evolve-2026-10-22/README.md",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-evolve-2026-10-22/README.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "2fc814162169aa79ab926626f0e021d4cc152ac3871794ca1db870d0464d7099"
+    },
+    {
+      "from": "results/swap-standard-evolve-2026-10-22/build-readable-report.py",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-evolve-2026-10-22/build-readable-report.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "82db8f41165988e0a8fb0b09f6f16db30aaa81d93f89a5ddbfd05d5903aca753"
+    },
+    {
+      "from": "results/swap-standard-evolve-2026-10-22/evaluations.json",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-evolve-2026-10-22/evaluations.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "9062201d31ffa618dc7d6e3ff501dab4155f52fe4cc9e826616f32dbaf04ed02"
+    },
+    {
+      "from": "results/swap-standard-evolve-2026-10-22/evidence-spec.json",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-evolve-2026-10-22/evidence-spec.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "90a1529b1ec3ef901d6366b8a55be7131d371c96b693e9342b269292229c4f90"
+    },
+    {
+      "from": "results/swap-standard-evolve-2026-10-22/explainer.html",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-evolve-2026-10-22/explainer.html",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "73b4befd95594505dbafb463f65c0e9e8f12f941d6140e131eb896d96bee56f5"
+    },
+    {
+      "from": "results/swap-standard-evolve-2026-10-22/explainer.json",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-evolve-2026-10-22/explainer.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "1bc00fff726079bf921c94f82d5f8241ad2a33378aa718000679d9e31e3ca4f1"
+    },
+    {
+      "from": "results/swap-standard-evolve-2026-10-22/summary.json",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-evolve-2026-10-22/summary.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "f277092f98cc3b8fbd45d8f5b043ded8f80406bb01470ebbca9ff7f801965b1d"
+    },
+    {
+      "from": "results/swap-standard-evolve-2026-10-22/visual-validation.json",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-evolve-2026-10-22/visual-validation.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7acc0bb6cabc64aa27a0ca656668b0c7c0d2b0c25dfb20edff8335b1bce453c8"
+    },
+    {
+      "from": "results/swap-standard-integration-2026-10-22/README.md",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/README.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7c8dd24cee36e13c72253deec64f4ee9b3d2a7b3f2b523f2f081e5bde3df20d5"
+    },
+    {
+      "from": "results/swap-standard-integration-2026-10-22/build-readable-report.py",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/build-readable-report.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "a1fa0727f64ed9be88f5cdb3b4547eb711bb775ac7ab06884d6ae0109594b9f0"
+    },
+    {
+      "from": "results/swap-standard-integration-2026-10-22/explainer.html",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/explainer.html",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "ccb90d540f1a45d771aa24bf0a44690e658a6913f307c6104f07623252709e99"
+    },
+    {
+      "from": "results/swap-standard-integration-2026-10-22/explainer.json",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/explainer.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "5ec8f8dccc12cd313f8a766111bc8240d4a0b83b24d2fe41d2557c1180a62f54"
+    },
+    {
+      "from": "results/swap-standard-integration-2026-10-22/validation.json",
+      "to": "campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/validation.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "704c60fb287608ee666640e5e39ce261113e989e4451ba895d4daa3d061ad1fd"
+    },
+    {
+      "from": "results/xswap-2026-10-21/README.md",
+      "to": "campaigns/xswap-2026-10-21/report/README.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "872c44ec0e636af0296d1281859cc529e232dff93de833f5725bc426e5493c63"
+    },
+    {
+      "from": "results/xswap-2026-10-21/build-readable-report.py",
+      "to": "campaigns/xswap-2026-10-21/report/build-readable-report.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "ba006de1e89eb692c5069ed3edcc81f168adab78c8d6ca7f0e64c182d9635ce3"
+    },
+    {
+      "from": "results/xswap-2026-10-21/evidence-spec.json",
+      "to": "campaigns/xswap-2026-10-21/report/evidence-spec.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "657073b0af0a37fd38fcfe39386b8a73bb56a8e96d3a8667550b20a3a339d97d"
+    },
+    {
+      "from": "results/xswap-2026-10-21/explainer.html",
+      "to": "campaigns/xswap-2026-10-21/report/explainer.html",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "75de3adef78a00691845b0894359b7ac27b1a36f3c1e90450a1b90855bfcda85"
+    },
+    {
+      "from": "results/xswap-2026-10-21/explainer.json",
+      "to": "campaigns/xswap-2026-10-21/report/explainer.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "61024fba06d467bb381afde5f3428f741e2f58ae56ee9d2add20c7f72afa8754"
+    },
+    {
+      "from": "results/xswap-2026-10-21/review.md",
+      "to": "campaigns/xswap-2026-10-21/report/review.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "ce5d438e734355312c76371e922f7cd1830e2ac68339d9042c4a3462e3c90936"
+    },
+    {
+      "from": "results/xswap-2026-10-21/summary.json",
+      "to": "campaigns/xswap-2026-10-21/report/summary.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "02a5b88e46f95c8264571b5e4a4f5a0bde82a29f84b9b6401e33673802e83041"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/README.md",
+      "to": "campaigns/xswap-next-2026-10-24/report/README.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "247a1a9f2bb87a502d0964024df416fc11aca5a49f5272e8b23866d7ef41c98b"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/REPORT.md",
+      "to": "campaigns/xswap-next-2026-10-24/report/REPORT.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "14f6d04e2f90a8f67e9b837a2c826a4c38b1563d95dcd25a32a39a37dd014680"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/build-diagnostics.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/build-diagnostics.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7dcc1642d4308075479b9b9529c73d385cffc3cf66333a3483a94438b693a37b"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/calibration-diagnosis.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/calibration-diagnosis.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "3701401c19b3a8276321ccbfaf9a06d1e51426bcc39413ad028cf27083201894"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/contract.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/contract.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "efe25841feddc4b971f4f2dccd5da08acef53df4c207b8f211f7c91ca1a12b04"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/decompression-scene.svg",
+      "to": "campaigns/xswap-next-2026-10-24/report/decompression-scene.svg",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "bc997f0cb608fa5ad96bc379bdc9f801b1fcfb61c92f585292f748fdf3b35cd3"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/evidence-audit.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/evidence-audit.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "b3cfbe6c9ddb6374b4f08d3746b5f202402b88c627b15ff313cf8658ce5e7e24"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/evidence-availability.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/evidence-availability.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "fdd7548001097d3c95398b35404f76044eea4577b03d8ef5029f30740c904028"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/evidence-manifest.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/evidence-manifest.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "6b1013c9023fef06771eaf79a68e8bddbaccf1fec4536e624210e035af36238e"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/explainer-edits.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/explainer-edits.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "42801cd7c9243d3e77c39cdd1457341c5a573e74efce92d0fa2884fa28fc72d4"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/explainer.html",
+      "to": "campaigns/xswap-next-2026-10-24/report/explainer.html",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "5c00e5b714635c1e0602e00b19237cfd70e517c27c891bbda2ac5ec11cb22cb5"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/explainer.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/explainer.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "23156c3e0a647721db097179049facdba1a9df8acd19119316b48fddd05fb907"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/generate-report.py",
+      "to": "campaigns/xswap-next-2026-10-24/report/generate-report.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "548e3aa567cb5a0b2c35e6d5a73c1cae540a88a689a8fa704785d3fce350175c"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/h3-review.md",
+      "to": "campaigns/xswap-next-2026-10-24/report/h3-review.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "4b3ba1015d23f0b0efd77afe2a83e8d62ada0ec8a208b66a0c01b40b612c3191"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/h5-design-review.md",
+      "to": "campaigns/xswap-next-2026-10-24/report/h5-design-review.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "e8e34da51d0ec516535aaeff778ce8c2ad81601e9b76f98ad936307f6698267b"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/h6-design-review.md",
+      "to": "campaigns/xswap-next-2026-10-24/report/h6-design-review.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "3fafb56715ae5bab46703a9f3d8dec697529225062e7a4f4a6b1c2447c3600e0"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/policy-snapshot-15bf186.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/policy-snapshot-15bf186.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "ff44e8f8e49b03b6a3c28610a20765c61ec75d68086adc3136181042dca5e82f"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/prefetch-scene.svg",
+      "to": "campaigns/xswap-next-2026-10-24/report/prefetch-scene.svg",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "4cd858ba6a565b5bec6c0114349682f66a8a4ef5c6ee48b61a00dd12b01b7d9f"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/protocol-revision1.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/protocol-revision1.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "f784fa5e9d69c7b8d4fe07fda1fd656c71e3a1419b7668f082b4b3289d0ca9f7"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/protocol-revision2.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/protocol-revision2.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "c549e26a4d839020fbba4126ba2a9d484576c2acec5e904672f4d1e4d7496c09"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/publication.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/publication.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "8280c1747010331cf0745401361f32df9c1b615af17e66a12295e7fd3ecd66dd"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/render_report.py",
+      "to": "campaigns/xswap-next-2026-10-24/report/render_report.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "9870fad8cab68082379ab4b7da20f9ec59fc0a15f56ede4f326de28e0f97b924"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/round-decisions.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/round-decisions.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "1bb5f274d5918f81443b9d06b2327839be94a7fc2dc141f1a4b04c607d1a10c3"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/run-aux.py",
+      "to": "campaigns/xswap-next-2026-10-24/report/run-aux.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "bf5f86eb0fca96777686f084448b2b2299be78b5192ab51d4fef1496d215f11e"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/summary.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/summary.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7e84ebe2e1ae05f8b64e60ad66dd259dae93140cbbdbdc7b23b083008e7a8843"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/verify-evidence.py",
+      "to": "campaigns/xswap-next-2026-10-24/report/verify-evidence.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "a391a6dae2388e401bc75c90f8aafa7123d8f014008069b4dbaebd6d7bd11928"
+    },
+    {
+      "from": "results/xswap-next-2026-10-24/visual-qa.json",
+      "to": "campaigns/xswap-next-2026-10-24/report/visual-qa.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "0632ce8e5c0d1cdd05cd55026af41ed4623fc161e8273370bc291c0086faa667"
+    },
+    {
+      "from": "results/xswap-p123-2026-10-23/README.md",
+      "to": "campaigns/xswap-p123-2026-10-23/report/README.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "fb992306d924800a7d2a6370dfd244812ef8db0761a6f6e33ce47b61637400ec"
+    },
+    {
+      "from": "results/xswap-p123-2026-10-23/overnight-contract.json",
+      "to": "campaigns/xswap-p123-2026-10-23/report/overnight-contract.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "642d455d57807e4ad6b0bd7a099f6a87f9a7ea9043cbb89bd7fc675a664818c9"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/README.md",
+      "to": "campaigns/xswap-structure-2026-10-22/report/README.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "5f79be3264bd7f8bb32bc07af58e04cfe563918aa7b5c0c054ba98ac47d2a0fc"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/build-readable-report.py",
+      "to": "campaigns/xswap-structure-2026-10-22/report/build-readable-report.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "dc2a5d1ccb342d3f7df0ce9abe6b3f5fad0a6112a9ae8481be0024e334e261b2"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/descriptor-lifetime-repair-plan.md",
+      "to": "campaigns/xswap-structure-2026-10-22/report/descriptor-lifetime-repair-plan.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "bda4bfbafbd53ccaedf980f387ff20a2b69735f15ae7c9ee55f236247d2e54a6"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/descriptor-lifetime-review.md",
+      "to": "campaigns/xswap-structure-2026-10-22/report/descriptor-lifetime-review.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "8903c593893a21742ac52ff94aa3fd5e962ecb2eef0ea64eed5bea09e68f7b04"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/evidence-spec.json",
+      "to": "campaigns/xswap-structure-2026-10-22/report/evidence-spec.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "164a7f1b7a4b0b1b2d909e194b1a51e53aaa62ea7746aa26872592ff918988f8"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/explainer.html",
+      "to": "campaigns/xswap-structure-2026-10-22/report/explainer.html",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "dbb0681ab995394fa3b42624cf8692a5eccb4fa0e3357d0da078ffd50190f6a0"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/explainer.json",
+      "to": "campaigns/xswap-structure-2026-10-22/report/explainer.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "6d96c2011e425b03e79dc20780982e14f338d7a39cf6e2b2eef3e92b7cd89092"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/interior-reclamation-design.md",
+      "to": "campaigns/xswap-structure-2026-10-22/report/interior-reclamation-design.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "8d13056c209b3a36954702cf455622179dd944eb04718f230ef927878fbedb9f"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/next-hypotheses.md",
+      "to": "campaigns/xswap-structure-2026-10-22/report/next-hypotheses.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "786e7dd0486ab3d642fd4bcdba6170ec8887b9aa04e00cfab9cdc6041ca289d5"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/review.md",
+      "to": "campaigns/xswap-structure-2026-10-22/report/review.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "88c2e06889002dc77ab64e3d8f75c44ceec403e48dc5b785fd848f983b828f8a"
+    },
+    {
+      "from": "results/xswap-structure-2026-10-22/summary.json",
+      "to": "campaigns/xswap-structure-2026-10-22/report/summary.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "78f2ba4393672bb542e520a1e7932ec050b54c9afef47484a1a2d1a9f4305a78"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/README.md",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/README.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "7826656dc1ff2cd10ad01a9413d206335fb5b022f6d18819d7de50552f67b121"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/REPORT.md",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/REPORT.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "41fd76a55c18f7d898dd0ade745ae22cb0d8845736e383f3bfaf6f19b1230d07"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/build-readable-report.py",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/build-readable-report.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "eafa680daed45f7b96bdd946be01e55570f16d160a768f308227d3864a3d7b84"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/build-summary.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/build-summary.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "cdd96f1329fe9329a220f651c04c18a0ff75eda73771105480ba3d15d45db1e3"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/correctness-v10.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/correctness-v10.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "91aebacc47cafe9719f3a76fdeeeaf4d4923530c4c7bb25a958aa463aa69cc02"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/debug-config-gap.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/debug-config-gap.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "80a8b4826a3823e820f693a73c5f56738a8381cd15e674dab0a9b81a62391ec9"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/evidence-manifest.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/evidence-manifest.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "d6b283ebaa68570be5652932a1f9c3da7916fa00825b6305cd96618ea079b0cc"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/evidence-spec.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/evidence-spec.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "ff3166816f0ef512674492831e93e8550a70a5ad46a01b85d6d1b7068813ec6a"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/explainer.html",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/explainer.html",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "2c47e316de08c5cce6e2f8cd3a59b8adf67ae8ee4240806abf3cd17f7f67891a"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/explainer.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/explainer.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "0987228a9ebcb05aab8b7cac7588ad96818208b9ab0b0069cd4ccc282f812f99"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/generate-report.py",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/generate-report.py",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "50059a62ddf1b1b454be4f4e8380c97342bbbb41095967816a495beda06a4c60"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/h1-correctness-proof.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/h1-correctness-proof.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "892300965dae19cce751e0bcbea089e1dbdb58dd313e171ed67c5c48e80009ba"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/h1-review.md",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/h1-review.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "4a12c9ed7534dd9ed8bdbe3c46cb34229fc5a54c7f92ca5cd0cd2a8c1166326f"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/h1-sparse.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/h1-sparse.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "b6e7d3c000e1dcd89f88c766c4aabf958985b2721dc184bd805a30707a33383b"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/h2-correctness-proof.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/h2-correctness-proof.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "297417054f53bc98a8e005a17a22b3fe3530d36ccfcdc3df73ff462939d0660c"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/h2-review.md",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/h2-review.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "56c731daccb2d7cf07c00569140879df05475640cbba3e47bf56248c6f33f8e9"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/h2-sparse.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/h2-sparse.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "d51261da00684a43a452d8299609d22f2e9b0420c2d6810a82ac99e8f0aaaa79"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/harness-validation.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/harness-validation.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "9578fa38b5c439bd14826f4d161fe9aa81849e73c008038cfa367b664a8a64eb"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/lifetime-prerequisite.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/lifetime-prerequisite.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "afa4b0c29ac2fca162f9030cda42fd838c922d135d954336fbac45296f90c2dc"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/lifetime-review.md",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "a0be0c0229b3579c032b487fb6eb6d06a1da91c69707cc03e6aa8dd9783a17a4"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/policy-pre-resume.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/policy-pre-resume.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "515799f4178c38a9894fc35b466ff59fed94b6fb80dbb7fccec00561e4b1fdc7"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/resume-contract.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/resume-contract.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "14bd654995ec4c498e614da2224a53f38e4e09c2031040db98594f92fb79d034"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/summary.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/summary.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "932fefcae377c1bf9665ee26d2b07b9de176e3e02bacd818d507a5f00d7b4c97"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/system-story.html",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/system-story.html",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "821c781c918552d321381e6089c110b48fb23ea1a8d30cff613524818f744b42"
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/visual-qa.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/visual-qa.json",
+      "how": "git-mv",
+      "note": "Tracked bytes are preserved exactly.",
+      "sha256": "25d5e08bf65cbfc67de0225f2c61764d31a833757f9c0469effd4d44923575a2"
+    },
+    {
+      "from": "evolve/control/campaigns/xswap-reference-replay/policy.json",
+      "to": "campaigns/xswap-reference-replay/policy.json",
+      "how": "copy-rewritten",
+      "note": "Untracked controller policy imported; host paths normalized.",
+      "sha256": "cffba23415ad14696245707058c6fe7357dff6698111ed4fa0a304c919b72b31",
+      "output_sha256": "cffba23415ad14696245707058c6fe7357dff6698111ed4fa0a304c919b72b31"
+    },
+    {
+      "from": "evolve/swap-standard/state-layout-v1/budget.json",
+      "to": "campaigns/swap-standard-2026-10-22/ledger/budget.json",
+      "how": "copy",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "0b32064df65949f92e4661571151bb21a9933251e4116e7ed6cdf24c53485476",
+      "output_sha256": "0b32064df65949f92e4661571151bb21a9933251e4116e7ed6cdf24c53485476"
+    },
+    {
+      "from": "evolve/swap-standard/state-layout-v1/calibration-fast.json",
+      "to": "campaigns/swap-standard-2026-10-22/ledger/calibration-fast.json",
+      "how": "copy",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "f544aecd0f60d83f5dbf2ea0a32498fbfa8a75e6e5cd9fb8b537d654f1077e79",
+      "output_sha256": "f544aecd0f60d83f5dbf2ea0a32498fbfa8a75e6e5cd9fb8b537d654f1077e79"
+    },
+    {
+      "from": "evolve/swap-standard/state-layout-v1/ledger.json",
+      "to": "campaigns/swap-standard-2026-10-22/ledger/ledger.json",
+      "how": "copy",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "aaadb4812f848db0c27cb58d3364503acd84ed723a13ab0d8913b6ee8d9aa2f0",
+      "output_sha256": "aaadb4812f848db0c27cb58d3364503acd84ed723a13ab0d8913b6ee8d9aa2f0"
+    },
+    {
+      "from": "evolve/swap-standard/state-layout-v1/task-f604b3637171450698da3b32d4c7b028.json",
+      "to": "campaigns/swap-standard-2026-10-22/ledger/tasks/task-f604b3637171450698da3b32d4c7b028.json",
+      "how": "copy",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "4fc6a5781a0a3e82aaf7ec9c72c01fe8708da9f4733fcce4475727946a7cfa62",
+      "output_sha256": "4fc6a5781a0a3e82aaf7ec9c72c01fe8708da9f4733fcce4475727946a7cfa62"
+    },
+    {
+      "from": "evolve/swap-standard/state-xswap-next-2026-10-24/budget.json",
+      "to": "campaigns/xswap-next-2026-10-24/ledger/budget.json",
+      "how": "copy",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "b92c813c40c0a1a45504b9d2313f00ecfd377e3a23263a81646c7ce3be275ba1",
+      "output_sha256": "b92c813c40c0a1a45504b9d2313f00ecfd377e3a23263a81646c7ce3be275ba1"
+    },
+    {
+      "from": "evolve/swap-standard/state-xswap-next-2026-10-24/calibration-fast.json",
+      "to": "campaigns/xswap-next-2026-10-24/ledger/calibration-fast.json",
+      "how": "copy",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "a31518a18ad8d709e81b2b0a118ba712ae342ae0a9424b51121b5e5c27be5e1b",
+      "output_sha256": "a31518a18ad8d709e81b2b0a118ba712ae342ae0a9424b51121b5e5c27be5e1b"
+    },
+    {
+      "from": "evolve/swap-standard/state-xswap-next-2026-10-24/ledger.json",
+      "to": "campaigns/xswap-next-2026-10-24/ledger/ledger.json",
+      "how": "copy-rewritten",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "053c6a04ea1821ac7b215218d9ab80cdf882de92a961cd99ba267afbb5b7b4e7",
+      "output_sha256": "2f345dfd36be19c3ef7022668a094d5a98603a3dd38fed0a21479507f7d39ad4"
+    },
+    {
+      "from": "evolve/swap-standard/state-xswap-swapin-2026-10-23/budget.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/ledger/budget.json",
+      "how": "copy",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "c0a92e43df2ed6ff75ed697de6fb48ebddad99add9c9512965bbf7dd47e88e78",
+      "output_sha256": "c0a92e43df2ed6ff75ed697de6fb48ebddad99add9c9512965bbf7dd47e88e78"
+    },
+    {
+      "from": "evolve/swap-standard/state-xswap-swapin-2026-10-23/calibration-fast.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/ledger/calibration-fast.json",
+      "how": "copy",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "5545f0832b580bfe1239b5eb8e6b7ead967ca1582d949de6eb7e9e934cb6ab11",
+      "output_sha256": "5545f0832b580bfe1239b5eb8e6b7ead967ca1582d949de6eb7e9e934cb6ab11"
+    },
+    {
+      "from": "evolve/swap-standard/state-xswap-swapin-2026-10-23/ledger.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/ledger/ledger.json",
+      "how": "copy-rewritten",
+      "note": "Runtime ledger imported; absolute host paths normalized when present.",
+      "sha256": "bba801aaa39ad0273cf8e8587d69cc884e8f2725cd69195602ff594bab347dbf",
+      "output_sha256": "c5e7223a9722abc5c0757b41928b91445cb9c565af853f1c70cf60a7e3d8b17c"
+    },
+    {
+      "from": "evolve/control/state/swap-standard-2026-10-22/STOP",
+      "to": "campaigns/swap-standard-2026-10-22/STOP",
+      "how": "copy",
+      "note": "Campaign STOP retained; remains gitignored.",
+      "ignored": true,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/candidates.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-cap8.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xswap-grow-cap8",
+      "sha256": "0fa0e0ad7019163c6c2eff1c3e86fed76cb06c886ce0cf125d42ced830624386",
+      "output_sha256": "2ace56ec6770c9e430c13abee9e75ee55123a59dbdc006394b1dff5e71059d13"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-cap8/candidate.patch",
+      "to": "evolve/control/state/xswap-2026-10-21/xswap-grow-cap8/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-2026-10-21/patches/xswap-grow-cap8.patch; exported patch is moved separately.",
+      "sha256": "90ae1452e2183d2e3bea324f250c3fa2a26dd57ef482dd7a1a4d1f032c341639"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-cap8/checkpatch.log",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-cap8/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "78c4f9b0f79012511402557ef189e9006e6a83f4b4136f4d70f139249dffd02e",
+      "output_sha256": "78c4f9b0f79012511402557ef189e9006e6a83f4b4136f4d70f139249dffd02e"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-cap8/commit-message.txt",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-cap8/commit-message.txt",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "836d084d675b70a193b228253682d73d07b3cc3e72c3798c5a4c263b7e54b3f3",
+      "output_sha256": "836d084d675b70a193b228253682d73d07b3cc3e72c3798c5a4c263b7e54b3f3"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-cap8/diff-check.log",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-cap8/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-cap8/static.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-cap8/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "8fd82d676cb5642541524fea5af51a0d1704f389bd5d10751e8919462ce20b48",
+      "output_sha256": "4006f63e7e6b18e6662bff990702385200a9ae81f8fe00a24352be4233cbf47e"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-cap8/task.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-cap8/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "56f8a95bbdea186f1e7fc92de4a9ab0f281b8d3651d007eab068998ce1e8a642",
+      "output_sha256": "0c85b135f24bcff92409d9d627a9268d502a008413b7ee3accdfcb1c58fd8e83"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/candidates.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-target75.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xswap-grow-target75",
+      "sha256": "0fa0e0ad7019163c6c2eff1c3e86fed76cb06c886ce0cf125d42ced830624386",
+      "output_sha256": "108e758e354ff6996aceaad8f193ccec748a2766a9dcbbf988b90a55f4c1fd94"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-target75/candidate.patch",
+      "to": "evolve/control/state/xswap-2026-10-21/xswap-grow-target75/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-2026-10-21/patches/xswap-grow-target75.patch; exported patch is moved separately.",
+      "sha256": "6db3cbf89cb1ae955cab2781624dc3f3f90c0473dae8fb9f73a92c635dc27ed2"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-target75/checkpatch.log",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-target75/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "720909bed0a117898ae79b6db281f48659182e44ffdda13d823c91079e3495eb",
+      "output_sha256": "720909bed0a117898ae79b6db281f48659182e44ffdda13d823c91079e3495eb"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-target75/commit-message.txt",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-target75/commit-message.txt",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "7228782c23080a988064d918bee8d4af7fe09d9ef44ec542c8145993b65fbfad",
+      "output_sha256": "7228782c23080a988064d918bee8d4af7fe09d9ef44ec542c8145993b65fbfad"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-target75/diff-check.log",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-target75/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-target75/static.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-target75/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "433a0408609137fc07b51124bbe58a059ffe6d7674a7dddb1a233830ff21e620",
+      "output_sha256": "288452110ede9e02b2a9d4ec0845d9ba90edb2de1652c7e10be7c53fb5946772"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-grow-target75/task.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-grow-target75/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "2bfb4b78d506a933d39920cce62017241c3c3f880e129b46110811988109f8fa",
+      "output_sha256": "3b7162ac290f72a9c836945e70253c850afa07b5d522602b989ad0c3b154b4e3"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/candidates.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-shrink-min4.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xswap-shrink-min4",
+      "sha256": "0fa0e0ad7019163c6c2eff1c3e86fed76cb06c886ce0cf125d42ced830624386",
+      "output_sha256": "da4f8d8f313dfc612e3c29fe7f33671268c4a60141662f5b302b375de5715043"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-shrink-min4/candidate.patch",
+      "to": "evolve/control/state/xswap-2026-10-21/xswap-shrink-min4/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-2026-10-21/patches/xswap-shrink-min4.patch; exported patch is moved separately.",
+      "sha256": "7f617a5f1f5461e6e077b3186b51e42091f93d959c9504b023ff60773ff35fc5"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-shrink-min4/checkpatch.log",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-shrink-min4/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "78c4f9b0f79012511402557ef189e9006e6a83f4b4136f4d70f139249dffd02e",
+      "output_sha256": "78c4f9b0f79012511402557ef189e9006e6a83f4b4136f4d70f139249dffd02e"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-shrink-min4/commit-message.txt",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-shrink-min4/commit-message.txt",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "e3a832640c4aa7fbf61af508565aebca5b7d04e4c9c086b84b4248228f4400bd",
+      "output_sha256": "e3a832640c4aa7fbf61af508565aebca5b7d04e4c9c086b84b4248228f4400bd"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-shrink-min4/diff-check.log",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-shrink-min4/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-shrink-min4/static.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-shrink-min4/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "7dfd49c7ed28329b2f3eb5f5b98ded5ba3ee57d898b83d58c797789d03213658",
+      "output_sha256": "31772c36468282a6458608056e25a5dc1bf9906a0a355811893bacfd582a0fc4"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-shrink-min4/task.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-shrink-min4/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "828ba9549f2bbf66117005b021aa4d6d3706d97f25fcd1463b9bb58bc022b740",
+      "output_sha256": "2b4408bf28616a3df495c6782e8f9abeec1660fa4641c8bedf4fe47b57851ec4"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/candidates.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-source.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xswap-source",
+      "sha256": "0fa0e0ad7019163c6c2eff1c3e86fed76cb06c886ce0cf125d42ced830624386",
+      "output_sha256": "550ac03746e28c5c18f34b822bdea60db40535b2a5a156935dc60a9c5d592feb"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-source/candidate.patch",
+      "to": "evolve/control/state/xswap-2026-10-21/xswap-source/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-2026-10-21/patches/xswap-source.patch; exported patch is moved separately.",
+      "sha256": "f5eb61b585781999fdba05d1813dcc8b7ed1b60b2907b6f01c0c7684e89a5a18"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-source/checkpatch.log",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-source/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9c8a723fc8c47ab8a4b0c421234014acd05654886bf6b9429e7144a18aea9f3e",
+      "output_sha256": "9c8a723fc8c47ab8a4b0c421234014acd05654886bf6b9429e7144a18aea9f3e"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-source/diff-check.log",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-source/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-source/static.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-source/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "e5811b1c6bd53aa233ec082bb193c57acc6ff9248f7f6a2e8efca3274adf5cab",
+      "output_sha256": "961e0846a85fcc857d63518887d821a92df2764f097e0b345f8f994365d67c24"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/xswap-source/task.json",
+      "to": "campaigns/xswap-2026-10-21/candidates/xswap-source/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "b57049f5c51f6c86cca8026f828f1d63a85b39d132c3eda050671bf1dc5b8bc4",
+      "output_sha256": "d22ade8a1cda37ee2a0903d24bd5c069d018fea10a5c1c22d91af00179981b24"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/events.jsonl",
+      "to": "campaigns/xswap-2026-10-21/ledger/events.jsonl",
+      "how": "copy-rewritten",
+      "note": "Controller events imported; host paths normalized.",
+      "sha256": "83498b2900432d5c65e2e6ea866a491062957cbebca9831dd9c182bc2b550ad4",
+      "output_sha256": "269568172478b3b34f55006c5621937dc847bec28126f3259f98dc060b53c113"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/baseline-build.log",
+      "to": "evolve/control/state/xswap-2026-10-21/baseline-build.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "9f94a5617da291e925b3dc3777a7a7ead05e325d143498c86958905e57044042"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/calibration-launch.json",
+      "to": "evolve/control/state/xswap-2026-10-21/calibration-launch.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "09ff2e2bbf9411f6558215a16bcd304e7bfbe1b63f7d25ef719f8c51abbc361b"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/calibration-stderr.log",
+      "to": "evolve/control/state/xswap-2026-10-21/calibration-stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/final-loop-status.json",
+      "to": "evolve/control/state/xswap-2026-10-21/final-loop-status.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "8c00438398dd44eb79b2157506450e0bd61631058cdc3c96b03df06b543ea6ac"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/reference-replay.json",
+      "to": "evolve/control/state/xswap-2026-10-21/reference-replay.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "17ce825c32eb1881423110736c86ab8367c536b17860c991fbc394d0231735d2"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/round1-launch.json",
+      "to": "evolve/control/state/xswap-2026-10-21/round1-launch.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "25da0edb538efcf1f54c6310716d521eeefaff6f411c8114a198df06a64f6130"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/round1-stderr.log",
+      "to": "evolve/control/state/xswap-2026-10-21/round1-stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/round2-feedback.json",
+      "to": "evolve/control/state/xswap-2026-10-21/round2-feedback.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "d072acfd8afc55b224f0da0591b820c0c8cfc60c7c787af4916d71590aaedde8"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/round2-launch.json",
+      "to": "evolve/control/state/xswap-2026-10-21/round2-launch.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "40e24b03a752afe1ba0081707617e019cbc46e0c8915d0d7557b4193c988fc10"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/round2-stderr.log",
+      "to": "evolve/control/state/xswap-2026-10-21/round2-stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/round3-feedback.json",
+      "to": "evolve/control/state/xswap-2026-10-21/round3-feedback.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "4124b3ccbf60aae59eea2efcc2f61b6fb6ba6386cdb6f7c69f499b478942467b"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/round3-launch.json",
+      "to": "evolve/control/state/xswap-2026-10-21/round3-launch.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e51d507d5f1a37607151326f2f9fce522aa766cba2943677fbbf406cbf1d8311"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/round3-stderr.log",
+      "to": "evolve/control/state/xswap-2026-10-21/round3-stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/smoke-disk-v1.json",
+      "to": "evolve/control/state/xswap-2026-10-21/smoke-disk-v1.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "7f6c16af96be879db0998cf5eb7e755f9694ea8de10718692d6dd54eebdd211b"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/smoke-disk.json",
+      "to": "evolve/control/state/xswap-2026-10-21/smoke-disk.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "94e94aad8da3bb0f4ae852e8e1fec86658fe7a1b42f99ea19fbf2e02c578afd1"
+    },
+    {
+      "from": "evolve/control/state/xswap-2026-10-21/smoke-zswap-v1.json",
+      "to": "evolve/control/state/xswap-2026-10-21/smoke-zswap-v1.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "036c98e8e44a77b263ed8af9027c65dd272b0644990610df04f83292d6da3eb7"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/candidates.json",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-cluster-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-ra-cluster-v1",
+      "sha256": "9b165644b317dc1f51db367e38948ec12915a83c4f26cb11df286d56b023ea5f",
+      "output_sha256": "949f87f172909640632d8c6c6c69ea76e3f77028e8e3ac291ca1e801f3e6b0a3"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-cluster-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-next-2026-10-24/xs-ra-cluster-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-next-2026-10-24/patches/xs-ra-cluster-v1.patch; exported patch is moved separately.",
+      "sha256": "bfb488d37e044638b0c4f4588200d4745f86ff5a037a6501cbc79f1540795c09"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-cluster-v1/checkpatch.log",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-cluster-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "2e20b85c0df21c4df21da2afbb80d3d80f8f14646c5c4aed8904fa45528ff071",
+      "output_sha256": "2e20b85c0df21c4df21da2afbb80d3d80f8f14646c5c4aed8904fa45528ff071"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-cluster-v1/diff-check.log",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-cluster-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-cluster-v1/static.json",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-cluster-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "743ad7ca19afb879fdb113bbedb5a5214ad48a72bac591eca760184f6fa2a5bb",
+      "output_sha256": "776cc79099aabe2c00c0c497d0e746c8c984904ec5054d654fd570dc95e5c87f"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-cluster-v1/task.json",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-cluster-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "98d3b13ae2c2d2de3bf5cd3fdbe5a5d86b50334e0551530e2c63e65f79b1fb74",
+      "output_sha256": "8b4eb178d88fb5e07015d1bd4a44082c9d7ceaf429035edcd5b5c60f3f2832fc"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/candidates.json",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-sequential-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-ra-sequential-v1",
+      "sha256": "9b165644b317dc1f51db367e38948ec12915a83c4f26cb11df286d56b023ea5f",
+      "output_sha256": "bfa6bdf87e663944b2377c40e7e1ee6d181770505d6d047ddc4be734d2e34195"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-sequential-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-next-2026-10-24/xs-ra-sequential-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-next-2026-10-24/patches/xs-ra-sequential-v1.patch; exported patch is moved separately.",
+      "sha256": "5523d92a93634d215fd60dc3ed6dded64d663f757d696e1802a5e76f8cc00dfc"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-sequential-v1/checkpatch.log",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-sequential-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "ce42ee85f1d780d82108c80d7f25ed0a4136e612b23d49937048c96921b93c3b",
+      "output_sha256": "ce42ee85f1d780d82108c80d7f25ed0a4136e612b23d49937048c96921b93c3b"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-sequential-v1/diff-check.log",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-sequential-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-sequential-v1/static.json",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-sequential-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "7d0f493ada446f8622442bca160bee8b001251ac2dba5ee96b35bd4fb97d0409",
+      "output_sha256": "de907ce7dae38df3c9828349455680fbf22a925207d397ce94f02f905c9b1fd9"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-ra-sequential-v1/task.json",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-ra-sequential-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "49322f8ad9eec2236f01a733bfd6146bc14c0049b77cebedc38f0734ac250784",
+      "output_sha256": "0f52473b5ff4429b414831d32f5ed07cf913e4cfce66e7610a84fabe086be5b3"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/candidates.json",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-zswap-linear-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-zswap-linear-v1",
+      "sha256": "9b165644b317dc1f51db367e38948ec12915a83c4f26cb11df286d56b023ea5f",
+      "output_sha256": "b03055a47d0b791facd518b6eac623778fba1a1945b8f9328260a5e9bd7a56ce"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-zswap-linear-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-next-2026-10-24/xs-zswap-linear-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-next-2026-10-24/patches/xs-zswap-linear-v1.patch; exported patch is moved separately.",
+      "sha256": "e6231f3050675350516501f00a1d91f1a2be0159d0802009838997ad9ab37cd9"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-zswap-linear-v1/checkpatch.log",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-zswap-linear-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "940471d6fa717ffb2c0aa32ab1aa553547fded1380e0e064b8b88143c563c119",
+      "output_sha256": "940471d6fa717ffb2c0aa32ab1aa553547fded1380e0e064b8b88143c563c119"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-zswap-linear-v1/diff-check.log",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-zswap-linear-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-zswap-linear-v1/static.json",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-zswap-linear-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "38bcacf4e542165eea9868a21e559a530651bd4807c598f5a87ec3172c191db0",
+      "output_sha256": "cd1f0cdabf0d37c59c0d26a2f7624d37c374dddd62cc13914a0d51ce70622e1e"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/xs-zswap-linear-v1/task.json",
+      "to": "campaigns/xswap-next-2026-10-24/candidates/xs-zswap-linear-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "970b20c5513f20ab306ed2467dcbc40c02057e972678eab03346166c6dbc75e9",
+      "output_sha256": "ed2e71ec717564c8c2fbe89e83fcc16d31233cd67b7de85c869452e9a7cb3fad"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/events.jsonl",
+      "to": "campaigns/xswap-next-2026-10-24/ledger/events.jsonl",
+      "how": "copy-rewritten",
+      "note": "Controller events imported; host paths normalized.",
+      "sha256": "d5139fb7168e9698b93ffdca8349a0c7f8d1e42213e498d9f48e47c421b0747a",
+      "output_sha256": "1b17a9fa3adb68764142a7dcec8bf3d9ad2108334f7246ecd80434299337c0d6"
+    },
+    {
+      "from": "evolve/control/state/xswap-next-2026-10-24/STOP",
+      "to": "campaigns/xswap-next-2026-10-24/STOP",
+      "how": "copy",
+      "note": "Campaign STOP retained; remains gitignored.",
+      "ignored": true,
+      "sha256": "c395604630f8b2f8d9bfb819b3efc06d86abc28880cc60b830a7b21c2167ba83",
+      "output_sha256": "c395604630f8b2f8d9bfb819b3efc06d86abc28880cc60b830a7b21c2167ba83"
+    },
+    {
+      "from": "evolve/control/state/xswap-observe-2026-10-22/candidates.json",
+      "to": "campaigns/xswap-observe-2026-10-22/candidates/xs-observe-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-observe-v1",
+      "sha256": "b1bf877dc3ff233ce7aead2189c4ba1e85b50510332121cd89020435bc95b506",
+      "output_sha256": "ee85009823d4253de77f692ab619bfd3788680b930adea6599605f90ef5f12a2"
+    },
+    {
+      "from": "evolve/control/state/xswap-observe-2026-10-22/xs-observe-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-observe-2026-10-22/xs-observe-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-observe-2026-10-22/patches/xs-observe-v1.patch; exported patch is moved separately.",
+      "sha256": "32117fde1215089141b5e1b8417ca9bd8ac0937241037433950cab1a847a56a2"
+    },
+    {
+      "from": "evolve/control/state/xswap-observe-2026-10-22/xs-observe-v1/checkpatch.log",
+      "to": "campaigns/xswap-observe-2026-10-22/candidates/xs-observe-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "0e1fcba1bf6beb36f7028826bcc9e6847e93b3d1ad31021be7d79810a7887153",
+      "output_sha256": "0e1fcba1bf6beb36f7028826bcc9e6847e93b3d1ad31021be7d79810a7887153"
+    },
+    {
+      "from": "evolve/control/state/xswap-observe-2026-10-22/xs-observe-v1/diff-check.log",
+      "to": "campaigns/xswap-observe-2026-10-22/candidates/xs-observe-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-observe-2026-10-22/xs-observe-v1/static.json",
+      "to": "campaigns/xswap-observe-2026-10-22/candidates/xs-observe-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "7abaf18d8574b9fb3ad8bf1106804936e3bdcb9157ea4f039e88e8fb070cb7cf",
+      "output_sha256": "6d9c1438242b88d9e5b0acafec799bb20d3f7de5244975b50fded7e16e2c1c5c"
+    },
+    {
+      "from": "evolve/control/state/xswap-observe-2026-10-22/xs-observe-v1/task.json",
+      "to": "campaigns/xswap-observe-2026-10-22/candidates/xs-observe-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "646e3c011b9d7abf82fe5ffe89d860d027592ec51a4c6bcdcfce0292c45c4a60",
+      "output_sha256": "f72c7988950855b6a2d997fb10f6846ee2c09943b18ba718c6a2f0577fc6804f"
+    },
+    {
+      "from": "evolve/control/state/xswap-observe-2026-10-22/events.jsonl",
+      "to": "campaigns/xswap-observe-2026-10-22/ledger/events.jsonl",
+      "how": "copy-rewritten",
+      "note": "Controller events imported; host paths normalized.",
+      "sha256": "02a302f07bac49b4898af2de74e338ee50100fa8feb7f53adc020e2f860de913",
+      "output_sha256": "4f8a81f5376e4a6eb5beba75e9419a30df371916735e39f3446238f559722a38"
+    },
+    {
+      "from": "evolve/control/state/xswap-observe-2026-10-22/baseline-build.log",
+      "to": "evolve/control/state/xswap-observe-2026-10-22/baseline-build.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e958c77dcdca43d6381c6cc8b22f0fb99e1e5cde21fa1732ce213491605389cd"
+    },
+    {
+      "from": "evolve/control/state/xswap-observe-2026-10-22/environment-install.log",
+      "to": "evolve/control/state/xswap-observe-2026-10-22/environment-install.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "9ec4ce11aa9c34da29d9c8bdf31f50d32e451b58e12e3e98b322e5eff3fc7e79"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-2026-10-23/candidates.json",
+      "to": "campaigns/xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-desc-lifetime-v1",
+      "sha256": "583b0bede12a62eb8a2eb670556006141125e98b1ad7473cc0668e594243c249",
+      "output_sha256": "a6230cae8aa994927761bf91abd595e2eff16840a7885a1ba3d89120a16eddff"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-2026-10-23/xs-desc-lifetime-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-p123-2026-10-23/xs-desc-lifetime-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-p123-2026-10-23/patches/xs-desc-lifetime-v1.patch; exported patch is moved separately.",
+      "sha256": "81e1b33de803c04e4e7f00acdcd16e4c7963b3b55db3a18b059d2b079bc1a658"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-2026-10-23/xs-desc-lifetime-v1/checkpatch.log",
+      "to": "campaigns/xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "63183eedbabdacb9f21f04a77334e75c5c9a204ddd1b78146fe435dff12d30e8",
+      "output_sha256": "63183eedbabdacb9f21f04a77334e75c5c9a204ddd1b78146fe435dff12d30e8"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-2026-10-23/xs-desc-lifetime-v1/diff-check.log",
+      "to": "campaigns/xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-2026-10-23/xs-desc-lifetime-v1/static.json",
+      "to": "campaigns/xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "a5b7d2c243cf479e1e2facce89e3507e4963e5f4edbffea2da43834c2660f5c6",
+      "output_sha256": "ab3049b36ce89dd8f3bbb39cf6950dbb2380b284e79bbf3e3c2f51c9ee32554d"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-2026-10-23/xs-desc-lifetime-v1/task.json",
+      "to": "campaigns/xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "69a000753b596c56c65ab3756eaab47a93a7537b6329c294f2dcfe1a8632c576",
+      "output_sha256": "b7fc826936c20e3e4b00077c30d79aa6724c14bb3e8dc1141b9bb09e74583a3a"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-2026-10-23/events.jsonl",
+      "to": "campaigns/xswap-p123-2026-10-23/ledger/events.jsonl",
+      "how": "copy-rewritten",
+      "note": "Controller events imported; host paths normalized.",
+      "sha256": "566848306493a388ff3416a8c7c4cfa5f2f89379d365604487205d348378b64d",
+      "output_sha256": "7ca5ae993062f8df5e96a7a368612b3eb7b773562933900d5fa2ae05b753809f"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-lifetime-20261023/candidates.json",
+      "to": "campaigns/xswap-p123-lifetime-20261023/candidates/p123-lifetime-rcu.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "p123-lifetime-rcu",
+      "sha256": "d37b393a767bc018de84dd9cd89435222bdf3e217925bbd9a3df42a7911f939f",
+      "output_sha256": "119c2da0b57826a0b6b672042b0d745bb09866efcca27184d72c7bc57df3cee6"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-lifetime-20261023/p123-lifetime-rcu/task.json",
+      "to": "campaigns/xswap-p123-lifetime-20261023/candidates/p123-lifetime-rcu/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "da41697d7e0c761f6efa120ad973068c5315fa9baf9297f1183cefb60eccadf9",
+      "output_sha256": "7591654149997300e328c152a8e3c5c551f84ab2160cadaf7bef1a03e81cd5df"
+    },
+    {
+      "from": "evolve/control/state/xswap-p123-lifetime-20261023/events.jsonl",
+      "to": "campaigns/xswap-p123-lifetime-20261023/ledger/events.jsonl",
+      "how": "copy-rewritten",
+      "note": "Controller events imported; host paths normalized.",
+      "sha256": "345f60c3dc814508d56290aa79ced0af054bc048f15517a17ee5815905d3f8c5",
+      "output_sha256": "9e24272cd8e8e341fe5865fca256e13043a31e6a18741f3e8a90fca3b146dcd4"
+    },
+    {
+      "from": "evolve/control/state/xswap-phase3-import/candidates.json",
+      "to": "campaigns/xswap-phase3-import/candidates/xswap-phase3-import.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xswap-phase3-import",
+      "sha256": "fb73424714230f7981f837177ad41fe1af825dd490cbd276f2e7091b514fa05b",
+      "output_sha256": "abbce6dd441fc8691b339a917f6f791fd388e488db5498e8d96dd828e7b83a3b"
+    },
+    {
+      "from": "evolve/control/state/xswap-phase3-import/xswap-phase3-import/candidate.patch",
+      "to": "evolve/control/state/xswap-phase3-import/xswap-phase3-import/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-phase3-import/patches/xswap-phase3-import.patch; exported patch is moved separately.",
+      "sha256": "732d94a23e17ac213c9228b70bf69210f6690b36963ff15f3e9a5a7c09d4a530"
+    },
+    {
+      "from": "evolve/control/state/xswap-phase3-import/xswap-phase3-import/checkpatch.log",
+      "to": "campaigns/xswap-phase3-import/candidates/xswap-phase3-import/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "d14690c241135d6310ffc3c5d5ad5869806188e2ffe7d6d97db6b77116835021",
+      "output_sha256": "d14690c241135d6310ffc3c5d5ad5869806188e2ffe7d6d97db6b77116835021"
+    },
+    {
+      "from": "evolve/control/state/xswap-phase3-import/xswap-phase3-import/diff-check.log",
+      "to": "campaigns/xswap-phase3-import/candidates/xswap-phase3-import/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-phase3-import/xswap-phase3-import/static.json",
+      "to": "campaigns/xswap-phase3-import/candidates/xswap-phase3-import/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "61de893258b4b9a0139a0aed993783f249491a78f0d6d2fa5bc3f65cd4cc61cf",
+      "output_sha256": "b3949529f25f92fcf47a6197174adcc2db18dbce174931807aeeaeaae99410b0"
+    },
+    {
+      "from": "evolve/control/state/xswap-phase3-import/xswap-phase3-import/task.json",
+      "to": "campaigns/xswap-phase3-import/candidates/xswap-phase3-import/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "75287e7f4a6da4e87fe5e19ff5718cf353521b794b0eaf58762137b986d0087f",
+      "output_sha256": "7191ff6dc08112bd25f5310249189f74aa7ec2a362600282b33c5b92f95521ca"
+    },
+    {
+      "from": "evolve/control/state/xswap-phase3-import/events.jsonl",
+      "to": "campaigns/xswap-phase3-import/ledger/events.jsonl",
+      "how": "copy-rewritten",
+      "note": "Controller events imported; host paths normalized.",
+      "sha256": "20ba40f54ce138b234b258158c2bfabc55bc099feb80017921ccb17a469de5ae",
+      "output_sha256": "0a6848e63565e210253ccc0d5e7400605de9d844104ba58035e633a69fc6683b"
+    },
+    {
+      "from": "evolve/control/state/xswap-reference-replay/candidates.json",
+      "to": "campaigns/xswap-reference-replay/candidates/xswap-reference-replay.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xswap-reference-replay",
+      "sha256": "15dc4ae3bd408145ecc38b391bd15397c869be6f3812b7fd2f1e63ca03ddda78",
+      "output_sha256": "beaa74eb788ff4b64be8fb78bde14090ec029dd256fb2fa706aa904c5e2d1480"
+    },
+    {
+      "from": "evolve/control/state/xswap-reference-replay/xswap-reference-replay/candidate.patch",
+      "to": "evolve/control/state/xswap-reference-replay/xswap-reference-replay/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-reference-replay/patches/xswap-reference-replay.patch; exported patch is moved separately.",
+      "sha256": "f5eb61b585781999fdba05d1813dcc8b7ed1b60b2907b6f01c0c7684e89a5a18"
+    },
+    {
+      "from": "evolve/control/state/xswap-reference-replay/xswap-reference-replay/checkpatch.log",
+      "to": "campaigns/xswap-reference-replay/candidates/xswap-reference-replay/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9c8a723fc8c47ab8a4b0c421234014acd05654886bf6b9429e7144a18aea9f3e",
+      "output_sha256": "9c8a723fc8c47ab8a4b0c421234014acd05654886bf6b9429e7144a18aea9f3e"
+    },
+    {
+      "from": "evolve/control/state/xswap-reference-replay/xswap-reference-replay/diff-check.log",
+      "to": "campaigns/xswap-reference-replay/candidates/xswap-reference-replay/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-reference-replay/xswap-reference-replay/static.json",
+      "to": "campaigns/xswap-reference-replay/candidates/xswap-reference-replay/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "4964f55b33550c0b447456691b604a4279319e73b761593c295dee8886e53b40",
+      "output_sha256": "309c583f985f698fe636bf490838485c420e6eb591b26dfbd88f5ed07f14fb75"
+    },
+    {
+      "from": "evolve/control/state/xswap-reference-replay/xswap-reference-replay/task.json",
+      "to": "campaigns/xswap-reference-replay/candidates/xswap-reference-replay/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "3ff2825d04c8b76db312d21673b12d23ffb52bf3ecc95ea1068a621f1ff27008",
+      "output_sha256": "9f2f991695a032c5799b53ff65f766de0f7cf65fe00f9525fbffbb57616f3097"
+    },
+    {
+      "from": "evolve/control/state/xswap-reference-replay/events.jsonl",
+      "to": "campaigns/xswap-reference-replay/ledger/events.jsonl",
+      "how": "copy-rewritten",
+      "note": "Controller events imported; host paths normalized.",
+      "sha256": "e12f80df753b9e47d6a854e9b85b8c177bb2d5326fc66c30e2be82a6b16f8287",
+      "output_sha256": "09ba3ca7359e97ca8b3af4dc94c68cc51b907de8488aa173ff9c3e8cfb7d2704"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/candidates.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lockassert-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-lockassert-v1",
+      "sha256": "096787d9663cb7d6f41bb01b13367b63da592e732c333d081efade1d41a59bc5",
+      "output_sha256": "096d1ecf05857884f7c79f028fae9733e01c9334cf1914bfb5e19567dd042f34"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lockassert-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/xs-lockassert-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-structure-2026-10-22/patches/xs-lockassert-v1.patch; exported patch is moved separately.",
+      "sha256": "5497c3f85bd13a1a8efce347632708addb29be72151063f9a0032a510133ceb4"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lockassert-v1/checkpatch.log",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lockassert-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "78c4f9b0f79012511402557ef189e9006e6a83f4b4136f4d70f139249dffd02e",
+      "output_sha256": "78c4f9b0f79012511402557ef189e9006e6a83f4b4136f4d70f139249dffd02e"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lockassert-v1/diff-check.log",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lockassert-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lockassert-v1/static.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lockassert-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "969e8bfb4e60bcddc79cf08d5f53584093ebefef974ad94d18473f836a6ef108",
+      "output_sha256": "ff27654d2de07e331ce1016e5ce2a6c519649618083b42ee07681fcdfcb09e2d"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lockassert-v1/task.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lockassert-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "421fb79036ca6dc9cbfd6cab005574c6017445ab59fea368cd0ca8fd0825323c",
+      "output_sha256": "fe6079dfc74b763497e55d3328d148d9156ae514e3de459d80234e24679daf22"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/candidates.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lowfree-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-lowfree-v1",
+      "sha256": "096787d9663cb7d6f41bb01b13367b63da592e732c333d081efade1d41a59bc5",
+      "output_sha256": "3412fe658f277384cf1261805c128541954021fbfe5a4c3cd9cbd43963eac571"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lowfree-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/xs-lowfree-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-structure-2026-10-22/patches/xs-lowfree-v1.patch; exported patch is moved separately.",
+      "sha256": "03ee25da3f5d27ba2bea9f2c21eaa438de4f493ccfc4e28b440ee31f60a80a15"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lowfree-v1/checkpatch.log",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lowfree-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "ca5e12f6f3da9da04b6aab17e73673d9c622605c3ece48db0e99f23477d5b7d7",
+      "output_sha256": "ca5e12f6f3da9da04b6aab17e73673d9c622605c3ece48db0e99f23477d5b7d7"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lowfree-v1/diff-check.log",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lowfree-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lowfree-v1/static.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lowfree-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "c531b9831ab0aa6b7e65bcc1eb77f51281e77d96b4e86a6819b1edf6b75022d1",
+      "output_sha256": "1654de98953048defc6f5a6000de8d5cd54e0191c16fb46d75ba06689b2aab4d"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-lowfree-v1/task.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-lowfree-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "a206d03d2289138f81cbca9a457739a89d80ac7a1cda9079bc6c19a5ece25ff2",
+      "output_sha256": "4fb21ef3bb5cf6844c1df7145f533cd1525e6084d204a2304c18256e9f04ae8f"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/candidates.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-tailcache-v1",
+      "sha256": "096787d9663cb7d6f41bb01b13367b63da592e732c333d081efade1d41a59bc5",
+      "output_sha256": "16bc6b6f41c153ee79bc5e8caa808b2b15175cc1012a39d1df59e2382d9e9510"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-structure-2026-10-22/patches/xs-tailcache-v1.patch; exported patch is moved separately.",
+      "sha256": "a2ac66549b9eb2e5940024eb069d0e4171ed77052965730a4b8d3b34eef56c5d"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v1/checkpatch.log",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "526ea9eaec22e2b35a476e4aa01a0fbdb06721f8dd8518806d20e154d8cb3351",
+      "output_sha256": "526ea9eaec22e2b35a476e4aa01a0fbdb06721f8dd8518806d20e154d8cb3351"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v1/diff-check.log",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v1/static.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "48327273573ab433d955b7789b2f51a07d0993879ded0234a2861db5fc21b0ec",
+      "output_sha256": "b96808a2c2637065c307be2287bc10b3d80500c6dbaa0ea22ae28177bdb1fbaa"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v1/task.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "6870e560bf1130ed087fb0bdcac5221a23b3bff71520f24a8f4eec205f48a17f",
+      "output_sha256": "f9127480450ee70e28d6fc7bc135a98da1b756af9c90c3bbb621962a924fd657"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/candidates.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v2.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-tailcache-v2",
+      "sha256": "096787d9663cb7d6f41bb01b13367b63da592e732c333d081efade1d41a59bc5",
+      "output_sha256": "84ba532e7ec555e4e3577eb4ceba90e6a3c98fe6553f3373c3f68fd8be436546"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v2/candidate.patch",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v2/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-structure-2026-10-22/patches/xs-tailcache-v2.patch; exported patch is moved separately.",
+      "sha256": "9ac67fa848543e66e4d6a463b0a477dc3562bbb683a6993f674d2590f8818d73"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v2/checkpatch.log",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v2/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "c13d0d72daeaad35d7bf1dcb64edeee3d37e8d80cacd0bf5e79b372639a3ef77",
+      "output_sha256": "c13d0d72daeaad35d7bf1dcb64edeee3d37e8d80cacd0bf5e79b372639a3ef77"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v2/diff-check.log",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v2/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v2/static.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v2/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "b9ce14a553801a442dac83aa84574a9662fece6f38431edc750a24955aed7541",
+      "output_sha256": "f83001d7099e4bf4104e9bac3bfb2f9d82550dd45b0900a81cdea627011b56fc"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/xs-tailcache-v2/task.json",
+      "to": "campaigns/xswap-structure-2026-10-22/candidates/xs-tailcache-v2/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "71f3823b0b1a661c0ffc54b1f8d12fa663323e719c863fc1993c5a64691a0f7f",
+      "output_sha256": "90d31b5ad83fd1e772b2abebe6065e9335cb05ea69521737ec6c2902d3ff7f13"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/events.jsonl",
+      "to": "campaigns/xswap-structure-2026-10-22/ledger/events.jsonl",
+      "how": "copy-rewritten",
+      "note": "Controller events imported; host paths normalized.",
+      "sha256": "b5e282be54e6bcb268f9d4d9cbb494d6577ed6485360b658ab3941b8e8aa22d8",
+      "output_sha256": "07bb3d9646884e0854d3207f9cd05e09d3e23805306af25598e7c95de894d432"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/calibration-launch.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/calibration-launch.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "4a2163905fe76960cdc1c6bcb39c925e011e39c9bb83cf75be513a6dc556d8e9"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/calibration.stderr.log",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/calibration.stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/lockassert-build.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/lockassert-build.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "4a6f38bdddfdfa4c7586b4d7bfaa833dd1b4d4e1883e5ddea663e774ef573fd0"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/lockassert-build.stderr.log",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/lockassert-build.stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/lockassert-disk.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/lockassert-disk.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "d60db6711be198fe97f3d44db3884abe82086c0d6aec608921e6010e08cb5744"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/lowfree-launch.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/lowfree-launch.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "705ed37322304984618b79aa66e342e7b2bb9a081368d23033a71ed9b2c64d21"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/lowfree.stderr.log",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/lowfree.stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/observe-lockdep-build.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/observe-lockdep-build.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "ede44d2939ab75f415a286a6676f0efb974d58ba2343dbf2d190b705ecc6b9b4"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/observe-lockdep-build.stderr.log",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/observe-lockdep-build.stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/observe-lockdep-disk.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/observe-lockdep-disk.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "59fd52d225a73558673e4ebc8b1e032ba7524c64257d1e340a9d35a0c0c3606d"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/smoke-disk.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/smoke-disk.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "ad3b425ec50003d451ccf7c97986eb55a3e1755c0d2adb0819cba5645c9a5471"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/smoke-disk.stderr.log",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/smoke-disk.stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/smoke-zswap.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/smoke-zswap.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "a00b007a39458b11c916b2a5f63a1b1930c4917db640bbd9206dcd8cc87e3f0c"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/smoke-zswap.stderr.log",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/smoke-zswap.stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/tailcache-lockdep-build.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/tailcache-lockdep-build.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "dd283bfa4c10e3cd7a4b6a5a9c8c8f32ce5a4ea53d32a2b9606a2aa30d2569d8"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/tailcache-lockdep-build.stderr.log",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/tailcache-lockdep-build.stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/tailcache-lockdep-disk.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/tailcache-lockdep-disk.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "78bb791874329674d25fe10923db37f75364ab15b8c67f25b8a8ed63046238a1"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-launch.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-launch.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "45827d920ef735ca389ea1d28519c5cb9596409986d79ae26ba61faa8080d87f"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-lockdep-build.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-lockdep-build.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "40e7e56391a5c2986a7644f11ddb9c4d3123743de7d046654a749f7e49cefd3b"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-lockdep-build.stderr.log",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-lockdep-build.stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-lockdep-disk.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-lockdep-disk.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "f1f48f0da839ebf9253db9391bba1a0be1b39dae9e1d2130026e6cf8d8c225b4"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-lockdep-zswap.json",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2-lockdep-zswap.json",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "bbc9bd43a4bd632f233d65e05b0fed07e5e137fdd66f60734dfdc65b69dd6a71"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2.stderr.log",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/tailcache-v2.stderr.log",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "from": "evolve/control/state/xswap-structure-2026-10-22/validation-configs",
+      "to": "evolve/control/state/xswap-structure-2026-10-22/validation-configs",
+      "how": "left-in-place",
+      "note": "Historical raw controller evidence remains at its original location."
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/candidates.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-phys-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-ra-phys-v1",
+      "sha256": "c7324022f3be888d9f5fa6c27e0cbfbb4e1926ceb926f67c1f476e789b8f9c37",
+      "output_sha256": "e2b2b67c62a26eae73c6306ec7952c1191d2caf2ac9f4eec7dc312683684e49c"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-swapin-2026-10-23/patches/xs-ra-phys-v1.patch; exported patch is moved separately.",
+      "sha256": "e6c00ca69b0eab3af19e669050b482ea692ce8e0b065fe88ea7171e0c5555005"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/checkpatch.log",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-phys-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "f25e5f15775c9ef8820c1021684db89c6b3c031fc9e307a461503a2da59021c1",
+      "output_sha256": "f25e5f15775c9ef8820c1021684db89c6b3c031fc9e307a461503a2da59021c1"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/diff-check.log",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-phys-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/static.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-phys-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9c5c982d344704ba7f0db26c3563eef979750792443741957a579b33b0d6fc67",
+      "output_sha256": "c27eb3a4926ebcab0d9b22c5156b4d34071359e6a6a5bc9a7a4df83296fb4834"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-phys-v1/task.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-phys-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "ed1769b7e1c0b1d86b811194a2c52ad47acf24bacd141986bf77b6b69953aaaf",
+      "output_sha256": "f8444816fa7032ea2e4147df7c0cf022ca99ee832f20a2ac99bcb6f6905f99ad"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/candidates.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-zswap-v1.json",
+      "how": "copy-rewritten",
+      "note": "Candidate registry split into per-candidate records; paths normalized.",
+      "candidate_id": "xs-ra-zswap-v1",
+      "sha256": "c7324022f3be888d9f5fa6c27e0cbfbb4e1926ceb926f67c1f476e789b8f9c37",
+      "output_sha256": "727a7f36efc309a4f4ba9feae3207f79f7d21d0bd6ae40693cde75905f9c7a17"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-zswap-v1/candidate.patch",
+      "to": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-zswap-v1/candidate.patch",
+      "how": "left-in-place",
+      "note": "Verified byte-identical to campaigns/xswap-swapin-2026-10-23/patches/xs-ra-zswap-v1.patch; exported patch is moved separately.",
+      "sha256": "7757e205bc368560b5c33ff17577745c0f38859e5cfec83a10907d8168a5bf09"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-zswap-v1/checkpatch.log",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-zswap-v1/checkpatch.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "382171867dd4c811e9f939b7c8338e40c4cca8e5235f610b1624d8e7cf460778",
+      "output_sha256": "382171867dd4c811e9f939b7c8338e40c4cca8e5235f610b1624d8e7cf460778"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-zswap-v1/diff-check.log",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-zswap-v1/diff-check.log",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a",
+      "output_sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-zswap-v1/static.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-zswap-v1/static.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "8d721a05f420e82a2a33170f1aa73882f0909986b31adf0dde027ccdaf6b53f2",
+      "output_sha256": "a7de75d228c47bfc17fe4773e4877330d72089b5fea7656ff22620c275e0420a"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/xs-ra-zswap-v1/task.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/candidates/xs-ra-zswap-v1/task.json",
+      "how": "copy-rewritten",
+      "note": "Candidate artifact imported; host paths normalized.",
+      "sha256": "2e52e2a2c9bbcbaba5602593f3ceb2427020afc290094ce06ec1a8842ca5a7a0",
+      "output_sha256": "53913bbb7bf54ca338157f3ca04bd93eef6aa264639d2f3c8b4cc26200edb7c5"
+    },
+    {
+      "from": "evolve/control/state/xswap-swapin-2026-10-23/events.jsonl",
+      "to": "campaigns/xswap-swapin-2026-10-23/ledger/events.jsonl",
+      "how": "copy-rewritten",
+      "note": "Controller events imported; host paths normalized.",
+      "sha256": "8d829e3fe0e4bc5e79511f6bea1c0592875c2cc762a1c64aa9fb349d6edf583c",
+      "output_sha256": "04284dae87d7622a009cb71b92aadf52802f9e2a3f42bac49d0fbb5f435e96e3"
+    },
+    {
+      "from": "benchmark/xswap/protocol.json",
+      "to": "benchmark/xswap/protocol.json",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path.",
+      "sha256": "aa3a260f9459a5646b651fdf236e82481e25788b7416a199f04ef3d5cba88fd8"
+    },
+    {
+      "from": "benchmark/xswap-p123/protocol.json",
+      "to": "benchmark/xswap-p123/protocol.json",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path.",
+      "sha256": "642d455d57807e4ad6b0bd7a099f6a87f9a7ea9043cbb89bd7fc675a664818c9"
+    },
+    {
+      "from": "benchmark/xswap-structure/protocol.json",
+      "to": "benchmark/xswap-structure/protocol.json",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path.",
+      "sha256": "52a5b5f3e98c4e3f7d1e9ed01cb820d0be54c698b84173d06536e37d5c710f40"
+    },
+    {
+      "from": "benchmark/xswap-hole-probe/protocol.json",
+      "to": "benchmark/xswap-hole-probe/protocol.json",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path.",
+      "sha256": "00b66225e102fb03915b73db4b54fe935bc3f1db21cd85bb3f83323753de6bed"
+    },
+    {
+      "from": "benchmark/kernel/protocol.json",
+      "to": "benchmark/kernel/protocol.json",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path.",
+      "sha256": "c04d96b879b0720ec1bfa4f8d5fb466c2e7f69f3f78f39627b6e808f12c0b6ef"
+    },
+    {
+      "from": "evolve/xswap/state-layout-v1",
+      "to": "evolve/xswap/state-layout-v1",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path."
+    },
+    {
+      "from": "evolve/kernel/state-layout-v1",
+      "to": "evolve/kernel/state-layout-v1",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path."
+    },
+    {
+      "from": "evolve/xswap-structure/state-layout-v1",
+      "to": "evolve/xswap-structure/state-layout-v1",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path."
+    },
+    {
+      "from": "benchmark/xswap-structure/state-layout-v1",
+      "to": "benchmark/xswap-structure/state-layout-v1",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path."
+    },
+    {
+      "from": "benchmark/xswap-structure/state-runtime-layout-v1",
+      "to": "benchmark/xswap-structure/state-runtime-layout-v1",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path."
+    },
+    {
+      "from": "benchmark/swap-standard/runs",
+      "to": "benchmark/swap-standard/runs",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path."
+    },
+    {
+      "from": "benchmark/swap-standard/evaluations",
+      "to": "benchmark/swap-standard/evaluations",
+      "how": "left-in-place",
+      "note": "Shared older-suite protocol or raw runtime evidence retains its original path."
+    }
+  ],
+  "campaigns": {
+    "confirm-h1-ra-phys-2026-10-23": {
+      "campaign": "confirm-h1-ra-phys-2026-10-23",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": {
+        "campaign": "xswap-p123-2026-10-23",
+        "candidate": "xs-desc-lifetime-v1",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "evidence": {
+          "kind": "correctness_fix",
+          "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+        }
+      },
+      "machine": "hurricpc",
+      "opened": "2026-10-24",
+      "closed": "2026-10-24",
+      "budget": {
+        "guest_attempts": 0,
+        "wall_seconds": 0,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      }
+    },
+    "swap-standard-2026-10-22": {
+      "campaign": "swap-standard-2026-10-22",
+      "status": "closed",
+      "line": "plain",
+      "baseline_from": null,
+      "machine": "hurricpc",
+      "opened": "2026-10-22",
+      "closed": "2026-10-22",
+      "budget": {
+        "guest_attempts": 240,
+        "wall_seconds": 28800,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      }
+    },
+    "xswap-2026-10-21": {
+      "campaign": "xswap-2026-10-21",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": null,
+      "machine": "hurricpc",
+      "opened": "2026-10-21",
+      "closed": "2026-10-21",
+      "budget": {
+        "guest_attempts": 0,
+        "wall_seconds": 0,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      },
+      "protocol_ref": "benchmark/xswap/protocol.json",
+      "protocol_sha256": "aa3a260f9459a5646b651fdf236e82481e25788b7416a199f04ef3d5cba88fd8"
+    },
+    "xswap-next-2026-10-24": {
+      "campaign": "xswap-next-2026-10-24",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": {
+        "campaign": "xswap-p123-2026-10-23",
+        "candidate": "xs-desc-lifetime-v1",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "evidence": {
+          "kind": "correctness_fix",
+          "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+        }
+      },
+      "machine": "hurricpc",
+      "opened": "2026-10-24",
+      "closed": "2026-10-24",
+      "budget": {
+        "guest_attempts": 48,
+        "wall_seconds": 21600,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      }
+    },
+    "xswap-observe-2026-10-22": {
+      "campaign": "xswap-observe-2026-10-22",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": null,
+      "machine": "hurricpc",
+      "opened": "2026-10-22",
+      "closed": "2026-10-22",
+      "budget": {
+        "guest_attempts": 0,
+        "wall_seconds": 0,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      }
+    },
+    "xswap-p123-2026-10-23": {
+      "campaign": "xswap-p123-2026-10-23",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": null,
+      "machine": "hurricpc",
+      "opened": "2026-10-23",
+      "closed": "2026-10-26",
+      "budget": {
+        "guest_attempts": 0,
+        "wall_seconds": 0,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      },
+      "protocol_ref": "benchmark/xswap-p123/protocol.json",
+      "protocol_sha256": "642d455d57807e4ad6b0bd7a099f6a87f9a7ea9043cbb89bd7fc675a664818c9"
+    },
+    "xswap-p123-lifetime-20261023": {
+      "campaign": "xswap-p123-lifetime-20261023",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": null,
+      "machine": "hurricpc",
+      "opened": "2026-10-23",
+      "closed": "2026-10-26",
+      "budget": {
+        "guest_attempts": 0,
+        "wall_seconds": 0,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      }
+    },
+    "xswap-phase3-import": {
+      "campaign": "xswap-phase3-import",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": null,
+      "machine": "hurricpc",
+      "opened": "2026-10-23",
+      "closed": "2026-10-23",
+      "budget": {
+        "guest_attempts": 0,
+        "wall_seconds": 0,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      }
+    },
+    "xswap-reference-replay": {
+      "campaign": "xswap-reference-replay",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": null,
+      "machine": "hurricpc",
+      "opened": "2026-10-21",
+      "closed": "2026-10-21",
+      "budget": {
+        "guest_attempts": 0,
+        "wall_seconds": 0,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      }
+    },
+    "xswap-structure-2026-10-22": {
+      "campaign": "xswap-structure-2026-10-22",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": null,
+      "machine": "hurricpc",
+      "opened": "2026-10-22",
+      "closed": "2026-10-26",
+      "budget": {
+        "guest_attempts": 0,
+        "wall_seconds": 0,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      },
+      "protocol_ref": "benchmark/xswap-structure/protocol.json",
+      "protocol_sha256": "52a5b5f3e98c4e3f7d1e9ed01cb820d0be54c698b84173d06536e37d5c710f40"
+    },
+    "xswap-swapin-2026-10-23": {
+      "campaign": "xswap-swapin-2026-10-23",
+      "status": "closed",
+      "line": "xswap",
+      "baseline_from": {
+        "campaign": "xswap-p123-2026-10-23",
+        "candidate": "xs-desc-lifetime-v1",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "evidence": {
+          "kind": "correctness_fix",
+          "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+        }
+      },
+      "machine": "hurricpc",
+      "opened": "2026-10-23",
+      "closed": "2026-10-23",
+      "budget": {
+        "guest_attempts": 160,
+        "wall_seconds": 36000,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      }
+    },
+    "xswap-tcg-rev3-2026-10-25": {
+      "campaign": "xswap-tcg-rev3-2026-10-25",
+      "status": "open",
+      "line": "xswap",
+      "baseline_from": {
+        "campaign": "xswap-p123-2026-10-23",
+        "candidate": "xs-desc-lifetime-v1",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "evidence": {
+          "kind": "correctness_fix",
+          "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+        }
+      },
+      "machine": "grok-cloud",
+      "opened": "2026-10-25",
+      "closed": null,
+      "budget": {
+        "guest_attempts": 120,
+        "wall_seconds": 64800,
+        "probe_guest_attempts": 0,
+        "approved_over_cap": null
+      }
+    }
+  },
+  "legacy_absolute_paths": [
+    {
+      "from": "results/xswap-swapin-2026-10-23/h2-sparse.json",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/h2-sparse.json",
+      "note": "Existing host paths retained to preserve historical bytes; normalize only in a separate evidence-aware commit."
+    },
+    {
+      "from": "results/xswap-swapin-2026-10-23/lifetime-review.md",
+      "to": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md",
+      "note": "Existing host paths retained to preserve historical bytes; normalize only in a separate evidence-aware commit."
+    }
+  ]
+}

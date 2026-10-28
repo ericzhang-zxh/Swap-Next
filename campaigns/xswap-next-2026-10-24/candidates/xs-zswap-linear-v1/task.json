@@ -1,0 +1,41 @@
+{
+  "id": "xs-zswap-linear-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "worktree": "worktrees/xswap-next-2026-10-24/xs-zswap-linear-v1",
+  "status": "active",
+  "hypothesis": "Copy only split compressed zsmalloc objects into the existing mutex-owned buffer for synchronous transforms, exposing contiguous input to one-shot zstd decode instead of streaming. Expect lower zswap mean/tails, neutral disk; falsified by correctness failure, calibrated guard regression, or improvement inside noise.",
+  "created_unix": 1792832392.5801473,
+  "protocol_sha256": "d2f3d5b976cbdf8976584df4988c7adeca6606454509d1bb57159797ae8c3ca0",
+  "allowed_modify": [
+    "mm/memory.c",
+    "mm/swap_state.c",
+    "mm/swap.h",
+    "mm/swapfile.c",
+    "mm/page_io.c",
+    "mm/zswap.c"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "budget": {
+    "max_candidates": 3,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 8,
+    "guest_memory_mib": 8192,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 900,
+    "max_total_campaign_seconds": 21600,
+    "max_build_attempts": 10
+  },
+  "primary_metric": "swapin_seq.mean_ns",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

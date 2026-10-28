@@ -1,0 +1,14 @@
+mm: xswap: test a four-chunk minimum tail shrink
+
+The initial disk and zswap smoke observations retained 429 and 471 free
+clusters at the mapped tail without a shrink. The eight-chunk minimum
+and one-chunk slack require a larger free run in this configuration.
+
+Lower the minimum to four chunks as a bounded metadata-retention
+experiment. Keep the occupancy trigger, shrink target and slack intact.
+The exact tail scan, locked revalidation, PCP invalidation, RCU wait,
+backend release and allocation-failure fallback remain unchanged.
+
+More frequent shrinking can increase unmap and grace-period costs and
+can cause regrowth under oscillating demand. No performance improvement
+or general correctness acceptance is claimed by this experiment.

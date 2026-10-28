@@ -1,0 +1,46 @@
+{
+  "id": "xswap-source",
+  "parent": "9a0542b19a541eda3f82934ee747c61ec3f18847",
+  "worktree": "worktrees/xswap-2026-10-21/xswap-source",
+  "status": "active",
+  "hypothesis": "Import the public Phase I v4 and Phase II v1 series on their published upstream base as an experimental reference; no optimization or performance claim. Preserve original authors and trailers.",
+  "created_unix": 1792573132.06698,
+  "protocol_sha256": "50643256c07ee3a226d541a5983d2946b3bd68e4935e5798182de466ca6ee33c",
+  "allowed_modify": [
+    "include/linux/swap.h",
+    "include/linux/swap_ops.h",
+    "include/linux/zswap.h",
+    "mm/Kconfig",
+    "mm/memory.c",
+    "mm/page_io.c",
+    "mm/swap.h",
+    "mm/swap_state.c",
+    "mm/swap_table.h",
+    "mm/swapfile.c",
+    "mm/vmscan.c",
+    "mm/zswap.c"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "budget": {
+    "max_candidates": 4,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 900,
+    "build_jobs": 4,
+    "guest_vcpus": 2,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 600,
+    "max_total_campaign_seconds": 14400
+  },
+  "primary_metric": "throughput_ops_s",
+  "required_reading": [
+    "AGENTS.md",
+    "system/CODE_PATTERNS.md",
+    "system/PRINCIPLES.md",
+    "system/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

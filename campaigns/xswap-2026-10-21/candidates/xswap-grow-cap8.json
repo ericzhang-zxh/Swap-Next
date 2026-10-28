@@ -1,0 +1,10 @@
+{
+  "id": "xswap-grow-cap8",
+  "parent": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "worktree": "worktrees/xswap-2026-10-21/xswap-grow-cap8",
+  "status": "closed",
+  "hypothesis": "Round one shrink tuning left high mapped ranges with short free tails; stop lowering the minimum. Test growth cap four to eight chunks to reduce 12-16 observed growth operations, while measuring extra metadata retention and latency/runtime costs.",
+  "created_unix": 1792574372.6272593,
+  "protocol_sha256": "cf440dbc2c1fcb57dd7623f9a908a0fafb4da43aaf6086d6d3eb76c7e08c9cb9",
+  "reason": "Eight pilot boots passed. Zswap growth count fell to 13 from 15-16, but retention and latency do not justify promotion under the noisy baseline."
+}

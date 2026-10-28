@@ -1,0 +1,30 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "9a0542b19a541eda3f82934ee747c61ec3f18847",
+  "candidate_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "changed_paths": [
+    "include/linux/swap.h",
+    "include/linux/swap_ops.h",
+    "include/linux/zswap.h",
+    "mm/Kconfig",
+    "mm/memory.c",
+    "mm/page_io.c",
+    "mm/swap.h",
+    "mm/swap_state.c",
+    "mm/swap_table.h",
+    "mm/swapfile.c",
+    "mm/vmscan.c",
+    "mm/zswap.c"
+  ],
+  "changed_lines": 2525,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "system/state/xswap-2026-10-21/xswap-source/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "system/state/xswap-2026-10-21/xswap-source/checkpatch.log",
+    "sha256": "9c8a723fc8c47ab8a4b0c421234014acd05654886bf6b9429e7144a18aea9f3e"
+  }
+}

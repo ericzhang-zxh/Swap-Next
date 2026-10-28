@@ -1,0 +1,33 @@
+{
+  "id": "xswap-shrink-min4",
+  "parent": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "worktree": "worktrees/xswap-2026-10-21/xswap-shrink-min4",
+  "status": "active",
+  "hypothesis": "Reduce the automatic tail-shrink minimum from eight to four growth chunks: baseline smoke retained 429/471 free tail clusters without shrinking. Test lower mapped-cluster retention against extra RCU/unmap cost; preserve one-chunk slack and all lifetime handling.",
+  "created_unix": 1792573882.7043507,
+  "protocol_sha256": "cf440dbc2c1fcb57dd7623f9a908a0fafb4da43aaf6086d6d3eb76c7e08c9cb9",
+  "allowed_modify": [
+    "mm/swapfile.c"
+  ],
+  "allowed_add": [],
+  "budget": {
+    "max_candidates": 4,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 900,
+    "build_jobs": 4,
+    "guest_vcpus": 2,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 8,
+    "run_wall_seconds": 600,
+    "max_total_campaign_seconds": 14400
+  },
+  "primary_metric": "mapped_clusters_after_settle",
+  "required_reading": [
+    "AGENTS.md",
+    "system/CODE_PATTERNS.md",
+    "system/PRINCIPLES.md",
+    "system/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

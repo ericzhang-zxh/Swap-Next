@@ -1,0 +1,13 @@
+mm: xswap: test an eight-chunk cap on metadata growth
+
+Reference pilots executed 12 to 16 growth operations. Raising the cap
+can satisfy a large occupancy deficit with fewer mapping episodes.
+It does not force an eight-chunk allocation when less is needed.
+
+Keep the occupancy target, device maximum clamp, stale-range checks,
+allocation rollback, no-reclaim scope and publication ordering intact.
+The experiment may allocate larger bursts or retain more metadata.
+No throughput or latency improvement is assumed from fewer calls.
+
+This independent candidate follows a smaller-shrink-minimum experiment
+whose mixed retention results did not justify promotion.

@@ -1,0 +1,23 @@
+{
+  "campaign": "xswap-swapin-2026-10-23",
+  "status": "closed",
+  "line": "xswap",
+  "baseline_from": {
+    "campaign": "xswap-p123-2026-10-23",
+    "candidate": "xs-desc-lifetime-v1",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "evidence": {
+      "kind": "correctness_fix",
+      "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+    }
+  },
+  "machine": "hurricpc",
+  "opened": "2026-10-23",
+  "closed": "2026-10-23",
+  "budget": {
+    "guest_attempts": 160,
+    "wall_seconds": 36000,
+    "probe_guest_attempts": 0,
+    "approved_over_cap": null
+  }
+}

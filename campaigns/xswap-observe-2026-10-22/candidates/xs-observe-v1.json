@@ -1,0 +1,10 @@
+{
+  "id": "xs-observe-v1",
+  "parent": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "worktree": "worktrees/xswap-observe-2026-10-22/xs-observe-v1",
+  "status": "closed",
+  "hypothesis": "Measure retained xswap topology and cache-only ownership with read-only debugfs counters. Highest occupied and non-free clusters, free/nonempty counts, and cache-only versus referenced slot counts distinguish tail pinning from shrink scheduling. No allocation behavior changes.",
+  "created_unix": 1792656809.4883208,
+  "protocol_sha256": "e3c9dcd31ea619805e8d50ea7ac6ce93700a3d5f7ae2855729e0aca0b75fb0af",
+  "reason": "Observation baseline built in namespaces; fresh disk and zswap smoke guests passed all pilot gates. Frozen as structural campaign reference, not a performance candidate."
+}

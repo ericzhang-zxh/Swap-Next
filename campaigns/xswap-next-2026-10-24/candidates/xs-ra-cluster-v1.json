@@ -1,0 +1,10 @@
+{
+  "id": "xs-ra-cluster-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "worktree": "worktrees/xswap-next-2026-10-24/xs-ra-cluster-v1",
+  "status": "closed",
+  "hypothesis": "Extend adjacency-gated physical xswap readahead to the actual rotational cluster mode, recording demand-miss VMA history without altering global estimator state. Recover disk sequential benefit, retain synchronous discontinuities, leave compressed reads unchanged. Falsified by zero useful prefetch counters or any calibrated latency guard failure.",
+  "created_unix": 1792833094.6890907,
+  "protocol_sha256": "d2f3d5b976cbdf8976584df4988c7adeca6606454509d1bb57159797ae8c3ca0",
+  "reason": "REJECT_FAST: report 9ec21a04b74b4d46a7931c16112a6bdb records useful physical prefetch and disk seq mean -40.19%, but disk random p99 +29.46% and compressed random mean +7.96% fail guards. Targeted KASAN/lockdep, both release correctness backends and CONFIG_SWAP=n build pass. Retain the tradeoff; no slow confirmation or promotion. Two pairs leave causal attribution and between-run variation unresolved."
+}

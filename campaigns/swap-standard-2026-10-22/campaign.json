@@ -1,0 +1,15 @@
+{
+  "campaign": "swap-standard-2026-10-22",
+  "status": "closed",
+  "line": "plain",
+  "baseline_from": null,
+  "machine": "hurricpc",
+  "opened": "2026-10-22",
+  "closed": "2026-10-22",
+  "budget": {
+    "guest_attempts": 240,
+    "wall_seconds": 28800,
+    "probe_guest_attempts": 0,
+    "approved_over_cap": null
+  }
+}

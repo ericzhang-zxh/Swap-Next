@@ -1,0 +1,10 @@
+{
+  "id": "xswap-reference-replay",
+  "parent": "9a0542b19a541eda3f82934ee747c61ec3f18847",
+  "worktree": "worktrees/xswap-reference-replay/xswap-reference-replay",
+  "status": "closed",
+  "hypothesis": "Reproduce the imported public reference using preserved patch and commit identities; no optimization or performance acceptance.",
+  "created_unix": 1792575003.5121243,
+  "protocol_sha256": "31a0d30485e90ce998c067729ab46409815e4db061274be2fefcbced79173efd",
+  "reason": "Exact commit and tree replay verified; reference remains experimental."
+}

@@ -1,0 +1,24 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "candidate_commit": "b2beda7fe460f911b88d27890993347588d70748",
+  "changed_paths": [
+    "Documentation/admin-guide/cgroup-v1/memcg_test.rst",
+    "include/linux/memcontrol.h",
+    "include/linux/swap.h",
+    "mm/memcontrol-v1.c",
+    "mm/memcontrol.c",
+    "mm/swapfile.c"
+  ],
+  "changed_lines": 379,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "evolve/control/state/xswap-phase3-import/xswap-phase3-import/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "evolve/control/state/xswap-phase3-import/xswap-phase3-import/checkpatch.log",
+    "sha256": "d14690c241135d6310ffc3c5d5ad5869806188e2ffe7d6d97db6b77116835021"
+  }
+}
