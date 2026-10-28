@@ -258,9 +258,11 @@ class Workflow:
         return commit, record, proof
 
     def campaign_errors(self):
-        """Closed or over-cap campaigns are refused before any ledger row or budget."""
+        """Closed, over-cap or unclaimed campaigns are refused before any ledger row or budget."""
         try:
-            return campaign_store.budget_errors(campaign_store.require_open(self.p["campaign"]))
+            errors = campaign_store.budget_errors(campaign_store.require_open(self.p["campaign"]))
+            campaign_store.require_claim(self.p["campaign"])
+            return errors
         except campaign_store.CampaignError as exc:
             return [str(exc)]
 

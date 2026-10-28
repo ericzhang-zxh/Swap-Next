@@ -177,6 +177,19 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual(row["reason"], "reserved")
         self.assertEqual(flow.budget["guests"], 0)
 
+    def test_claimless_evaluate_blocks_before_build(self):
+        self.claim.unlink()
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(flow, "candidate", return_value=("commit", {}, {})), \
+             patch.object(flow, "command") as command:
+            row = flow.run("evaluate", "fast", "candidate")
+        self.assertEqual(row["status"], "BLOCKED")
+        self.assertIn("claim", row["reason"])
+        self.assertEqual((flow.budget["builds"], flow.budget["guests"]), (0, 0))
+        command.assert_not_called()
+        self.assertFalse((self.state / "ledger.json").exists())
+
     def test_guest_needs_machine_claim(self):
         flow = w.Workflow(self.p)
         for held in ("other-campaign\n", None):
