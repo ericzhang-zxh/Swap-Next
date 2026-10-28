@@ -311,6 +311,7 @@ def create(name, hypothesis, mechanism=None, parent=None, brief=None):
             receipt = population.validate_parent(brief, chosen)
             require(receipt.get("consumed_by") in (None, name), "proposal brief is already consumed")
             binding = receipt["parent_bindings"][chosen]
+            git(ROOT, "merge-base", "--is-ancestor", baseline, chosen)
             actual_tree = git(ROOT, "rev-parse", chosen + "^{tree}")
             if binding.get("source_tree"):
                 require(actual_tree == binding["source_tree"], "parent tree differs from durable brief")
@@ -457,10 +458,26 @@ def _open_campaign(args):
     if "probe" in protocol.get("tiers", {}):
         require(config["budget"]["max_candidates"] >= protocol["max_probe_candidates"],
                 "controller max_candidates must cover max_probe_candidates")
+    anchor = line_anchor(args.line, seed())
+    carried_origin, known_baselines = None, set()
+    for path in sorted(campaign_store.CAMPAIGNS.glob("*/campaign.json")):
+        old = campaign_store.load(path.parent.name)
+        if old["line"] != args.line:
+            continue
+        source = path.with_name("protocol.json")
+        if not source.exists() and old.get("protocol_ref"):
+            source = PROJECT / old["protocol_ref"]
+        old_baseline = load_json(source).get("baseline_commit") if source.is_file() else None
+        if old_baseline:
+            known_baselines.add(old_baseline)
+            if old_baseline == seed():
+                carried_origin = old.get("baseline_from")
+    require(args.baseline_from or seed() == anchor or seed() in known_baselines,
+            "a new baseline on an existing line requires --baseline-from with advancement or correctness evidence")
     record = {"campaign": CAMPAIGN, "status": "open", "line": args.line,
-              "baseline_from": baseline_from(args, protocol) if args.baseline_from else None,
+              "baseline_from": baseline_from(args, protocol) if args.baseline_from else carried_origin,
               "machine": args.machine, "opened": time.strftime("%Y-%m-%d", time.gmtime()),
-              "closed": None, "line_anchor_commit": line_anchor(args.line, seed()),
+              "closed": None, "line_anchor_commit": anchor,
               "budget": {"guest_attempts": budget["guest_attempts"],
                          "wall_seconds": budget["wall_seconds"],
                          "probe_guest_attempts": budget.get("probe_guest_attempts", 0),

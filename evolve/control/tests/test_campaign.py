@@ -307,6 +307,24 @@ class OpenCloseTests(Fixture):
         self.assertEqual((r["campaign"], r["candidate"], r["evidence"]["kind"]),
                          ("old", "cand-b", "correctness_fix"))
 
+    def test_omitting_origin_cannot_reset_a_line_to_a_new_baseline(self):
+        original = sh(self.linux, "rev-parse", "seed")
+        self.open_dir("old", status="closed", closed="2026-10-26", line_anchor_commit=original)
+        (self.campaigns / "old/protocol.json").write_text(json.dumps({"baseline_commit": original}))
+        sh(self.linux, "commit", "--allow-empty", "-qm", "different baseline identity")
+        newer = sh(self.linux, "rev-parse", "HEAD")
+        self.prep("new1")
+        config = json.loads((self.campaigns / "new1/policy.json").read_text())
+        config["seed_ref"] = newer
+        (self.campaigns / "new1/policy.json").write_text(json.dumps(config))
+        protocol = json.loads((self.campaigns / "new1/protocol.json").read_text())
+        protocol["baseline_commit"] = newer
+        (self.campaigns / "new1/protocol.json").write_text(json.dumps(protocol))
+        rc, out = self.open("new1")
+        self.assertEqual(rc, 2, out)
+        self.assertIn("requires --baseline-from", out["error"])
+        self.assertFalse((self.campaigns / "new1/campaign.json").exists())
+
     def test_bare_fast_pass_cannot_advance_baseline(self):
         self.open_dir("old", status="closed", closed="2026-10-26")
         (self.campaigns / "old/ledger").mkdir()
