@@ -247,11 +247,13 @@ def create(name, hypothesis):
                   "created_unix": time.time(), "protocol_sha256": protocol_hash()}
         records[name] = record
         save(records, record)
+        names = ("CODE_PATTERNS.md", "PRINCIPLES.md", "METRICS.md")
+        reading = (["AGENTS.md"] + ["evolve/control/" + n for n in names] if CAMPAIGN else
+                   [str(PROJECT / "AGENTS.md")] + [str(CONTROL / n) for n in names])
         task = dict(record, allowed_modify=config["allowed_modify"],
                     allowed_add=config["allowed_add"], budget=config["budget"],
                     primary_metric=config.get("primary_metric", "throughput_ops_s"),
-                    required_reading=[str(PROJECT / "AGENTS.md"), str(CONTROL / "CODE_PATTERNS.md"),
-                                      str(CONTROL / "PRINCIPLES.md"), str(CONTROL / "METRICS.md")],
+                    required_reading=reading,
                     boundaries="Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
                     execution_status="PREPARED_ONLY; no worker or kernel was launched")
         write_json(artifacts(name) / "task.json", task)
@@ -421,6 +423,8 @@ def main():
         elif args.command in ("guard", "check"):
             result = check_candidate(args.name, args.command == "check")
         elif args.command == "close":
+            if CAMPAIGN:
+                campaign_store.require_open(CAMPAIGN)
             with lock():
                 records = registry()
                 require(args.name in records, "unknown candidate")

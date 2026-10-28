@@ -124,7 +124,9 @@ class CampaignTests(Fixture):
         self.assertEqual(rc, 0, new)
         record = json.loads((self.campaigns / "demo/candidates/cand-a.json").read_text())
         self.assertEqual(record["worktree"], "worktrees/demo/cand-a")
-        self.assertTrue((self.campaigns / "demo/candidates/cand-a/task.json").is_file())
+        task = (self.campaigns / "demo/candidates/cand-a/task.json").read_text()
+        self.assertNotIn(str(self.project), task)
+        self.assertNotIn(str(c.CONTROL), task)
         self.assertTrue((self.campaigns / "demo/ledger/events.jsonl").is_file())
         self.assertTrue((self.campaigns / "demo/.lock").is_file())
         self.commit_change(self.project / "worktrees/demo/cand-a")
@@ -141,6 +143,26 @@ class CampaignTests(Fixture):
         rc, out = self.run_cli("--campaign", "demo", "check", "cand-a")
         self.assertEqual(out["status"], "BLOCKED_OR_REJECTED")
         self.assertIn("closed", out["error"])
+
+
+class CandidateCloseTests(Fixture):
+    def test_candidate_close_gated_on_open_not_stop(self):
+        self.open_dir("demo")
+        self.run_cli("--campaign", "demo", "new", "cand-a", "--hypothesis", "a long enough hypothesis")
+        cs.GLOBAL_STOP.touch()
+        rc, out = self.run_cli("--campaign", "demo", "close", "cand-a", "--reason", "r")
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(cs.candidates("demo")["cand-a"]["status"], "closed")
+
+    def test_closed_campaign_refuses_candidate_close(self):
+        self.open_dir("demo", status="closed", closed="2026-10-27")
+        (self.campaigns / "demo/candidates").mkdir()
+        cs.write_candidate("demo", {"id": "cand-a", "status": "active"})
+        rc, out = self.run_cli("--campaign", "demo", "close", "cand-a", "--reason", "r")
+        self.assertEqual((rc, out["status"]), (2, "BLOCKED_OR_REJECTED"))
+        self.assertIn("closed", out["error"])
+        self.assertEqual(cs.candidates("demo")["cand-a"]["status"], "active")
+        self.assertFalse((self.campaigns / "demo/ledger/events.jsonl").exists())
 
 
 class OpenCloseTests(Fixture):
