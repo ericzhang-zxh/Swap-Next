@@ -6,7 +6,7 @@ Date: 2026-10-23. Scope: read-only source and retained evidence review over SSH 
 
 No actionable remaining descriptor-lifetime defect is supported by the inspected paths. Confidence: medium. The source fix is suitable as the baseline for the owner-authorized bounded H1/H2 discovery experiments, subject to the controller retaining its actual gates. This is a code-review disposition, not a declaration that every policy gate passed or a merge approval. A concrete unpinned descriptor access outside the bound/RCU/lock protocol, or a failing targeted runtime trace, would change this disposition.
 
-Reviewed head: `5e84ca928deeacb4eee656806a003f27d1eca82f`; direct base: `b1eb429f257641dab45dd1633fda80c353d26250`; Phase III seed: `b2beda7fe460f911b88d27890993347588d70748`. Diff changes mm/swap.h, mm/swap_state.c and mm/swapfile.c. Source references below are relative to `worktrees/xswap-p123-2026-10-23/xs-desc-lifetime-v1/` in `/home/xuanhao/playground/Swap-Next`.
+Reviewed head: `5e84ca928deeacb4eee656806a003f27d1eca82f`; direct base: `b1eb429f257641dab45dd1633fda80c353d26250`; Phase III seed: `b2beda7fe460f911b88d27890993347588d70748`. Diff changes mm/swap.h, mm/swap_state.c and mm/swapfile.c. Source references below are relative to `worktrees/xswap-p123-2026-10-23/xs-desc-lifetime-v1/` in the repository.
 
 ## Source reasoning and ownership
 

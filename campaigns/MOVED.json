@@ -2865,5 +2865,19 @@
     "campaigns/xswap-p123-2026-10-23/report/README.md",
     "campaigns/xswap-structure-2026-10-22/report/README.md",
     "campaigns/xswap-structure-2026-10-22/report/review.md"
+  ],
+  "normalized_host_paths": [
+    {
+      "path": "campaigns/xswap-swapin-2026-10-23/report/h2-sparse.json",
+      "pre_normalization_sha256": "d51261da00684a43a452d8299609d22f2e9b0420c2d6810a82ac99e8f0aaaa79",
+      "sha256": "06ae1669465fcfeaa6745d9bf19ee35a1bbed80963c7cc38b355821c1c80a961",
+      "note": "Only host-specific artifact references were normalized; original bytes verify at pre_migration_commit."
+    },
+    {
+      "path": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md",
+      "pre_normalization_sha256": "a0be0c0229b3579c032b487fb6eb6d06a1da91c69707cc03e6aa8dd9783a17a4",
+      "sha256": "a2aac594e600e7d4a3a391bd101fa4420793732e51461a009da3817cefac38e5",
+      "note": "Only host-specific artifact references were normalized; original bytes verify at pre_migration_commit."
+    }
   ]
 }

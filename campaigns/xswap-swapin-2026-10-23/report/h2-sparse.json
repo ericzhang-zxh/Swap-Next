@@ -9,7 +9,7 @@
       "normalized": [
         "/src/mm/memory.c: error: incompatible types in conditional expression (different base types):"
       ],
-      "log_path": "/home/xuanhao/playground/Swap-Next-scratch/sparse-resume-h2/xs-desc-v1/sparse.log",
+      "log_path": "worker-artifact://sparse-resume-h2/xs-desc-v1/sparse.log",
       "log_sha256": "5bb83532ab2614e005bcc95bacf89864cb94445b86fb3300abd55c7a33a01664"
     },
     {
@@ -21,7 +21,7 @@
       "normalized": [
         "/src/mm/memory.c: error: incompatible types in conditional expression (different base types):"
       ],
-      "log_path": "/home/xuanhao/playground/Swap-Next-scratch/sparse-resume-h2/xs-ra-zswap-v1/sparse.log",
+      "log_path": "worker-artifact://sparse-resume-h2/xs-ra-zswap-v1/sparse.log",
       "log_sha256": "5bb83532ab2614e005bcc95bacf89864cb94445b86fb3300abd55c7a33a01664"
     }
   ],
