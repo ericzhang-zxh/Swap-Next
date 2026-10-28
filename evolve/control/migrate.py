@@ -4,7 +4,10 @@
 
 A complete, preflighted journal is saved before the first git move. Repeating
 apply after interruption resumes that journal; after completion it is a no-op.
-The separate links action changes only Markdown/HTML link targets.
+The separate links action changes only Markdown/HTML link targets. After another
+worker pulls the tracked move, import-state copies only its own ignored historical
+state. It records a private per-machine receipt under Git metadata. Stop local
+legacy runners first; different existing evidence must be reconciled explicitly.
 """
 import argparse
 from contextlib import contextmanager
@@ -67,7 +70,11 @@ class Migration:
         text = text.replace(str(self.project) + "/", "")
         # Runtime artifacts also mention sibling scratch checkouts. Preserve
         # their location relative to this checkout rather than a host username.
-        text = re.sub(r"/home/[A-Za-z0-9_./+@-]+", lambda m: os.path.relpath(m[0], self.project), text)
+        prefixes = [r"/home/[A-Za-z0-9_./+@-]+"]
+        if self.project.parent != Path("/"):
+            prefixes.append(re.escape(str(self.project.parent)) + r"/[A-Za-z0-9_./+@-]+")
+        for pattern in prefixes:
+            text = re.sub(pattern, lambda m: os.path.relpath(m[0], self.project), text)
         return text.encode("utf-8")
 
     def destination(self, name, seeds):
@@ -320,6 +327,162 @@ class Migration:
         self.git("add", "--", "campaigns/MOVED.json")
         print(f"migrated {len(plan['campaigns'])} campaigns; {len(plan['moves'])} source records")
 
+    def state_paths(self, machine):
+        """Private, per-machine receipt and journal; neither travels through git."""
+        store._name(machine, "machine")
+        common = Path(self.git("rev-parse", "--git-common-dir"))
+        if not common.is_absolute(): common = self.project / common
+        private = common.resolve() / "swap-next-migration"
+        return private / f"{machine}.json", private / f"{machine}.pending.json"
+
+    @staticmethod
+    def check_state_identity(value, campaign, source):
+        rows = value if isinstance(value, list) else [value]
+        for row in rows:
+            if isinstance(row, dict) and row.get("campaign", campaign) != campaign:
+                raise MigrationError(f"campaign identity mismatch in {source}")
+
+    def local_state_moves(self, machine):
+        """Plan local imports without replacing any different migrated evidence."""
+        moves = []
+        identities = {}
+        def owner(campaign):
+            if campaign not in identities:
+                with self.store_root(): record = store.load(campaign)
+                if record["machine"] != machine:
+                    raise MigrationError(f"local campaign {campaign} belongs to machine {record['machine']}, not {machine}")
+                identities[campaign] = record
+        def add(path, target, candidate_id=None, exact=False, ignored=False):
+            if path.is_symlink() or not path.resolve().is_relative_to(self.project):
+                raise MigrationError(f"local state source escapes checkout: {path.name}")
+            relative = str(path.relative_to(self.project))
+            op = {"from": relative, "to": target, "how": "copy" if exact else "copy-rewritten",
+                  "note": "Machine-local historical state imported after tracked layout migration.",
+                  "sha256": digest(path.read_bytes())}
+            if candidate_id is not None: op["candidate_id"] = candidate_id
+            if ignored: op["ignored"] = True
+            if path.suffix in (".json", ".jsonl"):
+                data = path.read_text()
+                values = [json.loads(line) for line in data.splitlines() if line.strip()] if path.suffix == ".jsonl" else [json.loads(data)]
+                for value in values:
+                    if candidate_id is not None: value = value[candidate_id]
+                    self.check_state_identity(value, Path(target).parts[1], relative)
+            op["output_sha256"] = digest(self.content(op))
+            existing = self.project / target
+            if existing.is_file() and digest(existing.read_bytes()) != op["output_sha256"]:
+                op["retained_sha256"] = digest(existing.read_bytes())
+            moves.append(op)
+        for directory in sorted((self.project / "evolve/swap-standard").glob("state-*")):
+            files = [p for p in sorted(directory.rglob("*")) if p.is_file() and p.name != ".lock" and not p.name.endswith(".tmp")]
+            if not files: continue
+            campaign = "swap-standard-2026-10-22" if directory.name == "state-layout-v1" else directory.name.removeprefix("state-")
+            owner(campaign)
+            for path in files:
+                task = "tasks/" if path.name.startswith("task-") and path.suffix == ".json" else ""
+                target = f"campaigns/{campaign}/ledger/" + task + str(path.relative_to(directory))
+                add(path, target)
+        for directory in sorted((self.project / "evolve/control/state").glob("*")):
+            if not directory.is_dir(): continue
+            registry = directory / "candidates.json"
+            events, stop = directory / "events.jsonl", directory / "STOP"
+            if not any(p.exists() for p in (registry, events, stop)): continue
+            campaign = directory.name
+            owner(campaign)
+            records = json.loads(registry.read_text()) if registry.exists() else {}
+            if not isinstance(records, dict): raise MigrationError(f"candidate registry is not an object: {campaign}")
+            for cid, record in sorted(records.items()):
+                store._name(cid, "candidate")
+                if not isinstance(record, dict) or record.get("id") != cid:
+                    raise MigrationError(f"candidate id differs from registry key: {campaign}/{cid}")
+                add(registry, f"campaigns/{campaign}/candidates/{cid}.json", candidate_id=cid)
+                for path in sorted((directory / cid).rglob("*")):
+                    if not path.is_file() or path.name == ".lock" or path.name.endswith(".tmp"): continue
+                    if path.name == "candidate.patch":
+                        exported = self.project / "patches" / campaign / f"{cid}.patch"
+                        if exported.exists() and exported.read_bytes() != path.read_bytes():
+                            raise MigrationError(f"local candidate patch conflicts with legacy export: {campaign}/{cid}")
+                        add(path, f"campaigns/{campaign}/patches/{cid}.patch", exact=True)
+                    else:
+                        add(path, f"campaigns/{campaign}/candidates/{cid}/" + str(path.relative_to(directory / cid)))
+            if events.exists(): add(events, f"campaigns/{campaign}/ledger/events.jsonl")
+            if stop.exists(): add(stop, f"campaigns/{campaign}/STOP", exact=True, ignored=True)
+        self.preflight_state(moves, machine)
+        return moves
+
+    def state_equivalent(self, op, data):
+        expected = self.content(op)
+        return (data if op["how"] == "copy" else self.clean_paths(data)) == expected
+
+    def preflight_state(self, moves, machine):
+        targets = set()
+        for op in moves:
+            target = self.project / op["to"]
+            source = self.project / op["from"]
+            if not target.resolve().is_relative_to(self.campaigns.resolve()):
+                raise MigrationError(f"state destination escapes campaigns: {op['to']}")
+            if op["to"] in targets: raise MigrationError(f"duplicate state destination: {op['to']}")
+            targets.add(op["to"])
+            with self.store_root(): record = store.load(Path(op["to"]).parts[1])
+            if record["machine"] != machine: raise MigrationError(f"state destination belongs to another machine: {op['to']}")
+            if digest(source.read_bytes()) != op["sha256"]:
+                raise MigrationError(f"local state source changed during import: {op['from']}")
+            if target.exists() and (not target.is_file() or not self.state_equivalent(op, target.read_bytes())):
+                raise MigrationError(f"local state conflicts with migrated destination: {op['to']}; reconcile evidence before importing")
+
+    def import_state_file(self, op):
+        """Write a missing artifact atomically; equivalent existing bytes stay put."""
+        source, target = self.project / op["from"], self.project / op["to"]
+        if digest(source.read_bytes()) != op["sha256"]:
+            raise MigrationError(f"local state source changed during import: {op['from']}")
+        data = self.content(op)
+        if target.exists():
+            if not self.state_equivalent(op, target.read_bytes()):
+                raise MigrationError(f"local state destination changed during import: {op['to']}")
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            tmp = target.with_name(target.name + ".migration-tmp")
+            tmp.write_bytes(data)
+            os.replace(tmp, target)
+        # Recovery may encounter bytes copied just before the prior process
+        # died at git-add. Stage equivalent files as well as newly copied ones.
+        if not op.get("ignored"): self.git("add", "-f", "--", op["to"])
+
+    def import_state(self):
+        """Import this worker's ignored state even after MOVED arrives via git."""
+        if not self.done.exists(): raise MigrationError("apply tracked layout migration before import-state")
+        manifest = json.loads(self.done.read_text())
+        with self.store_root(): machine = store.current_machine()
+        receipt_path, journal = self.state_paths(machine)
+        if journal.exists():
+            job = json.loads(journal.read_text())
+            if job.get("machine") != machine or job.get("pre_migration_commit") != manifest["pre_migration_commit"]:
+                raise MigrationError("state import journal has mismatched machine or layout identity")
+            moves = job["sources"]
+            self.preflight_state(moves, machine)
+        else:
+            moves = self.local_state_moves(machine)
+            job = {"machine": machine, "pre_migration_commit": manifest["pre_migration_commit"], "sources": moves}
+            if receipt_path.exists() and json.loads(receipt_path.read_text()) == job:
+                print("already imported local state")
+                return
+            # No receipt or journal is written until all local source identities
+            # and every destination have passed conflict checks.
+            dump(journal, job)
+        new = [op for op in moves if not (self.project / op["to"]).exists()]
+        for op in moves: self.import_state_file(op)
+        # Keep provenance for new tracked imports alongside the immutable layout
+        # mapping. The receipt/journal remain private Git metadata per machine.
+        imported = {"machine": machine, "sources": [op for op in moves if not op.get("ignored")]}
+        imports = manifest.get("state_imports", [])
+        if imported["sources"] and imported not in imports:
+            imports.append(imported)
+            manifest["state_imports"] = imports
+            dump(self.done, manifest)
+            self.git("add", "--", "campaigns/MOVED.json")
+        dump(receipt_path, job)
+        journal.unlink()
+        print(f"imported {len(new)} machine-local state files for {machine}")
+
     def links(self):
         if not self.done.exists():
             raise MigrationError("apply migration before rewriting links")
@@ -378,7 +541,7 @@ class Migration:
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("plan", "apply", "links"))
+    parser.add_argument("action", choices=("plan", "apply", "links", "import-state"))
     args = parser.parse_args(argv)
     tool = Migration()
     try:
@@ -386,6 +549,8 @@ def main(argv=None):
             print(json.dumps(tool.plan(), indent=2))
         elif args.action == "apply":
             tool.apply()
+        elif args.action == "import-state":
+            tool.import_state()
         else:
             tool.links()
     except (MigrationError, store.CampaignError, OSError, ValueError, subprocess.CalledProcessError) as error:

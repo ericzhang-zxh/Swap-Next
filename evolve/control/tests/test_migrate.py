@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
@@ -199,6 +200,132 @@ class MigrationTests(unittest.TestCase):
         manifest = (self.root / "campaigns/MOVED.json").read_text()
         self.assertIn("legacy_absolute_paths", manifest)
         self.assertNotIn("/home/legacy", manifest)
+
+
+class MachineStateImportTests(unittest.TestCase):
+    """A second worker receives MOVED through git, but has its own ignored state."""
+    git = MigrationTests.git
+    write = MigrationTests.write
+    snapshot = MigrationTests.snapshot
+
+    def setUp(self):
+        MigrationTests.setUp(self)
+        self.tool.apply()
+        self.git("commit", "-qm", "tracked migration from first worker")
+        shutil.rmtree(self.root / "evolve/control/state")
+        shutil.rmtree(self.root / "evolve/swap-standard/state-layout-v1")
+        shutil.rmtree(self.root / "evolve/swap-standard/state-xswap-next-2026-10-24")
+        self.campaign = "xswap-tcg-rev3-2026-10-25"
+        self.write(f"evolve/swap-standard/state-{self.campaign}/ledger.json", [{"campaign": self.campaign, "id": "new", "report": str(self.root / "benchmark/swap-standard/evaluations/new/report.json")}])
+        self.write(f"evolve/control/state/{self.campaign}/candidates.json", {"new": {"id": "new", "campaign": self.campaign, "worktree": str(self.root / f"worktrees/{self.campaign}/new"), "status": "active"}})
+        self.write(f"evolve/control/state/{self.campaign}/new/candidate.patch", "machine-local immutable patch\n")
+        self.write(f"evolve/control/state/{self.campaign}/new/task.json", {"campaign": self.campaign, "path": str(self.root / "worktrees/new")})
+        self.env = mock.patch.dict("os.environ", {"SWAP_NEXT_MACHINE": "grok-cloud"})
+        self.env.start()
+        self.addCleanup(self.env.stop)
+
+    def test_remote_manifest_does_not_skip_local_state(self):
+        protocol = (self.root / f"campaigns/{self.campaign}/protocol.json").read_bytes()
+        self.tool.import_state()
+        record = json.loads((self.root / f"campaigns/{self.campaign}/candidates/new.json").read_text())
+        self.assertEqual(record["worktree"], f"worktrees/{self.campaign}/new")
+        self.assertEqual((self.root / f"campaigns/{self.campaign}/patches/new.patch").read_bytes(), b"machine-local immutable patch\n")
+        self.assertEqual((self.root / f"campaigns/{self.campaign}/protocol.json").read_bytes(), protocol)
+        receipt, journal = self.tool.state_paths("grok-cloud")
+        self.assertTrue(receipt.exists())
+        self.assertFalse(journal.exists())
+        self.assertNotIn("swap-next-migration", self.git("ls-files"))
+        before, received = self.snapshot(), receipt.read_bytes()
+        self.tool.import_state()
+        self.assertEqual(before, self.snapshot())
+        self.assertEqual(received, receipt.read_bytes())
+
+    def test_cloud_paths_are_normalized_without_changing_device_names(self):
+        tool = migration.Migration(self.root)
+        tool.project = Path("/workspace/Swap-Next")
+        value = {"root": "/workspace/Swap-Next", "worktree": "/workspace/Swap-Next/worktrees/new", "sibling": "/workspace/xswap-replay", "device": "/dev/vda"}
+        normalized = json.loads(tool.clean_paths(json.dumps(value).encode()))
+        self.assertEqual(normalized, {"root": ".", "worktree": "worktrees/new", "sibling": "../xswap-replay", "device": "/dev/vda"})
+
+    def test_state_import_resumes_partial_failure(self):
+        real = self.tool.import_state_file
+        calls = []
+        def interrupt(entry):
+            if len(calls) == 1: raise RuntimeError("interrupted state import")
+            real(entry)
+            calls.append(entry)
+        with mock.patch.object(self.tool, "import_state_file", side_effect=interrupt):
+            with self.assertRaisesRegex(RuntimeError, "interrupted state import"):
+                self.tool.import_state()
+        receipt, journal = self.tool.state_paths("grok-cloud")
+        self.assertTrue(journal.exists())
+        self.assertFalse(receipt.exists())
+        self.tool.import_state()
+        self.assertTrue(receipt.exists())
+        self.assertFalse(journal.exists())
+        self.assertTrue((self.root / f"campaigns/{self.campaign}/ledger/ledger.json").exists())
+
+    def test_state_import_recovers_copy_before_staging(self):
+        copied = []
+        def interrupt(entry):
+            path = self.root / entry["to"]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(self.tool.content(entry))
+            copied.append(entry["to"])
+            raise RuntimeError("copied before git add")
+        with mock.patch.object(self.tool, "import_state_file", side_effect=interrupt):
+            with self.assertRaisesRegex(RuntimeError, "copied before git add"):
+                self.tool.import_state()
+        self.assertNotIn(copied[0], self.git("ls-files").splitlines())
+        self.tool.import_state()
+        self.assertIn(copied[0], self.git("ls-files").splitlines())
+
+    def test_conflicting_remote_state_refused_before_writes(self):
+        self.write(f"campaigns/{self.campaign}/ledger/ledger.json", [{"id": "remote"}])
+        before = self.snapshot()
+        with self.assertRaisesRegex(migration.MigrationError, "conflict"):
+            self.tool.import_state()
+        self.assertEqual(before, self.snapshot())
+        self.assertFalse(self.tool.state_paths("grok-cloud")[1].exists())
+
+    def test_mismatched_machine_refused_before_writes(self):
+        with mock.patch.dict("os.environ", {"SWAP_NEXT_MACHINE": "hurricpc"}):
+            before = self.snapshot()
+            with self.assertRaisesRegex(migration.MigrationError, "machine"):
+                self.tool.import_state()
+            self.assertEqual(before, self.snapshot())
+        self.assertFalse(self.tool.state_paths("hurricpc")[1].exists())
+
+    def test_mismatched_campaign_record_refused_before_writes(self):
+        self.write(f"evolve/control/state/{self.campaign}/candidates.json", {"new": {"id": "new", "campaign": "foreign"}})
+        before = self.snapshot()
+        with self.assertRaisesRegex(migration.MigrationError, "campaign"):
+            self.tool.import_state()
+        self.assertEqual(before, self.snapshot())
+
+    def test_equivalence_normalizes_both_sides_without_rewriting_remote(self):
+        source = self.root / f"evolve/swap-standard/state-{self.campaign}/ledger.json"
+        remote = source.read_bytes()
+        dest = self.root / f"campaigns/{self.campaign}/ledger/ledger.json"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(remote)
+        self.git("add", "campaigns")
+        self.git("commit", "-qm", "remote retained historical paths")
+        self.tool.import_state()
+        self.assertEqual(dest.read_bytes(), remote)
+
+    def test_equivalent_normalized_remote_state_is_retained(self):
+        source = self.root / f"evolve/swap-standard/state-{self.campaign}/ledger.json"
+        data = self.tool.clean_paths(source.read_bytes())
+        dest = self.root / f"campaigns/{self.campaign}/ledger/ledger.json"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
+        self.git("add", "campaigns")
+        self.git("commit", "-qm", "equivalent remote ledger")
+        before = dest.stat().st_mtime_ns
+        self.tool.import_state()
+        self.assertEqual(dest.read_bytes(), data)
+        self.assertEqual(dest.stat().st_mtime_ns, before)
 
 
 if __name__ == "__main__":
