@@ -9,6 +9,13 @@ from validity import (classify_attempt, clocksource_invalid, launch_blocked,
                       parse_loadavg, parse_psi, protocol_rules, read_host_load, wall_outlier)
 
 ROOT = Path(__file__).resolve().parents[2]
+NEXT_REPORT = ROOT / "campaigns/xswap-next-2026-10-24/report"
+
+
+def tcg_revision3_protocol():
+    """Falls back to the pre-migration path until campaigns/ holds the protocol."""
+    new = ROOT / "campaigns/xswap-tcg-rev3-2026-10-25/protocol.json"
+    return new if new.exists() else ROOT / "benchmark/swap-standard/protocol-tcg-revision3.json"
 RULES = {"pre_qemu_seconds_max": 60, "wall_factor": 1.5, "wall_min_samples": 3}
 
 
@@ -60,7 +67,7 @@ class ValidityTests(unittest.TestCase):
         self.assertNotIn("memory", snap["psi"])
 
     def test_revision3_protocol_shape(self):
-        protocol = json.loads((ROOT / "benchmark/swap-standard/protocol-tcg-revision3.json").read_text())
+        protocol = json.loads(tcg_revision3_protocol().read_text())
         rules = protocol_rules(protocol)
         self.assertEqual(rules["protocol_revision"], 3)
         self.assertEqual(rules["noise_ceiling"], 0.25)
@@ -74,8 +81,11 @@ class ValidityTests(unittest.TestCase):
         self.assertEqual(protocol["accelerator"]["require"], "tcg")
         self.assertTrue(protocol["preallocate_swap"])
         self.assertNotIn("slow", protocol["tiers"])
-        rev1 = json.loads((ROOT / "results/xswap-next-2026-10-24/protocol-revision1.json").read_text())
-        rev2 = json.loads((ROOT / "results/xswap-next-2026-10-24/protocol-revision2.json").read_text())
+
+    @unittest.skipUnless((NEXT_REPORT / "protocol-revision1.json").exists(), "before migration")
+    def test_revision1_and_2_protocol_shape(self):
+        rev1 = json.loads((NEXT_REPORT / "protocol-revision1.json").read_text())
+        rev2 = json.loads((NEXT_REPORT / "protocol-revision2.json").read_text())
         self.assertNotIn("protocol_revision", rev1)
         self.assertEqual(rev2["protocol_revision"], 2)
         self.assertEqual(rev1["noise_ceiling"], 0.2)

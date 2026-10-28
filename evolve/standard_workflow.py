@@ -17,30 +17,28 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 BENCH = ROOT / "benchmark/swap-standard"
-STATE = ROOT / "evolve/swap-standard/state-layout-v1"
-PROTOCOL = BENCH / "protocol.json"
 WORKFLOW_FILE = Path(__file__).resolve()
 sys.path.insert(0, str(ROOT / "benchmark/kernel"))
 from lifetime import bind_child_to_parent
 
+_spec = importlib.util.spec_from_file_location("campaign_store", ROOT / "evolve/control/campaign_store.py")
+campaign_store = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(campaign_store)
 
-def select_protocol(path):
-    """Use one frozen protocol file and its own ledger, budget and calibration."""
-    global STATE, PROTOCOL
-    path = Path(path).resolve()
-    root = ROOT.resolve()
-    if not path.is_file() or not path.is_relative_to(root):
-        raise ValueError("protocol must be a file inside the repository")
-    PROTOCOL = path
-    if path == (BENCH / "protocol.json").resolve():
-        STATE = ROOT / "evolve/swap-standard/state-layout-v1"
-    else:
-        # The ledger follows the campaign, so a renamed protocol file cannot
-        # reset an existing campaign's budget.
-        campaign = read(path)["campaign"]
-        if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", campaign):
-            raise ValueError("protocol campaign name")
-        STATE = ROOT / "evolve/swap-standard" / ("state-" + campaign)
+
+# Module defaults name the standard campaign; select_campaign switches all of them.
+CAMPAIGN = ROOT / "campaigns/swap-standard-2026-10-22"
+PROTOCOL, STATE, ARCHIVE = CAMPAIGN / "protocol.json", CAMPAIGN / "ledger", CAMPAIGN / "archive"
+EVALUATIONS, RUNS, TASKS = CAMPAIGN / "runs/evaluations", CAMPAIGN / "runs/guests", CAMPAIGN / "runs/tasks"
+
+
+def select_campaign(name):
+    """Use one campaign directory: its protocol, ledger, budget, calibration and runs."""
+    global CAMPAIGN, PROTOCOL, STATE, ARCHIVE, EVALUATIONS, RUNS, TASKS
+    campaign_store.load(name)  # refuses unknown campaigns before any path is used
+    CAMPAIGN = campaign_store.campaign_dir(name)
+    PROTOCOL, STATE, ARCHIVE = CAMPAIGN / "protocol.json", CAMPAIGN / "ledger", CAMPAIGN / "archive"
+    EVALUATIONS, RUNS, TASKS = CAMPAIGN / "runs/evaluations", CAMPAIGN / "runs/guests", CAMPAIGN / "runs/tasks"
 
 
 def read(path):
@@ -100,10 +98,9 @@ def runner_extra(protocol):
     return extra
 
 
-# Protocols frozen before the campaign contract; they keep their own metrics.
-CONTRACT_EXEMPT = {"protocol.json", "protocol-confirm-h1-2026-10-23.json",
-                   "protocol-xswap-swapin-2026-10-23.json", "protocol-xswap-next-2026-10-24.json",
-                   "protocol-tcg-revision3.json"}
+# Campaigns frozen before the campaign contract; they keep their own metrics.
+CONTRACT_EXEMPT = {"swap-standard-2026-10-22", "confirm-h1-ra-phys-2026-10-23", "xswap-swapin-2026-10-23",
+                   "xswap-next-2026-10-24", "xswap-tcg-rev3-2026-10-25"}
 SWAPIN_PRIMARIES = {"swapin_seq.mean_ns", "swapin_rand.mean_ns"}
 METADATA_METRIC = "metadata_delta_bytes_per_capacity_slot"
 
@@ -127,7 +124,7 @@ def contract_errors(p):
 def fingerprint(p):
     paths = [PROTOCOL, BENCH / "image.json", ROOT / "evolve/loop.py", Path(__file__),
              ROOT / "evolve/control/controller.py", ROOT / "evolve/control/analysis.py",
-             ROOT / "evolve/control/campaigns" / p["campaign"] / "policy.json",
+             CAMPAIGN / "policy.json",
              ROOT / "benchmark/config/swap-standard.config"]
     paths += list(BENCH.glob("*.py")) + list(BENCH.glob("*.sh"))
     paths += [BENCH / name for name in ["guest-init", "tools.json", "swapin.c", "correctness.c", "console-drain.c"]]
@@ -163,19 +160,22 @@ class Workflow:
             self.budget = read(self.budget_path)
         else:
             self.budget = {"created": time.time(), "guests": 0, "builds": 0}
-        self.stop = ROOT / "evolve/control/state" / p["campaign"] / "STOP"
-        self.global_stop = ROOT / "evolve/control/state/STOP"
+        self.stop = CAMPAIGN / "STOP"
+        self.global_stop = campaign_store.GLOBAL_STOP
         # Holding the evaluation lock proves these are abandoned adapter calls.
+        changed = False
         for row in self.ledger:
             if row["status"] == "RUNNING":
-                report = BENCH / "evaluations" / row["id"] / "report.json"
+                changed = True
+                report = EVALUATIONS / row["id"] / "report.json"
                 if report.exists():
                     row.update(read(report))
                 if row["status"] == "RUNNING":
                     row["status"] = "INTERRUPTED"
                     row["reason"] = "Adapter exited before completion; attempt retained, no retry"
                     save(report, row)
-        save(self.ledger_path, self.ledger)
+        if changed:
+            save(self.ledger_path, self.ledger)
 
     def check(self):
         if self.stop.exists() or self.global_stop.exists():
@@ -184,6 +184,11 @@ class Workflow:
             raise RuntimeError("campaign deadline")
 
     def reserve(self, kind):
+        if kind == "guest":
+            try:
+                campaign_store.require_claim(self.p["campaign"])
+            except campaign_store.CampaignError as exc:
+                raise RuntimeError("BLOCKED: machine claim: " + str(exc))
         self.check()
         key, cap = ("guests", "guest_attempts") if kind == "guest" else ("builds", "build_attempts")
         if self.budget[key] >= self.p["budget"][cap]:
@@ -231,19 +236,15 @@ class Workflow:
 
     def candidate(self, name, correctness):
         # Historical identities are explicitly held even if supplied as commit IDs.
-        old = ROOT / "evolve/control/state/xswap-structure-2026-10-22/candidates.json"
-        if old.exists():
-            records = read(old)
-            if name in records:
-                raise RuntimeError("BLOCKED: historical xswap candidate; unresolved descriptor lifetime")
+        if name in campaign_store.candidates("xswap-structure-2026-10-22"):
+            raise RuntimeError("BLOCKED: historical xswap candidate; unresolved descriptor lifetime")
         if name in self.p["blocked_commits"]:
             raise RuntimeError("BLOCKED: " + self.p["blocked_commits"][name])
-        path = ROOT / "evolve/control/state" / self.p["campaign"] / "candidates.json"
-        records = read(path) if path.exists() else {}
+        records = campaign_store.candidates(self.p["campaign"])
         if name not in records:
             raise RuntimeError("candidate absent from frozen controller campaign")
         record = records[name]
-        worktree = record["worktree"]
+        worktree = str(ROOT / record["worktree"])
         commit = subprocess.check_output(["git", "-C", worktree, "rev-parse", "HEAD"], text=True).strip()
         if commit in self.p["blocked_commits"]:
             raise RuntimeError("BLOCKED: " + self.p["blocked_commits"][commit])
@@ -256,19 +257,31 @@ class Workflow:
             raise RuntimeError("missing exact-commit correctness evidence")
         return commit, record, proof
 
+    def campaign_errors(self):
+        """Closed or over-cap campaigns are refused before any ledger row or budget."""
+        try:
+            return campaign_store.budget_errors(campaign_store.require_open(self.p["campaign"]))
+        except campaign_store.CampaignError as exc:
+            return [str(exc)]
+
     def run(self, action, tier, candidate=None, correctness=None):
         ident = uuid.uuid4().hex
-        dest = BENCH / "evaluations" / ident
-        dest.mkdir(parents=True)
         row = {"id": ident, "action": action, "tier": tier, "candidate": candidate,
                "status": "RUNNING", "started": time.time(), "runs": [], "pairs": [],
                "performance_accepted": False, "auto_promote": False}
+        errors = self.campaign_errors()
+        if errors:
+            row.update(status="BLOCKED", reason="BLOCKED: campaign: " + "; ".join(errors), finished=time.time())
+            print(json.dumps({k: row.get(k) for k in ["id", "action", "tier", "status", "reason"]}, indent=2), flush=True)
+            return row
+        dest = EVALUATIONS / ident
+        dest.mkdir(parents=True)
         self.ledger.append(row)
         save(self.ledger_path, self.ledger)
         save(dest / "report.json", row)
         try:
             self.check()
-            if PROTOCOL.name not in CONTRACT_EXEMPT and contract_errors(self.p):
+            if self.p["campaign"] not in CONTRACT_EXEMPT and contract_errors(self.p):
                 raise RuntimeError("BLOCKED: protocol contract: " + "; ".join(contract_errors(self.p)))
             fp = fingerprint(self.p)
             row["fingerprint"] = fp
@@ -358,11 +371,11 @@ class Workflow:
                             self.command([sys.executable, str(BENCH / "run.py"), "--build", chosen,
                                           "--backend", case["backend"], "--mode", case.get("mode", "plain"),
                                           "--workload", case["workload"], "--run-id", run_id,
-                                          "--stop-file", str(self.stop),
+                                          "--stop-file", str(self.stop), "--run-root", str(RUNS),
                                           "--timeout", str(self.p["budget"]["guest_timeout"]), *extra],
                                          dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60,
                                          accept_failure=True, env=env)
-                            result_path = BENCH / "runs" / run_id / "result.json"
+                            result_path = RUNS / run_id / "result.json"
                             if not result_path.is_file():
                                 raise RuntimeError("missing run result")
                             result = read(result_path)
@@ -446,11 +459,11 @@ class Workflow:
         from openevolve.config import DatabaseConfig
         from openevolve.database import Program, ProgramDatabase
         db = ProgramDatabase(DatabaseConfig(in_memory=True, population_size=8, archive_size=8, num_islands=1, random_seed=42))
-        path = STATE / "database"
+        path = ARCHIVE / "database"
         if path.exists():
             db.load(str(path))
-        patch = subprocess.check_output(["git", "-C", record["worktree"], "diff", self.p["baseline_commit"], row["candidate_commit"]], text=True)
-        db.add(Program(id=row["id"], code=patch, language="diff", metrics={"combined_score": row["analysis"]["combined_score"]}, metadata={"commit": row["candidate_commit"], "report": str((BENCH / "evaluations" / row["id"] / "report.json").relative_to(ROOT)), "review_required": True}))
+        patch = subprocess.check_output(["git", "-C", str(ROOT / record["worktree"]), "diff", self.p["baseline_commit"], row["candidate_commit"]], text=True)
+        db.add(Program(id=row["id"], code=patch, language="diff", metrics={"combined_score": row["analysis"]["combined_score"]}, metadata={"commit": row["candidate_commit"], "report": str((EVALUATIONS / row["id"] / "report.json").relative_to(ROOT)), "review_required": True}))
         db.save(str(path), iteration=len(self.ledger))
 
 
@@ -461,14 +474,16 @@ def main(argv=None):
                         help="slow (and auto, which continues into slow) needs explicit owner approval; see AGENTS.md")
     parser.add_argument("--candidate")
     parser.add_argument("--correctness", type=Path)
-    parser.add_argument("--protocol", type=Path, default=PROTOCOL,
-                        help="frozen protocol JSON; revision 3 is benchmark/swap-standard/protocol-tcg-revision3.json")
+    parser.add_argument("--campaign", default=CAMPAIGN.name,
+                        help="campaign directory under campaigns/; revision 3 is xswap-tcg-rev3-2026-10-25")
     args = parser.parse_args(argv)
-    select_protocol(args.protocol)
+    select_campaign(args.campaign)
     STATE.mkdir(parents=True, exist_ok=True)
     with (STATE / ".lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         p = read(PROTOCOL)
+        if p.get("campaign") != args.campaign:
+            raise SystemExit("protocol campaign " + repr(p.get("campaign")) + " does not match " + args.campaign)
         validity_module().protocol_rules(p)
         workflow = Workflow(p)
         if args.action in ("status", "plan", "next"):
@@ -483,17 +498,17 @@ def main(argv=None):
             if args.action == "next":
                 output["instruction"] = "Resolve correctness holds, then calibrate missing/noisy tiers. Only a calibrated fast tier may screen a controller candidate. Slow requires the exact fast-pass commit and explicit owner approval; no automatic promotion."
                 output["references"] = []
-                if (STATE / "database").exists():
+                if (ARCHIVE / "database").exists():
                     from openevolve.config import DatabaseConfig
                     from openevolve.database import ProgramDatabase
                     db = ProgramDatabase(DatabaseConfig(in_memory=True, population_size=8, archive_size=8, num_islands=1, random_seed=42))
-                    db.load(str(STATE / "database"))
+                    db.load(str(ARCHIVE / "database"))
                     if db.programs:
                         parent, inspirations = db.sample(num_inspirations=2)
                         output["references"] = [r.to_dict() for r in [parent, *inspirations]]
                 output["required_patch_base"] = p["baseline_commit"]
                 output["controller_campaign"] = p["campaign"]
-                save(STATE / ("task-" + uuid.uuid4().hex + ".json"), output)
+                save(TASKS / ("task-" + uuid.uuid4().hex + ".json"), output)
             print(json.dumps(output, indent=2))
             return
         if args.action == "evaluate" and not args.candidate:

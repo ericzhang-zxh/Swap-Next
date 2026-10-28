@@ -9,19 +9,57 @@ from unittest.mock import patch
 spec = importlib.util.spec_from_file_location("workflow", Path(__file__).with_name("standard_workflow.py"))
 w = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(w)
+REPO = Path(__file__).resolve().parents[1]
+
+
+def fixture_protocol():
+    """The standard protocol; falls back to its pre-migration path until campaigns/ holds it."""
+    new = REPO / "campaigns/swap-standard-2026-10-22/protocol.json"
+    return w.read(new if new.exists() else REPO / "benchmark/swap-standard/protocol.json")
+
+
+def write_campaign(campaigns, name, status="open", **budget):
+    record = {"campaign": name, "status": status, "line": "plain", "baseline_from": None,
+              "machine": "hurricpc", "opened": "2026-10-27",
+              "closed": "2026-10-27" if status == "closed" else None,
+              "budget": dict({"guest_attempts": 120, "wall_seconds": 64800,
+                              "probe_guest_attempts": 0, "approved_over_cap": None}, **budget)}
+    w.save(campaigns / name / "campaign.json", record)
+
+
+def campaign_tree(test, p):
+    """Temp repository with an open campaign.json and a machine claim for p's campaign."""
+    test.tmp = tempfile.TemporaryDirectory()
+    test.addCleanup(test.tmp.cleanup)
+    test.root = Path(test.tmp.name)
+    test.campaigns = test.root / "campaigns"
+    test.campaign = test.campaigns / p["campaign"]
+    test.state = test.campaign / "ledger"
+    test.state.mkdir(parents=True)
+    test.bench = test.root / "bench"
+    test.claim = test.root / "claim"
+    test.claim.write_text(p["campaign"] + "\n")
+    w.save(test.campaigns / "hosts.json", {"hurricpc": {"hostnames": []}})
+    write_campaign(test.campaigns, p["campaign"])
+    values = [("ROOT", test.root), ("BENCH", test.bench), ("CAMPAIGN", test.campaign),
+              ("PROTOCOL", test.campaign / "protocol.json"), ("STATE", test.state),
+              ("EVALUATIONS", test.campaign / "runs/evaluations"), ("RUNS", test.campaign / "runs/guests"),
+              ("ARCHIVE", test.campaign / "archive"), ("TASKS", test.campaign / "runs/tasks")]
+    patches = [patch.object(w, name, value) for name, value in values]
+    patches += [patch.object(w.campaign_store, "CAMPAIGNS", test.campaigns),
+                patch.object(w.campaign_store, "HOSTS", test.campaigns / "hosts.json"),
+                patch.object(w.campaign_store, "GLOBAL_STOP", test.campaigns / "STOP"),
+                patch.dict("os.environ", {"SWAP_NEXT_CLAIM": str(test.claim),
+                                          "SWAP_NEXT_MACHINE": "hurricpc"})]
+    for item in patches:
+        item.start()
+        test.addCleanup(item.stop)
 
 
 class WorkflowTests(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.tmp.cleanup)
-        self.root = Path(self.tmp.name)
-        self.state = self.root / "state"
-        self.state.mkdir()
-        self.bench = self.root / "bench"
-        self.p = w.read(w.PROTOCOL)
-        for name, value in [("STATE", self.state), ("BENCH", self.bench), ("ROOT", self.root)]:
-            p = patch.object(w, name, value); p.start(); self.addCleanup(p.stop)
+        self.p = fixture_protocol()
+        campaign_tree(self, self.p)
 
     def test_reservation_survives_failure_and_budget(self):
         flow = w.Workflow(self.p)
@@ -34,11 +72,21 @@ class WorkflowTests(unittest.TestCase):
     def test_interrupted_identity_is_recovered_from_report(self):
         row = {"id": "one", "status": "RUNNING", "action": "evaluate", "tier": "fast"}
         w.save(self.state / "ledger.json", [row])
-        w.save(self.bench / "evaluations/one/report.json", dict(row, candidate_commit="deadbeef", runs=[{"id": "reserved"}]))
+        report = self.campaign / "runs/evaluations/one/report.json"
+        w.save(report, dict(row, candidate_commit="deadbeef", runs=[{"id": "reserved"}]))
         flow = w.Workflow(self.p)
         self.assertEqual(flow.ledger[0]["status"], "INTERRUPTED")
         self.assertEqual(flow.ledger[0]["candidate_commit"], "deadbeef")
-        self.assertEqual(w.read(self.bench / "evaluations/one/report.json")["status"], "INTERRUPTED")
+        self.assertEqual(w.read(report)["status"], "INTERRUPTED")
+        self.assertEqual(w.read(self.state / "ledger.json")[0]["status"], "INTERRUPTED")
+
+    def test_unchanged_ledger_is_not_rewritten(self):
+        write_campaign(self.campaigns, self.p["campaign"], status="closed")
+        ledger = self.state / "ledger.json"
+        ledger.write_text(json.dumps([{"id": "one", "status": "FAST_PASS", "action": "evaluate", "tier": "fast"}]))
+        before = ledger.read_bytes()
+        w.Workflow(self.p)
+        self.assertEqual(ledger.read_bytes(), before)
 
     def test_blocked_historical_commit_uses_no_budget(self):
         flow = w.Workflow(self.p)
@@ -86,11 +134,61 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(w.contract_errors(good), [])
         good["cases"]["swapin-disk"]["primary"] = "throughput_kbps_sum"
         self.assertTrue(w.contract_errors(good))
+
+    def test_contract_exemption_is_by_campaign(self):
+        for name, blocked in (("new-campaign-2026-10-27", True), ("xswap-next-2026-10-24", False)):
+            with self.subTest(campaign=name):
+                p = dict(self.p, campaign=name)
+                write_campaign(self.campaigns, name)
+                self.claim.write_text(name + "\n")
+                flow = w.Workflow(p)
+                with patch.object(w, "fingerprint", return_value="fp"), \
+                     patch.object(flow, "reserve", side_effect=RuntimeError("reserved")):
+                    row = flow.run("calibrate", "fast")
+                if blocked:
+                    self.assertEqual(row["status"], "BLOCKED")
+                    self.assertIn("protocol contract", row["reason"])
+                else:
+                    self.assertEqual(row["reason"], "reserved")
+                self.assertEqual(flow.budget["guests"], 0)
+
+    def test_closed_campaign_blocks_before_budget(self):
+        write_campaign(self.campaigns, self.p["campaign"], status="closed")
         flow = w.Workflow(self.p)
-        with patch.object(w, "PROTOCOL", self.root / "protocol-new-campaign.json"):
+        with patch.object(w, "fingerprint", return_value="fp"):
             row = flow.run("calibrate", "fast")
         self.assertEqual(row["status"], "BLOCKED")
+        self.assertIn("closed", row["reason"])
         self.assertEqual(flow.budget["guests"], 0)
+        ledger = w.read(self.state / "ledger.json") if (self.state / "ledger.json").exists() else []
+        self.assertFalse(any(r.get("execution_started") for r in ledger))
+
+    def test_over_cap_open_campaign_blocks(self):
+        write_campaign(self.campaigns, self.p["campaign"], guest_attempts=200)
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(flow, "reserve", side_effect=RuntimeError("reserved")):
+            row = flow.run("calibrate", "fast")
+            self.assertEqual(row["status"], "BLOCKED")
+            self.assertIn("cap", row["reason"])
+            write_campaign(self.campaigns, self.p["campaign"], guest_attempts=200,
+                           approved_over_cap="owner approved 2026-10-27")
+            row = flow.run("calibrate", "fast")
+            self.assertEqual(row["reason"], "reserved")
+        self.assertEqual(flow.budget["guests"], 0)
+
+    def test_guest_needs_machine_claim(self):
+        flow = w.Workflow(self.p)
+        for held in ("other-campaign\n", None):
+            with self.subTest(held=held):
+                if held:
+                    self.claim.write_text(held)
+                else:
+                    self.claim.unlink()
+                with self.assertRaisesRegex(RuntimeError, "^BLOCKED: .*claim"):
+                    flow.reserve("guest")
+                self.assertEqual(flow.budget["guests"], 0)
+                self.assertFalse(flow.budget_path.exists())
 
     def test_slow_gate_before_build_or_guest(self):
         flow = w.Workflow(self.p)
@@ -102,11 +200,15 @@ class WorkflowTests(unittest.TestCase):
 
     def test_exact_commit_proof_alias_still_requires_all_gates(self):
         campaign = self.p["campaign"]
-        records = self.root / "evolve/control/state" / campaign / "candidates.json"
-        w.save(records, {"candidate": {"worktree": str(self.root / "candidate")}})
+        w.save(self.campaign / "candidates/candidate.json",
+               {"id": "candidate", "worktree": "worktrees/" + campaign + "/candidate"})
+        w.save(self.campaigns / "xswap-structure-2026-10-22/candidates/held.json",
+               {"id": "held", "worktree": "worktrees/xswap-structure-2026-10-22/held"})
         proof = self.root / "proof.json"
         flow = w.Workflow(self.p)
-        with patch.object(w.subprocess, "check_output", return_value="exact\n"):
+        with self.assertRaisesRegex(RuntimeError, "BLOCKED: historical"):
+            flow.candidate("held", None)
+        with patch.object(w.subprocess, "check_output", return_value="exact\n") as git:
             w.save(proof, {"source_commit": "exact", "gates": {"swapin_data": True}})
             with self.assertRaisesRegex(RuntimeError, "correctness"):
                 flow.candidate("candidate", proof)
@@ -119,25 +221,22 @@ class WorkflowTests(unittest.TestCase):
                 flow.candidate("candidate", proof)
             w.save(proof, {"source_commit": "exact", "gates": gates, "integration_pass": True})
             self.assertEqual(flow.candidate("candidate", proof)[0], "exact")
+        self.assertEqual(git.call_args[0][0][:3], ["git", "-C", str(self.root / "worktrees" / campaign / "candidate")])
 
     def test_stop_prevents_reservation(self):
-        flow = w.Workflow(self.p)
-        flow.stop.parent.mkdir(parents=True)
-        flow.stop.touch()
-        with self.assertRaisesRegex(RuntimeError, "STOP"):
-            flow.reserve("guest")
-        self.assertEqual(flow.budget["guests"], 0)
+        for stop in (self.campaign / "STOP", self.campaigns / "STOP"):
+            with self.subTest(stop=stop.name):
+                flow = w.Workflow(self.p)
+                stop.touch()
+                with self.assertRaisesRegex(RuntimeError, "STOP"):
+                    flow.reserve("guest")
+                self.assertEqual(flow.budget["guests"], 0)
+                stop.unlink()
 
 
 class Revision3WorkflowTests(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.tmp.cleanup)
-        self.root = Path(self.tmp.name)
-        self.state = self.root / "state"
-        self.state.mkdir()
-        self.bench = self.root / "bench"
-        self.p = json.loads(json.dumps(w.read(w.PROTOCOL)))
+        self.p = json.loads(json.dumps(fixture_protocol()))
         self.p.update(protocol_revision=3, noise_envelope="p90", noise_ceiling=0.25,
                       comparison_decision="median", advisory_metric_suffixes=[".p99_ns"],
                       preallocate_swap=True, guest={"vcpus": 4, "mem_mib": 4096, "swap_gib": 16},
@@ -148,10 +247,7 @@ class Revision3WorkflowTests(unittest.TestCase):
                       cases={"swapin-disk": {"workload": "swapin", "backend": "disk", "mode": "xswap",
                                              "metrics": {"swapin_seq.mean_ns": "lower"},
                                              "primary": "swapin_seq.mean_ns"}})
-        for name, value in [("STATE", self.state), ("BENCH", self.bench), ("ROOT", self.root)]:
-            p = patch.object(w, name, value)
-            p.start()
-            self.addCleanup(p.stop)
+        campaign_tree(self, self.p)
 
     def _analysis(self):
         spec = importlib.util.spec_from_file_location(
@@ -166,7 +262,9 @@ class Revision3WorkflowTests(unittest.TestCase):
             calls["commands"].append(command)
             calls["n"] += 1
             run_id = command[command.index("--run-id") + 1]
-            dest = self.bench / "runs" / run_id
+            self.assertEqual(command[command.index("--run-root") + 1], str(self.campaign / "runs/guests"))
+            self.assertEqual(command[command.index("--stop-file") + 1], str(self.campaign / "STOP"))
+            dest = Path(command[command.index("--run-root") + 1]) / run_id
             dest.mkdir(parents=True)
             invalid = calls["n"] <= invalid_until
             (dest / "result.json").write_text(json.dumps({
@@ -215,18 +313,32 @@ class Revision3WorkflowTests(unittest.TestCase):
         self.assertEqual([item["status"] for item in row["runs"]], ["INVALID", "INVALID"])
         self.assertEqual(flow.budget["guests"], 2)
 
-    def test_protocol_campaign_selects_its_own_state_directory(self):
-        real_root = Path(__file__).resolve().parents[1]
-        saved = (w.STATE, w.PROTOCOL, w.ROOT, w.BENCH)
-        path = real_root / "benchmark/swap-standard/protocol-tcg-revision3.json"
-        try:
-            w.ROOT = real_root
-            w.BENCH = real_root / "benchmark/swap-standard"
-            w.select_protocol(path)
-            self.assertEqual(w.STATE, real_root / "evolve/swap-standard/state-xswap-tcg-rev3-2026-10-25")
-            self.assertEqual(w.PROTOCOL, path.resolve())
-        finally:
-            w.STATE, w.PROTOCOL, w.ROOT, w.BENCH = saved
+    def test_select_campaign_paths(self):
+        name = "xswap-tcg-rev3-2026-10-25"
+        write_campaign(self.campaigns, name)
+        w.select_campaign(name)
+        c = self.campaigns / name
+        self.assertEqual(w.CAMPAIGN, c)
+        self.assertEqual(w.PROTOCOL, c / "protocol.json")
+        self.assertEqual(w.STATE, c / "ledger")
+        self.assertEqual(w.EVALUATIONS, c / "runs/evaluations")
+        self.assertEqual(w.RUNS, c / "runs/guests")
+        self.assertEqual(w.ARCHIVE, c / "archive")
+        self.assertEqual(w.TASKS, c / "runs/tasks")
+        for bad in ("unknown-campaign", "../escape", "Bad"):
+            with self.subTest(bad=bad):
+                with self.assertRaises(w.campaign_store.CampaignError):
+                    w.select_campaign(bad)
+                with self.assertRaises(w.campaign_store.CampaignError):
+                    w.main(["status", "--campaign", bad])
+                self.assertEqual(w.CAMPAIGN, c)
+        self.assertFalse((self.campaigns / "unknown-campaign").exists())
+
+    def test_module_defaults_name_the_standard_campaign(self):
+        fresh = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(fresh)
+        c = REPO / "campaigns/swap-standard-2026-10-22"
+        self.assertEqual((fresh.CAMPAIGN, fresh.PROTOCOL, fresh.STATE), (c, c / "protocol.json", c / "ledger"))
 
 
 if __name__ == "__main__":

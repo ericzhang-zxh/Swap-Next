@@ -108,6 +108,20 @@ def absolute_stop_file(value):
     return path
 
 
+def run_root(value):
+    """A campaign's guest run directory: PROJECT/campaigns/<c>/runs/guests."""
+    path = Path(value)
+    if not path.is_absolute():
+        raise argparse.ArgumentTypeError("run root must be an absolute path")
+    path = path.resolve()
+    campaigns = (PROJECT / "campaigns").resolve()
+    parts = path.relative_to(campaigns).parts if path.is_relative_to(campaigns) else ()
+    if (len(parts) != 3 or parts[1:] != ("runs", "guests") or
+            not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", parts[0])):
+        raise argparse.ArgumentTypeError("run root must be campaigns/<campaign>/runs/guests")
+    return path
+
+
 def stop_requested(extra_stop=None):
     return STOP.exists() or (extra_stop is not None and extra_stop.exists())
 
@@ -178,6 +192,8 @@ def main():
     parser.add_argument("--run-id", type=run_id, help="explicit unique run directory name")
     parser.add_argument("--stop-file", type=absolute_stop_file,
                         help="additional absolute STOP path checked before and during the run")
+    parser.add_argument("--run-root", type=run_root, default=BASE / "runs",
+                        help="absolute campaigns/<campaign>/runs/guests directory for run evidence")
     args = parser.parse_args()
     if os.geteuid() == 0:
         parser.error("host root execution forbidden")
@@ -216,7 +232,7 @@ def main():
             raise SystemExit(f"need {need_kib // 1024} MiB available host RAM")
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
         name = args.run_id or (stamp + "-" + args.build + "-" + args.backend + "-" + args.workload)
-        dest = create_run_directory(BASE / "runs", name)
+        dest = create_run_directory(args.run_root, name)
         disk = dest / "swap.raw"
         setup_started = time.monotonic()
         create_swap_image(disk, args.preallocate_swap)

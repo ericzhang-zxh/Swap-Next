@@ -71,3 +71,4 @@ campaigns/*/runs/
 campaigns/*/.lock
 campaigns/*/STOP
 campaigns/*/ledger/*.tmp
+campaigns/*/ledger/.lock

@@ -71,6 +71,24 @@ class RunnerValidationTests(unittest.TestCase):
                 with self.assertRaises(argparse.ArgumentTypeError):
                     runner.absolute_stop_file(value)
 
+    def test_run_root_must_be_inside_campaigns(self):
+        campaigns = runner.PROJECT / "campaigns"
+        good = campaigns / "x/runs/guests"
+        self.assertEqual(runner.run_root(str(good)), good.resolve())
+        for value in ("/tmp/x/runs/guests", str(campaigns / "x/runs"), "campaigns/x/runs/guests",
+                      str(campaigns / "runs/guests"), str(campaigns / "x/../../tmp/runs/guests"),
+                      str(campaigns / "x/y/runs/guests")):
+            with self.subTest(value=value):
+                with self.assertRaises(argparse.ArgumentTypeError):
+                    runner.run_root(value)
+                argv = ["run.py", "--build", "b", "--backend", "disk", "--workload", "swapin",
+                        "--run-root", value]
+                with patch.object(sys, "argv", argv), patch.object(runner.os, "geteuid") as euid, \
+                     patch("sys.stderr"), self.assertRaises(SystemExit) as raised:
+                    runner.main()
+                self.assertEqual(raised.exception.code, 2)
+                euid.assert_not_called()
+
     def test_either_stop_file_stops_run(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
