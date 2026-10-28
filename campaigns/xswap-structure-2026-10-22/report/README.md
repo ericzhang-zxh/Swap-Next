@@ -19,7 +19,7 @@ PTE-referenced slots. A second pressure cycle is diagnostic, after the primary
 measurement. Latency, workload duration, data integrity, COW, live destroy,
 swapoff and backend activity remain visible guardrails.
 
-The [protocol](../../benchmark/xswap-structure/protocol.json) freezes 8 A/A boots,
+The [protocol](../../../benchmark/xswap-structure/protocol.json) freezes 8 A/A boots,
 10 paired comparisons per backend for each evaluated candidate, 96 total guest
 attempts, at most 4 candidates and 8 builds. The actual guest allowance supports
 at most two full candidate comparisons after calibration. Resource bounds remain
@@ -27,7 +27,7 @@ at most two full candidate comparisons after calibration. Resource bounds remain
 guest timeout and 900-second build timeout. Stop before further launches when
 free storage falls below 80 GiB.
 
-The [policy](../../evolve/control/campaigns/xswap-structure-2026-10-22/policy.json)
+The [policy](../policy.json)
 allows a coherent structural patch series across the xswap allocation,
 metadata, lookup and teardown paths. Every changed lifetime assumption requires
 review before runtime. STOP, deadline, correctness failure, provenance failure

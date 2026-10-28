@@ -68,4 +68,4 @@ The randomized usemem profile must be revised and calibrated separately.
 The historical evolve adapters have not been retargeted to this suite; admitting
 it requires a frozen new campaign protocol. xswap execution remains held pending
 resolution of the existing descriptor lifetime review. Other measurement limits
-are in [the suite README](../../benchmark/swap-standard/README.md#limitations).
+are in [the suite README](../../../../benchmark/swap-standard/README.md#limitations).

@@ -2856,5 +2856,14 @@
       "to": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md",
       "note": "Existing host paths retained to preserve historical bytes; normalize only in a separate evidence-aware commit."
     }
+  ],
+  "rewritten_links": [
+    "campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/README.md",
+    "campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/explainer.html",
+    "campaigns/xswap-2026-10-21/report/README.md",
+    "campaigns/xswap-next-2026-10-24/report/README.md",
+    "campaigns/xswap-p123-2026-10-23/report/README.md",
+    "campaigns/xswap-structure-2026-10-22/report/README.md",
+    "campaigns/xswap-structure-2026-10-22/report/review.md"
   ]
 }

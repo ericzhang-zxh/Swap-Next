@@ -6,7 +6,7 @@ during the pressure phase. That event decides the result and dominates
 every candidate comparison. No patch was promoted.
 
 Baseline: imported xswap Phase I v4 + Phase II v1 (`37de636c`), see
-[patches/xswap-reference](../../patches/xswap-reference/README.md). This campaign
+[patches/xswap-reference](../../_unassigned/patches/xswap-reference/README.md). This campaign
 compares xswap variants with each other, not xswap with ordinary swap.
 
 ## What ran
@@ -119,8 +119,8 @@ Hypotheses, ranked:
 - [summary.json](summary.json): per-run metrics, snapshots, counters, gates,
   and source/image/raw-log hashes.
 - [review.md](review.md): per-candidate source review.
-- [Experimental patches](../../patches/xswap-experiments/manifest.json):
+- [Experimental patches](../../_unassigned/patches/xswap-experiments/manifest.json):
   independent alternatives, each based on the reference.
-- [Harness](../../benchmark/xswap/README.md).
+- [Harness](../../../benchmark/xswap/README.md).
 
 Raw serial logs, guest disks and the OpenEvolve database stay on the Linux worker.

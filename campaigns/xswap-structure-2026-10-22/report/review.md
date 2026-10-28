@@ -77,7 +77,7 @@ places real references at high indices, so it is not a dependable cleanup.
 The workload is synthetic; these are discovery observations. Missing correctness,
 sanitizer, confirmation, and holdout coverage remains recorded in the protocol.
 Instrumentation changes timing and is present in every compared kernel.
-See [DESIGN.md](../../DESIGN.md#limitations).
+See [DESIGN.md](../../../DESIGN.md#limitations).
 
 ## Bounded cache-only tail candidate
 
