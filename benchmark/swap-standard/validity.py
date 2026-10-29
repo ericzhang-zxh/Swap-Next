@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
-"""Run-validity rules for protocol revision 3. No guest is started here.
+"""Run-validity rules for approved swap-standard revisions. No guest is started here.
 
-A revision 3 run is invalid, and the adapter reruns it, when the guest
+From revision 3 on, a run is invalid, and the adapter reruns it, when the guest
 reports a TSC-unstable clocksource fallback, the wall time exceeds 1.5 times
 the running median of prior valid runs of the same case, or more than 60
 seconds elapse before QEMU is launched. Invalid attempts stay in the report.
+Revision 6 is the TCG kbench screen and additionally excludes the build workload.
 """
 import math
 import statistics
@@ -29,7 +30,7 @@ def clocksource_invalid(serial_text):
 
 
 def launch_blocked(protocol_revision, pre_qemu_seconds, limit=60):
-    """Revision 3 does not launch QEMU after a pre-launch stall over the limit."""
+    """Revisions from 3 on do not launch QEMU after a pre-launch stall over the limit."""
     if isinstance(protocol_revision, bool) or not isinstance(protocol_revision, int):
         raise ValueError("protocol revision")
     if (isinstance(pre_qemu_seconds, bool) or not isinstance(pre_qemu_seconds, (int, float))
@@ -141,8 +142,77 @@ def classify_attempt(result, prior_walls, rules):
     return True, None
 
 
+# Guest shape and accelerator for revisions whose measurement parameters are approved.
+# Revision 5 is the closed kbench smoke and stays unapproved here.
+_APPROVED_SHAPE = {
+    3: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
+    4: {"vcpus": 8, "mem_mib": 8192, "accel": "kvm"},
+    6: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
+}
+_TCG_QEMU = ["-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc", "-cpu", "max"]
+
+
+def _revision6(protocol, rules, validity, accelerator):
+    """The TCG kbench screen: 25% ceiling, xswap probe and fast, build excluded."""
+    if protocol.get("template_only"):
+        raise ValueError("revision 6 protocol is executable")
+    if rules["noise_ceiling"] != 0.25:
+        raise ValueError("revision 6 noise ceiling is 25%")
+    if rules["max_reruns"] != 2:
+        raise ValueError("revision 6 allows two validity reruns")
+    if ".p99_ns" not in rules["advisory_suffixes"]:
+        raise ValueError("revision 6 keeps p99 advisory")
+    if protocol.get("preallocate_swap") is not True:
+        raise ValueError("revision 6 preallocates swap")
+    if accelerator.get("qemu") != _TCG_QEMU:
+        raise ValueError("revision 6 QEMU accelerator options")
+    if validity.get("clocksource_fallback") != "invalid_and_rerun":
+        raise ValueError("revision 6 clocksource gate")
+    if not isinstance(validity.get("host_load"), str) or not validity["host_load"].strip():
+        raise ValueError("revision 6 records host load")
+    excluded = protocol.get("excluded")
+    if not isinstance(excluded, dict) or not isinstance(excluded.get("build"), str) or not excluded["build"].strip():
+        raise ValueError("revision 6 excludes the build workload")
+    tiers = protocol.get("tiers", {})
+    if "slow" in tiers or "probe" not in tiers:
+        raise ValueError("revision 6 requires a probe tier and has no slow tier")
+    if protocol.get("baseline_build") != "kb-xs-desc-v1":
+        raise ValueError("revision 6 baseline build is kb-xs-desc-v1")
+    if protocol.get("baseline_commit") != "5e84ca928deeacb4eee656806a003f27d1eca82f":
+        raise ValueError("revision 6 baseline commit")
+    if protocol.get("page_cluster", {}).get("value") != 3:
+        raise ValueError("revision 6 page-cluster is the kernel default 3")
+    if tiers.get("fast", {}).get("cases") != ["swapin-disk", "swapin-zram-64k"]:
+        raise ValueError("revision 6 fast cases")
+    if tiers.get("probe", {}).get("cases") != ["swapin-disk", "swapin-zram-64k", "metadata-brd"]:
+        raise ValueError("revision 6 probe cases")
+    cases = protocol.get("cases", {})
+    if set(cases) != {"swapin-disk", "swapin-zram-64k", "metadata-brd"}:
+        raise ValueError("revision 6 case set")
+    for name, backend in (("swapin-disk", "disk"), ("swapin-zram-64k", "zram-64k")):
+        spec = cases[name]
+        if (spec.get("workload") != "swapin" or spec.get("mode") != "xswap" or
+                spec.get("backend") != backend or spec.get("primary") != "swapin_seq.mean_ns"):
+            raise ValueError("revision 6 swap-in cases are xswap")
+        if spec.get("metrics", {}).get("swapin_rand.mean_ns") != "lower":
+            raise ValueError("revision 6 keeps swapin_rand as a guard")
+    firing = {"swapin_vmstat_delta.swap_ra", "swapin_vmstat_delta.swap_ra_hit",
+              "swapin_vmstat_delta.pgmajfault"}
+    if not firing <= set(cases["swapin-zram-64k"].get("probe_signals", [])):
+        raise ValueError("revision 6 zram-64k probe keys the swap-in count signals")
+    meta = cases["metadata-brd"]
+    # Plain brd: the metadata gate requires the brd SwapTotal delta alone.
+    # xswap create adds a swap device and that guest cannot pass swap_capacity.
+    if (meta.get("workload") != "metadata" or meta.get("backend") != "brd" or
+            meta.get("mode") != "plain" or meta.get("primary") is not None):
+        raise ValueError("revision 6 brd metadata probe is plain mode")
+    config_hash = protocol.get("input_config_sha256")
+    if not isinstance(config_hash, str) or len(config_hash) != 64:
+        raise ValueError("revision 6 kernel config hash")
+
+
 def protocol_rules(protocol):
-    """Measurement rules. Revision 3 checks the approved TCG screen shape."""
+    """Measurement rules for approved revisions. Revision 6 is the TCG kbench screen."""
     if not isinstance(protocol, dict):
         raise ValueError("protocol")
     revision = protocol.get("protocol_revision", 1)
@@ -173,24 +243,36 @@ def protocol_rules(protocol):
     if rules["envelope"] not in ("max", "p90") or rules["decision"] not in ("legacy", "median"):
         raise ValueError("unknown envelope or decision")
     if revision >= 3:
-        if revision not in (3, 4):
+        if revision not in _APPROVED_SHAPE:
             raise ValueError("unapproved protocol revision")
         if rules["envelope"] != "p90" or rules["decision"] != "median":
-            raise ValueError("revision 3 uses a p90 envelope and a median comparison")
+            raise ValueError("approved revision uses a p90 envelope and a median comparison")
         if not 0.25 - 1e-12 <= rules["noise_ceiling"] <= 0.30 + 1e-12:
-            raise ValueError("revision 3 noise ceiling must be between 25% and 30%")
+            raise ValueError("approved revision noise ceiling must be between 25% and 30%")
         if rules["max_reruns"] < 1 or rules["pre_qemu_seconds_max"] != 60 or rules["wall_factor"] != 1.5:
-            raise ValueError("revision 3 validity gates")
+            raise ValueError("approved revision validity gates")
         guest = protocol.get("guest") if isinstance(protocol.get("guest"), dict) else {}
         accelerator = protocol.get("accelerator") if isinstance(protocol.get("accelerator"), dict) else {}
-        cpus, memory, accel = (4, 4096, "tcg") if revision == 3 else (8, 8192, "kvm")
-        if guest.get("vcpus") != cpus or guest.get("mem_mib") != memory or guest.get("swap_gib") != 16:
-            raise ValueError(f"revision {revision} guest is {cpus} vCPU, {memory} MiB, 16 GiB swap")
-        if accelerator.get("require") != accel:
-            raise ValueError(f"revision {revision} requires {accel.upper()}")
+        shape = _APPROVED_SHAPE[revision]
+        if (guest.get("vcpus") != shape["vcpus"] or guest.get("mem_mib") != shape["mem_mib"] or
+                guest.get("swap_gib") != 16):
+            raise ValueError(
+                f"revision {revision} guest is {shape['vcpus']} vCPU, {shape['mem_mib']} MiB, 16 GiB swap")
+        if accelerator.get("require") != shape["accel"]:
+            raise ValueError(f"revision {revision} requires {shape['accel'].upper()}")
+        excluded = protocol.get("excluded") if isinstance(protocol.get("excluded"), dict) else {}
+        for spec in protocol.get("tiers", {}).values():
+            if not isinstance(spec, dict):
+                continue
+            for case_name in spec.get("cases", []):
+                workload = protocol.get("cases", {}).get(case_name, {}).get("workload")
+                if workload in excluded:
+                    raise ValueError("excluded workload is in a tier: " + str(workload))
         if revision == 4 and (protocol.get("preallocate_swap") is not True or
                               any(c.get("mode", "plain") != "plain" for c in protocol.get("cases", {}).values())):
             raise ValueError("revision 4 requires plain mode and preallocated swap")
+        if revision == 6:
+            _revision6(protocol, rules, validity, accelerator)
         for name, spec in protocol.get("tiers", {}).items():
             if spec.get("kind") == "probe":
                 if name != "probe":

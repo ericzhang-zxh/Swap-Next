@@ -90,6 +90,24 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(result["status"], "PROBE_PASS")
         self.assertEqual(result["probe_signals"]["swapin-disk"]["xswap.usage_pages"], [-3])
 
+    def test_revision6_zram64k_counters_are_integer_count_signals(self):
+        p = json.loads((BASE.parents[1] / "campaigns/xswap-tcg-kbench-2026-10-29/protocol.json").read_text())
+        for key in ("swap_ra", "swap_ra_hit", "pgmajfault"):
+            case, signal, direction = probe.validate_mechanism(
+                p, "swapin-zram-64k:swapin_vmstat_delta." + key + ":up")
+            self.assertEqual((case, signal, direction), ("swapin-zram-64k", "swapin_vmstat_delta." + key, "up"))
+        rows = {name: [{"swapin_vmstat_delta": {n: 10 for n in probe.VMSTAT},
+                        "swapin_xswap_snapshots": {"swapin_start": {n: 4 for n in ("grows", "shrinks", "usage_pages", "clusters_mapped")},
+                                                   "swapin_end": {n: 4 for n in ("grows", "shrinks", "usage_pages", "clusters_mapped")}},
+                        probe.METADATA: 0.2} for _ in range(3)]
+                for name in p["tiers"]["probe"]["cases"]}
+        cal = probe.calibrate(p, rows)
+        band = cal["bands"]["swapin-zram-64k"]["swapin_vmstat_delta.swap_ra"]
+        self.assertEqual((band["low"], band["high"]), (9, 11))
+        self.assertIsInstance(probe.signal({"swapin_vmstat_delta": {"swap_ra": 12}}, "swapin_vmstat_delta.swap_ra"), int)
+        with self.assertRaises(ValueError):
+            probe.signal({"swapin_vmstat_delta": {"swap_ra": 12.5}}, "swapin_vmstat_delta.swap_ra")
+
     def test_template_budget_is_planned_and_within_default_cap(self):
         self.assertTrue(self.p["template_only"])
         planned = self.p["planned_guest_counts"]

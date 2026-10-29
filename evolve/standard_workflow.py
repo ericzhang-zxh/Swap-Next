@@ -98,7 +98,8 @@ def probe_module():
 
 
 def child_env(protocol):
-    """Pin the revision 3 guest. A TCG protocol forces SWAP_NEXT_ACCEL=tcg."""
+    """Force the protocol accelerator. A TCG protocol sets SWAP_NEXT_ACCEL=tcg
+    and the protocol's vCPU and memory size, whatever the parent environment says."""
     guest = protocol.get("guest") if isinstance(protocol.get("guest"), dict) else {}
     require = (protocol.get("accelerator") or {}).get("require") if isinstance(protocol.get("accelerator"), dict) else None
     if not guest and require not in ("tcg", "kvm"):

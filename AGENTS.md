@@ -291,3 +291,24 @@ follow [Campaign lifecycle](#campaign-lifecycle) and go directly to `main`.
   A fast-tier pass under this file is a screen, not an acceptance.
 - TCG guest wall time per case: unmeasured. The protocol's `guest_timeout`
   (900 s) and `wall_seconds` (64800 s) are scaffold caps.
+
+### TCG kbench revision 6
+
+Prepared, not opened:
+[campaigns/xswap-tcg-kbench-2026-10-29/protocol.json](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json).
+Owner pre-approved 2026-10-29 01:36 PT. It is the TCG protocol on the kbench
+setup: QEMU TCG, 4 vCPU, 4096 MiB, 16 GiB swap, p90 envelope, 25% ceiling,
+median of at least 4 AB/BA pairs, advisory p99, and the revision 3 validity
+gates. The probe tier is mandatory (9-guest calibration: disk, zram-64k, brd
+metadata). Fast calibration is 40 guests (disk and zram-64k). Three rounds
+use the 71 guests left under the 120-guest cap. Swap-in and correctness are
+xswap on baseline build `kb-xs-desc-v1` (`5e84ca92`). That commit is not an
+ancestor of the `linux/` pin `744e5400`; the runner archives the requested
+commit from the linux object store and leaves HEAD on the pin. The build
+workload is excluded. `vm.page-cluster` stays at the kernel default 3. Open
+it on grok-cloud with `SWAP_NEXT_MACHINE=grok-cloud` and `SWAP_NEXT_ACCEL=tcg`;
+the protocol forces TCG and rejects any other accelerator. Rebuild the guest
+image there with `prepare-image.py` before the first guest. The baseline
+config is `benchmark/config/swap-standard.config` (`input_config_sha256` in
+the protocol), which sets `CONFIG_TRANSPARENT_HUGEPAGE` and `CONFIG_THP_SWAP`.
+No slow tier.

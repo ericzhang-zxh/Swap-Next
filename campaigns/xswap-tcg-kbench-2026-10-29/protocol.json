@@ -1,0 +1,316 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-tcg-kbench-2026-10-29",
+  "protocol_revision": 6,
+  "protocol_id": "swap-standard-xswap-tcg-kbench-revision6",
+  "approval": "Owner pre-approved 2026-10-29 01:36 PT: 我提前批准你的 tcg changes 你直接做就行",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_build": "kb-xs-desc-v1",
+  "max_probe_candidates": 3,
+  "max_candidates": 3,
+  "budget": {
+    "probe_guest_attempts": 24,
+    "guest_attempts": 96,
+    "build_attempts": 10,
+    "wall_seconds": 64800,
+    "guest_timeout": 900,
+    "note": "24 probe + 96 fast = 120, the default cap, and wall_seconds 64800 is 18 h. Probe calibration is 9 and fast calibration is 40, so 71 guests remain for three rounds. Each round is 20 guests (probe 3, fast 16, one xswap correctness proof). Three rounds are 60, and 11 remain for validity reruns. Counts are ceilings. Builds and guests run on grok-cloud."
+  },
+  "planned_guest_counts": {
+    "probe_calibration": 9,
+    "probe_candidate": 3,
+    "three_probe_candidates": 9,
+    "fast_calibration": 40,
+    "fast_candidate": 16,
+    "three_fast_candidates": 48,
+    "correctness_per_round": 1,
+    "three_correctness": 3,
+    "one_round": 20,
+    "three_rounds": 60,
+    "calibration_total": 49,
+    "remaining_after_calibration": 71,
+    "performance_and_correctness": 109,
+    "validity_spare": 11,
+    "probe_ceiling": 24,
+    "fast_ceiling": 96,
+    "total_ceiling": 120,
+    "arithmetic": "Probe calibration is 3 cases (swapin-disk, swapin-zram-64k, metadata-brd) x 3 runs = 9 guests. Each probe candidate is 3 guests. Fast calibration is 2 swap-in cases x 10 A/A pairs x 2 arms = 40 guests. Each fast candidate is 2 cases x 4 AB/BA pairs x 2 arms = 16 guests. One round is 3+16+1 = 20. Three rounds are 60. 9+40 leaves 71; 71-60 leaves 11 validity reruns. Correctness is one xswap disk or zswap guest per candidate, reserved on the fast pool, and that proof is reused for the fast screen. Fast evaluate refuses a candidate without an exact PROBE_PASS. A third latency case would make fast calibration 60 guests and three rounds would not fit."
+  },
+  "wall_estimate": {
+    "kvm_swapin_anchor_seconds": 34.5,
+    "kvm_anchor": "campaigns/swap-standard-2026-10-22/report/swap-standard-integration-2026-10-22/validation.json disk swap-in, 34.5 s, 8 vCPU KVM, pre-kbench",
+    "tcg_planning_factor": 10,
+    "tcg_planning_seconds_per_guest": 345,
+    "guest_timeout_seconds": 900,
+    "confidence": "low",
+    "first_pass_at_planning_factor_seconds": {
+      "probe_calibration": 3105,
+      "fast_calibration": 13800,
+      "one_round": 6900,
+      "three_rounds": 20700,
+      "calibrations_plus_three_rounds": 37605,
+      "validity_spare": 3795
+    },
+    "timeout_cap_seconds": {
+      "probe_calibration": 8100,
+      "fast_calibration": 36000,
+      "one_round": 18000,
+      "three_rounds": 54000,
+      "calibrations_plus_one_round": 62100,
+      "calibrations_plus_three_rounds": 98100
+    },
+    "note": "No TCG swap-in wall has been measured. 345 s is 10 times the published KVM anchor and is a planning choice, not a measurement. The 900 s guest_timeout is the hard cap. At that cap, probe calibration (2.25 h) plus fast calibration (10 h) plus one round (5 h) is 17.25 h and fits in 18 h; three rounds at the cap are 27.25 h and do not. At the 345 s planning factor, calibrations plus three rounds are 10.4 h. The first passing revision 6 swap-in wall_seconds replaces the factor."
+  },
+  "guest": {
+    "vcpus": 4,
+    "mem_mib": 4096,
+    "swap_gib": 16
+  },
+  "accelerator": {
+    "require": "tcg",
+    "qemu": [
+      "-accel",
+      "tcg,thread=multi,tb-size=256",
+      "-machine",
+      "pc",
+      "-cpu",
+      "max"
+    ],
+    "kvm_default": "run.py keeps KVM, 8 vCPU and 8192 MiB when SWAP_NEXT_ACCEL is unset. This revision's child environment sets SWAP_NEXT_ACCEL=tcg, SWAP_NEXT_TCG_SMP=4 and SWAP_NEXT_TCG_MEM_MIB=4096, and the workflow rejects any result whose accelerator is not tcg.",
+    "host_cpus": "This revision does not offline or online host CPUs."
+  },
+  "kbench_params": {
+    "SETTLE_SEC": "3",
+    "SWAPPINESS": "60",
+    "ZRAM_COMP": "lz4",
+    "ZRAM0_SIZE": "3200M",
+    "ZRAM1_SIZE": "20000M",
+    "ZRAM64K_SIZE": "8G",
+    "ZSWAP_COMP": "lzo",
+    "ZSWAP_ZPOOL": "zsmalloc",
+    "THP_SIZE": "2048kB",
+    "THP_SIZE_64K": "64kB",
+    "USEMEM_NPROC": "8",
+    "USEMEM_SIZE": "1G",
+    "USEMEM_MEMCG": "4G",
+    "BUILD_MEMCG": "470M",
+    "BUILD_JOBS": "32",
+    "BUILD_SETTLE_SEC": "10",
+    "REDIS_MEMCG": "1536M",
+    "REDIS_MAXMEMORY": "2560M",
+    "REDIS_KEYS": "3000000",
+    "REDIS_VALUE": "1024",
+    "SWAPIN_SIZE": "1G"
+  },
+  "backends": {
+    "disk": "16 GiB preallocated virtio raw swap file, cache=none. 2 MiB THP policy is set; swap-in opts out with MADV_NOHUGEPAGE.",
+    "zswap": "lzo/zsmalloc, shrinker enabled, backed by lz4 zram1 20000M. Guest cmdline sets zswap.enabled=1 and zswap.compressor=lzo.",
+    "zram": "lz4 zram0 3200M priority 100 and zram1 20000M priority 0. Not a scored case.",
+    "zram-64k": "lz4 zram0 8G, 64 KiB THP only. Not a scored case.",
+    "brd": "1 TiB brd (brd.rd_size=1073741824). Probe-only metadata case, plain mode, so SwapTotal is the brd device alone."
+  },
+  "page_cluster": {
+    "value": 3,
+    "source": "kernel default",
+    "guest": "bench.sh reads /proc/sys/vm/page-cluster, prints PAGE_CLUSTER, and fails unless the value is 3. It does not write the sysctl."
+  },
+  "baseline_lineage": {
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "build": "kb-xs-desc-v1",
+    "mode": "xswap",
+    "config": "benchmark/config/swap-standard.config with CONFIG_TRANSPARENT_HUGEPAGE and CONFIG_THP_SWAP",
+    "template_deviation": "revision4-protocol-template.json names plain baseline 744e5400 and build unbuilt-revision4-baseline. This revision does not use that baseline. Plain mode has no correctness route.",
+    "submodule_pin": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+    "ancestry": "The linux/ submodule pin and 5e84ca92 are not ancestry-related. 5e84ca92 is the xswap replay on 9a0542b1. linux/ HEAD stays at the pin because policy checkout_ref is that pin and trusted_control requires HEAD to match it. benchmark/kernel/build.py resolves --commit with git rev-parse and git archive inside the linux object store; it does not build HEAD. Candidate worktrees are added from that store at the baseline commit, so a candidate commit is archived by hash from the same store. The object 5e84ca92 must already be present on grok-cloud."
+  },
+  "kernel_config": {
+    "path": "benchmark/config/swap-standard.config",
+    "input_config_sha256": "c7a95cd1a937bb5268843511eadb672a31c0f40c717e85e519ebf3eb155f4417",
+    "required": [
+      "CONFIG_TRANSPARENT_HUGEPAGE=y",
+      "CONFIG_THP_SWAP=y",
+      "CONFIG_XSWAP=y"
+    ]
+  },
+  "input_config_sha256": "c7a95cd1a937bb5268843511eadb672a31c0f40c717e85e519ebf3eb155f4417",
+  "guest_image": {
+    "prepare": "python3 benchmark/swap-standard/prepare-image.py --src <pinned valkey and vm-scalability checkouts> --busybox-template <busybox rootfs>",
+    "provenance": "benchmark/swap-standard/image.json",
+    "where": "grok-cloud, before the first guest. image.json is local and gitignored. The fingerprint hashes it, so a guest launched from an image built before this kbench bench.sh and params.sh does not belong to this revision.",
+    "contains": "guest-init, bench.sh, params.sh, swapin, churn, correctness, console-drain, and the pinned linux source archive"
+  },
+  "cases": {
+    "swapin-disk": {
+      "workload": "swapin",
+      "backend": "disk",
+      "mode": "xswap",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns",
+      "probe_signals": [
+        "swapin_vmstat_delta.pswpin",
+        "swapin_vmstat_delta.zswpin",
+        "swapin_vmstat_delta.swap_ra",
+        "swapin_vmstat_delta.swap_ra_hit",
+        "swapin_vmstat_delta.pgmajfault",
+        "swapin_vmstat_delta.zswpwb",
+        "xswap.grows",
+        "xswap.shrinks",
+        "xswap.usage_pages",
+        "xswap.clusters_mapped"
+      ]
+    },
+    "swapin-zram-64k": {
+      "workload": "swapin",
+      "backend": "zram-64k",
+      "mode": "xswap",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns",
+      "guard": ["swapin_rand.mean_ns"],
+      "probe_signals": [
+        "swapin_vmstat_delta.pswpin",
+        "swapin_vmstat_delta.zswpin",
+        "swapin_vmstat_delta.swap_ra",
+        "swapin_vmstat_delta.swap_ra_hit",
+        "swapin_vmstat_delta.pgmajfault",
+        "swapin_vmstat_delta.zswpwb",
+        "xswap.grows",
+        "xswap.shrinks",
+        "xswap.usage_pages",
+        "xswap.clusters_mapped"
+      ]
+    },
+    "metadata-brd": {
+      "workload": "metadata",
+      "backend": "brd",
+      "mode": "plain",
+      "metrics": {
+        "metadata_delta_bytes_per_capacity_slot": "lower"
+      },
+      "primary": null,
+      "probe_signals": [
+        "metadata_delta_bytes_per_capacity_slot"
+      ]
+    }
+  },
+  "tiers": {
+    "probe": {
+      "kind": "probe",
+      "cases": [
+        "swapin-disk",
+        "swapin-zram-64k",
+        "metadata-brd"
+      ],
+      "calibration_runs": 3,
+      "candidate_runs": 1
+    },
+    "fast": {
+      "cases": [
+        "swapin-disk",
+        "swapin-zram-64k"
+      ],
+      "calibration_pairs": 10,
+      "comparison_pairs": 4
+    }
+  },
+  "probe_band": {
+    "relative_padding": 0.01,
+    "integer_padding_floor": 1,
+    "metadata_spread_fraction": 0.01
+  },
+  "order": "alternating AB then BA; same order in calibration",
+  "repetition": {
+    "swapin_passes": 1,
+    "discarded_warmups": 0,
+    "reclaim_attempts_max": 16,
+    "reclaim_target": "at least 90% of the 1 GiB region swapped",
+    "swapin_cgroup": "max",
+    "swapin_madvise": "MADV_NOHUGEPAGE",
+    "settle_on_swapin_path": false
+  },
+  "calibration_max_age_seconds": 86400,
+  "noise_floor": 0.03,
+  "noise_ceiling": 0.25,
+  "noise_envelope": "p90",
+  "comparison_decision": "median",
+  "advisory_metric_suffixes": [
+    ".p99_ns"
+  ],
+  "bootstrap_resamples": 10000,
+  "promotion": "human_review_only",
+  "preallocate_swap": true,
+  "validity": {
+    "clocksource_fallback": "invalid_and_rerun",
+    "pre_qemu_seconds_max": 60,
+    "wall_time_factor": 1.5,
+    "wall_median_min_samples": 3,
+    "reruns_per_arm": 2,
+    "host_load": "loadavg and PSI when /proc/pressure exists, stored on every attempt before launch and after exit"
+  },
+  "screen": "TCG-only xswap screen on the kbench guest setup. A fast pass is a screen, not an acceptance. Noise ceiling is 25%. Round-1 latency target is swapin-zram-64k.",
+  "excluded": {
+    "build": "kbench build OOMs in a 470M memcg on this tree: the 2026-10-27 KVM smoke killed objtool after about 17 min with anon-rss 465668 kB and 445 MiB already swapped. BUILD_MEMCG stays 470M and BUILD_JOBS stays 32. This revision does not score build. A full TCG kernel build also does not fit guest_timeout 900s. The parser already records build_system_usec when a build guest runs; this revision never launches one, so system time is not a result.",
+    "usemem-rand": "OOM and synchronization hang in the pre-kbench integration; not a case in this revision."
+  },
+  "build_oom": {
+    "choice": "exclude",
+    "memory_limit": "470M",
+    "jobs": 32,
+    "params_unchanged": true,
+    "evidence": "campaigns/kbench-smoke-2026-10-27/report/README.md",
+    "rejected_alternatives": {
+      "raise_memcg": "A limit that fits objtool abandons the kbench pressure point and still leaves a full kernel build, which does not finish inside guest_timeout under TCG.",
+      "reduce_jobs": "The killed task was objtool on vmlinux, which is not a -j fan-out. Reducing -j would also change the shared kbench parameter."
+    }
+  },
+  "blocked_commits": {
+    "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4": "Unresolved descriptor lifetime review; dependent experiment held",
+    "157c4a178c587add1d22f4b483629b49a6ff0eca": "Unresolved descriptor lifetime review; dependent experiment held",
+    "b674f0d1e90c5b158f0a31d4ea877c4876535c2a": "Unresolved descriptor lifetime review; dependent experiment held",
+    "8f02472031fb71b9791a5199872701c645afd276": "Unresolved descriptor lifetime review; dependent experiment held",
+    "615f839bb6653ffd56dbb66ebdc855dea0823d54": "Unresolved descriptor lifetime review; dependent experiment held"
+  },
+  "required_correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings"
+  ],
+  "purpose": "QEMU TCG screen for xswap on the kbench swap-standard setup. Revisions 1 through 5 stay frozen. This file prepares the campaign; it does not open it.",
+  "measurement_revision": "Noise envelope is the nearest-rank p90 of absolute pair ratios over at least 10 A/A pairs (the 9th of 10 ordered values). Scored ceiling is 25%. Metrics whose names end in .p99_ns are advisory. swapin_rand.mean_ns is a scored guard on the swap-in cases. Comparison is at least 4 AB/BA pairs per backend, judged on the median pair delta. The probe tier is mandatory: fast evaluate refuses a candidate without an exact PROBE_PASS. Probe signals swapin_vmstat_delta.swap_ra, swap_ra_hit and pgmajfault are integer count bands (padding at least 1). Probe calibration is 9 guests (disk, zram-64k, and brd metadata, three runs each). Fast calibration is 40 guests (10 A/A pairs on disk and zram-64k). The guest is 4 vCPU and 4096 MiB with a 16 GiB preallocated scratch swap image under -accel tcg,thread=multi,tb-size=256 -machine pc -cpu max. vm.page-cluster stays at the kernel default 3.",
+  "ceiling_justification": "The ceiling is 25%, the bottom of the 25-30% band used by revision 3 and the revision 4 template. Revision 2 TCG pair-median spreads were 4-10% and worst-pair tails were 19-28%. A 25% ceiling fails the tier as CALIBRATION_NOISY when the scored-mean p90 exceeds 25%, which stops candidate comparison until the measurement is cleaner. A 30% ceiling would accept noise as large as the effect the revision 3 screen was meant to resolve. There is no TCG kbench A/A yet; the first passing calibration's per-metric p90 is the observation that would support a later revision with a different ceiling. Confidence in applying the revision 3 split to this setup is medium.",
+  "mechanism_evidence": [
+    "swap_ra and swap_ra_hit deltas",
+    "zswpin/pswpin path counters",
+    "xswap grows, shrinks, usage_pages and clusters_mapped snapshots"
+  ],
+  "limitations": [
+    "Verdicts are TCG-only screens. This protocol has no KVM arm.",
+    "p99 latency is advisory.",
+    "The 25% ceiling is the gate. Calibration has to pass on a fresh revision 6 A/A before any candidate comparison.",
+    "The build workload is excluded. kbench's 470M memcg and -j32 stay unchanged in params.sh.",
+    "Swap-in uses MADV_NOHUGEPAGE, so the scored latency is base-page swap-in on the kbench backends. It is not a THP swap-in measurement.",
+    "Swap-in cases and correctness run in xswap mode on kb-xs-desc-v1. The kbench smoke cases on main are plain; this revision does not copy that mode. The brd metadata probe stays plain: its swap_capacity gate expects the brd SwapTotal delta alone, and xswap create adds a swap device.",
+    "The fast pair is swapin-disk and swapin-zram-64k, not the disk-plus-zswap pair. swapin-zswap is not a calibrated case. A third latency case would make fast calibration 60 guests, and three rounds would not fit in the 71 guests left after the 9-guest probe calibration and the 40-guest fast calibration. zswap remains a legal xswap correctness backend.",
+    "Round-1 mechanisms key swapin-zram-64k on swapin_vmstat_delta.swap_ra, swap_ra_hit and pgmajfault. Those counters are integer count signals. Primary is swapin_seq.mean_ns. swapin_rand.mean_ns is a guard.",
+    "The build workload stays excluded, so build_system_usec is not produced. THP swapout CPU is not a parsed metric. The closest CPU split the parser records is build_system_usec on a build guest, which this revision does not run. Swap-in uses MADV_NOHUGEPAGE, so the scored latency is base-page swap-in.",
+    "The baseline kernel is kb-xs-desc-v1 at 5e84ca92, built from benchmark/config/swap-standard.config with CONFIG_TRANSPARENT_HUGEPAGE and CONFIG_THP_SWAP. It is not the plain 744e5400 baseline named by the revision 4 template. The linux/ pin and this baseline are not ancestry-related; build.py archives the requested commit from the linux object store while HEAD stays on the pin. The guest image is rebuilt on grok-cloud with prepare-image.py so it contains this kbench bench.sh and params.sh.",
+    "vm.page-cluster is the kernel default 3. The guest records it and does not write it.",
+    "Guest wall time per swap-in is unmeasured. 345 s/guest is a planning factor. guest_timeout 900 and wall_seconds 64800 are the caps.",
+    "A pre-launch stall above 60 seconds invalidates the attempt. The wall-time gate starts after three prior valid wall times for that case.",
+    "Host load is recorded and is not itself a reject threshold.",
+    "No slow tier. eligible_for_slow in a fast result does not authorize a slow run.",
+    "Host CPUs are not offlined or onlined."
+  ],
+  "candidate_builds": {}
+}

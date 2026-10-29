@@ -237,6 +237,10 @@ run_swapin() {
 }
 
 echo "BENCH_PARAMS backend=$backend mode=$mode workload=$workload ncpu=$(nproc)"
+# Kernel default is 3 (8-page cluster). Record it. Do not write the sysctl.
+page_cluster=$(cat /proc/sys/vm/page-cluster)
+echo "PAGE_CLUSTER $page_cluster"
+[ "$page_cluster" = 3 ] || fail page_cluster
 echo PARAMS_BEGIN
 cat /opt/bench/params.sh
 echo PARAMS_END

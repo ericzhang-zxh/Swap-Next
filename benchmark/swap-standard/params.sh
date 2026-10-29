@@ -3,6 +3,8 @@
 # kbench scripts (kbench, kbench-setup-{zram,zram-64k,zswap}); the other
 # workloads keep their upstream-thread sizes for an 8-vCPU, 8-GiB guest.
 # Changing any value is a new protocol revision and needs fresh calibration.
+# vm.page-cluster is not a parameter here. The guest keeps the kernel
+# default of 3, prints PAGE_CLUSTER, and fails if that value is not 3.
 SETTLE_SEC=3
 SWAPPINESS=60
 
@@ -26,6 +28,9 @@ USEMEM_MEMCG=4G
 
 # kbench kernel build: extract outside the memcg, then defconfig and a full
 # "make -j32" inside a 470M memcg, after a 10 s settle.
+# TCG revision 6 excludes this workload. The 2026-10-27 smoke OOM-killed
+# objtool inside 470M, and a full TCG build does not fit the guest timeout.
+# These two values stay at the kbench settings.
 BUILD_MEMCG=470M
 BUILD_JOBS=32
 BUILD_SETTLE_SEC=10

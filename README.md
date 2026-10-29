@@ -44,10 +44,11 @@ as evaluators for the new suite.
 
 Kernel builds and guests run on a Linux KVM worker; see
 [benchmark/SETUP.md](benchmark/SETUP.md).
-Experiments launched by Grok Bot run on its cloud box under QEMU TCG (no KVM)
-as protocol revision 3
-([campaigns/xswap-tcg-rev3-2026-10-25/protocol.json](campaigns/xswap-tcg-rev3-2026-10-25/protocol.json));
+Experiments launched by Grok Bot run on its cloud box under QEMU TCG (no KVM).
+Revision 3 is closed. The prepared successor is revision 6
+([campaigns/xswap-tcg-kbench-2026-10-29/protocol.json](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json));
 see [AGENTS.md § Grok Bot runs](AGENTS.md#grok-bot-runs-cloud-box-qemu-tcg).
+It is not opened.
 
 ```sh
 python3 evolve/control/controller.py --campaign <c> open-campaign --line <line> --machine <machine>

@@ -3,9 +3,11 @@
 """Run one bounded integration measurement in KVM or TCG; never accept a candidate.
 
 KVM is the default and keeps 8 vCPU and 8192 MiB. SWAP_NEXT_ACCEL=tcg selects
-TCG, whose guests default to 4 vCPU and 4096 MiB (revision 3). This process
-records host load, pre-launch delay and clocksource fallback; the adapter
-applies the wall-time median gate and reruns invalid revision 3 attempts.
+TCG, whose guests default to 4 vCPU and 4096 MiB. A protocol with
+accelerator.require tcg forces that accelerator and rejects any other result.
+This process records host load, pre-launch delay and clocksource fallback.
+It does not offline or online host CPUs. A workload named in the protocol's
+excluded map is refused before a guest is reserved or launched.
 """
 import argparse
 import datetime
@@ -60,9 +62,26 @@ def create_swap_image(path, preallocate=False, size=SWAP_BYTES):
         raise
 
 
+def excluded_workload_reason(protocol, workload):
+    """Return the protocol's reason for refusing this workload, or None."""
+    if not isinstance(protocol, dict):
+        raise ValueError("protocol")
+    excluded = protocol.get("excluded", {})
+    if excluded is None:
+        return None
+    if not isinstance(excluded, dict):
+        raise ValueError("excluded")
+    if workload not in excluded:
+        return None
+    reason = excluded[workload]
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValueError("excluded workload needs a reason")
+    return reason
+
+
 def guest_shape(env):
     """KVM is the default. Grok Bot's cloud box must set SWAP_NEXT_ACCEL=tcg,
-    because starting KVM there crashes its host."""
+    because starting KVM there crashes its host. Host CPUs stay online."""
     accel_name = env.get("SWAP_NEXT_ACCEL", "kvm")
     if accel_name not in ("tcg", "kvm"):
         raise ValueError("SWAP_NEXT_ACCEL must be tcg or kvm")
@@ -276,6 +295,10 @@ def main():
             guest = frozen.get("guest", {})
             if guest and (guest.get("mem_mib") != memory or guest.get("vcpus") != int(cpus)):
                 raise campaign_store.CampaignError("runner guest size does not match protocol")
+            reason = excluded_workload_reason(frozen, args.workload)
+            if reason:
+                raise campaign_store.CampaignError(
+                    "workload excluded by protocol: " + args.workload + ": " + reason)
             guest_budget.consume_guest(args.campaign, args.run_id, args.reservation,
                                        {key: getattr(args, key) for key in guest_budget.IDENTITY_KEYS})
         except (campaign_store.CampaignError, OSError, ValueError) as exc:

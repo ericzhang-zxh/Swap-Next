@@ -615,5 +615,56 @@ class ProbeWorkflowTests(unittest.TestCase):
         self.assertEqual(w.read(w.EVALUATIONS / row["id"] / "report.json")["status"], "INCOMPLETE")
 
 
+class Revision6WorkflowTests(unittest.TestCase):
+    def setUp(self):
+        self.real = w.read(REPO / "campaigns/xswap-tcg-kbench-2026-10-29/protocol.json")
+        self.p = json.loads(json.dumps(self.real))
+        self.p["campaign"] = "tcg-kbench-unit"
+        campaign_tree(self, self.p)
+        record = json.loads((self.campaign / "campaign.json").read_text())
+        record["budget"] = {"guest_attempts": self.p["budget"]["guest_attempts"],
+                            "wall_seconds": self.p["budget"]["wall_seconds"],
+                            "probe_guest_attempts": self.p["budget"]["probe_guest_attempts"],
+                            "approved_over_cap": None}
+        w.save(self.campaign / "campaign.json", record)
+
+    def test_contract_and_child_env_force_tcg(self):
+        self.assertEqual(w.contract_errors(self.real), [])
+        self.assertNotIn(self.real["campaign"], w.CONTRACT_EXEMPT)
+        self.assertFalse((REPO / "campaigns/xswap-tcg-kbench-2026-10-29/campaign.json").exists())
+        with patch.dict("os.environ", {"SWAP_NEXT_ACCEL": "kvm"}, clear=False):
+            env = w.child_env(self.real)
+        self.assertEqual(env["SWAP_NEXT_ACCEL"], "tcg")
+        self.assertEqual(env["SWAP_NEXT_TCG_SMP"], "4")
+        self.assertEqual(env["SWAP_NEXT_TCG_MEM_MIB"], "4096")
+        self.assertIn("--preallocate-swap", w.runner_extra(self.real))
+        self.assertEqual(w.runner_extra(self.real)[w.runner_extra(self.real).index("--protocol-revision") + 1], "6")
+
+    def test_kvm_accelerator_result_is_rejected(self):
+        flow = w.Workflow(self.p)
+
+        def fake_command(command, logfile, timeout, accept_failure=False, env=None):
+            self.assertEqual(env["SWAP_NEXT_ACCEL"], "tcg")
+            run_id = command[command.index("--run-id") + 1]
+            dest = self.campaign / "runs/guests" / run_id
+            dest.mkdir(parents=True)
+            (dest / "result.json").write_text(json.dumps({
+                "run_id": run_id, "source_commit": self.p["baseline_commit"], "integration_pass": True,
+                "swap_image_allocation": "preallocated", "clocksource_invalid": False,
+                "pre_qemu_seconds": 1.0, "wall_seconds": 100.0,
+                "host_load": {"before_launch": {"loadavg_1m": 0.2, "loadavg_5m": 0.2, "loadavg_15m": 0.2}},
+                "metrics": {}, "guest_mem_mib": 4096, "guest_vcpus": 4, "accelerator": "kvm"}))
+            logfile.write_text("mocked\n")
+            return 0
+
+        with patch.dict("os.environ", {"SWAP_NEXT_ACCEL": "kvm"}, clear=False), \
+             patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(flow, "command", side_effect=fake_command):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["status"], "INCOMPLETE")
+        self.assertIn("accelerator does not match protocol", row["reason"])
+        self.assertEqual(row["protocol_revision"], 6)
+
+
 if __name__ == "__main__":
     unittest.main()
