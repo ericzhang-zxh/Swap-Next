@@ -54,6 +54,43 @@ def report(directory):
     return None
 
 
+def void_rows(project, campaign):
+    """Void receipts from the campaign ledger. Missing ledger means none."""
+    path = Path(project) / "campaigns" / campaign / "ledger" / "ledger.json"
+    if not path.is_file():
+        return []
+    try:
+        rows = json.loads(path.read_text())
+    except ValueError as exc:
+        raise store.CampaignError(f"unreadable ledger for {campaign}: {exc}") from exc
+    if not isinstance(rows, list):
+        raise store.CampaignError(f"ledger for {campaign} is not a list")
+    found = []
+    for row in rows:
+        if not isinstance(row, dict) or row.get("action") != "void-calibration":
+            continue
+        for key in ("id", "attempt_id", "tier", "reason", "guests"):
+            if key not in row:
+                raise store.CampaignError(f"void receipt {row.get('id')!r} missing {key}")
+        guests = row["guests"]
+        named = isinstance(guests, list) and all(isinstance(guest, dict) and isinstance(guest.get("id"), str) and guest["id"] for guest in guests)
+        if not named:
+            raise store.CampaignError(f"void receipt {row.get('id')!r} guests must name an id")
+        found.append(row)
+    return found
+
+
+def _void_section(rows):
+    lines = ["Voided calibration attempts:", "",
+             "| Attempt | Tier | Receipt | Guests | Reason |",
+             "| --- | --- | --- | --- | --- |"]
+    for row in rows:
+        guests = ", ".join(f"{guest.get('id')} {guest.get('status')}" for guest in row["guests"]) or None
+        fields = [row["attempt_id"], row["tier"], row["id"], guests, row["reason"]]
+        lines.append("| " + " | ".join(cell(value) for value in fields) + " |")
+    return lines
+
+
 def render(project=None):
     """Return relative output filenames and complete contents; write nothing."""
     project = Path(project or PROJECT).resolve()
@@ -112,6 +149,9 @@ def render(project=None):
             for cid, candidate in sorted(candidates[name].items()):
                 fields = [f"[{cid}](../{name}/candidates/{cid}.json)", candidate.get("status", "unknown"), candidate.get("reason", "—")]
                 text.append("| " + " | ".join(cell(v) for v in fields) + " |")
+            voids = void_rows(project, name)
+            if voids:
+                text += ["", *_void_section(voids)]
             text += [""]
         latest = history[-1]
         text += [f"Current baseline: {baselines[latest['campaign']] or 'unknown'} ({latest['campaign']})"]

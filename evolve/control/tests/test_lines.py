@@ -75,6 +75,33 @@ class LineIndexTests(unittest.TestCase):
             lines.generate(self.root)
         self.assertEqual((self.root / "campaigns/README.md").read_bytes(), before)
 
+    def test_line_index_lists_voided_calibration_attempts(self):
+        attempt = "16fe9d24" + "ab" * 12
+        receipt = "cd" * 16
+        self.put(f"campaigns/first/ledger/ledger.json", [
+            {"id": attempt, "action": "calibrate", "tier": "fast", "status": "INCOMPLETE"},
+            {"schema_version": 1, "id": receipt, "action": "void-calibration", "tier": "fast",
+             "status": "VOIDED", "attempt_id": attempt, "reason": "False watchdog STOP",
+             "guests": [{"id": attempt + "-guest", "status": "PASS"}]},
+        ])
+        history = lines.render(self.root)["campaigns/lines/xswap.md"]
+        self.assertLess(history.index("Voided calibration attempts:"), history.index("## second"))
+        self.assertIn(attempt, history)
+        self.assertIn(receipt, history)
+        self.assertIn(attempt + "-guest PASS", history)
+        self.assertIn("False watchdog STOP", history)
+        self.assertEqual(history.count("Voided calibration attempts:"), 1)
+
+    def test_broken_void_receipt_does_not_rewrite_indexes(self):
+        lines.generate(self.root)
+        before = (self.root / "campaigns/lines/xswap.md").read_bytes()
+        self.put("campaigns/first/ledger/ledger.json", [
+            {"id": "ab" * 16, "action": "void-calibration", "status": "VOIDED"},
+        ])
+        with self.assertRaises(lines.store.CampaignError):
+            lines.generate(self.root)
+        self.assertEqual((self.root / "campaigns/lines/xswap.md").read_bytes(), before)
+
     def test_unassigned_and_noncampaign_directories_are_ignored(self):
         self.put("campaigns/_unassigned/patches/one.patch", "patch\n")
         self.put("campaigns/lines/old.md", "kept until explicit cleanup\n")
