@@ -666,5 +666,22 @@ class Revision6WorkflowTests(unittest.TestCase):
         self.assertEqual(row["protocol_revision"], 6)
 
 
+class Revision7ContractTests(unittest.TestCase):
+    def test_contract_forces_tcg_and_keeps_metadata_gating(self):
+        protocol = w.read(REPO / "campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json")
+        self.assertEqual(w.contract_errors(protocol), [])
+        self.assertNotIn(protocol["campaign"], w.CONTRACT_EXEMPT)
+        self.assertFalse((REPO / "campaigns/xswap-tcg-kbench-rev7-2026-10-29/campaign.json").exists())
+        with patch.dict("os.environ", {"SWAP_NEXT_ACCEL": "kvm"}, clear=False):
+            env = w.child_env(protocol)
+        self.assertEqual(env["SWAP_NEXT_ACCEL"], "tcg")
+        self.assertEqual(env["SWAP_NEXT_TCG_SMP"], "4")
+        self.assertEqual(env["SWAP_NEXT_TCG_MEM_MIB"], "4096")
+        extra = w.runner_extra(protocol)
+        self.assertEqual(extra[extra.index("--protocol-revision") + 1], "7")
+        self.assertIn("metadata-brd", protocol["tiers"]["probe"]["cases"])
+        self.assertEqual(protocol["cases"]["metadata-brd"]["metrics"][w.METADATA_METRIC], "lower")
+
+
 if __name__ == "__main__":
     unittest.main()

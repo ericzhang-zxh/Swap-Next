@@ -121,6 +121,14 @@ of the 120-guest cap. The `build` workload stays at `BUILD_MEMCG=470M` and
 Rebuild the guest image with `prepare-image.py` on grok-cloud before the
 first guest. The baseline config hash is the protocol's `input_config_sha256`.
 
+## TCG kbench revision 7
+
+[campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json](../../campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json)
+is proposed and not opened. It keeps the revision 6 guest, swap-in cases,
+1% metadata spread and 25% latency ceiling. `metadata-brd` scores
+`SUnreclaim + VmallocUsed + PageTables + Percpu` instead of `-ΔMemAvailable`.
+`bench.sh` already records those fields, so the guest image does not change.
+
 ## Evidence
 
 The runner binds source/config/image identity, complete output, intended
@@ -144,8 +152,10 @@ Pure unit and lifecycle fixtures start no guests.
   file, `make -j16 vmlinux` in 3G) are not comparable with the kbench setup.
 - Memory-pressure workloads use memcg limits. Global-pressure coverage
   requires a separately frozen configuration.
-- The metadata delta includes VM noise and measures swapon-time allocation;
-  it is not total runtime metadata or a proven bytes-per-live-slot measure.
+- `metadata` measures swapon-time allocation per configured capacity slot.
+  Revision 7 scores `SUnreclaim`, `VmallocUsed`, `PageTables` and `Percpu`.
+  Earlier revisions score `-ΔMemAvailable`, which follows free-memory noise.
+  Neither ratio is bytes per occupied slot.
 - Valkey GET includes misses because random SET does not fill every possible
   key. BGSAVE can finish during GET; the interval includes overlap but is not
   guaranteed to be entirely concurrent.
