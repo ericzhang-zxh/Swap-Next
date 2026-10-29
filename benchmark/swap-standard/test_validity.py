@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
-"""Guest-free validity and revision 3 protocol tests."""
+"""Guest-free validity and revision protocol tests."""
 import json
 from pathlib import Path
 import tempfile
@@ -16,6 +16,21 @@ def tcg_revision3_protocol():
     """Falls back to the pre-migration path until campaigns/ holds the protocol."""
     new = ROOT / "campaigns/xswap-tcg-rev3-2026-10-25/protocol.json"
     return new if new.exists() else ROOT / "benchmark/swap-standard/protocol-tcg-revision3.json"
+
+
+def tcg_revision6_protocol():
+    return json.loads((ROOT / "campaigns/xswap-tcg-kbench-2026-10-29/protocol.json").read_text())
+
+
+def parse_params(text):
+    values = {}
+    for line in text.splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key] = value
+    return values
 RULES = {"pre_qemu_seconds_max": 60, "wall_factor": 1.5, "wall_min_samples": 3}
 
 
@@ -32,9 +47,10 @@ class ValidityTests(unittest.TestCase):
         self.assertFalse(clocksource_invalid("clocksource: Switched to clocksource tsc"))
         self.assertFalse(clocksource_invalid("Linux version test"))
 
-    def test_pre_launch_stall_blocks_only_revision_3(self):
+    def test_pre_launch_stall_blocks_from_revision_3(self):
         self.assertFalse(launch_blocked(3, 60))
         self.assertTrue(launch_blocked(3, 60.01))
+        self.assertTrue(launch_blocked(6, 60.01))
         self.assertFalse(launch_blocked(2, 120))
 
     def test_wall_gate_waits_for_three_samples_and_uses_a_strict_factor(self):
@@ -96,6 +112,114 @@ class ValidityTests(unittest.TestCase):
         p["accelerator"]["require"] = "tcg"
         with self.assertRaisesRegex(ValueError, "requires KVM"):
             protocol_rules(p)
+
+    def test_revision6_tcg_kbench_shape_excludes_build_and_is_not_opened(self):
+        protocol = tcg_revision6_protocol()
+        campaign = ROOT / "campaigns/xswap-tcg-kbench-2026-10-29"
+        self.assertFalse((campaign / "campaign.json").exists())
+        self.assertFalse((campaign / "ledger").exists())
+        policy = json.loads((campaign / "policy.json").read_text())
+        base = json.loads((ROOT / "evolve/control/config/policy.json").read_text())
+        self.assertEqual(protocol["campaign"], campaign.name)
+        self.assertEqual(protocol["baseline_commit"], policy["seed_ref"])
+        self.assertLessEqual(set(policy["allowed_modify"]), set(base["allowed_modify"]))
+        self.assertNotIn("mm/memory.c", policy["allowed_modify"])
+        self.assertEqual(len(policy["allowed_modify"]), 8)
+        self.assertLessEqual(set(policy["allowed_add"]), set(base["allowed_add"]))
+        budget = protocol["budget"]
+        self.assertLessEqual(budget["probe_guest_attempts"] + budget["guest_attempts"], 120)
+        self.assertLessEqual(budget["wall_seconds"], 64800)
+        self.assertGreaterEqual(policy["budget"]["max_candidates"], protocol["max_probe_candidates"])
+        rules = protocol_rules(protocol)
+        self.assertEqual(rules["protocol_revision"], 6)
+        self.assertEqual(rules["noise_ceiling"], 0.25)
+        self.assertEqual(rules["envelope"], "p90")
+        self.assertEqual(rules["decision"], "median")
+        self.assertEqual(rules["advisory_suffixes"], (".p99_ns",))
+        self.assertEqual(rules["max_reruns"], 2)
+        self.assertEqual(protocol["guest"], {"vcpus": 4, "mem_mib": 4096, "swap_gib": 16})
+        self.assertEqual(protocol["accelerator"]["require"], "tcg")
+        self.assertEqual(protocol["tiers"]["probe"]["calibration_runs"], 3)
+        self.assertEqual(protocol["tiers"]["probe"]["candidate_runs"], 1)
+        self.assertEqual(protocol["tiers"]["fast"]["calibration_pairs"], 10)
+        self.assertEqual(protocol["tiers"]["fast"]["comparison_pairs"], 4)
+        self.assertNotIn("slow", protocol["tiers"])
+        self.assertNotIn("template_only", protocol)
+        self.assertEqual(protocol["build_oom"]["choice"], "exclude")
+        self.assertTrue(protocol["build_oom"]["params_unchanged"])
+        planned = protocol["planned_guest_counts"]
+        self.assertEqual(planned["probe_calibration"] + planned["three_probe_candidates"]
+                         + planned["fast_calibration"] + planned["three_fast_candidates"]
+                         + planned["three_correctness"],
+                         planned["performance_and_correctness"])
+        self.assertEqual(planned["performance_and_correctness"] + planned["validity_spare"],
+                         planned["total_ceiling"])
+        self.assertEqual(planned["calibration_total"] + planned["three_rounds"],
+                         planned["performance_and_correctness"])
+        self.assertEqual(planned["remaining_after_calibration"], 71)
+        self.assertEqual(planned["one_round"],
+                         planned["probe_candidate"] + planned["fast_candidate"] + planned["correctness_per_round"])
+        self.assertEqual(planned["total_ceiling"], 120)
+        self.assertEqual(protocol["baseline_build"], "kb-xs-desc-v1")
+        self.assertEqual(protocol["page_cluster"]["value"], 3)
+        factor = protocol["wall_estimate"]["tcg_planning_seconds_per_guest"]
+        wall = protocol["wall_estimate"]["first_pass_at_planning_factor_seconds"]
+        self.assertEqual(planned["probe_calibration"], 9)
+        self.assertEqual(planned["fast_calibration"], 40)
+        self.assertEqual(wall["probe_calibration"], planned["probe_calibration"] * factor)
+        self.assertEqual(wall["fast_calibration"], planned["fast_calibration"] * factor)
+        self.assertEqual(wall["one_round"], planned["one_round"] * factor)
+        self.assertEqual(wall["three_rounds"], planned["three_rounds"] * factor)
+        self.assertEqual(wall["calibrations_plus_three_rounds"],
+                         (planned["calibration_total"] + planned["three_rounds"]) * factor)
+        cap = protocol["wall_estimate"]["timeout_cap_seconds"]
+        self.assertEqual(cap["calibrations_plus_one_round"],
+                         (planned["calibration_total"] + planned["one_round"]) * 900)
+        import hashlib
+        config = ROOT / "benchmark/config/swap-standard.config"
+        text = config.read_text().splitlines()
+        self.assertIn("CONFIG_TRANSPARENT_HUGEPAGE=y", text)
+        self.assertIn("CONFIG_THP_SWAP=y", text)
+        self.assertEqual(protocol["input_config_sha256"], hashlib.sha256(config.read_bytes()).hexdigest())
+        self.assertEqual(protocol["kernel_config"]["input_config_sha256"], protocol["input_config_sha256"])
+        self.assertEqual(protocol["cases"]["swapin-disk"]["mode"], "xswap")
+        self.assertEqual(protocol["cases"]["swapin-zram-64k"]["mode"], "xswap")
+        self.assertEqual(protocol["cases"]["swapin-zram-64k"]["primary"], "swapin_seq.mean_ns")
+        self.assertEqual(protocol["cases"]["swapin-zram-64k"]["metrics"]["swapin_rand.mean_ns"], "lower")
+        self.assertEqual(protocol["cases"]["metadata-brd"]["mode"], "plain")
+        self.assertNotIn("swapin-zswap", protocol["cases"])
+        self.assertEqual(protocol["tiers"]["probe"]["cases"],
+                         ["swapin-disk", "swapin-zram-64k", "metadata-brd"])
+        self.assertEqual(protocol["tiers"]["fast"]["cases"],
+                         ["swapin-disk", "swapin-zram-64k"])
+        bench = (ROOT / "benchmark/swap-standard/bench.sh").read_text()
+        self.assertIn('page_cluster=$(cat /proc/sys/vm/page-cluster)', bench)
+        self.assertIn('echo "PAGE_CLUSTER $page_cluster"', bench)
+        self.assertIn('[ "$page_cluster" = 3 ] || fail page_cluster', bench)
+        self.assertNotRegex(bench, r">\s*/proc/sys/vm/page-cluster")
+        params = parse_params((ROOT / "benchmark/swap-standard/params.sh").read_text())
+        for key, value in protocol["kbench_params"].items():
+            self.assertEqual(params[key], value, key)
+        self.assertEqual(params["BUILD_MEMCG"], "470M")
+        self.assertEqual(params["BUILD_JOBS"], "32")
+        rev5 = json.loads(json.dumps(protocol))
+        rev5["protocol_revision"] = 5
+        with self.assertRaisesRegex(ValueError, "unapproved protocol revision"):
+            protocol_rules(rev5)
+        wider = json.loads(json.dumps(protocol))
+        wider["noise_ceiling"] = 0.30
+        with self.assertRaisesRegex(ValueError, "25%"):
+            protocol_rules(wider)
+        kvm = json.loads(json.dumps(protocol))
+        kvm["accelerator"]["require"] = "kvm"
+        with self.assertRaisesRegex(ValueError, "requires TCG"):
+            protocol_rules(kvm)
+        built = json.loads(json.dumps(protocol))
+        built["cases"]["build-zram"] = {"workload": "build", "backend": "zram", "mode": "xswap",
+                                         "metrics": {"build_real_usec": "lower"}, "primary": None}
+        built["tiers"]["fast"]["cases"].append("build-zram")
+        with self.assertRaisesRegex(ValueError, "build"):
+            protocol_rules(built)
 
     @unittest.skipUnless((NEXT_REPORT / "protocol-revision1.json").exists(), "before migration")
     def test_revision1_and_2_protocol_shape(self):

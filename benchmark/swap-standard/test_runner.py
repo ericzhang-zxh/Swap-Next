@@ -2,6 +2,7 @@
 """Runner validation tests; no guest launches."""
 import argparse
 from types import SimpleNamespace
+import json
 import re
 import subprocess
 import shlex
@@ -222,6 +223,72 @@ class RunnerValidationTests(unittest.TestCase):
             runner.has_lifetime_fix("0" * 40)
         self.assertFalse(runner.needs_lifetime_fix("plain", "swapin"))
         self.assertFalse(runner.needs_lifetime_fix("xswap", "lifetime"))
+
+    def test_runner_does_not_offline_host_cpus(self):
+        text = (BASE / "run.py").read_text() + (BASE / "bench.sh").read_text()
+        self.assertNotIn("/sys/devices/system/cpu", text)
+
+    def test_revision6_matches_tcg_qemu_and_excludes_build(self):
+        protocol = json.loads((runner.PROJECT / "campaigns/xswap-tcg-kbench-2026-10-29/protocol.json").read_text())
+        tcg, mem, cpus, accel = runner.guest_shape({"SWAP_NEXT_ACCEL": "tcg"})
+        self.assertTrue(tcg)
+        self.assertEqual(protocol["accelerator"]["qemu"], accel)
+        self.assertEqual((protocol["guest"]["mem_mib"], str(protocol["guest"]["vcpus"])), (mem, cpus))
+        self.assertIn("470M", runner.excluded_workload_reason(protocol, "build"))
+        self.assertIsNone(runner.excluded_workload_reason(protocol, "swapin"))
+        self.assertIn("-enable-kvm", runner.guest_shape({})[3])
+
+    def _execution_argv(self, workload):
+        return ["run.py", "--build", "b", "--backend", "disk", "--mode", "plain",
+                "--preallocate-swap", "--workload", workload, "--campaign", "demo",
+                "--run-id", "run-1", "--reservation", "/tmp/ticket.json",
+                "--protocol-revision", "6"]
+
+    def _frozen(self, require="tcg"):
+        protocol = json.loads((runner.PROJECT / "campaigns/xswap-tcg-kbench-2026-10-29/protocol.json").read_text())
+        protocol["accelerator"]["require"] = require
+        return protocol
+
+    def test_excluded_build_is_refused_before_reservation_or_qemu(self):
+        argv = self._execution_argv("build")
+        with patch.object(sys, "argv", argv), patch.object(runner.os, "geteuid", return_value=1000), \
+             patch.dict(runner.os.environ, {"SWAP_NEXT_ACCEL": "tcg"}, clear=False), \
+             patch.object(runner, "execution_campaign", return_value="demo"), \
+             patch.object(runner.guest_budget, "protocol", return_value=self._frozen()), \
+             patch.object(runner.guest_budget, "consume_guest") as consume, \
+             patch.object(runner.subprocess, "Popen") as launch, \
+             patch.object(runner, "validate") as validate:
+            with self.assertRaisesRegex(SystemExit, "workload excluded by protocol: build"):
+                runner.main()
+            consume.assert_not_called()
+            launch.assert_not_called()
+            validate.assert_not_called()
+
+    def test_kvm_result_cannot_satisfy_a_tcg_protocol(self):
+        argv = self._execution_argv("swapin")
+        with patch.object(sys, "argv", argv), patch.object(runner.os, "geteuid", return_value=1000), \
+             patch.dict(runner.os.environ, {"SWAP_NEXT_ACCEL": "kvm"}, clear=False), \
+             patch.object(runner, "execution_campaign", return_value="demo"), \
+             patch.object(runner.guest_budget, "protocol", return_value=self._frozen()), \
+             patch.object(runner.guest_budget, "consume_guest") as consume, \
+             patch.object(runner.subprocess, "Popen") as launch:
+            with self.assertRaisesRegex(SystemExit, "accelerator does not match protocol"):
+                runner.main()
+            consume.assert_not_called()
+            launch.assert_not_called()
+
+    def test_swapin_passes_the_exclusion_check(self):
+        argv = self._execution_argv("swapin")
+        with patch.object(sys, "argv", argv), patch.object(runner.os, "geteuid", return_value=1000), \
+             patch.dict(runner.os.environ, {"SWAP_NEXT_ACCEL": "tcg"}, clear=False), \
+             patch.object(runner, "execution_campaign", return_value="demo"), \
+             patch.object(runner.guest_budget, "protocol", return_value=self._frozen()), \
+             patch.object(runner.guest_budget, "consume_guest",
+                          side_effect=runner.campaign_store.CampaignError("reached-consume")), \
+             patch.object(runner.subprocess, "Popen") as launch:
+            with self.assertRaisesRegex(SystemExit, "reached-consume"):
+                runner.main()
+            launch.assert_not_called()
 
 
 if __name__ == "__main__":

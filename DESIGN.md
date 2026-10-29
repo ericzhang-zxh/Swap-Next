@@ -30,8 +30,9 @@ a frozen campaign protocol is recorded in that campaign's report. The default
 matrix is not itself a calibrated candidate campaign;
 [xswap-next-2026-10-24](campaigns/xswap-next-2026-10-24/report/REPORT.md) froze a
 narrower swap-in protocol and recorded both a noisy sparse-image A/A and a
-passing preallocated A/A. QEMU TCG screening uses
-[protocol revision 3](campaigns/xswap-tcg-rev3-2026-10-25/protocol.json).
+passing preallocated A/A. QEMU TCG revision 3 is closed. The prepared kbench
+successor is [protocol revision 6](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json).
+It is not opened.
 
 ## Upstream landscape
 
@@ -145,3 +146,14 @@ requires xswap interfaces, so plain-mode full correctness remains an explicit
 runtime capability gap. No plain proof is inferred from an xswap-only run.
 Framework validation uses guest-free end-to-end tests; real calibration and
 performance evaluation are separate authorized work.
+
+## TCG kbench revision 6
+
+[The revision 6 protocol](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json)
+is the TCG measurement on the kbench setup. It is prepared and not opened.
+Swap-in and correctness run in xswap mode on `kb-xs-desc-v1` (`5e84ca92`),
+not the plain `744e5400` baseline in the revision 4 template. The probe tier
+adds a plain brd metadata guest because that gate expects the brd device
+alone. Fast screening is disk and zram-64k swap-in. The build workload is
+excluded. `vm.page-cluster` stays at the kernel default 3. Builds, the guest
+image, and guests run on grok-cloud. The parameter table lives in the protocol.

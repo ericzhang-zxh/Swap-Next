@@ -108,6 +108,19 @@ requires xswap interfaces and cannot certify plain mode. A future plain
 correctness adapter must provide exact source/mode/backend/config evidence;
 no xswap-only proof stands in for it. No real revision 4 run is claimed.
 
+## TCG kbench revision 6
+
+[campaigns/xswap-tcg-kbench-2026-10-29/protocol.json](../../campaigns/xswap-tcg-kbench-2026-10-29/protocol.json)
+is prepared and not opened. It keeps this kbench `params.sh` and runs on
+grok-cloud under QEMU TCG, 4 vCPU and 4 GiB. Swap-in and correctness are
+xswap on baseline build `kb-xs-desc-v1` (`5e84ca92`). Probe calibration is
+9 guests (disk, zram-64k, plain brd metadata). Fast calibration is 40 guests
+(10 A/A pairs on disk and zram-64k). Three rounds fit in the 71 guests left
+of the 120-guest cap. The `build` workload stays at `BUILD_MEMCG=470M` and
+`-j32` and is excluded. `vm.page-cluster` stays at the kernel default 3.
+Rebuild the guest image with `prepare-image.py` on grok-cloud before the
+first guest. The baseline config hash is the protocol's `input_config_sha256`.
+
 ## Evidence
 
 The runner binds source/config/image identity, complete output, intended

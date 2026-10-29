@@ -27,6 +27,8 @@ Probe/fast execution follows the frozen campaign protocol and counted guest
 reservations. The slow tier needs explicit owner approval per run. Formal
 acceptance and code promotion remain human decisions. The revision 4 template
 is preparation only; see [runtime readiness](../DESIGN.md#revision-4-readiness).
+TCG kbench revision 6 is prepared and not opened; see
+[its protocol](../campaigns/xswap-tcg-kbench-2026-10-29/protocol.json).
 
 Use the [closed-loop workflow](../.agents/skills/closed-loop-evolve/SKILL.md)
 and its [repository binding](../.agents/skills/closed-loop-evolve/references/swap-next.md).
