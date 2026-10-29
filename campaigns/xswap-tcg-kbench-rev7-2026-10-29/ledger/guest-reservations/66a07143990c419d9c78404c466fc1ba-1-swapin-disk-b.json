@@ -1,0 +1,15 @@
+{
+  "id": "66a07143990c419d9c78404c466fc1ba-1-swapin-disk-b",
+  "campaign": "xswap-tcg-kbench-rev7-2026-10-29",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793307826.0150375,
+  "identity": {
+    "build": "std-b69e47c9118b",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "a058b8f55589b822ef7e1380e369abf1429099515d85414b8704987db4a2f4bd",
+  "started_unix": 1793307826.0643766
+}

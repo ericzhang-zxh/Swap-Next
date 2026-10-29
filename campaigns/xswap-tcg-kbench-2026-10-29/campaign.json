@@ -1,0 +1,24 @@
+{
+  "campaign": "xswap-tcg-kbench-2026-10-29",
+  "status": "closed",
+  "line": "xswap",
+  "baseline_from": {
+    "campaign": "xswap-p123-2026-10-23",
+    "candidate": "xs-desc-lifetime-v1",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "evidence": {
+      "kind": "correctness_fix",
+      "report": "campaigns/xswap-swapin-2026-10-23/report/lifetime-review.md"
+    }
+  },
+  "machine": "grok-cloud",
+  "opened": "2026-10-29",
+  "closed": "2026-10-29",
+  "line_anchor_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "budget": {
+    "guest_attempts": 96,
+    "wall_seconds": 64800,
+    "probe_guest_attempts": 24,
+    "approved_over_cap": null
+  }
+}

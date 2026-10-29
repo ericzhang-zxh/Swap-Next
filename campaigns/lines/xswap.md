@@ -176,4 +176,17 @@ Origin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime
 | Candidate | Status | Reason |
 | --- | --- | --- |
 
-Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (kbench-smoke-2026-10-27)
+## xswap-tcg-kbench-2026-10-29
+
+Status: closed; machine: grok-cloud; opened: 2026-10-29; closed: 2026-10-29.
+
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Baseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Origin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).
+
+| Candidate | Status | Reason |
+| --- | --- | --- |
+
+Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (xswap-tcg-kbench-2026-10-29)

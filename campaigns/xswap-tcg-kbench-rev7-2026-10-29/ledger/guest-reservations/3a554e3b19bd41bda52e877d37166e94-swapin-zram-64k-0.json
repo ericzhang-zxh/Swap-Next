@@ -1,0 +1,15 @@
+{
+  "id": "3a554e3b19bd41bda52e877d37166e94-swapin-zram-64k-0",
+  "campaign": "xswap-tcg-kbench-rev7-2026-10-29",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1793304032.8383465,
+  "identity": {
+    "build": "std-31eb4618eae8",
+    "backend": "zram-64k",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "a058b8f55589b822ef7e1380e369abf1429099515d85414b8704987db4a2f4bd",
+  "started_unix": 1793304032.894272
+}

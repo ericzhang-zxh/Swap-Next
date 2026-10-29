@@ -1,0 +1,16 @@
+{
+  "id": "v2-c1-xs-sync-ra",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-450a25c6d11d",
+  "worktree": "worktrees/xswap-tcg-kbench-rev7-2026-10-29/v2-c1-xs-sync-ra",
+  "status": "closed",
+  "hypothesis": "xswap fault readahead with adjacency gate (c1, commit 31eb4618): xswap_fault_readahead takes the readahead path for order-0 non-shmem faults with page_cluster>0 adjacent to the VMA last fault; both readahead paths filter xswap neighbours per entry (xswap_readahead_wanted) instead of skipping the device. Expect swapin-zram-64k swapin_seq.mean_ns down, swapin_rand.mean_ns ~unchanged; swap_ra and swap_ra_hit up, pgmajfault down.",
+  "created_unix": 1793303882.0394223,
+  "protocol_sha256": "cb3c6a09cc16a0c74813199693c8014d3bbad5060304134c401c49b42da15bcc",
+  "mechanism": "swapin-zram-64k:swapin_vmstat_delta.swap_ra:up",
+  "reason": "Round 1 complete: FAST_PASS 68de12e0 (non-regression screen). Swap Review NEEDS-MORE-EVIDENCE (/workspace/reviews/c1-v2-c1-xs-sync-ra-round1.md): zram seq.p99 regression and an open SIGBUS TOCTOU; not a parent per review. Superseded by c1c (baseline-parented, same mechanism plus safety gate). Closed to free the single active-candidate slot; worktree, branch and build kept as evidence."
+}

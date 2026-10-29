@@ -1,0 +1,49 @@
+{
+  "id": "v2-c1c-xs-ra-safe",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000002-2db0c4104afa",
+  "worktree": "worktrees/xswap-tcg-kbench-rev7-2026-10-29/v2-c1c-xs-ra-safe",
+  "status": "active",
+  "hypothesis": "c1c v2-c1c-xs-ra-safe (commit b69e47c9, tree 58d43c94, parent baseline 5e84ca92): xswap fault readahead admitted only for slots whose physical backend is asynchronous (not SWP_SYNCHRONOUS_IO) and SWP_WRITEOK, with a recheck under ci->lock after swap-cache insertion (xswap_ra_folio_keep) that unwinds the speculative folio before any read. Expect swapin-disk swap_ra up (~115k) and disk swapin_seq.mean_ns down; zram-64k back on the baseline path (swap_ra ~0, seq.p99 ~1.0). PRE-REGISTRATION (before first boot): probe key swapin-disk:swapin_vmstat_delta.swap_ra:up. KILL: MEDIAN zram-64k seq.p99 ratio (baseline/candidate) < 0.834 (A/A guard ratio from noise 0.1988; 0.90 is inside the noise envelope and is advisory only). FALSIFIERS: zram swap_ra not ~0; disk swap_ra not ~115k; disk seq.mean median ratio < 2.5; any page_io.c WARN or SIGBUS in guest serial; any correctness failure. Correctness on the disk backend with swap_ra > 0. A1 (TOCTOU) rests on code reading; zswap-mixed async-backend test NOT RUN.",
+  "created_unix": 1793307271.2567623,
+  "protocol_sha256": "cb3c6a09cc16a0c74813199693c8014d3bbad5060304134c401c49b42da15bcc",
+  "mechanism": "swapin-disk:swapin_vmstat_delta.swap_ra:up",
+  "allowed_modify": [
+    "mm/swapfile.c",
+    "mm/swap_state.c",
+    "mm/swap_table.h",
+    "mm/swap.h",
+    "mm/page_io.c",
+    "include/linux/swap.h",
+    "include/linux/swap_ops.h",
+    "include/linux/swapops.h"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "budget": {
+    "max_candidates": 3,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 4,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 900,
+    "max_total_campaign_seconds": 64800,
+    "max_build_attempts": 10
+  },
+  "primary_metric": "swapin_seq.mean_ns",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}
