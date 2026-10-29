@@ -10,6 +10,7 @@ import json
 import os
 import re
 from pathlib import Path
+import shutil
 import signal
 import subprocess
 import sys
@@ -25,6 +26,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from population import Population, advancement_evidence
 sys.path.insert(0, str(Path(__file__).resolve().parent / "control"))
 import correctness_proof
+import host_preflight
+
+
+class HostPreflight(RuntimeError):
+    """An unstarted calibration was dropped because host RAM is short."""
 
 _spec = importlib.util.spec_from_file_location("campaign_store", ROOT / "evolve/control/campaign_store.py")
 campaign_store = importlib.util.module_from_spec(_spec)
@@ -346,6 +352,31 @@ class Workflow:
         except campaign_store.CampaignError as exc:
             return [str(exc)]
 
+    def host_launch_refusal(self):
+        """run.py's host-RAM message, or None when MemAvailable is sufficient.
+
+        Uses the environment the child guest will see. A TCG protocol supplies
+        its vCPU count and memory size. Available memory equal to the threshold
+        is enough.
+        """
+        env = child_env(self.p)
+        return host_preflight.refusal(os.environ if env is None else env)
+
+    def _block_unstarted(self, row):
+        """Return True when this attempt has not started and host RAM is short.
+
+        A guest after execution_started is left to run.py. Refusing it here
+        would keep a blocking row with no preflight log. run.py records the
+        refusal on that guest, and the void command can prove it.
+        """
+        if row.get("execution_started") or row.get("runs"):
+            return False
+        message = self.host_launch_refusal()
+        if not message:
+            return False
+        row.update(status="BLOCKED", reason=message, finished=time.time())
+        return True
+
     def candidate_tree(self, commit, record):
         tree = subprocess.check_output(["git", "-C", str(ROOT / record["worktree"]),
                                         "rev-parse", commit + "^{tree}"], text=True).strip()
@@ -427,10 +458,14 @@ class Workflow:
             row.update(status="BLOCKED", reason="BLOCKED: campaign: " + "; ".join(errors), finished=time.time())
             print(json.dumps({k: row.get(k) for k in ("id", "action", "tier", "status", "reason")}), flush=True)
             return row
+        if self._block_unstarted(row):
+            print(json.dumps({k: row.get(k) for k in ("id", "action", "tier", "status", "reason")}), flush=True)
+            return row
         dest = EVALUATIONS / ident
         dest.mkdir(parents=True)
         self.ledger.append(row)
         save(self.ledger_path, self.ledger)
+        discard_unstarted = False
         try:
             self.check()
             if self.p.get("template_only"):
@@ -476,6 +511,9 @@ class Workflow:
                     for rerun in range(rules["max_reruns"] + 1 if rules["enforce_validity"] else 1):
                         if fingerprint(self.p) != fp:
                             raise RuntimeError("trusted inputs changed during probe")
+                        if self._block_unstarted(row):
+                            discard_unstarted = True
+                            raise HostPreflight(row["reason"])
                         run_id = f"{ident}-{case_name}-{index}" + (f"-r{rerun}" if rerun else "")
                         ticket = self._reserve_guest(run_id, build, case, pool="probe")
                         row["execution_started"] = True
@@ -527,6 +565,8 @@ class Workflow:
                        probe_signals=analysis.get("probe_signals", samples), budget_pools=self.budget_pools())
             if action == "calibrate":
                 save(STATE / "calibration-probe.json", row)
+        except HostPreflight:
+            pass
         except (Exception, KeyboardInterrupt) as exc:
             if isinstance(exc, correctness_proof.CorrectnessFailure):
                 record = exc.candidate_record
@@ -536,8 +576,14 @@ class Workflow:
             else:
                 row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=failure_reason(exc), finished=time.time())
         finally:
-            save(dest / "report.json", row)
-            save(self.ledger_path, self.ledger)
+            if discard_unstarted:
+                self.ledger[:] = [item for item in self.ledger if item is not row]
+                save(self.ledger_path, self.ledger)
+                if dest.exists():
+                    shutil.rmtree(dest)
+            else:
+                save(dest / "report.json", row)
+                save(self.ledger_path, self.ledger)
         if action == "evaluate" and row.get("status") == "CORRECTNESS_FAIL":
             self.archive(row, record)
         print(json.dumps({k: row.get(k) for k in ("id", "action", "tier", "status", "reason", "budget_pools")}), flush=True)
@@ -555,11 +601,15 @@ class Workflow:
             row.update(status="BLOCKED", reason="BLOCKED: campaign: " + "; ".join(errors), finished=time.time())
             print(json.dumps({k: row.get(k) for k in ["id", "action", "tier", "status", "reason"]}, indent=2), flush=True)
             return row
+        if self._block_unstarted(row):
+            print(json.dumps({k: row.get(k) for k in ["id", "action", "tier", "status", "reason"]}, indent=2), flush=True)
+            return row
         dest = EVALUATIONS / ident
         dest.mkdir(parents=True)
         self.ledger.append(row)
         save(self.ledger_path, self.ledger)
         save(dest / "report.json", row)
+        discard_unstarted = False
         try:
             self.check()
             if self.p.get("template_only"):
@@ -654,6 +704,9 @@ class Workflow:
                         for attempt_index in range(attempts):
                             if fingerprint(self.p) != fp:
                                 raise RuntimeError("trusted inputs changed during evaluation")
+                            if self._block_unstarted(row):
+                                discard_unstarted = True
+                                raise HostPreflight(row["reason"])
                             suffix = "" if attempt_index == 0 else "-r" + str(attempt_index)
                             run_id = ident + "-" + str(pair_index) + "-" + case_name + "-" + arm + suffix
                             chosen = self.p["baseline_build"] if arm == "a" else build
@@ -743,6 +796,8 @@ class Workflow:
             row.update(analysis=result, status=result["status"], finished=time.time())
             if action == "calibrate":
                 save(STATE / ("calibration-" + tier + ".json"), row)
+        except HostPreflight:
+            pass
         except (Exception, KeyboardInterrupt) as exc:
             if isinstance(exc, correctness_proof.CorrectnessFailure):
                 record = exc.candidate_record
@@ -752,8 +807,14 @@ class Workflow:
             else:
                 row.update(status="BLOCKED" if "BLOCKED:" in str(exc) else "INCOMPLETE", reason=failure_reason(exc), finished=time.time())
         finally:
-            save(dest / "report.json", row)
-            save(self.ledger_path, self.ledger)
+            if discard_unstarted:
+                self.ledger[:] = [item for item in self.ledger if item is not row]
+                save(self.ledger_path, self.ledger)
+                if dest.exists():
+                    shutil.rmtree(dest)
+            else:
+                save(dest / "report.json", row)
+                save(self.ledger_path, self.ledger)
         if action == "evaluate" and row.get("candidate_commit"):
             records = campaign_store.candidates(self.p["campaign"])
             if candidate in records:

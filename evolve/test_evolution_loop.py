@@ -56,6 +56,7 @@ class EvolutionLoopTests(Fixture):
             self.addCleanup(item.stop)
         for item in (patch.object(w, "fingerprint", return_value=FP),
                      patch.object(c, "campaign_fingerprint", return_value=FP),
+                     patch.object(w.host_preflight, "mem_available_kib", return_value=64 * 1024 * 1024),
                      patch.object(w.Workflow, "command", side_effect=AssertionError("physical measurement transport is forbidden")),
                      patch.object(socket.socket, "connect", side_effect=AssertionError("network is forbidden"))):
             item.start()

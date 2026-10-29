@@ -29,6 +29,7 @@ sys.path.insert(0, str(PROJECT / "benchmark/kernel"))
 sys.path.insert(0, str(PROJECT / "evolve/control"))
 import campaign_store
 import guest_budget
+import host_preflight
 from lifetime import bind_child_to_parent
 from evidence import parse, DIAGNOSTIC
 from validity import clocksource_invalid, launch_blocked, read_host_load
@@ -314,13 +315,13 @@ def main():
             return
         if shutil.disk_usage(BASE).free < 24 * 1024**3:
             raise SystemExit("need 24 GiB free disk")
-        available = int(re.search(r"MemAvailable:\s+(\d+)", Path("/proc/meminfo").read_text()).group(1))
+        available = host_preflight.mem_available_kib()
         # KVM unless SWAP_NEXT_ACCEL=tcg; TCG guests default to 4 vCPU and
         # 4096 MiB unless the size env vars override them.
         tcg, guest_mib, guest_cpus, accel = guest_shape(os.environ)
-        need_kib = (guest_mib + 1024) * 1024 if tcg else 10 * 1024**2
-        if available < need_kib:
-            raise SystemExit(f"need {need_kib // 1024} MiB available host RAM")
+        message = host_preflight.refusal_for(available, tcg, guest_mib)
+        if message:
+            raise SystemExit(message)
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
         name = args.run_id or (stamp + "-" + args.build + "-" + args.backend + "-" + args.workload)
         dest = create_run_directory(args.run_root, name)

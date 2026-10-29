@@ -102,6 +102,7 @@ class VoidCalibrationTests(unittest.TestCase):
         self.assertEqual(receipt["attempt_id"], ident())
         self.assertEqual(receipt["reason"], REASON)
         self.assertEqual(receipt["attempt_reason"], "STOP")
+        self.assertIsNone(receipt["preflight"])
         self.assertTrue(receipt["execution_started"])
         self.assertEqual([(g["id"], g["status"]) for g in receipt["guests"]],
                          [(ident() + "-0-a", "PASS"), (ident() + "-0-b", "PASS")])
@@ -156,7 +157,7 @@ class VoidCalibrationTests(unittest.TestCase):
                     "did not end because of STOP")
         self.refuse(self.attempt(reason="validity reruns exhausted: wall",
                                  runs=[{"id": "bad", "status": "INVALID", "run_valid": False}]),
-                    "did not end because of STOP")
+                    "run_invalid")
         self.refuse(self.attempt(runs=[{"id": "bad", "status": "INVALID", "run_valid": False}]),
                     "run_invalid")
         self.refuse(self.attempt(runs=[{"id": "bad", "status": "FAIL", "run_valid": False}]),
@@ -198,11 +199,120 @@ class VoidCalibrationTests(unittest.TestCase):
         with self.assertRaisesRegex(store.CampaignError, "claim"):
             vc.void_calibration(self.name, ident(), REASON)
 
+    def ram_log(self, attempt_id, run_id, text="need 5120 MiB available host RAM\n"):
+        path = self.campaign / "runs/evaluations" / attempt_id / (run_id + ".log")
+        self._write(path, text)
+        return path
+
+    def test_prelaunch_host_ram_refusal_can_be_voided_once(self):
+        attempt_id = ident("0c2cd749")
+        run_id = attempt_id + "-0-swapin-disk-a"
+        passed = attempt_id + "-0-swapin-disk-b"
+        row = self.attempt(id=attempt_id, reason="missing run result", status="INCOMPLETE",
+                           runs=[{"id": passed, "status": "PASS", "run_valid": True},
+                                 {"id": run_id, "status": "STARTED"}])
+        budget = {"guests": 1, "probe_guests": 9, "builds": 0}
+        ledger_path = self.write_ledger([row], budget)
+        log = self.ram_log(attempt_id, run_id)
+        report = self.campaign / "runs/evaluations" / attempt_id / "report.json"
+        self._write(report, row)
+        budget_bytes, report_bytes = (self.campaign / "ledger" / "budget.json").read_bytes(), report.read_bytes()
+        reason = ("Fast calibration 0c2cd749 reserved 0-swapin-disk-a then run.py refused before "
+                  "QEMU: need 5120 MiB available host RAM. No guest booted.")
+        receipt = vc.void_calibration(self.name, "0c2cd749", reason)
+        self.assertEqual(receipt["attempt_id"], attempt_id)
+        self.assertEqual(receipt["attempt_reason"], "missing run result")
+        self.assertTrue(receipt["execution_started"])
+        self.assertEqual(receipt["preflight"], [receipt["guests"][1]["preflight"]])
+        proof = receipt["preflight"][0]
+        self.assertEqual(proof["message"], "need 5120 MiB available host RAM")
+        self.assertEqual(proof["sha256"], hashlib.sha256(log.read_bytes()).hexdigest())
+        self.assertTrue(proof["log"].startswith("campaigns/"))
+        self.assertFalse(proof["guest_directory"])
+        self.assertNotIn(str(self.root), json.dumps(receipt))
+        ledger = json.loads(ledger_path.read_text())
+        self.assertFalse(ledger[0]["execution_started"])
+        self.assertEqual(ledger[0]["status"], "INCOMPLETE")
+        self.assertEqual(ledger[0]["runs"][1]["status"], "STARTED")
+        self.assertEqual((self.campaign / "ledger" / "budget.json").read_bytes(), budget_bytes)
+        self.assertEqual(report.read_bytes(), report_bytes)
+        self.assertTrue(log.is_file())
+        before = ledger_path.read_bytes()
+        with self.assertRaisesRegex(vc.VoidError, "already voided"):
+            vc.void_calibration(self.name, attempt_id, reason)
+        self.assertEqual(ledger_path.read_bytes(), before)
+
+    def test_disk_refusal_and_blocked_status_are_the_same_preflight_class(self):
+        attempt_id = ident("0c2cd749")
+        run_id = attempt_id + "-0-swapin-disk-a"
+        self.write_ledger([self.attempt(id=attempt_id, status="BLOCKED", reason="missing run result",
+                                        runs=[{"id": run_id, "status": "STARTED"}])])
+        self.ram_log(attempt_id, run_id, "need 24 GiB free disk\n")
+        receipt = vc.void_calibration(self.name, attempt_id, "Disk preflight refused before QEMU.")
+        self.assertEqual(receipt["preflight"][0]["message"], "need 24 GiB free disk")
+        self.assertEqual(receipt["attempt_status"], "BLOCKED")
+
+    def test_prelaunch_proof_fails_closed(self):
+        attempt_id = ident("0c2cd749")
+        run_id = attempt_id + "-0-swapin-disk-a"
+        reason = "missing run result"
+
+        def plant(text=None, directory=False, **extra):
+            row = self.attempt(id=attempt_id, reason=reason, runs=[{"id": run_id, "status": "STARTED", **extra}])
+            path = self.write_ledger([row], {"guests": 1, "probe_guests": 0, "builds": 0})
+            if text is not None:
+                self.ram_log(attempt_id, run_id, text)
+            if directory:
+                (self.campaign / "runs/guests" / run_id).mkdir(parents=True)
+            return path
+
+        cases = (
+            (dict(), "missing preflight log"),
+            (dict(text="need 5120 MiB available host RAM\nqemu-system-x86_64\n"), "shows a boot"),
+            (dict(text="need 5120 MiB available host RAM\nextra\n"), "not a single"),
+            (dict(text="process failed\n"), "not a single"),
+            (dict(text="need 5120 MiB available host RAM\n", directory=True), "launch setup began"),
+            (dict(text="need 5120 MiB available host RAM\n", metrics={"swapin_seq.mean_ns": 1}), "measurement result"),
+            (dict(text="need 5120 MiB available host RAM\n", result="runs/guests/x/result.json"), "measurement result"),
+        )
+        for kwargs, pattern in cases:
+            path = plant(**kwargs)
+            before = path.read_bytes()
+            with self.assertRaisesRegex(vc.VoidError, pattern):
+                vc.void_calibration(self.name, attempt_id, REASON)
+            self.assertEqual(path.read_bytes(), before)
+            guest = self.campaign / "runs/guests" / run_id
+            if guest.exists():
+                guest.rmdir()
+
+        noisy = self.attempt(id=attempt_id, status="CALIBRATION_NOISY", reason="spread",
+                             analysis={"status": "CALIBRATION_NOISY", "passed": False},
+                             runs=[{"id": run_id, "status": "STARTED"}])
+        path = self.write_ledger([noisy], {"guests": 1, "probe_guests": 0, "builds": 0})
+        self.ram_log(attempt_id, run_id)
+        before = path.read_bytes()
+        with self.assertRaisesRegex(vc.VoidError, "noisy"):
+            vc.void_calibration(self.name, attempt_id, REASON)
+        self.assertEqual(path.read_bytes(), before)
+
+        self.refuse(self.attempt(reason="missing run result"),
+                    "did not end because of STOP")
+        self.refuse(self.attempt(reason="missing run result",
+                                 runs=[{"id": "booted", "status": "FAIL", "run_valid": False}]),
+                    "guest FAIL")
+
     def test_void_command_stays_outside_the_calibration_fingerprint(self):
         workflow = (ROOT / "evolve/standard_workflow.py").read_text()
         self.assertNotIn("void_calibration", workflow)
         self.assertIn("Path(__file__)", workflow)
-        for name in ("evidence.py", "validity.py", "run.py"):
+        fingerprint = workflow[workflow.index("def fingerprint"):workflow.index("def metric_spec")]
+        self.assertIn("Path(__file__)", fingerprint)
+        self.assertNotIn("host_preflight", fingerprint)
+        self.assertIn("host_preflight", workflow)
+        runner = (ROOT / "benchmark/swap-standard/run.py").read_text()
+        self.assertIn("host_preflight.refusal_for", runner)
+        self.assertNotIn("void_calibration", runner)
+        for name in ("evidence.py", "validity.py"):
             self.assertNotIn("void_calibration", (ROOT / "benchmark/swap-standard" / name).read_text())
         for name in ("controller.py", "campaign_store.py", "guest_budget.py", "analysis.py"):
             self.assertNotIn("void_calibration", (ROOT / "evolve/control" / name).read_text())

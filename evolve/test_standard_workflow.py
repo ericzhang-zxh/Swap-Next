@@ -53,6 +53,7 @@ def campaign_tree(test, p):
                 patch.object(w.campaign_store, "CAMPAIGNS", test.campaigns),
                 patch.object(w.campaign_store, "HOSTS", test.campaigns / "hosts.json"),
                 patch.object(w.campaign_store, "GLOBAL_STOP", test.campaigns / "STOP"),
+                patch.object(w.host_preflight, "mem_available_kib", return_value=64 * 1024 * 1024),
                 patch.dict("os.environ", {"SWAP_NEXT_CLAIM": str(test.claim),
                                           "SWAP_NEXT_MACHINE": "hurricpc"})]
     for item in patches:
@@ -227,6 +228,74 @@ class WorkflowTests(unittest.TestCase):
             refused = flow.run("calibrate", "fast")
         self.assertIn("already attempted", refused["reason"])
         self.assertEqual(w.read(self.state / "budget.json")["guests"], 7)
+
+    def _tcg_guest(self):
+        self.p["guest"] = {"vcpus": 4, "mem_mib": 4096, "swap_gib": 16}
+        self.p["accelerator"] = {"require": "tcg"}
+
+    def test_short_host_ram_records_nothing_and_exact_threshold_reserves(self):
+        self._tcg_guest()
+        flow = w.Workflow(self.p)
+        ledger, budget = self.state / "ledger.json", self.state / "budget.json"
+        with patch.object(w.host_preflight, "mem_available_kib", return_value=5120 * 1024 - 1):
+            for tier in ("fast", "probe"):
+                row = flow.run("calibrate", tier)
+                self.assertEqual(row["status"], "BLOCKED")
+                self.assertEqual(row["reason"], "need 5120 MiB available host RAM")
+                self.assertFalse(row.get("execution_started"))
+                self.assertFalse(ledger.exists())
+                self.assertFalse(budget.exists())
+                self.assertFalse((self.campaign / "runs/evaluations" / row["id"]).exists())
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(w.host_preflight, "mem_available_kib", return_value=5120 * 1024), \
+             patch.object(flow, "_reserve_guest", side_effect=RuntimeError("reserved")):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["reason"], "reserved")
+        self.assertFalse(row.get("execution_started"))
+
+    def test_host_ram_drop_before_reserve_removes_the_unstarted_attempt(self):
+        self._tcg_guest()
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(w.host_preflight, "mem_available_kib", side_effect=[5120 * 1024, 1]), \
+             patch.object(flow, "_reserve_guest", side_effect=AssertionError("reserved")):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["status"], "BLOCKED")
+        self.assertEqual(row["reason"], "need 5120 MiB available host RAM")
+        self.assertFalse(row.get("execution_started"))
+        self.assertEqual(w.read(self.state / "ledger.json"), [])
+        self.assertFalse((self.state / "budget.json").exists())
+        self.assertFalse((self.campaign / "runs/evaluations" / row["id"]).exists())
+
+    def test_preflight_void_releases_the_fast_slot(self):
+        import void_calibration as vc
+        ident = "0c2cd749" + "ab" * 12
+        run_id = ident + "-0-swapin-disk-a"
+        guests = [{"id": run_id, "status": "STARTED"}]
+        blocked = {"id": ident, "action": "calibrate", "tier": "fast", "status": "INCOMPLETE",
+                   "reason": "missing run result", "execution_started": True, "fingerprint": "fp",
+                   "runs": guests}
+        w.save(self.state / "ledger.json", [blocked])
+        w.save(self.state / "budget.json", {"created": w.time.time(), "guests": 1, "builds": 0})
+        log = self.campaign / "runs/evaluations" / ident / (run_id + ".log")
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.write_text("need 5120 MiB available host RAM\n")
+        with patch.object(vc.store, "PROJECT", self.root), \
+             patch.object(vc.store, "CAMPAIGNS", self.campaigns), \
+             patch.object(vc.store, "HOSTS", self.campaigns / "hosts.json"), \
+             patch.object(vc.store, "GLOBAL_STOP", self.campaigns / "STOP"):
+            receipt = vc.void_calibration(self.p["campaign"], "0c2cd749",
+                                          "run.py refused before QEMU: need 5120 MiB available host RAM")
+        self.assertEqual(receipt["attempt_id"], ident)
+        self.assertEqual(receipt["preflight"][0]["message"], "need 5120 MiB available host RAM")
+        self.assertEqual(w.read(self.state / "budget.json")["guests"], 1)
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(flow, "_reserve_guest", side_effect=RuntimeError("reserved")):
+            retried = flow.run("calibrate", "fast")
+        self.assertEqual(retried["reason"], "reserved")
+        self.assertEqual(w.read(self.state / "budget.json")["guests"], 1)
 
     def test_new_protocol_scores_swapin_and_probes_metadata(self):
         good = probe_protocol()
