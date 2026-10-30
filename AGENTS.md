@@ -253,7 +253,18 @@ base and resulting hashes with the campaign (example layout:
 6. **Report** writes the audit and an HTML report (`explainer.html`), then
    publishes for the Coordinator, following
    [Report publication](#report-publication) and
-   [Campaign lifecycle](#campaign-lifecycle).
+   [Campaign lifecycle](#campaign-lifecycle). The page must be produced by
+   [explaining-campaign-results](.agents/skills/explaining-campaign-results/SKILL.md):
+   an extraction script derives `campaigns/<c>/report/explainer.json` from the
+   evidence, then
+   `python3 .agents/skills/explaining-campaign-results/scripts/build_page.py explainer.json explainer.html`
+   builds it in `campaigns/<c>/report/`. Do not hand-write report HTML, copy
+   styling from older pages, name the page anything but `explainer.html`, or
+   keep report drafts outside `campaigns/<c>/report/`. The evidence audit is a
+   separate document, not the explainer page. A brief that asks for another
+   format does not override the skill; a `build_page.py` text-budget error means
+   shorten the overview, never bypass the builder. The Coordinator confirms the
+   page was built this way before committing it.
 
 ### Rules and scaffolding
 
