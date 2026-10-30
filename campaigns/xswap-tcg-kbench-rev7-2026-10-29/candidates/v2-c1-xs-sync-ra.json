@@ -12,5 +12,5 @@
   "created_unix": 1793303882.0394223,
   "protocol_sha256": "cb3c6a09cc16a0c74813199693c8014d3bbad5060304134c401c49b42da15bcc",
   "mechanism": "swapin-zram-64k:swapin_vmstat_delta.swap_ra:up",
-  "reason": "Round 1 complete: FAST_PASS 68de12e0 (non-regression screen). Swap Review NEEDS-MORE-EVIDENCE (/workspace/reviews/c1-v2-c1-xs-sync-ra-round1.md): zram seq.p99 regression and an open SIGBUS TOCTOU; not a parent per review. Superseded by c1c (baseline-parented, same mechanism plus safety gate). Closed to free the single active-candidate slot; worktree, branch and build kept as evidence."
+  "reason": "Round 1 complete: FAST_PASS 68de12e0 (non-regression screen). Swap Review NEEDS-MORE-EVIDENCE (campaigns/xswap-tcg-kbench-rev7-2026-10-29/report/c1-v2-c1-xs-sync-ra-round1.md): zram seq.p99 regression and an open SIGBUS TOCTOU; not a parent per review. Superseded by c1c (baseline-parented, same mechanism plus safety gate). Closed to free the single active-candidate slot; worktree, branch and build kept as evidence."
 }

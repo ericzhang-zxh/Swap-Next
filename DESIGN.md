@@ -34,7 +34,7 @@ passing preallocated A/A. QEMU TCG revision 3 is closed. The prepared kbench
 successor is [protocol revision 6](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json).
 Its probe calibration on grok-cloud was noisy on the MemAvailable metadata
 numerator. [Protocol revision 7](campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json)
-scores attributable meminfo counters instead. It is proposed and not opened.
+scores attributable meminfo counters instead; its campaign is open.
 
 ## Upstream landscape
 
@@ -171,5 +171,4 @@ is the same TCG kbench screen as revision 6, with one measurement change.
 The 1% metadata spread, the swap-in cases, and the 25% latency ceiling stay
 as in revision 6. A missing counter, a decrease in `VmallocUsed`, or a
 negative sum fails that guest. Eval `469ee19c` already stored the four
-counters, so the numerator can be recomputed without another guest. The
-proposal does not open the campaign.
+counters, so the numerator can be recomputed without another guest.
