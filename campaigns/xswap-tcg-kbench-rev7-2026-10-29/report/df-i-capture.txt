@@ -1,0 +1,4 @@
+# df -i / captured on the box by the report agent
+2026-10-29 14:25:36 PDT
+Filesystem      Inodes  IUsed   IFree IUse% Mounted on
+/dev/vdb       2031616 842869 1188747   42% /

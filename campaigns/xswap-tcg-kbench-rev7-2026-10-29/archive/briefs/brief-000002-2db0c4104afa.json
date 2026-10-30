@@ -1,0 +1,1039 @@
+{
+  "schema_version": 1,
+  "id": "brief-000002-2db0c4104afa",
+  "campaign": "xswap-tcg-kbench-rev7-2026-10-29",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "line_anchor_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+  "fingerprint": "dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34",
+  "sequence": 2,
+  "eligible": {
+    "v2-c1-xs-sync-ra": "31eb4618eae83f8ff55e4201b55bfe54a1d84284"
+  },
+  "sample_seed": 3292346901864301539,
+  "persisted": true,
+  "parent": {
+    "id": "v2-c1-xs-sync-ra",
+    "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+    "source_tree": "2f93d30f83db174edc624a4a5aab2bbb17c6288e",
+    "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "line_anchor_commit": "37de636c972a413f5c25e5b6c891fb4df2f53aed",
+    "parent_candidate": null,
+    "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "generation": 1,
+    "patch": "diff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..c30fb4bfb 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -718,6 +718,16 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\n \t\t\thits = min_t(int, hits + 1, SWAP_RA_HITS_MAX);\n \t\tatomic_long_set(&vma->swap_readahead_info,\n \t\t\t\tSWAP_RA_VAL(addr, win, hits));\n+\t} else if (vma && readahead) {\n+\t\t/*\n+\t\t * Cluster mode keeps its window in global state, so the VMA\n+\t\t * history is only read by xswap_fault_readahead().  Record a\n+\t\t * readahead hit there: the next miss after a prefetched block\n+\t\t * is then adjacent and stays admitted.  The history is\n+\t\t * advisory and every entry is revalidated by the swap cache.\n+\t\t */\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(addr, 1, 0));\n \t}\n \n \tif (readahead) {\n@@ -754,7 +764,70 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\n }\n \n /**\n- * swapin_sync - swap-in one or multiple entries skipping readahead.\n+ * xswap_readahead_wanted - Check whether an xswap slot has a physical backend.\n+ * @si: the swap device of @entry.\n+ * @entry: the swap entry, which need not be pinned.\n+ *\n+ * This is a readahead hint, not a pin on the slot or its backend. The swap\n+ * cache allocation and read paths must revalidate the entry after this\n+ * returns. No cluster pointer or physical entry escapes the lock.\n+ *\n+ * Context: Caller must protect @si with a reference count or locks.\n+ * Return: true if an xswap slot has a physical backend, false otherwise.\n+ */\n+static bool xswap_readahead_wanted(struct swap_info_struct *si,\n+\t\t\t\t   swp_entry_t entry)\n+{\n+\tstruct swap_cluster_info *ci;\n+\tbool backed;\n+\n+\tif (!(si->flags & SWP_XSWAP))\n+\t\treturn false;\n+\tci = swap_cluster_lock_unpinned(si, swp_offset(entry));\n+\tif (!ci)\n+\t\treturn false;\n+\tbacked = xswap_slot_backend(ci, swp_cluster_offset(entry)).val;\n+\tswap_cluster_unlock(ci);\n+\n+\treturn backed;\n+}\n+\n+/**\n+ * xswap_fault_readahead - Admit physical readahead after adjacent faults.\n+ * @vmf: fault holding a reference to the target swap device.\n+ * @entry: target swap entry.\n+ *\n+ * Keep discontinuous faults on the synchronous demand path. VMA history is\n+ * advisory: racing faults may suppress or admit speculation, but the swap\n+ * cache and I/O paths still validate every entry and own its references.\n+ */\n+static bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)\n+{\n+\tstruct swap_info_struct *si = __swap_entry_to_info(entry);\n+\tstruct vm_area_struct *vma = vmf->vma;\n+\tunsigned long prev;\n+\n+\tif (!(si->flags & SWP_XSWAP) || READ_ONCE(page_cluster) <= 0)\n+\t\treturn false;\n+\t/* shmem passes its own vmf; its VMA has no swap PTEs to read ahead. */\n+\tif (vma_is_shmem(vma))\n+\t\treturn false;\n+\tprev = SWAP_RA_ADDR(GET_SWAP_RA_VAL(vma));\n+\tif (vmf->address != prev + PAGE_SIZE &&\n+\t    prev != vmf->address + PAGE_SIZE) {\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(vmf->address, 1, 0));\n+\t\treturn false;\n+\t}\n+\t/* VMA mode updates the history in swap_vma_ra_win(). */\n+\tif (!swap_use_vma_readahead())\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(vmf->address, 1, 0));\n+\treturn xswap_readahead_wanted(si, entry);\n+}\n+\n+/**\n+ * swapin_sync - swap-in one or multiple entries, normally skipping readahead.\n  * @entry: swap entry indicating the target slot\n  * @gfp: memory allocation flags\n  * @orders: allocation orders\n@@ -765,6 +838,8 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\n  * This allocates a folio suitable for given @orders, or returns the\n  * existing folio in the swap cache for @entry. This initiates the IO, too,\n  * if needed. @entry is rounded down if @orders allow large allocation.\n+ * An order-0 fault on an xswap entry with a physical backend that follows\n+ * an adjacent fault goes through swapin_readahead() instead.\n  *\n  * Context: Caller must ensure @entry is valid and pin the swap device with refcount.\n  * Return: Returns the folio on success, error code if failed.\n@@ -775,6 +850,12 @@ struct folio *swapin_sync(swp_entry_t entry, gfp_t gfp, unsigned long orders,\n \tstruct swap_io_ctx ctx = {};\n \tstruct folio *folio;\n \n+\tif (vmf && orders == BIT(0) && xswap_fault_readahead(vmf, entry)) {\n+\t\tfolio = swapin_readahead(entry, gfp, vmf);\n+\t\tif (folio)\n+\t\t\treturn folio;\n+\t}\n+\n \tdo {\n \t\tfolio = swap_cache_get_folio(entry);\n \t\tif (folio)\n@@ -920,8 +1001,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tstruct blk_plug plug;\n \tswp_entry_t ra_entry;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n+\t/* Keep compressed xswap targets on the single-folio path. */\n+\tif ((si->flags & SWP_XSWAP) && !xswap_readahead_wanted(si, entry))\n \t\tgoto skip;\n \n \tmask = swapin_nr_pages(offset) - 1;\n@@ -940,6 +1021,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tfor (offset = start_offset; offset <= end_offset ; offset++) {\n \t\t/* Ok, do the async read-ahead now */\n \t\tra_entry = swp_entry(swp_type(entry), offset);\n+\t\tif ((si->flags & SWP_XSWAP) && offset != entry_offset &&\n+\t\t    !xswap_readahead_wanted(si, ra_entry))\n+\t\t\tcontinue;\n \t\tfolio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,\n \t\t\t\tilx, offset != entry_offset);\n \t\tif (!folio)\n@@ -1009,7 +1093,6 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\tstruct mempolicy *mpol, pgoff_t targ_ilx, struct vm_fault *vmf)\n {\n-\tstruct swap_info_struct *si = __swap_entry_to_info(targ_entry);\n \tstruct swap_io_ctx ctx = {};\n \tstruct blk_plug plug;\n \tstruct folio *folio;\n@@ -1018,10 +1101,6 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \tunsigned long start, end, addr;\n \tpgoff_t ilx = targ_ilx;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n-\n \twin = swap_vma_ra_win(vmf, &start, &end);\n \tif (win == 1)\n \t\tgoto skip;\n@@ -1054,8 +1133,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\t\tif (IS_ERR_OR_NULL(si))\n \t\t\t\tcontinue;\n \t\t}\n-\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,\n-\t\t\t\t\t      addr != vmf->address);\n+\t\tif (addr != vmf->address &&\n+\t\t    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&\n+\t\t    !xswap_readahead_wanted(__swap_entry_to_info(entry), entry))\n+\t\t\tfolio = NULL;\n+\t\telse\n+\t\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,\n+\t\t\t\t\t\t      ilx, addr != vmf->address);\n \t\tif (si)\n \t\t\tput_swap_device(si);\n \t\tif (!folio)\n",
+    "changed_paths": [
+      "mm/swap_state.c"
+    ],
+    "hypothesis": "xswap fault readahead with adjacency gate (c1, commit 31eb4618): xswap_fault_readahead takes the readahead path for order-0 non-shmem faults with page_cluster>0 adjacent to the VMA last fault; both readahead paths filter xswap neighbours per entry (xswap_readahead_wanted) instead of skipping the device. Expect swapin-zram-64k swapin_seq.mean_ns down, swapin_rand.mean_ns ~unchanged; swap_ra and swap_ra_hit up, pgmajfault down.",
+    "mechanism": "swapin-zram-64k:swapin_vmstat_delta.swap_ra:up",
+    "evidence": [
+      {
+        "id": "68de12e0b0c9471bb497a9f0dc844a3f",
+        "action": "evaluate",
+        "tier": "fast",
+        "status": "FAST_PASS",
+        "candidate": "v2-c1-xs-sync-ra",
+        "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+        "fingerprint": "dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34",
+        "started": 1793304129.7528832,
+        "finished": 1793305278.3802967,
+        "analysis": {
+          "tier": "fast",
+          "pair_count": 4,
+          "metrics": {
+            "swapin-disk.swapin_seq.mean_ns": {
+              "pair_ratios": [
+                3.2028189639392304,
+                3.0183255930714217,
+                2.8472102569300133,
+                3.089800581121014
+              ],
+              "geomean_ratio": 3.036771513739117,
+              "median_ratio": 3.053853986601931,
+              "noise_relative": 0.08642634015094441,
+              "guard_pass": true
+            },
+            "swapin-disk.swapin_seq.p99_ns": {
+              "pair_ratios": [
+                0.9856426977603824,
+                0.9335013456580676,
+                0.9117842446379234,
+                0.94953939870615
+              ],
+              "geomean_ratio": 0.9447347331501328,
+              "median_ratio": 0.9414862221230555,
+              "noise_relative": 0.09842555046295698,
+              "guard_pass": true,
+              "advisory": true
+            },
+            "swapin-disk.swapin_rand.mean_ns": {
+              "pair_ratios": [
+                0.9139855463827379,
+                0.9174591477223327,
+                0.9668521462639111,
+                1.039838507412226
+              ],
+              "geomean_ratio": 0.9582150908900118,
+              "median_ratio": 0.9418319096764539,
+              "noise_relative": 0.14425001236749901,
+              "guard_pass": true
+            },
+            "swapin-disk.swapin_rand.p99_ns": {
+              "pair_ratios": [
+                0.8897326722331791,
+                0.9206441596453492,
+                0.9005276208628975,
+                1.0306098581766587
+              ],
+              "geomean_ratio": 0.9337608643329399,
+              "median_ratio": 0.910530337082048,
+              "noise_relative": 0.11840206297857647,
+              "guard_pass": true,
+              "advisory": true
+            },
+            "swapin-zram-64k.swapin_seq.mean_ns": {
+              "pair_ratios": [
+                1.3044205495818382,
+                0.9551527424493119,
+                1.507822535489608,
+                1.7673215806237983
+              ],
+              "geomean_ratio": 1.3498610541272458,
+              "median_ratio": 1.4024388401692371,
+              "noise_relative": 0.22422817264659112,
+              "guard_pass": true
+            },
+            "swapin-zram-64k.swapin_seq.p99_ns": {
+              "pair_ratios": [
+                0.6243611064492013,
+                0.44436723805934514,
+                0.6477420202082619,
+                1.067648504003931
+              ],
+              "geomean_ratio": 0.6618385506335457,
+              "median_ratio": 0.6359441205254368,
+              "noise_relative": 0.1988131554179,
+              "guard_pass": false,
+              "advisory": true
+            },
+            "swapin-zram-64k.swapin_rand.mean_ns": {
+              "pair_ratios": [
+                0.9049874933676947,
+                0.869746038469685,
+                1.1017194490744817,
+                1.0637548159764574
+              ],
+              "geomean_ratio": 0.9800244213680354,
+              "median_ratio": 0.9811650240751285,
+              "noise_relative": 0.18438755991144928,
+              "guard_pass": true
+            },
+            "swapin-zram-64k.swapin_rand.p99_ns": {
+              "pair_ratios": [
+                0.9472573477686451,
+                0.9217367966580313,
+                1.0669034895078342,
+                0.9550699468340128
+              ],
+              "geomean_ratio": 0.9712002952065794,
+              "median_ratio": 0.9511556259474724,
+              "noise_relative": 0.12941012313810196,
+              "guard_pass": true,
+              "advisory": true
+            }
+          },
+          "overall_geomean_ratio": 2.024652957096469,
+          "combined_score": 2.0579269195328704,
+          "primary": [
+            "swapin-disk.swapin_seq.mean_ns",
+            "swapin-zram-64k.swapin_seq.mean_ns"
+          ],
+          "reference": false,
+          "performance_accepted": false,
+          "auto_promote": false,
+          "eligible_for_slow": false,
+          "needs_review": false,
+          "decision": "median",
+          "overall_median_ratio": 2.0579269195328704,
+          "status": "FAST_PASS"
+        },
+        "calibration_id": "e8b7a7e377eb40ab88f875c83b2dfc69",
+        "probe_id": "3a554e3b19bd41bda52e877d37166e94",
+        "probe_signals": {
+          "swapin-disk": {
+            "swapin_vmstat_delta.pswpin": [
+              262159
+            ],
+            "swapin_vmstat_delta.zswpin": [
+              0
+            ],
+            "swapin_vmstat_delta.swap_ra": [
+              115148
+            ],
+            "swapin_vmstat_delta.swap_ra_hit": [
+              115144
+            ],
+            "swapin_vmstat_delta.pgmajfault": [
+              147013
+            ],
+            "swapin_vmstat_delta.zswpwb": [
+              0
+            ],
+            "xswap.grows": [
+              7
+            ],
+            "xswap.shrinks": [
+              0
+            ],
+            "xswap.usage_pages": [
+              0
+            ],
+            "xswap.clusters_mapped": [
+              584
+            ]
+          },
+          "swapin-zram-64k": {
+            "swapin_vmstat_delta.pswpin": [
+              262138
+            ],
+            "swapin_vmstat_delta.zswpin": [
+              0
+            ],
+            "swapin_vmstat_delta.swap_ra": [
+              114684
+            ],
+            "swapin_vmstat_delta.swap_ra_hit": [
+              114684
+            ],
+            "swapin_vmstat_delta.pgmajfault": [
+              147456
+            ],
+            "swapin_vmstat_delta.zswpwb": [
+              0
+            ],
+            "xswap.grows": [
+              7
+            ],
+            "xswap.shrinks": [
+              0
+            ],
+            "xswap.usage_pages": [
+              0
+            ],
+            "xswap.clusters_mapped": [
+              584
+            ]
+          },
+          "metadata-brd": {
+            "metadata_delta_bytes_per_capacity_slot": [
+              0.11093139689762666
+            ]
+          }
+        },
+        "controller_check": {
+          "status": "SCOPE_PASS",
+          "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+          "changed_paths": [
+            "mm/swap_state.c"
+          ],
+          "changed_lines": 104,
+          "diff-check": {
+            "exit_code": 0,
+            "evidence": "campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra/diff-check.log",
+            "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+          },
+          "checkpatch": {
+            "exit_code": 0,
+            "evidence": "campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra/checkpatch.log",
+            "sha256": "ce42ee85f1d780d82108c80d7f25ed0a4136e612b23d49937048c96921b93c3b"
+          }
+        },
+        "correctness": {
+          "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+          "source_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+          "gates": {
+            "boot": true,
+            "cmdline_identity": true,
+            "workload_complete": true,
+            "kernel_log_present": true,
+            "no_kernel_warnings": true,
+            "thp_policy": true,
+            "swap_activity": true,
+            "backend_exercised": true,
+            "swap_routing": true,
+            "correctness_evidence": true,
+            "data_roundtrip": true,
+            "fork_cow": true,
+            "concurrent_fault": true,
+            "destroy_live_pages": true,
+            "swapoff_live_pages": true,
+            "no_new_kernel_warnings": true,
+            "qemu_exit": true
+          },
+          "integration_pass": true,
+          "mode": "xswap",
+          "backend": "disk",
+          "config_sha256": "b9e2fe059b49257ddd30dd3193e38455df3b5e3c28f2a0f556264bbda8e2211a"
+        },
+        "report": "campaigns/xswap-tcg-kbench-rev7-2026-10-29/runs/evaluations/68de12e0b0c9471bb497a9f0dc844a3f/report.json",
+        "row_sha256": "1175d814f87082d75ca639a707717bb3d2ad2aad2c80a5ae05685560dfe85210"
+      },
+      {
+        "id": "3a554e3b19bd41bda52e877d37166e94",
+        "action": "evaluate",
+        "tier": "probe",
+        "status": "PROBE_PASS",
+        "candidate": "v2-c1-xs-sync-ra",
+        "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+        "fingerprint": "dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34",
+        "started": 1793303966.165642,
+        "finished": 1793304094.4556797,
+        "analysis": {
+          "status": "PROBE_PASS",
+          "passed": true,
+          "reasons": [],
+          "probe_signals": {
+            "swapin-disk": {
+              "swapin_vmstat_delta.pswpin": [
+                262159
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                115148
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                115144
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                147013
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                0
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "swapin-zram-64k": {
+              "swapin_vmstat_delta.pswpin": [
+                262138
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                114684
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                114684
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                147456
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                0
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "metadata-brd": {
+              "metadata_delta_bytes_per_capacity_slot": [
+                0.11093139689762666
+              ]
+            }
+          },
+          "mechanism": "swapin-zram-64k:swapin_vmstat_delta.swap_ra:up",
+          "performance_accepted": false,
+          "auto_promote": false
+        },
+        "calibration_id": "86fc2f677ee24429bc1c0dba6c91141f",
+        "probe_signals": {
+          "swapin-disk": {
+            "swapin_vmstat_delta.pswpin": [
+              262159
+            ],
+            "swapin_vmstat_delta.zswpin": [
+              0
+            ],
+            "swapin_vmstat_delta.swap_ra": [
+              115148
+            ],
+            "swapin_vmstat_delta.swap_ra_hit": [
+              115144
+            ],
+            "swapin_vmstat_delta.pgmajfault": [
+              147013
+            ],
+            "swapin_vmstat_delta.zswpwb": [
+              0
+            ],
+            "xswap.grows": [
+              7
+            ],
+            "xswap.shrinks": [
+              0
+            ],
+            "xswap.usage_pages": [
+              0
+            ],
+            "xswap.clusters_mapped": [
+              584
+            ]
+          },
+          "swapin-zram-64k": {
+            "swapin_vmstat_delta.pswpin": [
+              262138
+            ],
+            "swapin_vmstat_delta.zswpin": [
+              0
+            ],
+            "swapin_vmstat_delta.swap_ra": [
+              114684
+            ],
+            "swapin_vmstat_delta.swap_ra_hit": [
+              114684
+            ],
+            "swapin_vmstat_delta.pgmajfault": [
+              147456
+            ],
+            "swapin_vmstat_delta.zswpwb": [
+              0
+            ],
+            "xswap.grows": [
+              7
+            ],
+            "xswap.shrinks": [
+              0
+            ],
+            "xswap.usage_pages": [
+              0
+            ],
+            "xswap.clusters_mapped": [
+              584
+            ]
+          },
+          "metadata-brd": {
+            "metadata_delta_bytes_per_capacity_slot": [
+              0.11093139689762666
+            ]
+          }
+        },
+        "controller_check": {
+          "status": "SCOPE_PASS",
+          "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+          "changed_paths": [
+            "mm/swap_state.c"
+          ],
+          "changed_lines": 104,
+          "diff-check": {
+            "exit_code": 0,
+            "evidence": "campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra/diff-check.log",
+            "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+          },
+          "checkpatch": {
+            "exit_code": 0,
+            "evidence": "campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra/checkpatch.log",
+            "sha256": "ce42ee85f1d780d82108c80d7f25ed0a4136e612b23d49937048c96921b93c3b"
+          }
+        },
+        "correctness": {
+          "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+          "source_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+          "gates": {
+            "boot": true,
+            "cmdline_identity": true,
+            "workload_complete": true,
+            "kernel_log_present": true,
+            "no_kernel_warnings": true,
+            "thp_policy": true,
+            "swap_activity": true,
+            "backend_exercised": true,
+            "swap_routing": true,
+            "correctness_evidence": true,
+            "data_roundtrip": true,
+            "fork_cow": true,
+            "concurrent_fault": true,
+            "destroy_live_pages": true,
+            "swapoff_live_pages": true,
+            "no_new_kernel_warnings": true,
+            "qemu_exit": true
+          },
+          "integration_pass": true,
+          "mode": "xswap",
+          "backend": "disk",
+          "config_sha256": "b9e2fe059b49257ddd30dd3193e38455df3b5e3c28f2a0f556264bbda8e2211a"
+        },
+        "report": "campaigns/xswap-tcg-kbench-rev7-2026-10-29/runs/evaluations/3a554e3b19bd41bda52e877d37166e94/report.json",
+        "row_sha256": "9730074c0fccbf3b44b3c1e4f53a94f24c101c5c0717f5f318a7fcd53951c437"
+      }
+    ],
+    "invalidations": [],
+    "timestamp": 1793305278.3802967,
+    "fingerprint": "dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34",
+    "analysis": {
+      "tier": "fast",
+      "pair_count": 4,
+      "metrics": {
+        "swapin-disk.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            3.2028189639392304,
+            3.0183255930714217,
+            2.8472102569300133,
+            3.089800581121014
+          ],
+          "geomean_ratio": 3.036771513739117,
+          "median_ratio": 3.053853986601931,
+          "noise_relative": 0.08642634015094441,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            0.9856426977603824,
+            0.9335013456580676,
+            0.9117842446379234,
+            0.94953939870615
+          ],
+          "geomean_ratio": 0.9447347331501328,
+          "median_ratio": 0.9414862221230555,
+          "noise_relative": 0.09842555046295698,
+          "guard_pass": true,
+          "advisory": true
+        },
+        "swapin-disk.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            0.9139855463827379,
+            0.9174591477223327,
+            0.9668521462639111,
+            1.039838507412226
+          ],
+          "geomean_ratio": 0.9582150908900118,
+          "median_ratio": 0.9418319096764539,
+          "noise_relative": 0.14425001236749901,
+          "guard_pass": true
+        },
+        "swapin-disk.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            0.8897326722331791,
+            0.9206441596453492,
+            0.9005276208628975,
+            1.0306098581766587
+          ],
+          "geomean_ratio": 0.9337608643329399,
+          "median_ratio": 0.910530337082048,
+          "noise_relative": 0.11840206297857647,
+          "guard_pass": true,
+          "advisory": true
+        },
+        "swapin-zram-64k.swapin_seq.mean_ns": {
+          "pair_ratios": [
+            1.3044205495818382,
+            0.9551527424493119,
+            1.507822535489608,
+            1.7673215806237983
+          ],
+          "geomean_ratio": 1.3498610541272458,
+          "median_ratio": 1.4024388401692371,
+          "noise_relative": 0.22422817264659112,
+          "guard_pass": true
+        },
+        "swapin-zram-64k.swapin_seq.p99_ns": {
+          "pair_ratios": [
+            0.6243611064492013,
+            0.44436723805934514,
+            0.6477420202082619,
+            1.067648504003931
+          ],
+          "geomean_ratio": 0.6618385506335457,
+          "median_ratio": 0.6359441205254368,
+          "noise_relative": 0.1988131554179,
+          "guard_pass": false,
+          "advisory": true
+        },
+        "swapin-zram-64k.swapin_rand.mean_ns": {
+          "pair_ratios": [
+            0.9049874933676947,
+            0.869746038469685,
+            1.1017194490744817,
+            1.0637548159764574
+          ],
+          "geomean_ratio": 0.9800244213680354,
+          "median_ratio": 0.9811650240751285,
+          "noise_relative": 0.18438755991144928,
+          "guard_pass": true
+        },
+        "swapin-zram-64k.swapin_rand.p99_ns": {
+          "pair_ratios": [
+            0.9472573477686451,
+            0.9217367966580313,
+            1.0669034895078342,
+            0.9550699468340128
+          ],
+          "geomean_ratio": 0.9712002952065794,
+          "median_ratio": 0.9511556259474724,
+          "noise_relative": 0.12941012313810196,
+          "guard_pass": true,
+          "advisory": true
+        }
+      },
+      "overall_geomean_ratio": 2.024652957096469,
+      "combined_score": 2.0579269195328704,
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zram-64k.swapin_seq.mean_ns"
+      ],
+      "reference": false,
+      "performance_accepted": false,
+      "auto_promote": false,
+      "eligible_for_slow": false,
+      "needs_review": false,
+      "decision": "median",
+      "overall_median_ratio": 2.0579269195328704,
+      "status": "FAST_PASS"
+    },
+    "probe_signals": {
+      "swapin-disk": {
+        "swapin_vmstat_delta.pswpin": [
+          262159
+        ],
+        "swapin_vmstat_delta.zswpin": [
+          0
+        ],
+        "swapin_vmstat_delta.swap_ra": [
+          115148
+        ],
+        "swapin_vmstat_delta.swap_ra_hit": [
+          115144
+        ],
+        "swapin_vmstat_delta.pgmajfault": [
+          147013
+        ],
+        "swapin_vmstat_delta.zswpwb": [
+          0
+        ],
+        "xswap.grows": [
+          7
+        ],
+        "xswap.shrinks": [
+          0
+        ],
+        "xswap.usage_pages": [
+          0
+        ],
+        "xswap.clusters_mapped": [
+          584
+        ]
+      },
+      "swapin-zram-64k": {
+        "swapin_vmstat_delta.pswpin": [
+          262138
+        ],
+        "swapin_vmstat_delta.zswpin": [
+          0
+        ],
+        "swapin_vmstat_delta.swap_ra": [
+          114684
+        ],
+        "swapin_vmstat_delta.swap_ra_hit": [
+          114684
+        ],
+        "swapin_vmstat_delta.pgmajfault": [
+          147456
+        ],
+        "swapin_vmstat_delta.zswpwb": [
+          0
+        ],
+        "xswap.grows": [
+          7
+        ],
+        "xswap.shrinks": [
+          0
+        ],
+        "xswap.usage_pages": [
+          0
+        ],
+        "xswap.clusters_mapped": [
+          584
+        ]
+      },
+      "metadata-brd": {
+        "metadata_delta_bytes_per_capacity_slot": [
+          0.11093139689762666
+        ]
+      }
+    },
+    "report": "campaigns/xswap-tcg-kbench-rev7-2026-10-29/runs/evaluations/68de12e0b0c9471bb497a9f0dc844a3f/report.json",
+    "fast_evidence_id": "68de12e0b0c9471bb497a9f0dc844a3f",
+    "advancement": {
+      "eligible": true,
+      "reason": "improvement exceeds calibrated noise",
+      "evidence_id": "68de12e0b0c9471bb497a9f0dc844a3f",
+      "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+      "fingerprint": "dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34",
+      "score": 2.0579269195328704,
+      "primary": [
+        "swapin-disk.swapin_seq.mean_ns",
+        "swapin-zram-64k.swapin_seq.mean_ns"
+      ],
+      "noise_relative": 0.22422817264659112,
+      "threshold": 1.2242281726465911
+    },
+    "parent_delta": {
+      "comparable": false,
+      "signal_summary": "median of retained samples; legacy scalar values are unchanged",
+      "probe_signals": {},
+      "combined_score": null,
+      "interpretation": "diagnostic difference of separate baseline comparisons, not a paired parent control"
+    },
+    "latest_status": "FAST_PASS",
+    "tier": "fast",
+    "screen_only": true,
+    "performance_accepted": false,
+    "parent_eligible": true,
+    "invalidation_reasons": [],
+    "kind": "exploratory_parent"
+  },
+  "allowed_parents": [
+    "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "31eb4618eae83f8ff55e4201b55bfe54a1d84284"
+  ],
+  "parent_bindings": {
+    "5e84ca928deeacb4eee656806a003f27d1eca82f": {
+      "candidate": null,
+      "source_tree": null
+    },
+    "31eb4618eae83f8ff55e4201b55bfe54a1d84284": {
+      "candidate": "v2-c1-xs-sync-ra",
+      "source_tree": "2f93d30f83db174edc624a4a5aab2bbb17c6288e"
+    }
+  },
+  "inspirations": [],
+  "last_outcomes": [
+    {
+      "id": "e8b7a7e377eb40ab88f875c83b2dfc69",
+      "candidate": null,
+      "candidate_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "tier": "fast",
+      "status": "CALIBRATED",
+      "analysis": {
+        "schema_version": 1,
+        "status": "CALIBRATED",
+        "passed": true,
+        "directions": {
+          "swapin-disk.swapin_seq.mean_ns": "lower",
+          "swapin-disk.swapin_seq.p99_ns": "lower",
+          "swapin-disk.swapin_rand.mean_ns": "lower",
+          "swapin-disk.swapin_rand.p99_ns": "lower",
+          "swapin-zram-64k.swapin_seq.mean_ns": "lower",
+          "swapin-zram-64k.swapin_seq.p99_ns": "lower",
+          "swapin-zram-64k.swapin_rand.mean_ns": "lower",
+          "swapin-zram-64k.swapin_rand.p99_ns": "lower"
+        },
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "pair_count": 10,
+        "envelope": "p90",
+        "noise_ceiling": 0.25,
+        "noise_floor": 0.03,
+        "noise_log": {
+          "swapin-disk.swapin_seq.mean_ns": 0.08289372288087016,
+          "swapin-disk.swapin_seq.p99_ns": 0.0938778367296269,
+          "swapin-disk.swapin_rand.mean_ns": 0.13474941136000318,
+          "swapin-disk.swapin_rand.p99_ns": 0.11190093707597981,
+          "swapin-zram-64k.swapin_seq.mean_ns": 0.20231058227785326,
+          "swapin-zram-64k.swapin_seq.p99_ns": 0.1813320302222312,
+          "swapin-zram-64k.swapin_rand.mean_ns": 0.16922581390699953,
+          "swapin-zram-64k.swapin_rand.p99_ns": 0.12169548150499132
+        },
+        "noise_relative": {
+          "swapin-disk.swapin_seq.mean_ns": 0.08642634015094441,
+          "swapin-disk.swapin_seq.p99_ns": 0.09842555046295698,
+          "swapin-disk.swapin_rand.mean_ns": 0.14425001236749901,
+          "swapin-disk.swapin_rand.p99_ns": 0.11840206297857647,
+          "swapin-zram-64k.swapin_seq.mean_ns": 0.22422817264659112,
+          "swapin-zram-64k.swapin_seq.p99_ns": 0.1988131554179,
+          "swapin-zram-64k.swapin_rand.mean_ns": 0.18438755991144928,
+          "swapin-zram-64k.swapin_rand.p99_ns": 0.12941012313810196
+        },
+        "advisory_metrics": [
+          "swapin-disk.swapin_seq.p99_ns",
+          "swapin-disk.swapin_rand.p99_ns",
+          "swapin-zram-64k.swapin_seq.p99_ns",
+          "swapin-zram-64k.swapin_rand.p99_ns"
+        ],
+        "rejected_metrics": [],
+        "performance_accepted": false,
+        "auto_promote": false
+      },
+      "changed_paths": []
+    },
+    {
+      "id": "3a554e3b19bd41bda52e877d37166e94",
+      "candidate": "v2-c1-xs-sync-ra",
+      "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+      "tier": "probe",
+      "status": "PROBE_PASS",
+      "mechanism": "swapin-zram-64k:swapin_vmstat_delta.swap_ra:up",
+      "analysis": {
+        "status": "PROBE_PASS",
+        "passed": true,
+        "reasons": [],
+        "probe_signals": {
+          "swapin-disk": {
+            "swapin_vmstat_delta.pswpin": [
+              262159
+            ],
+            "swapin_vmstat_delta.zswpin": [
+              0
+            ],
+            "swapin_vmstat_delta.swap_ra": [
+              115148
+            ],
+            "swapin_vmstat_delta.swap_ra_hit": [
+              115144
+            ],
+            "swapin_vmstat_delta.pgmajfault": [
+              147013
+            ],
+            "swapin_vmstat_delta.zswpwb": [
+              0
+            ],
+            "xswap.grows": [
+              7
+            ],
+            "xswap.shrinks": [
+              0
+            ],
+            "xswap.usage_pages": [
+              0
+            ],
+            "xswap.clusters_mapped": [
+              584
+            ]
+          },
+          "swapin-zram-64k": {
+            "swapin_vmstat_delta.pswpin": [
+              262138
+            ],
+            "swapin_vmstat_delta.zswpin": [
+              0
+            ],
+            "swapin_vmstat_delta.swap_ra": [
+              114684
+            ],
+            "swapin_vmstat_delta.swap_ra_hit": [
+              114684
+            ],
+            "swapin_vmstat_delta.pgmajfault": [
+              147456
+            ],
+            "swapin_vmstat_delta.zswpwb": [
+              0
+            ],
+            "xswap.grows": [
+              7
+            ],
+            "xswap.shrinks": [
+              0
+            ],
+            "xswap.usage_pages": [
+              0
+            ],
+            "xswap.clusters_mapped": [
+              584
+            ]
+          },
+          "metadata-brd": {
+            "metadata_delta_bytes_per_capacity_slot": [
+              0.11093139689762666
+            ]
+          }
+        },
+        "mechanism": "swapin-zram-64k:swapin_vmstat_delta.swap_ra:up",
+        "performance_accepted": false,
+        "auto_promote": false
+      },
+      "changed_paths": [
+        "mm/swap_state.c"
+      ]
+    },
+    {
+      "id": "68de12e0b0c9471bb497a9f0dc844a3f",
+      "candidate": "v2-c1-xs-sync-ra",
+      "candidate_commit": "31eb4618eae83f8ff55e4201b55bfe54a1d84284",
+      "tier": "fast",
+      "status": "FAST_PASS",
+      "mechanism": "swapin-zram-64k:swapin_vmstat_delta.swap_ra:up",
+      "analysis": {
+        "tier": "fast",
+        "pair_count": 4,
+        "metrics": {
+          "swapin-disk.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              3.2028189639392304,
+              3.0183255930714217,
+              2.8472102569300133,
+              3.089800581121014
+            ],
+            "geomean_ratio": 3.036771513739117,
+            "median_ratio": 3.053853986601931,
+            "noise_relative": 0.08642634015094441,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              0.9856426977603824,
+              0.9335013456580676,
+              0.9117842446379234,
+              0.94953939870615
+            ],
+            "geomean_ratio": 0.9447347331501328,
+            "median_ratio": 0.9414862221230555,
+            "noise_relative": 0.09842555046295698,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-disk.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              0.9139855463827379,
+              0.9174591477223327,
+              0.9668521462639111,
+              1.039838507412226
+            ],
+            "geomean_ratio": 0.9582150908900118,
+            "median_ratio": 0.9418319096764539,
+            "noise_relative": 0.14425001236749901,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              0.8897326722331791,
+              0.9206441596453492,
+              0.9005276208628975,
+              1.0306098581766587
+            ],
+            "geomean_ratio": 0.9337608643329399,
+            "median_ratio": 0.910530337082048,
+            "noise_relative": 0.11840206297857647,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              1.3044205495818382,
+              0.9551527424493119,
+              1.507822535489608,
+              1.7673215806237983
+            ],
+            "geomean_ratio": 1.3498610541272458,
+            "median_ratio": 1.4024388401692371,
+            "noise_relative": 0.22422817264659112,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              0.6243611064492013,
+              0.44436723805934514,
+              0.6477420202082619,
+              1.067648504003931
+            ],
+            "geomean_ratio": 0.6618385506335457,
+            "median_ratio": 0.6359441205254368,
+            "noise_relative": 0.1988131554179,
+            "guard_pass": false,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              0.9049874933676947,
+              0.869746038469685,
+              1.1017194490744817,
+              1.0637548159764574
+            ],
+            "geomean_ratio": 0.9800244213680354,
+            "median_ratio": 0.9811650240751285,
+            "noise_relative": 0.18438755991144928,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              0.9472573477686451,
+              0.9217367966580313,
+              1.0669034895078342,
+              0.9550699468340128
+            ],
+            "geomean_ratio": 0.9712002952065794,
+            "median_ratio": 0.9511556259474724,
+            "noise_relative": 0.12941012313810196,
+            "guard_pass": true,
+            "advisory": true
+          }
+        },
+        "overall_geomean_ratio": 2.024652957096469,
+        "combined_score": 2.0579269195328704,
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "reference": false,
+        "performance_accepted": false,
+        "auto_promote": false,
+        "eligible_for_slow": false,
+        "needs_review": false,
+        "decision": "median",
+        "overall_median_ratio": 2.0579269195328704,
+        "status": "FAST_PASS"
+      },
+      "changed_paths": [
+        "mm/swap_state.c"
+      ]
+    }
+  ],
+  "older_relevant_failures": [],
+  "line_history": "# xswap line\n\nCampaigns in opening order, with their recorded baselines and outcomes.\n\nFixed line anchor: `37de636c972a413f5c25e5b6c891fb4df2f53aed`. This is an identity, not an inferred root-relative performance result.\n\n## xswap-2026-10-21\n\nStatus: closed; machine: hurricpc; opened: 2026-10-21; closed: 2026-10-21.\n\nBaseline: `37de636c972a413f5c25e5b6c891fb4df2f53aed`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../xswap-2026-10-21/report/README.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xswap-grow-cap8](../xswap-2026-10-21/candidates/xswap-grow-cap8.json) | closed | Eight pilot boots passed. Zswap growth count fell to 13 from 15-16, but retention and latency do not justify promotion under the noisy baseline. |\n| [xswap-grow-target75](../xswap-2026-10-21/candidates/xswap-grow-target75.json) | closed | Eight pilot boots passed. Tighter target increased growth operations to 18-19 disk and 23 zswap, with mixed mapping/latency outcomes. No performance acceptance or promotion. |\n| [xswap-shrink-min4](../xswap-2026-10-21/candidates/xswap-shrink-min4.json) | closed | Eight pilot boots passed; no promotion: mixed metadata effects and large A/A state variation. Zswap retained more mapped clusters on average. |\n| [xswap-source](../xswap-2026-10-21/candidates/xswap-source.json) | closed | Upstream series imported and built as independent reference; not an optimized candidate or performance acceptance |\n\n## xswap-reference-replay\n\nStatus: closed; machine: hurricpc; opened: 2026-10-21; closed: 2026-10-21.\n\nBaseline: `9a0542b19a541eda3f82934ee747c61ec3f18847`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xswap-reference-replay](../xswap-reference-replay/candidates/xswap-reference-replay.json) | closed | Exact commit and tree replay verified; reference remains experimental. |\n\n## xswap-observe-2026-10-22\n\nStatus: closed; machine: hurricpc; opened: 2026-10-22; closed: 2026-10-22.\n\nBaseline: `37de636c972a413f5c25e5b6c891fb4df2f53aed`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-observe-v1](../xswap-observe-2026-10-22/candidates/xs-observe-v1.json) | closed | Observation baseline built in namespaces; fresh disk and zswap smoke guests passed all pilot gates. Frozen as structural campaign reference, not a performance candidate. |\n\n## xswap-structure-2026-10-22\n\nStatus: closed; machine: hurricpc; opened: 2026-10-22; closed: 2026-10-26.\n\nBaseline: `4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../xswap-structure-2026-10-22/report/README.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-lockassert-v1](../xswap-structure-2026-10-22/candidates/xs-lockassert-v1.json) | closed | Isolated one-line assertion repair passed same-config lockdep disk control with all data/lifecycle/no-warning gates; baseline and tailcache v1 reproduced original warning. Retain repair, no performance or promotion claim. |\n| [xs-lowfree-v1](../xswap-structure-2026-10-22/candidates/xs-lowfree-v1.json) | closed | 40/40 pilot gates pass; exploratory mean retention lower but regimes overlap and zswap mean p99 regresses 5.8 percent. Inconclusive discovery candidate, not accepted or promoted. Follow up independent bounded cache-only tail reclamation. |\n| [xs-tailcache-v1](../xswap-structure-2026-10-22/candidates/xs-tailcache-v1.json) | closed | Lockdep disk smoke failed no-warning gate. Same warning reproduced on observation baseline; xswap_grow asserts untranslated per-CPU lock address. Stop performance comparison, retain failed boot, isolate assertion repair then revalidate revised candidate. |\n| [xs-tailcache-v2](../xswap-structure-2026-10-22/candidates/xs-tailcache-v2.json) | closed | Lifecycle cleanup, no performance conclusion. Listed in blocked_commits pending descriptor lifetime review when the campaign ended. |\n\n## xswap-p123-2026-10-23\n\nStatus: closed; machine: hurricpc; opened: 2026-10-23; closed: 2026-10-26.\n\nBaseline: `b2beda7fe460f911b88d27890993347588d70748`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../xswap-p123-2026-10-23/report/README.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json) | closed | Lifecycle cleanup, no performance conclusion. Commit 5e84ca92 became the baseline of xswap-next-2026-10-24 and xswap-tcg-rev3-2026-10-25, which superseded this campaign. |\n\n## xswap-p123-lifetime-20261023\n\nStatus: closed; machine: hurricpc; opened: 2026-10-23; closed: 2026-10-26.\n\nBaseline: `b2beda7fe460f911b88d27890993347588d70748`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [p123-lifetime-rcu](../xswap-p123-lifetime-20261023/candidates/p123-lifetime-rcu.json) | closed | Lifecycle cleanup, no performance conclusion. Never checked; the descriptor lifetime repair in 5e84ca92 was adopted as the baseline instead. |\n\n## xswap-phase3-import\n\nStatus: closed; machine: hurricpc; opened: 2026-10-23; closed: 2026-10-23.\n\nBaseline: `37de636c972a413f5c25e5b6c891fb4df2f53aed`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xswap-phase3-import](../xswap-phase3-import/candidates/xswap-phase3-import.json) | closed | Phase III applied cleanly on 37de636c; tree 187cfe49 verified; scope, diff-check and checkpatch pass. Reference remains experimental. |\n\n## xswap-swapin-2026-10-23\n\nStatus: closed; machine: hurricpc; opened: 2026-10-23; closed: 2026-10-23.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n[Campaign report](../xswap-swapin-2026-10-23/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-ra-phys-v1](../xswap-swapin-2026-10-23/candidates/xs-ra-phys-v1.json) | closed | Fast evaluation 8a4b89fc0c8e44dd80c7675ef9c8c0fb REGRESSION: disk random p99 baseline/candidate 0.90495 below calibrated guard; no slow evaluation or promotion. |\n| [xs-ra-zswap-v1](../xswap-swapin-2026-10-23/candidates/xs-ra-zswap-v1.json) | closed | Fast evaluation 31cced4875f8470dbdde1dd557fca236 REGRESSION: zswap sequential p99 baseline/candidate0.262609; sequential mean gain0.407% below3%noise. No slow evaluation or promotion. |\n\n## confirm-h1-ra-phys-2026-10-23\n\nStatus: closed; machine: hurricpc; opened: 2026-10-24; closed: 2026-10-24.\n\nBaseline: `unknown`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n\n## xswap-next-2026-10-24\n\nStatus: closed; machine: hurricpc; opened: 2026-10-24; closed: 2026-10-24.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n[Campaign report](../xswap-next-2026-10-24/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-ra-cluster-v1](../xswap-next-2026-10-24/candidates/xs-ra-cluster-v1.json) | closed | REJECT_FAST: report 9ec21a04b74b4d46a7931c16112a6bdb records useful physical prefetch and disk seq mean -40.19%, but disk random p99 +29.46% and compressed random mean +7.96% fail guards. Targeted KASAN/lockdep, both release correctness backends and CONFIG_SWAP=n build pass. Retain the tradeoff; no slow confirmation or promotion. Two pairs leave causal attribution and between-run variation unresolved. |\n| [xs-ra-sequential-v1](../xswap-next-2026-10-24/candidates/xs-ra-sequential-v1.json) | closed | REGRESSION in fast report 49add9b084d04941a459281838bbf3f3: disk seq p99 and rand p99 fail. swap_ra=0 in both candidate disk runs; source VMA-only admission is inactive with the rotational guest backend. Keep failed evidence; no causal speed claim, slow run or promotion. |\n| [xs-zswap-linear-v1](../xswap-next-2026-10-24/candidates/xs-zswap-linear-v1.json) | closed | REJECT_FAST: report 15ded9c2bdf44b5fae1b3e83f0f75daf fails all four compressed latency guards; zswap seq mean +24.39%. Both release correctness backends and targeted KASAN/lockdep correctness pass. Disk-path movement has no matching mechanism and is not credited. Retain evidence, no slow tier or promotion. |\n\n## xswap-tcg-rev3-2026-10-25\n\nStatus: closed; machine: grok-cloud; opened: 2026-10-25; closed: 2026-10-28.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n\n## kbench-smoke-2026-10-27\n\nStatus: closed; machine: hurricpc; opened: 2026-10-28; closed: 2026-10-28.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n[Campaign report](../kbench-smoke-2026-10-27/report/README.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n\n## xswap-tcg-kbench-2026-10-29\n\nStatus: closed; machine: grok-cloud; opened: 2026-10-29; closed: 2026-10-29.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n\nCurrent baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (xswap-tcg-kbench-2026-10-29)\n",
+  "remaining": {
+    "fast": {
+      "spent": 69,
+      "ceiling": 96,
+      "remaining": 27
+    },
+    "probe": {
+      "spent": 12,
+      "ceiling": 24,
+      "remaining": 12
+    },
+    "total": {
+      "spent": 81,
+      "ceiling": 120
+    }
+  },
+  "anchor_comparison": "anchor identity retained; no root-relative measurement is claimed",
+  "prompt": {
+    "system": "You propose Linux swap experiments within the frozen campaign contract.",
+    "user": "Campaign proposal binding\n{\"allowed_parents\": [\"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\"], \"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"campaign\": \"xswap-tcg-kbench-rev7-2026-10-29\", \"fingerprint\": \"dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34\", \"id\": \"brief-000002-2db0c4104afa\", \"line_anchor_commit\": \"37de636c972a413f5c25e5b6c891fb4df2f53aed\"}\n\nChoose the campaign baseline or the sampled exact parent commit. State the choice,\nhypothesis, expected mechanism and falsifier. Preserve the cumulative scope and\ncompare every child with the frozen campaign baseline. A neutral screen may be an\nexploratory parent; advancing a campaign baseline requires improvement beyond its\ncalibrated noise. Screens are not acceptance or permission for a slow run.\n\nSampled parent and cumulative patch evidence\n{\"advancement\": {\"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"eligible\": true, \"evidence_id\": \"68de12e0b0c9471bb497a9f0dc844a3f\", \"fingerprint\": \"dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34\", \"noise_relative\": 0.22422817264659112, \"primary\": [\"swapin-disk.swapin_seq.mean_ns\", \"swapin-zram-64k.swapin_seq.mean_ns\"], \"reason\": \"improvement exceeds calibrated noise\", \"score\": 2.0579269195328704, \"threshold\": 1.2242281726465911}, \"analysis\": {\"auto_promote\": false, \"combined_score\": 2.0579269195328704, \"decision\": \"median\", \"eligible_for_slow\": false, \"metrics\": {\"swapin-disk.swapin_rand.mean_ns\": {\"geomean_ratio\": 0.9582150908900118, \"guard_pass\": true, \"median_ratio\": 0.9418319096764539, \"noise_relative\": 0.14425001236749901, \"pair_ratios\": [0.9139855463827379, 0.9174591477223327, 0.9668521462639111, 1.039838507412226]}, \"swapin-disk.swapin_rand.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.9337608643329399, \"guard_pass\": true, \"median_ratio\": 0.910530337082048, \"noise_relative\": 0.11840206297857647, \"pair_ratios\": [0.8897326722331791, 0.9206441596453492, 0.9005276208628975, 1.0306098581766587]}, \"swapin-disk.swapin_seq.mean_ns\": {\"geomean_ratio\": 3.036771513739117, \"guard_pass\": true, \"median_ratio\": 3.053853986601931, \"noise_relative\": 0.08642634015094441, \"pair_ratios\": [3.2028189639392304, 3.0183255930714217, 2.8472102569300133, 3.089800581121014]}, \"swapin-disk.swapin_seq.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.9447347331501328, \"guard_pass\": true, \"median_ratio\": 0.9414862221230555, \"noise_relative\": 0.09842555046295698, \"pair_ratios\": [0.9856426977603824, 0.9335013456580676, 0.9117842446379234, 0.94953939870615]}, \"swapin-zram-64k.swapin_rand.mean_ns\": {\"geomean_ratio\": 0.9800244213680354, \"guard_pass\": true, \"median_ratio\": 0.9811650240751285, \"noise_relative\": 0.18438755991144928, \"pair_ratios\": [0.9049874933676947, 0.869746038469685, 1.1017194490744817, 1.0637548159764574]}, \"swapin-zram-64k.swapin_rand.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.9712002952065794, \"guard_pass\": true, \"median_ratio\": 0.9511556259474724, \"noise_relative\": 0.12941012313810196, \"pair_ratios\": [0.9472573477686451, 0.9217367966580313, 1.0669034895078342, 0.9550699468340128]}, \"swapin-zram-64k.swapin_seq.mean_ns\": {\"geomean_ratio\": 1.3498610541272458, \"guard_pass\": true, \"median_ratio\": 1.4024388401692371, \"noise_relative\": 0.22422817264659112, \"pair_ratios\": [1.3044205495818382, 0.9551527424493119, 1.507822535489608, 1.7673215806237983]}, \"swapin-zram-64k.swapin_seq.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.6618385506335457, \"guard_pass\": false, \"median_ratio\": 0.6359441205254368, \"noise_relative\": 0.1988131554179, \"pair_ratios\": [0.6243611064492013, 0.44436723805934514, 0.6477420202082619, 1.067648504003931]}}, \"needs_review\": false, \"overall_geomean_ratio\": 2.024652957096469, \"overall_median_ratio\": 2.0579269195328704, \"pair_count\": 4, \"performance_accepted\": false, \"primary\": [\"swapin-disk.swapin_seq.mean_ns\", \"swapin-zram-64k.swapin_seq.mean_ns\"], \"reference\": false, \"status\": \"FAST_PASS\", \"tier\": \"fast\"}, \"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"changed_paths\": [\"mm/swap_state.c\"], \"evidence\": [{\"action\": \"evaluate\", \"analysis\": {\"auto_promote\": false, \"combined_score\": 2.0579269195328704, \"decision\": \"median\", \"eligible_for_slow\": false, \"metrics\": {\"swapin-disk.swapin_rand.mean_ns\": {\"geomean_ratio\": 0.9582150908900118, \"guard_pass\": true, \"median_ratio\": 0.9418319096764539, \"noise_relative\": 0.14425001236749901, \"pair_ratios\": [0.9139855463827379, 0.9174591477223327, 0.9668521462639111, 1.039838507412226]}, \"swapin-disk.swapin_rand.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.9337608643329399, \"guard_pass\": true, \"median_ratio\": 0.910530337082048, \"noise_relative\": 0.11840206297857647, \"pair_ratios\": [0.8897326722331791, 0.9206441596453492, 0.9005276208628975, 1.0306098581766587]}, \"swapin-disk.swapin_seq.mean_ns\": {\"geomean_ratio\": 3.036771513739117, \"guard_pass\": true, \"median_ratio\": 3.053853986601931, \"noise_relative\": 0.08642634015094441, \"pair_ratios\": [3.2028189639392304, 3.0183255930714217, 2.8472102569300133, 3.089800581121014]}, \"swapin-disk.swapin_seq.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.9447347331501328, \"guard_pass\": true, \"median_ratio\": 0.9414862221230555, \"noise_relative\": 0.09842555046295698, \"pair_ratios\": [0.9856426977603824, 0.9335013456580676, 0.9117842446379234, 0.94953939870615]}, \"swapin-zram-64k.swapin_rand.mean_ns\": {\"geomean_ratio\": 0.9800244213680354, \"guard_pass\": true, \"median_ratio\": 0.9811650240751285, \"noise_relative\": 0.18438755991144928, \"pair_ratios\": [0.9049874933676947, 0.869746038469685, 1.1017194490744817, 1.0637548159764574]}, \"swapin-zram-64k.swapin_rand.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.9712002952065794, \"guard_pass\": true, \"median_ratio\": 0.9511556259474724, \"noise_relative\": 0.12941012313810196, \"pair_ratios\": [0.9472573477686451, 0.9217367966580313, 1.0669034895078342, 0.9550699468340128]}, \"swapin-zram-64k.swapin_seq.mean_ns\": {\"geomean_ratio\": 1.3498610541272458, \"guard_pass\": true, \"median_ratio\": 1.4024388401692371, \"noise_relative\": 0.22422817264659112, \"pair_ratios\": [1.3044205495818382, 0.9551527424493119, 1.507822535489608, 1.7673215806237983]}, \"swapin-zram-64k.swapin_seq.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.6618385506335457, \"guard_pass\": false, \"median_ratio\": 0.6359441205254368, \"noise_relative\": 0.1988131554179, \"pair_ratios\": [0.6243611064492013, 0.44436723805934514, 0.6477420202082619, 1.067648504003931]}}, \"needs_review\": false, \"overall_geomean_ratio\": 2.024652957096469, \"overall_median_ratio\": 2.0579269195328704, \"pair_count\": 4, \"performance_accepted\": false, \"primary\": [\"swapin-disk.swapin_seq.mean_ns\", \"swapin-zram-64k.swapin_seq.mean_ns\"], \"reference\": false, \"status\": \"FAST_PASS\", \"tier\": \"fast\"}, \"calibration_id\": \"e8b7a7e377eb40ab88f875c83b2dfc69\", \"candidate\": \"v2-c1-xs-sync-ra\", \"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"controller_check\": {\"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"changed_lines\": 104, \"changed_paths\": [\"mm/swap_state.c\"], \"checkpatch\": {\"evidence\": \"campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra/checkpatch.log\", \"exit_code\": 0, \"sha256\": \"ce42ee85f1d780d82108c80d7f25ed0a4136e612b23d49937048c96921b93c3b\"}, \"diff-check\": {\"evidence\": \"campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra/diff-check.log\", \"exit_code\": 0, \"sha256\": \"9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a\"}, \"parent\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"status\": \"SCOPE_PASS\"}, \"correctness\": {\"backend\": \"disk\", \"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"config_sha256\": \"b9e2fe059b49257ddd30dd3193e38455df3b5e3c28f2a0f556264bbda8e2211a\", \"gates\": {\"backend_exercised\": true, \"boot\": true, \"cmdline_identity\": true, \"concurrent_fault\": true, \"correctness_evidence\": true, \"data_roundtrip\": true, \"destroy_live_pages\": true, \"fork_cow\": true, \"kernel_log_present\": true, \"no_kernel_warnings\": true, \"no_new_kernel_warnings\": true, \"qemu_exit\": true, \"swap_activity\": true, \"swap_routing\": true, \"swapoff_live_pages\": true, \"thp_policy\": true, \"workload_complete\": true}, \"integration_pass\": true, \"mode\": \"xswap\", \"source_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\"}, \"fingerprint\": \"dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34\", \"finished\": 1793305278.3802967, \"id\": \"68de12e0b0c9471bb497a9f0dc844a3f\", \"probe_id\": \"3a554e3b19bd41bda52e877d37166e94\", \"probe_signals\": {\"metadata-brd\": {\"metadata_delta_bytes_per_capacity_slot\": [0.11093139689762666]}, \"swapin-disk\": {\"swapin_vmstat_delta.pgmajfault\": [147013], \"swapin_vmstat_delta.pswpin\": [262159], \"swapin_vmstat_delta.swap_ra\": [115148], \"swapin_vmstat_delta.swap_ra_hit\": [115144], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}, \"swapin-zram-64k\": {\"swapin_vmstat_delta.pgmajfault\": [147456], \"swapin_vmstat_delta.pswpin\": [262138], \"swapin_vmstat_delta.swap_ra\": [114684], \"swapin_vmstat_delta.swap_ra_hit\": [114684], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}}, \"report\": \"campaigns/xswap-tcg-kbench-rev7-2026-10-29/runs/evaluations/68de12e0b0c9471bb497a9f0dc844a3f/report.json\", \"row_sha256\": \"1175d814f87082d75ca639a707717bb3d2ad2aad2c80a5ae05685560dfe85210\", \"started\": 1793304129.7528832, \"status\": \"FAST_PASS\", \"tier\": \"fast\"}, {\"action\": \"evaluate\", \"analysis\": {\"auto_promote\": false, \"mechanism\": \"swapin-zram-64k:swapin_vmstat_delta.swap_ra:up\", \"passed\": true, \"performance_accepted\": false, \"probe_signals\": {\"metadata-brd\": {\"metadata_delta_bytes_per_capacity_slot\": [0.11093139689762666]}, \"swapin-disk\": {\"swapin_vmstat_delta.pgmajfault\": [147013], \"swapin_vmstat_delta.pswpin\": [262159], \"swapin_vmstat_delta.swap_ra\": [115148], \"swapin_vmstat_delta.swap_ra_hit\": [115144], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}, \"swapin-zram-64k\": {\"swapin_vmstat_delta.pgmajfault\": [147456], \"swapin_vmstat_delta.pswpin\": [262138], \"swapin_vmstat_delta.swap_ra\": [114684], \"swapin_vmstat_delta.swap_ra_hit\": [114684], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}}, \"reasons\": [], \"status\": \"PROBE_PASS\"}, \"calibration_id\": \"86fc2f677ee24429bc1c0dba6c91141f\", \"candidate\": \"v2-c1-xs-sync-ra\", \"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"controller_check\": {\"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"changed_lines\": 104, \"changed_paths\": [\"mm/swap_state.c\"], \"checkpatch\": {\"evidence\": \"campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra/checkpatch.log\", \"exit_code\": 0, \"sha256\": \"ce42ee85f1d780d82108c80d7f25ed0a4136e612b23d49937048c96921b93c3b\"}, \"diff-check\": {\"evidence\": \"campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra/diff-check.log\", \"exit_code\": 0, \"sha256\": \"9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a\"}, \"parent\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"status\": \"SCOPE_PASS\"}, \"correctness\": {\"backend\": \"disk\", \"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"config_sha256\": \"b9e2fe059b49257ddd30dd3193e38455df3b5e3c28f2a0f556264bbda8e2211a\", \"gates\": {\"backend_exercised\": true, \"boot\": true, \"cmdline_identity\": true, \"concurrent_fault\": true, \"correctness_evidence\": true, \"data_roundtrip\": true, \"destroy_live_pages\": true, \"fork_cow\": true, \"kernel_log_present\": true, \"no_kernel_warnings\": true, \"no_new_kernel_warnings\": true, \"qemu_exit\": true, \"swap_activity\": true, \"swap_routing\": true, \"swapoff_live_pages\": true, \"thp_policy\": true, \"workload_complete\": true}, \"integration_pass\": true, \"mode\": \"xswap\", \"source_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\"}, \"fingerprint\": \"dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34\", \"finished\": 1793304094.4556797, \"id\": \"3a554e3b19bd41bda52e877d37166e94\", \"probe_signals\": {\"metadata-brd\": {\"metadata_delta_bytes_per_capacity_slot\": [0.11093139689762666]}, \"swapin-disk\": {\"swapin_vmstat_delta.pgmajfault\": [147013], \"swapin_vmstat_delta.pswpin\": [262159], \"swapin_vmstat_delta.swap_ra\": [115148], \"swapin_vmstat_delta.swap_ra_hit\": [115144], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}, \"swapin-zram-64k\": {\"swapin_vmstat_delta.pgmajfault\": [147456], \"swapin_vmstat_delta.pswpin\": [262138], \"swapin_vmstat_delta.swap_ra\": [114684], \"swapin_vmstat_delta.swap_ra_hit\": [114684], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}}, \"report\": \"campaigns/xswap-tcg-kbench-rev7-2026-10-29/runs/evaluations/3a554e3b19bd41bda52e877d37166e94/report.json\", \"row_sha256\": \"9730074c0fccbf3b44b3c1e4f53a94f24c101c5c0717f5f318a7fcd53951c437\", \"started\": 1793303966.165642, \"status\": \"PROBE_PASS\", \"tier\": \"probe\"}], \"fast_evidence_id\": \"68de12e0b0c9471bb497a9f0dc844a3f\", \"fingerprint\": \"dcca47b0ee5ff197817bbb177f12a1f528e8dc97405747e98548e9e3eb9fee34\", \"generation\": 1, \"hypothesis\": \"xswap fault readahead with adjacency gate (c1, commit 31eb4618): xswap_fault_readahead takes the readahead path for order-0 non-shmem faults with page_cluster>0 adjacent to the VMA last fault; both readahead paths filter xswap neighbours per entry (xswap_readahead_wanted) instead of skipping the device. Expect swapin-zram-64k swapin_seq.mean_ns down, swapin_rand.mean_ns ~unchanged; swap_ra and swap_ra_hit up, pgmajfault down.\", \"id\": \"v2-c1-xs-sync-ra\", \"invalidation_reasons\": [], \"invalidations\": [], \"kind\": \"exploratory_parent\", \"latest_status\": \"FAST_PASS\", \"line_anchor_commit\": \"37de636c972a413f5c25e5b6c891fb4df2f53aed\", \"mechanism\": \"swapin-zram-64k:swapin_vmstat_delta.swap_ra:up\", \"parent_candidate\": null, \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_delta\": {\"combined_score\": null, \"comparable\": false, \"interpretation\": \"diagnostic difference of separate baseline comparisons, not a paired parent control\", \"probe_signals\": {}, \"signal_summary\": \"median of retained samples; legacy scalar values are unchanged\"}, \"parent_eligible\": true, \"patch\": \"diff --git a/mm/swap_state.c b/mm/swap_state.c\\nindex 7ac1808ae..c30fb4bfb 100644\\n--- a/mm/swap_state.c\\n+++ b/mm/swap_state.c\\n@@ -718,6 +718,16 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\\n \\t\\t\\thits = min_t(int, hits + 1, SWAP_RA_HITS_MAX);\\n \\t\\tatomic_long_set(&vma->swap_readahead_info,\\n \\t\\t\\t\\tSWAP_RA_VAL(addr, win, hits));\\n+\\t} else if (vma && readahead) {\\n+\\t\\t/*\\n+\\t\\t * Cluster mode keeps its window in global state, so the VMA\\n+\\t\\t * history is only read by xswap_fault_readahead().  Record a\\n+\\t\\t * readahead hit there: the next miss after a prefetched block\\n+\\t\\t * is then adjacent and stays admitted.  The history is\\n+\\t\\t * advisory and every entry is revalidated by the swap cache.\\n+\\t\\t */\\n+\\t\\tatomic_long_set(&vma->swap_readahead_info,\\n+\\t\\t\\t\\tSWAP_RA_VAL(addr, 1, 0));\\n \\t}\\n \\n \\tif (readahead) {\\n@@ -754,7 +764,70 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\\n }\\n \\n /**\\n- * swapin_sync - swap-in one or multiple entries skipping readahead.\\n+ * xswap_readahead_wanted - Check whether an xswap slot has a physical backend.\\n+ * @si: the swap device of @entry.\\n+ * @entry: the swap entry, which need not be pinned.\\n+ *\\n+ * This is a readahead hint, not a pin on the slot or its backend. The swap\\n+ * cache allocation and read paths must revalidate the entry after this\\n+ * returns. No cluster pointer or physical entry escapes the lock.\\n+ *\\n+ * Context: Caller must protect @si with a reference count or locks.\\n+ * Return: true if an xswap slot has a physical backend, false otherwise.\\n+ */\\n+static bool xswap_readahead_wanted(struct swap_info_struct *si,\\n+\\t\\t\\t\\t   swp_entry_t entry)\\n+{\\n+\\tstruct swap_cluster_info *ci;\\n+\\tbool backed;\\n+\\n+\\tif (!(si->flags & SWP_XSWAP))\\n+\\t\\treturn false;\\n+\\tci = swap_cluster_lock_unpinned(si, swp_offset(entry));\\n+\\tif (!ci)\\n+\\t\\treturn false;\\n+\\tbacked = xswap_slot_backend(ci, swp_cluster_offset(entry)).val;\\n+\\tswap_cluster_unlock(ci);\\n+\\n+\\treturn backed;\\n+}\\n+\\n+/**\\n+ * xswap_fault_readahead - Admit physical readahead after adjacent faults.\\n+ * @vmf: fault holding a reference to the target swap device.\\n+ * @entry: target swap entry.\\n+ *\\n+ * Keep discontinuous faults on the synchronous demand path. VMA history is\\n+ * advisory: racing faults may suppress or admit speculation, but the swap\\n+ * cache and I/O paths still validate every entry and own its references.\\n+ */\\n+static bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)\\n+{\\n+\\tstruct swap_info_struct *si = __swap_entry_to_info(entry);\\n+\\tstruct vm_area_struct *vma = vmf->vma;\\n+\\tunsigned long prev;\\n+\\n+\\tif (!(si->flags & SWP_XSWAP) || READ_ONCE(page_cluster) <= 0)\\n+\\t\\treturn false;\\n+\\t/* shmem passes its own vmf; its VMA has no swap PTEs to read ahead. */\\n+\\tif (vma_is_shmem(vma))\\n+\\t\\treturn false;\\n+\\tprev = SWAP_RA_ADDR(GET_SWAP_RA_VAL(vma));\\n+\\tif (vmf->address != prev + PAGE_SIZE &&\\n+\\t    prev != vmf->address + PAGE_SIZE) {\\n+\\t\\tatomic_long_set(&vma->swap_readahead_info,\\n+\\t\\t\\t\\tSWAP_RA_VAL(vmf->address, 1, 0));\\n+\\t\\treturn false;\\n+\\t}\\n+\\t/* VMA mode updates the history in swap_vma_ra_win(). */\\n+\\tif (!swap_use_vma_readahead())\\n+\\t\\tatomic_long_set(&vma->swap_readahead_info,\\n+\\t\\t\\t\\tSWAP_RA_VAL(vmf->address, 1, 0));\\n+\\treturn xswap_readahead_wanted(si, entry);\\n+}\\n+\\n+/**\\n+ * swapin_sync - swap-in one or multiple entries, normally skipping readahead.\\n  * @entry: swap entry indicating the target slot\\n  * @gfp: memory allocation flags\\n  * @orders: allocation orders\\n@@ -765,6 +838,8 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\\n  * This allocates a folio suitable for given @orders, or returns the\\n  * existing folio in the swap cache for @entry. This initiates the IO, too,\\n  * if needed. @entry is rounded down if @orders allow large allocation.\\n+ * An order-0 fault on an xswap entry with a physical backend that follows\\n+ * an adjacent fault goes through swapin_readahead() instead.\\n  *\\n  * Context: Caller must ensure @entry is valid and pin the swap device with refcount.\\n  * Return: Returns the folio on success, error code if failed.\\n@@ -775,6 +850,12 @@ struct folio *swapin_sync(swp_entry_t entry, gfp_t gfp, unsigned long orders,\\n \\tstruct swap_io_ctx ctx = {};\\n \\tstruct folio *folio;\\n \\n+\\tif (vmf && orders == BIT(0) && xswap_fault_readahead(vmf, entry)) {\\n+\\t\\tfolio = swapin_readahead(entry, gfp, vmf);\\n+\\t\\tif (folio)\\n+\\t\\t\\treturn folio;\\n+\\t}\\n+\\n \\tdo {\\n \\t\\tfolio = swap_cache_get_folio(entry);\\n \\t\\tif (folio)\\n@@ -920,8 +1001,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\\n \\tstruct blk_plug plug;\\n \\tswp_entry_t ra_entry;\\n \\n-\\t/* xswap entries live only in zswap; readahead does not help. */\\n-\\tif (si->flags & SWP_XSWAP)\\n+\\t/* Keep compressed xswap targets on the single-folio path. */\\n+\\tif ((si->flags & SWP_XSWAP) && !xswap_readahead_wanted(si, entry))\\n \\t\\tgoto skip;\\n \\n \\tmask = swapin_nr_pages(offset) - 1;\\n@@ -940,6 +1021,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\\n \\tfor (offset = start_offset; offset <= end_offset ; offset++) {\\n \\t\\t/* Ok, do the async read-ahead now */\\n \\t\\tra_entry = swp_entry(swp_type(entry), offset);\\n+\\t\\tif ((si->flags & SWP_XSWAP) && offset != entry_offset &&\\n+\\t\\t    !xswap_readahead_wanted(si, ra_entry))\\n+\\t\\t\\tcontinue;\\n \\t\\tfolio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,\\n \\t\\t\\t\\tilx, offset != entry_offset);\\n \\t\\tif (!folio)\\n@@ -1009,7 +1093,6 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\\n static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\\n \\t\\tstruct mempolicy *mpol, pgoff_t targ_ilx, struct vm_fault *vmf)\\n {\\n-\\tstruct swap_info_struct *si = __swap_entry_to_info(targ_entry);\\n \\tstruct swap_io_ctx ctx = {};\\n \\tstruct blk_plug plug;\\n \\tstruct folio *folio;\\n@@ -1018,10 +1101,6 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\\n \\tunsigned long start, end, addr;\\n \\tpgoff_t ilx = targ_ilx;\\n \\n-\\t/* xswap entries live only in zswap; readahead does not help. */\\n-\\tif (si->flags & SWP_XSWAP)\\n-\\t\\tgoto skip;\\n-\\n \\twin = swap_vma_ra_win(vmf, &start, &end);\\n \\tif (win == 1)\\n \\t\\tgoto skip;\\n@@ -1054,8 +1133,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\\n \\t\\t\\tif (IS_ERR_OR_NULL(si))\\n \\t\\t\\t\\tcontinue;\\n \\t\\t}\\n-\\t\\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,\\n-\\t\\t\\t\\t\\t      addr != vmf->address);\\n+\\t\\tif (addr != vmf->address &&\\n+\\t\\t    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&\\n+\\t\\t    !xswap_readahead_wanted(__swap_entry_to_info(entry), entry))\\n+\\t\\t\\tfolio = NULL;\\n+\\t\\telse\\n+\\t\\t\\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,\\n+\\t\\t\\t\\t\\t\\t      ilx, addr != vmf->address);\\n \\t\\tif (si)\\n \\t\\t\\tput_swap_device(si);\\n \\t\\tif (!folio)\\n\", \"performance_accepted\": false, \"probe_signals\": {\"metadata-brd\": {\"metadata_delta_bytes_per_capacity_slot\": [0.11093139689762666]}, \"swapin-disk\": {\"swapin_vmstat_delta.pgmajfault\": [147013], \"swapin_vmstat_delta.pswpin\": [262159], \"swapin_vmstat_delta.swap_ra\": [115148], \"swapin_vmstat_delta.swap_ra_hit\": [115144], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}, \"swapin-zram-64k\": {\"swapin_vmstat_delta.pgmajfault\": [147456], \"swapin_vmstat_delta.pswpin\": [262138], \"swapin_vmstat_delta.swap_ra\": [114684], \"swapin_vmstat_delta.swap_ra_hit\": [114684], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}}, \"report\": \"campaigns/xswap-tcg-kbench-rev7-2026-10-29/runs/evaluations/68de12e0b0c9471bb497a9f0dc844a3f/report.json\", \"screen_only\": true, \"source_tree\": \"2f93d30f83db174edc624a4a5aab2bbb17c6288e\", \"tier\": \"fast\", \"timestamp\": 1793305278.3802967}\n\nInspirations (negative examples are never eligible parents)\n[]\n\nLast three outcomes\n[{\"analysis\": {\"advisory_metrics\": [\"swapin-disk.swapin_seq.p99_ns\", \"swapin-disk.swapin_rand.p99_ns\", \"swapin-zram-64k.swapin_seq.p99_ns\", \"swapin-zram-64k.swapin_rand.p99_ns\"], \"auto_promote\": false, \"directions\": {\"swapin-disk.swapin_rand.mean_ns\": \"lower\", \"swapin-disk.swapin_rand.p99_ns\": \"lower\", \"swapin-disk.swapin_seq.mean_ns\": \"lower\", \"swapin-disk.swapin_seq.p99_ns\": \"lower\", \"swapin-zram-64k.swapin_rand.mean_ns\": \"lower\", \"swapin-zram-64k.swapin_rand.p99_ns\": \"lower\", \"swapin-zram-64k.swapin_seq.mean_ns\": \"lower\", \"swapin-zram-64k.swapin_seq.p99_ns\": \"lower\"}, \"envelope\": \"p90\", \"noise_ceiling\": 0.25, \"noise_floor\": 0.03, \"noise_log\": {\"swapin-disk.swapin_rand.mean_ns\": 0.13474941136000318, \"swapin-disk.swapin_rand.p99_ns\": 0.11190093707597981, \"swapin-disk.swapin_seq.mean_ns\": 0.08289372288087016, \"swapin-disk.swapin_seq.p99_ns\": 0.0938778367296269, \"swapin-zram-64k.swapin_rand.mean_ns\": 0.16922581390699953, \"swapin-zram-64k.swapin_rand.p99_ns\": 0.12169548150499132, \"swapin-zram-64k.swapin_seq.mean_ns\": 0.20231058227785326, \"swapin-zram-64k.swapin_seq.p99_ns\": 0.1813320302222312}, \"noise_relative\": {\"swapin-disk.swapin_rand.mean_ns\": 0.14425001236749901, \"swapin-disk.swapin_rand.p99_ns\": 0.11840206297857647, \"swapin-disk.swapin_seq.mean_ns\": 0.08642634015094441, \"swapin-disk.swapin_seq.p99_ns\": 0.09842555046295698, \"swapin-zram-64k.swapin_rand.mean_ns\": 0.18438755991144928, \"swapin-zram-64k.swapin_rand.p99_ns\": 0.12941012313810196, \"swapin-zram-64k.swapin_seq.mean_ns\": 0.22422817264659112, \"swapin-zram-64k.swapin_seq.p99_ns\": 0.1988131554179}, \"pair_count\": 10, \"passed\": true, \"performance_accepted\": false, \"primary\": [\"swapin-disk.swapin_seq.mean_ns\", \"swapin-zram-64k.swapin_seq.mean_ns\"], \"rejected_metrics\": [], \"schema_version\": 1, \"status\": \"CALIBRATED\"}, \"candidate\": null, \"candidate_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"changed_paths\": [], \"id\": \"e8b7a7e377eb40ab88f875c83b2dfc69\", \"status\": \"CALIBRATED\", \"tier\": \"fast\"}, {\"analysis\": {\"auto_promote\": false, \"mechanism\": \"swapin-zram-64k:swapin_vmstat_delta.swap_ra:up\", \"passed\": true, \"performance_accepted\": false, \"probe_signals\": {\"metadata-brd\": {\"metadata_delta_bytes_per_capacity_slot\": [0.11093139689762666]}, \"swapin-disk\": {\"swapin_vmstat_delta.pgmajfault\": [147013], \"swapin_vmstat_delta.pswpin\": [262159], \"swapin_vmstat_delta.swap_ra\": [115148], \"swapin_vmstat_delta.swap_ra_hit\": [115144], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}, \"swapin-zram-64k\": {\"swapin_vmstat_delta.pgmajfault\": [147456], \"swapin_vmstat_delta.pswpin\": [262138], \"swapin_vmstat_delta.swap_ra\": [114684], \"swapin_vmstat_delta.swap_ra_hit\": [114684], \"swapin_vmstat_delta.zswpin\": [0], \"swapin_vmstat_delta.zswpwb\": [0], \"xswap.clusters_mapped\": [584], \"xswap.grows\": [7], \"xswap.shrinks\": [0], \"xswap.usage_pages\": [0]}}, \"reasons\": [], \"status\": \"PROBE_PASS\"}, \"candidate\": \"v2-c1-xs-sync-ra\", \"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"changed_paths\": [\"mm/swap_state.c\"], \"id\": \"3a554e3b19bd41bda52e877d37166e94\", \"mechanism\": \"swapin-zram-64k:swapin_vmstat_delta.swap_ra:up\", \"status\": \"PROBE_PASS\", \"tier\": \"probe\"}, {\"analysis\": {\"auto_promote\": false, \"combined_score\": 2.0579269195328704, \"decision\": \"median\", \"eligible_for_slow\": false, \"metrics\": {\"swapin-disk.swapin_rand.mean_ns\": {\"geomean_ratio\": 0.9582150908900118, \"guard_pass\": true, \"median_ratio\": 0.9418319096764539, \"noise_relative\": 0.14425001236749901, \"pair_ratios\": [0.9139855463827379, 0.9174591477223327, 0.9668521462639111, 1.039838507412226]}, \"swapin-disk.swapin_rand.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.9337608643329399, \"guard_pass\": true, \"median_ratio\": 0.910530337082048, \"noise_relative\": 0.11840206297857647, \"pair_ratios\": [0.8897326722331791, 0.9206441596453492, 0.9005276208628975, 1.0306098581766587]}, \"swapin-disk.swapin_seq.mean_ns\": {\"geomean_ratio\": 3.036771513739117, \"guard_pass\": true, \"median_ratio\": 3.053853986601931, \"noise_relative\": 0.08642634015094441, \"pair_ratios\": [3.2028189639392304, 3.0183255930714217, 2.8472102569300133, 3.089800581121014]}, \"swapin-disk.swapin_seq.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.9447347331501328, \"guard_pass\": true, \"median_ratio\": 0.9414862221230555, \"noise_relative\": 0.09842555046295698, \"pair_ratios\": [0.9856426977603824, 0.9335013456580676, 0.9117842446379234, 0.94953939870615]}, \"swapin-zram-64k.swapin_rand.mean_ns\": {\"geomean_ratio\": 0.9800244213680354, \"guard_pass\": true, \"median_ratio\": 0.9811650240751285, \"noise_relative\": 0.18438755991144928, \"pair_ratios\": [0.9049874933676947, 0.869746038469685, 1.1017194490744817, 1.0637548159764574]}, \"swapin-zram-64k.swapin_rand.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.9712002952065794, \"guard_pass\": true, \"median_ratio\": 0.9511556259474724, \"noise_relative\": 0.12941012313810196, \"pair_ratios\": [0.9472573477686451, 0.9217367966580313, 1.0669034895078342, 0.9550699468340128]}, \"swapin-zram-64k.swapin_seq.mean_ns\": {\"geomean_ratio\": 1.3498610541272458, \"guard_pass\": true, \"median_ratio\": 1.4024388401692371, \"noise_relative\": 0.22422817264659112, \"pair_ratios\": [1.3044205495818382, 0.9551527424493119, 1.507822535489608, 1.7673215806237983]}, \"swapin-zram-64k.swapin_seq.p99_ns\": {\"advisory\": true, \"geomean_ratio\": 0.6618385506335457, \"guard_pass\": false, \"median_ratio\": 0.6359441205254368, \"noise_relative\": 0.1988131554179, \"pair_ratios\": [0.6243611064492013, 0.44436723805934514, 0.6477420202082619, 1.067648504003931]}}, \"needs_review\": false, \"overall_geomean_ratio\": 2.024652957096469, \"overall_median_ratio\": 2.0579269195328704, \"pair_count\": 4, \"performance_accepted\": false, \"primary\": [\"swapin-disk.swapin_seq.mean_ns\", \"swapin-zram-64k.swapin_seq.mean_ns\"], \"reference\": false, \"status\": \"FAST_PASS\", \"tier\": \"fast\"}, \"candidate\": \"v2-c1-xs-sync-ra\", \"candidate_commit\": \"31eb4618eae83f8ff55e4201b55bfe54a1d84284\", \"changed_paths\": [\"mm/swap_state.c\"], \"id\": \"68de12e0b0c9471bb497a9f0dc844a3f\", \"mechanism\": \"swapin-zram-64k:swapin_vmstat_delta.swap_ra:up\", \"status\": \"FAST_PASS\", \"tier\": \"fast\"}]\n\nRelevant earlier failures\n[]\n\nLine history\n# xswap line\n\nCampaigns in opening order, with their recorded baselines and outcomes.\n\nFixed line anchor: `37de636c972a413f5c25e5b6c891fb4df2f53aed`. This is an identity, not an inferred root-relative performance result.\n\n## xswap-2026-10-21\n\nStatus: closed; machine: hurricpc; opened: 2026-10-21; closed: 2026-10-21.\n\nBaseline: `37de636c972a413f5c25e5b6c891fb4df2f53aed`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../xswap-2026-10-21/report/README.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xswap-grow-cap8](../xswap-2026-10-21/candidates/xswap-grow-cap8.json) | closed | Eight pilot boots passed. Zswap growth count fell to 13 from 15-16, but retention and latency do not justify promotion under the noisy baseline. |\n| [xswap-grow-target75](../xswap-2026-10-21/candidates/xswap-grow-target75.json) | closed | Eight pilot boots passed. Tighter target increased growth operations to 18-19 disk and 23 zswap, with mixed mapping/latency outcomes. No performance acceptance or promotion. |\n| [xswap-shrink-min4](../xswap-2026-10-21/candidates/xswap-shrink-min4.json) | closed | Eight pilot boots passed; no promotion: mixed metadata effects and large A/A state variation. Zswap retained more mapped clusters on average. |\n| [xswap-source](../xswap-2026-10-21/candidates/xswap-source.json) | closed | Upstream series imported and built as independent reference; not an optimized candidate or performance acceptance |\n\n## xswap-reference-replay\n\nStatus: closed; machine: hurricpc; opened: 2026-10-21; closed: 2026-10-21.\n\nBaseline: `9a0542b19a541eda3f82934ee747c61ec3f18847`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xswap-reference-replay](../xswap-reference-replay/candidates/xswap-reference-replay.json) | closed | Exact commit and tree replay verified; reference remains experimental. |\n\n## xswap-observe-2026-10-22\n\nStatus: closed; machine: hurricpc; opened: 2026-10-22; closed: 2026-10-22.\n\nBaseline: `37de636c972a413f5c25e5b6c891fb4df2f53aed`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-observe-v1](../xswap-observe-2026-10-22/candidates/xs-observe-v1.json) | closed | Observation baseline built in namespaces; fresh disk and zswap smoke guests passed all pilot gates. Frozen as structural campaign reference, not a performance candidate. |\n\n## xswap-structure-2026-10-22\n\nStatus: closed; machine: hurricpc; opened: 2026-10-22; closed: 2026-10-26.\n\nBaseline: `4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../xswap-structure-2026-10-22/report/README.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-lockassert-v1](../xswap-structure-2026-10-22/candidates/xs-lockassert-v1.json) | closed | Isolated one-line assertion repair passed same-config lockdep disk control with all data/lifecycle/no-warning gates; baseline and tailcache v1 reproduced original warning. Retain repair, no performance or promotion claim. |\n| [xs-lowfree-v1](../xswap-structure-2026-10-22/candidates/xs-lowfree-v1.json) | closed | 40/40 pilot gates pass; exploratory mean retention lower but regimes overlap and zswap mean p99 regresses 5.8 percent. Inconclusive discovery candidate, not accepted or promoted. Follow up independent bounded cache-only tail reclamation. |\n| [xs-tailcache-v1](../xswap-structure-2026-10-22/candidates/xs-tailcache-v1.json) | closed | Lockdep disk smoke failed no-warning gate. Same warning reproduced on observation baseline; xswap_grow asserts untranslated per-CPU lock address. Stop performance comparison, retain failed boot, isolate assertion repair then revalidate revised candidate. |\n| [xs-tailcache-v2](../xswap-structure-2026-10-22/candidates/xs-tailcache-v2.json) | closed | Lifecycle cleanup, no performance conclusion. Listed in blocked_commits pending descriptor lifetime review when the campaign ended. |\n\n## xswap-p123-2026-10-23\n\nStatus: closed; machine: hurricpc; opened: 2026-10-23; closed: 2026-10-26.\n\nBaseline: `b2beda7fe460f911b88d27890993347588d70748`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../xswap-p123-2026-10-23/report/README.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json) | closed | Lifecycle cleanup, no performance conclusion. Commit 5e84ca92 became the baseline of xswap-next-2026-10-24 and xswap-tcg-rev3-2026-10-25, which superseded this campaign. |\n\n## xswap-p123-lifetime-20261023\n\nStatus: closed; machine: hurricpc; opened: 2026-10-23; closed: 2026-10-26.\n\nBaseline: `b2beda7fe460f911b88d27890993347588d70748`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [p123-lifetime-rcu](../xswap-p123-lifetime-20261023/candidates/p123-lifetime-rcu.json) | closed | Lifecycle cleanup, no performance conclusion. Never checked; the descriptor lifetime repair in 5e84ca92 was adopted as the baseline instead. |\n\n## xswap-phase3-import\n\nStatus: closed; machine: hurricpc; opened: 2026-10-23; closed: 2026-10-23.\n\nBaseline: `37de636c972a413f5c25e5b6c891fb4df2f53aed`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xswap-phase3-import](../xswap-phase3-import/candidates/xswap-phase3-import.json) | closed | Phase III applied cleanly on 37de636c; tree 187cfe49 verified; scope, diff-check and checkpatch pass. Reference remains experimental. |\n\n## xswap-swapin-2026-10-23\n\nStatus: closed; machine: hurricpc; opened: 2026-10-23; closed: 2026-10-23.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n[Campaign report](../xswap-swapin-2026-10-23/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-ra-phys-v1](../xswap-swapin-2026-10-23/candidates/xs-ra-phys-v1.json) | closed | Fast evaluation 8a4b89fc0c8e44dd80c7675ef9c8c0fb REGRESSION: disk random p99 baseline/candidate 0.90495 below calibrated guard; no slow evaluation or promotion. |\n| [xs-ra-zswap-v1](../xswap-swapin-2026-10-23/candidates/xs-ra-zswap-v1.json) | closed | Fast evaluation 31cced4875f8470dbdde1dd557fca236 REGRESSION: zswap sequential p99 baseline/candidate0.262609; sequential mean gain0.407% below3%noise. No slow evaluation or promotion. |\n\n## confirm-h1-ra-phys-2026-10-23\n\nStatus: closed; machine: hurricpc; opened: 2026-10-24; closed: 2026-10-24.\n\nBaseline: `unknown`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n\n## xswap-next-2026-10-24\n\nStatus: closed; machine: hurricpc; opened: 2026-10-24; closed: 2026-10-24.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n[Campaign report](../xswap-next-2026-10-24/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [xs-ra-cluster-v1](../xswap-next-2026-10-24/candidates/xs-ra-cluster-v1.json) | closed | REJECT_FAST: report 9ec21a04b74b4d46a7931c16112a6bdb records useful physical prefetch and disk seq mean -40.19%, but disk random p99 +29.46% and compressed random mean +7.96% fail guards. Targeted KASAN/lockdep, both release correctness backends and CONFIG_SWAP=n build pass. Retain the tradeoff; no slow confirmation or promotion. Two pairs leave causal attribution and between-run variation unresolved. |\n| [xs-ra-sequential-v1](../xswap-next-2026-10-24/candidates/xs-ra-sequential-v1.json) | closed | REGRESSION in fast report 49add9b084d04941a459281838bbf3f3: disk seq p99 and rand p99 fail. swap_ra=0 in both candidate disk runs; source VMA-only admission is inactive with the rotational guest backend. Keep failed evidence; no causal speed claim, slow run or promotion. |\n| [xs-zswap-linear-v1](../xswap-next-2026-10-24/candidates/xs-zswap-linear-v1.json) | closed | REJECT_FAST: report 15ded9c2bdf44b5fae1b3e83f0f75daf fails all four compressed latency guards; zswap seq mean +24.39%. Both release correctness backends and targeted KASAN/lockdep correctness pass. Disk-path movement has no matching mechanism and is not credited. Retain evidence, no slow tier or promotion. |\n\n## xswap-tcg-rev3-2026-10-25\n\nStatus: closed; machine: grok-cloud; opened: 2026-10-25; closed: 2026-10-28.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n\n## kbench-smoke-2026-10-27\n\nStatus: closed; machine: hurricpc; opened: 2026-10-28; closed: 2026-10-28.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n[Campaign report](../kbench-smoke-2026-10-27/report/README.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n\n## xswap-tcg-kbench-2026-10-29\n\nStatus: closed; machine: grok-cloud; opened: 2026-10-29; closed: 2026-10-29.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nOrigin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n\nCurrent baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (xswap-tcg-kbench-2026-10-29)\n\n\nRemaining guest pools and build budget\n{\"fast\": {\"ceiling\": 96, \"remaining\": 27, \"spent\": 69}, \"probe\": {\"ceiling\": 24, \"remaining\": 12, \"spent\": 12}, \"total\": {\"ceiling\": 120, \"spent\": 81}}\n"
+  }
+}

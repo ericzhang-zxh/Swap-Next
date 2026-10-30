@@ -1,0 +1,14 @@
+1196:[34684.677709] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+1197:[34686.159030] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+1211:[36131.481484] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+1212:[36131.996616] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+1213:[36132.688088] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+1214:[36133.424520] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+# box kernel ring buffer excerpt, captured 2026-10-29 13:48:17 PDT; dmesg -T rendering:
+[Thu Oct 29 11:19:23 2026] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[Thu Oct 29 11:19:25 2026] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[Thu Oct 29 11:43:30 2026] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[Thu Oct 29 11:43:30 2026] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[Thu Oct 29 11:43:31 2026] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[Thu Oct 29 11:43:32 2026] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+# total virtio_balloon/Out of puff lines in ring buffer: 215

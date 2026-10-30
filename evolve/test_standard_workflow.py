@@ -631,7 +631,7 @@ class Revision6WorkflowTests(unittest.TestCase):
     def test_contract_and_child_env_force_tcg(self):
         self.assertEqual(w.contract_errors(self.real), [])
         self.assertNotIn(self.real["campaign"], w.CONTRACT_EXEMPT)
-        self.assertFalse((REPO / "campaigns/xswap-tcg-kbench-2026-10-29/campaign.json").exists())
+        self.assertEqual(json.loads((REPO / "campaigns/xswap-tcg-kbench-2026-10-29/campaign.json").read_text())["status"], "closed")
         with patch.dict("os.environ", {"SWAP_NEXT_ACCEL": "kvm"}, clear=False):
             env = w.child_env(self.real)
         self.assertEqual(env["SWAP_NEXT_ACCEL"], "tcg")

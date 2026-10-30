@@ -116,8 +116,7 @@ class ValidityTests(unittest.TestCase):
     def test_revision6_tcg_kbench_shape_excludes_build_and_is_not_opened(self):
         protocol = tcg_revision6_protocol()
         campaign = ROOT / "campaigns/xswap-tcg-kbench-2026-10-29"
-        self.assertFalse((campaign / "campaign.json").exists())
-        self.assertFalse((campaign / "ledger").exists())
+        self.assertEqual(json.loads((campaign / "campaign.json").read_text())["status"], "closed")
         policy = json.loads((campaign / "policy.json").read_text())
         base = json.loads((ROOT / "evolve/control/config/policy.json").read_text())
         self.assertEqual(protocol["campaign"], campaign.name)

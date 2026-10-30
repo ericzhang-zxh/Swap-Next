@@ -1,0 +1,19 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "b69e47c9118b442751767ef704fbac9cb74b50c3",
+  "changed_paths": [
+    "mm/swap_state.c"
+  ],
+  "changed_lines": 199,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1c-xs-ra-safe/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "campaigns/xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1c-xs-ra-safe/checkpatch.log",
+    "sha256": "7bad5bad0c96916310a76d8740f5f22dd63aa3281717b9fca68f0804e5f314b7"
+  }
+}

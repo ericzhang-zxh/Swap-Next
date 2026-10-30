@@ -1,0 +1,402 @@
+{
+ "campaign": "xswap-tcg-kbench-rev7-2026-10-29",
+ "source_commit": "729be1ccef0baccbd82203720cd4c2ee0ee8a287",
+ "protocol_revision": 7,
+ "guest": {
+  "vcpus": 4,
+  "mem_mib": 4096,
+  "swap_gib": 16
+ },
+ "accelerator": [
+  "-accel",
+  "tcg,thread=multi,tb-size=256",
+  "-machine",
+  "pc",
+  "-cpu",
+  "max"
+ ],
+ "evaluations": {
+  "86fc2f67": {
+   "status": "CALIBRATED",
+   "candidate": null,
+   "ratios": null
+  },
+  "16fe9d24": {
+   "status": "BLOCKED",
+   "candidate": null,
+   "ratios": {
+    "swapin-disk.swapin_seq.mean_ns": [
+     1.0231,
+     0.9805
+    ],
+    "swapin-disk.swapin_seq.p99_ns": [
+     1.0614,
+     0.9972
+    ],
+    "swapin-disk.swapin_rand.mean_ns": [
+     0.919,
+     0.9655
+    ],
+    "swapin-disk.swapin_rand.p99_ns": [
+     0.9253,
+     0.9695
+    ],
+    "swapin-zram-64k.swapin_seq.mean_ns": [
+     0.463
+    ],
+    "swapin-zram-64k.swapin_seq.p99_ns": [
+     0.2899
+    ],
+    "swapin-zram-64k.swapin_rand.mean_ns": [
+     0.7082
+    ],
+    "swapin-zram-64k.swapin_rand.p99_ns": [
+     0.7983
+    ]
+   }
+  },
+  "b0dcd6f7": {
+   "status": "INCOMPLETE",
+   "candidate": null,
+   "ratios": null
+  },
+  "0c2cd749": {
+   "status": "INCOMPLETE",
+   "candidate": null,
+   "ratios": {
+    "swapin-disk.swapin_seq.mean_ns": [],
+    "swapin-disk.swapin_seq.p99_ns": [],
+    "swapin-disk.swapin_rand.mean_ns": [],
+    "swapin-disk.swapin_rand.p99_ns": [],
+    "swapin-zram-64k.swapin_seq.mean_ns": [],
+    "swapin-zram-64k.swapin_seq.p99_ns": [],
+    "swapin-zram-64k.swapin_rand.mean_ns": [],
+    "swapin-zram-64k.swapin_rand.p99_ns": []
+   }
+  },
+  "e8b7a7e3": {
+   "status": "CALIBRATED",
+   "candidate": null,
+   "ratios": {
+    "swapin-disk.swapin_seq.mean_ns": [
+     0.8224,
+     0.9204,
+     0.932,
+     1.0136,
+     0.9687,
+     1.0063,
+     0.9556,
+     0.9964,
+     0.975,
+     0.9607
+    ],
+    "swapin-disk.swapin_seq.p99_ns": [
+     0.895,
+     0.955,
+     0.9104,
+     0.9899,
+     0.9975,
+     0.9916,
+     0.9585,
+     1.0376,
+     0.9627,
+     0.9229
+    ],
+    "swapin-disk.swapin_rand.mean_ns": [
+     0.8315,
+     0.9461,
+     0.8739,
+     1.0866,
+     0.9463,
+     0.9123,
+     0.8949,
+     0.9857,
+     1.0097,
+     1.0918
+    ],
+    "swapin-disk.swapin_rand.p99_ns": [
+     0.8941,
+     0.9822,
+     0.8519,
+     0.9886,
+     0.9793,
+     0.9426,
+     0.9136,
+     0.9988,
+     1.0063,
+     1.0558
+    ],
+    "swapin-zram-64k.swapin_seq.mean_ns": [
+     1.4205,
+     0.8864,
+     1.1426,
+     0.8168,
+     1.0347,
+     1.1628,
+     0.9092,
+     0.8814,
+     0.9462,
+     1.1169
+    ],
+    "swapin-zram-64k.swapin_seq.p99_ns": [
+     1.2552,
+     0.9908,
+     1.1083,
+     0.8342,
+     1.0411,
+     1.0415,
+     0.9711,
+     0.9317,
+     0.9324,
+     1.1094
+    ],
+    "swapin-zram-64k.swapin_rand.mean_ns": [
+     1.4089,
+     1.0201,
+     1.1844,
+     0.9424,
+     0.9454,
+     0.9645,
+     0.9224,
+     0.8782,
+     1.0167,
+     1.0988
+    ],
+    "swapin-zram-64k.swapin_rand.p99_ns": [
+     1.2799,
+     1.0264,
+     1.127,
+     0.962,
+     0.9054,
+     0.911,
+     0.9405,
+     0.8854,
+     1.0146,
+     1.1103
+    ]
+   }
+  },
+  "3a554e3b": {
+   "status": "PROBE_PASS",
+   "candidate": "v2-c1-xs-sync-ra",
+   "ratios": null
+  },
+  "68de12e0": {
+   "status": "FAST_PASS",
+   "candidate": "v2-c1-xs-sync-ra",
+   "ratios": {
+    "swapin-disk.swapin_seq.mean_ns": [
+     3.2028,
+     3.0183,
+     2.8472,
+     3.0898
+    ],
+    "swapin-disk.swapin_seq.p99_ns": [
+     0.9856,
+     0.9335,
+     0.9118,
+     0.9495
+    ],
+    "swapin-disk.swapin_rand.mean_ns": [
+     0.914,
+     0.9175,
+     0.9669,
+     1.0398
+    ],
+    "swapin-disk.swapin_rand.p99_ns": [
+     0.8897,
+     0.9206,
+     0.9005,
+     1.0306
+    ],
+    "swapin-zram-64k.swapin_seq.mean_ns": [
+     1.3044,
+     0.9552,
+     1.5078,
+     1.7673
+    ],
+    "swapin-zram-64k.swapin_seq.p99_ns": [
+     0.6244,
+     0.4444,
+     0.6477,
+     1.0676
+    ],
+    "swapin-zram-64k.swapin_rand.mean_ns": [
+     0.905,
+     0.8697,
+     1.1017,
+     1.0638
+    ],
+    "swapin-zram-64k.swapin_rand.p99_ns": [
+     0.9473,
+     0.9217,
+     1.0669,
+     0.9551
+    ]
+   }
+  },
+  "bc73887e": {
+   "status": "PROBE_PASS",
+   "candidate": "v2-c1c-xs-ra-safe",
+   "ratios": null
+  },
+  "66a07143": {
+   "status": "BLOCKED",
+   "candidate": "v2-c1c-xs-ra-safe",
+   "ratios": {
+    "swapin-disk.swapin_seq.mean_ns": [
+     2.5424,
+     2.8458
+    ],
+    "swapin-disk.swapin_seq.p99_ns": [
+     0.8559,
+     0.8698
+    ],
+    "swapin-disk.swapin_rand.mean_ns": [
+     0.9038,
+     0.8795
+    ],
+    "swapin-disk.swapin_rand.p99_ns": [
+     0.9488,
+     0.9766
+    ],
+    "swapin-zram-64k.swapin_seq.mean_ns": [
+     0.9492
+    ],
+    "swapin-zram-64k.swapin_seq.p99_ns": [
+     1.057
+    ],
+    "swapin-zram-64k.swapin_rand.mean_ns": [
+     1.0177
+    ],
+    "swapin-zram-64k.swapin_rand.p99_ns": [
+     1.0605
+    ]
+   }
+  }
+ },
+ "aa_guard": {
+  "swapin-disk.swapin_seq.mean_ns": 0.9204,
+  "swapin-disk.swapin_seq.p99_ns": 0.9104,
+  "swapin-disk.swapin_rand.mean_ns": 0.8739,
+  "swapin-disk.swapin_rand.p99_ns": 0.8941,
+  "swapin-zram-64k.swapin_seq.mean_ns": 0.8168,
+  "swapin-zram-64k.swapin_seq.p99_ns": 0.8342,
+  "swapin-zram-64k.swapin_rand.mean_ns": 0.8443,
+  "swapin-zram-64k.swapin_rand.p99_ns": 0.8854
+ },
+ "required_gates": {
+  "gcc_swap_on": "evidence",
+  "gcc_swap_off": "NOT RUN",
+  "gcc_zswap_on": "NOT RUN",
+  "sparse_no_new_diagnostics": "NOT RUN",
+  "checkpatch": "evidence",
+  "guest_boot_identity": "evidence",
+  "data_roundtrip": "evidence",
+  "fork_cow": "evidence",
+  "concurrent_fault": "evidence",
+  "swapoff_live_pages": "evidence",
+  "allocation_failure": "NOT RUN",
+  "io_failure": "NOT RUN",
+  "memcg_limits": "NOT RUN",
+  "large_folio": "NOT RUN",
+  "lockdep": "NOT RUN",
+  "kasan": "NOT RUN",
+  "kcsan": "NOT RUN",
+  "no_new_kernel_warnings": "evidence"
+ },
+ "guests": {
+  "rev7_reservations": 94,
+  "budget_json": {
+   "created": 1793294495.9672906,
+   "guests": 79,
+   "probe_guests": 15,
+   "builds": 0
+  },
+  "run_wide_incl_rev6": 103,
+  "groups": {
+   "rev6 probe cal": 9,
+   "rev7 probe cal": 9,
+   "fast cal (voided)": 8,
+   "fast cal A/A": 43,
+   "round 1 c1": 21,
+   "round 2 c1c": 13
+  }
+ },
+ "derived": {
+  "seq_mean_ratio_range": "2.5–3.2",
+  "c1_zram_seq_p99_below_guard": 3,
+  "kill": 0.834,
+  "c1c_pairs": {
+   "disk": 2,
+   "zram": 1,
+   "planned": 4
+  },
+  "correctness": "17/17",
+  "correctness_swap_ra": 12,
+  "noise_zram_over_disk": 1.647,
+  "c1_disk_base_us": "216.4–248.8",
+  "log_md_l27_us": "227-249",
+  "cap_history": [
+   120,
+   150,
+   200
+  ],
+  "agents_md_cap": [
+   101,
+   120
+  ],
+  "unmerged_vs_main": {
+   "main": "25ad0ab9",
+   "unmerged": [
+    "ab800d77",
+    "9c1468ac",
+    "87dc7357"
+   ]
+  },
+  "evidence_commit_pushed": false
+ },
+ "scope": "rounds 1-3 (round 3 not run); ledger has 11 rows",
+ "round3": {
+  "status": "NOT RUN",
+  "guests": 0,
+  "c1d": {
+   "commit": "b2b8ab86945a773a20b7b476e1343bb8584c76cc",
+   "tree": "8cbebbe1a7039a0a20b7545f4080bd6aecec476a",
+   "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f"
+  },
+  "fast_pool": {
+   "b_fast": 79,
+   "b_corr": 1,
+   "b_eval": 16,
+   "b_tot": 96,
+   "b_pool": 96,
+   "spare": 0
+  },
+  "ram_gate_mib": 5632,
+  "run_py_gate_mib": 5120,
+  "ram_readings_mib": [
+   2563,
+   2926,
+   3144,
+   2949,
+   3027,
+   2930,
+   2937,
+   3158,
+   3133,
+   3136,
+   3139,
+   2433
+  ],
+  "global": [
+   103,
+   200
+  ],
+  "per_coordinator": [
+   "cap 200 (Hurric's decision as relayed)",
+   "c1d pre-registered",
+   "models"
+  ]
+ }
+}

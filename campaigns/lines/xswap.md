@@ -176,4 +176,32 @@ Origin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime
 | Candidate | Status | Reason |
 | --- | --- | --- |
 
-Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (kbench-smoke-2026-10-27)
+## xswap-tcg-kbench-2026-10-29
+
+Status: closed; machine: grok-cloud; opened: 2026-10-29; closed: 2026-10-29.
+
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Baseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Origin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).
+
+| Candidate | Status | Reason |
+| --- | --- | --- |
+
+## xswap-tcg-kbench-rev7-2026-10-29
+
+Status: open; machine: grok-cloud; opened: 2026-10-29; closed: —.
+
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Baseline origin: [xswap-p123-2026-10-23/xs-desc-lifetime-v1](../xswap-p123-2026-10-23/candidates/xs-desc-lifetime-v1.json), commit `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Origin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime-review.md).
+
+| Candidate | Status | Reason |
+| --- | --- | --- |
+| [v2-c1-xs-sync-ra](../xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra.json) | closed | Round 1 complete: FAST_PASS 68de12e0 (non-regression screen). Swap Review NEEDS-MORE-EVIDENCE (campaigns/xswap-tcg-kbench-rev7-2026-10-29/report/c1-v2-c1-xs-sync-ra-round1.md): zram seq.p99 regression and an open SIGBUS TOCTOU; not a parent per review. Superseded by c1c (baseline-parented, same mechanism plus safety gate). Closed to free the single active-candidate slot; worktree, branch and build kept as evidence. |
+| [v2-c1c-xs-ra-safe](../xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1c-xs-ra-safe.json) | active | — |
+
+Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (xswap-tcg-kbench-rev7-2026-10-29)

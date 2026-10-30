@@ -1,0 +1,280 @@
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 7ac1808ae..c226fe726 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -718,6 +718,16 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,
+ 			hits = min_t(int, hits + 1, SWAP_RA_HITS_MAX);
+ 		atomic_long_set(&vma->swap_readahead_info,
+ 				SWAP_RA_VAL(addr, win, hits));
++	} else if (vma && readahead) {
++		/*
++		 * Cluster mode keeps its window in global state, so the VMA
++		 * history is only read by xswap_fault_readahead().  Record a
++		 * readahead hit there: the next miss after a prefetched block
++		 * is then adjacent and stays admitted.  The history is
++		 * advisory and every entry is revalidated by the swap cache.
++		 */
++		atomic_long_set(&vma->swap_readahead_info,
++				SWAP_RA_VAL(addr, 1, 0));
+ 	}
+ 
+ 	if (readahead) {
+@@ -727,6 +737,113 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,
+ 	}
+ }
+ 
++/*
++ * xswap_ra_slot_ok - Check an xswap slot for readahead, under its lock.
++ * @si: the xswap device.
++ * @ci: the locked cluster of the slot.
++ * @slot: the slot offset within @ci.
++ *
++ * Readahead of an xswap slot is only worth it, and only allowed, when:
++ *  - the slot has a physical backend: a zswap-only slot would be
++ *    decompressed inline, and a slot with no backend at all is not read;
++ *  - that backend is not SWP_SYNCHRONOUS_IO: zram or brd would read the
++ *    whole window in the faulting task before its own page is mapped;
++ *  - neither the xswap device nor the backend has lost SWP_WRITEOK.
++ *    swapoff clears it in swap_info_remove() before try_to_unuse(), and
++ *    reinsert_swap_info() sets it again if swapoff fails, so no readahead
++ *    is started on either device while it is being swapped off.
++ *
++ * swap_info[] entries are never freed and the flags are only sampled
++ * here: the swap cache recheck in xswap_ra_folio_keep() is what decides.
++ */
++static bool xswap_ra_slot_ok(struct swap_info_struct *si,
++			     struct swap_cluster_info *ci, unsigned int slot)
++{
++	struct swap_info_struct *psi;
++	unsigned long pflags;
++	swp_entry_t phys;
++
++	lockdep_assert_held(&ci->lock);
++	if (!(READ_ONCE(si->flags) & SWP_WRITEOK))
++		return false;
++	phys = xswap_slot_backend(ci, slot);
++	if (!phys.val)
++		return false;
++	psi = READ_ONCE(swap_info[swp_type(phys)]);
++	if (!psi)
++		return false;
++	pflags = READ_ONCE(psi->flags);
++
++	return (pflags & SWP_WRITEOK) && !(pflags & SWP_SYNCHRONOUS_IO);
++}
++
++/**
++ * xswap_readahead_wanted - Check whether an xswap slot is worth reading ahead.
++ * @si: the swap device of @entry.
++ * @entry: the swap entry, which need not be pinned.
++ *
++ * See xswap_ra_slot_ok() for the rule. This is a hint taken before any
++ * folio exists: the slot may change as soon as the lock is dropped, so
++ * xswap_ra_folio_keep() checks it again once the folio holds the slot.
++ *
++ * Context: Caller must protect @si with a reference count or locks.
++ * Return: true if @entry is an xswap slot that may be read ahead.
++ */
++static bool xswap_readahead_wanted(struct swap_info_struct *si,
++				   swp_entry_t entry)
++{
++	struct swap_cluster_info *ci;
++	bool ok;
++
++	if (!(si->flags & SWP_XSWAP))
++		return false;
++	ci = swap_cluster_lock_unpinned(si, swp_offset(entry));
++	if (!ci)
++		return false;
++	ok = xswap_ra_slot_ok(si, ci, swp_cluster_offset(entry));
++	swap_cluster_unlock(ci);
++
++	return ok;
++}
++
++/**
++ * xswap_ra_folio_keep - Recheck a new readahead folio before reading it.
++ * @folio: locked folio just added to the swap cache, not yet on the LRU.
++ *
++ * xswap_readahead_wanted() ran without the folio, so the slot may since
++ * have been freed and reused, written back, or had its backend dropped by
++ * swapoff. Now the folio holds the slot in the swap cache, and nothing can
++ * change its backend until the folio is unlocked: the slot is only freed
++ * once its swap cache folio is gone (__swap_cluster_free_entries()), and
++ * zswap writeback and the swapoff paths must first add or lock a swap
++ * cache folio for the slot. So a slot that passes here is read from a
++ * live backend, and one that fails is deleted from the swap cache before
++ * swap_read_folio() can see it, the same way __swap_cache_alloc() and
++ * xswap_unuse_rmap() unwind.
++ *
++ * Context: Caller holds the folio lock and a reference to the folio.
++ * Return: true to read @folio, false if it was dropped and released.
++ */
++static bool xswap_ra_folio_keep(struct folio *folio)
++{
++	struct swap_info_struct *si = __swap_entry_to_info(folio->swap);
++	struct swap_cluster_info *ci;
++	bool ok;
++
++	if (!(si->flags & SWP_XSWAP))
++		return true;
++	ci = swap_cluster_get_and_lock(folio);
++	ok = xswap_ra_slot_ok(si, ci, swp_cluster_offset(folio->swap));
++	swap_cluster_unlock(ci);
++	if (ok)
++		return true;
++
++	swap_cache_del_folio(folio);
++	folio_unlock(folio);
++	folio_put(folio);
++	return false;
++}
++
+ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,
+ 		swp_entry_t entry, gfp_t gfp, struct mempolicy *mpol,
+ 		pgoff_t ilx, bool readahead)
+@@ -743,6 +860,10 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,
+ 	if (IS_ERR_OR_NULL(folio))
+ 		return NULL;
+ 
++	/* Not yet on the LRU, so a dropped folio unwinds like a failed add. */
++	if (readahead && !xswap_ra_folio_keep(folio))
++		return NULL;
++
+ 	folio_add_lru(folio);
+ 	swap_read_folio(ctx, folio);
+ 	if (readahead) {
+@@ -754,7 +875,41 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,
+ }
+ 
+ /**
+- * swapin_sync - swap-in one or multiple entries skipping readahead.
++ * xswap_fault_readahead - Admit physical readahead after adjacent faults.
++ * @vmf: fault holding a reference to the target swap device.
++ * @entry: target swap entry.
++ *
++ * Keep discontinuous faults on the synchronous demand path. VMA history is
++ * advisory: racing faults may suppress or admit speculation, but the swap
++ * cache and I/O paths still validate every entry and own its references.
++ */
++static bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)
++{
++	struct swap_info_struct *si = __swap_entry_to_info(entry);
++	struct vm_area_struct *vma = vmf->vma;
++	unsigned long prev;
++
++	if (!(si->flags & SWP_XSWAP) || READ_ONCE(page_cluster) <= 0)
++		return false;
++	/* shmem passes its own vmf; its VMA has no swap PTEs to read ahead. */
++	if (vma_is_shmem(vma))
++		return false;
++	prev = SWAP_RA_ADDR(GET_SWAP_RA_VAL(vma));
++	if (vmf->address != prev + PAGE_SIZE &&
++	    prev != vmf->address + PAGE_SIZE) {
++		atomic_long_set(&vma->swap_readahead_info,
++				SWAP_RA_VAL(vmf->address, 1, 0));
++		return false;
++	}
++	/* VMA mode updates the history in swap_vma_ra_win(). */
++	if (!swap_use_vma_readahead())
++		atomic_long_set(&vma->swap_readahead_info,
++				SWAP_RA_VAL(vmf->address, 1, 0));
++	return xswap_readahead_wanted(si, entry);
++}
++
++/**
++ * swapin_sync - swap-in one or multiple entries, normally skipping readahead.
+  * @entry: swap entry indicating the target slot
+  * @gfp: memory allocation flags
+  * @orders: allocation orders
+@@ -765,6 +920,12 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,
+  * This allocates a folio suitable for given @orders, or returns the
+  * existing folio in the swap cache for @entry. This initiates the IO, too,
+  * if needed. @entry is rounded down if @orders allow large allocation.
++ * An order-0 fault on an xswap entry with an asynchronous physical backend
++ * that follows an adjacent fault goes through swapin_readahead() instead,
++ * so callers that use swapin_sync() to bypass readahead for
++ * SWP_SYNCHRONOUS_IO devices get it for xswap entries that pass
++ * xswap_ra_slot_ok(). try_to_unuse() calls swapin_readahead() directly
++ * and is gated by the same check on the target.
+  *
+  * Context: Caller must ensure @entry is valid and pin the swap device with refcount.
+  * Return: Returns the folio on success, error code if failed.
+@@ -775,6 +936,12 @@ struct folio *swapin_sync(swp_entry_t entry, gfp_t gfp, unsigned long orders,
+ 	struct swap_io_ctx ctx = {};
+ 	struct folio *folio;
+ 
++	if (vmf && orders == BIT(0) && xswap_fault_readahead(vmf, entry)) {
++		folio = swapin_readahead(entry, gfp, vmf);
++		if (folio)
++			return folio;
++	}
++
+ 	do {
+ 		folio = swap_cache_get_folio(entry);
+ 		if (folio)
+@@ -920,8 +1087,11 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,
+ 	struct blk_plug plug;
+ 	swp_entry_t ra_entry;
+ 
+-	/* xswap entries live only in zswap; readahead does not help. */
+-	if (si->flags & SWP_XSWAP)
++	/*
++	 * An xswap target that fails xswap_ra_slot_ok(), including one on a
++	 * device being swapped off, takes the single-folio path.
++	 */
++	if ((si->flags & SWP_XSWAP) && !xswap_readahead_wanted(si, entry))
+ 		goto skip;
+ 
+ 	mask = swapin_nr_pages(offset) - 1;
+@@ -940,6 +1110,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,
+ 	for (offset = start_offset; offset <= end_offset ; offset++) {
+ 		/* Ok, do the async read-ahead now */
+ 		ra_entry = swp_entry(swp_type(entry), offset);
++		if ((si->flags & SWP_XSWAP) && offset != entry_offset &&
++		    !xswap_readahead_wanted(si, ra_entry))
++			continue;
+ 		folio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,
+ 				ilx, offset != entry_offset);
+ 		if (!folio)
+@@ -1009,7 +1182,7 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,
+ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 		struct mempolicy *mpol, pgoff_t targ_ilx, struct vm_fault *vmf)
+ {
+-	struct swap_info_struct *si = __swap_entry_to_info(targ_entry);
++	struct swap_info_struct *tsi = __swap_entry_to_info(targ_entry);
+ 	struct swap_io_ctx ctx = {};
+ 	struct blk_plug plug;
+ 	struct folio *folio;
+@@ -1018,8 +1191,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 	unsigned long start, end, addr;
+ 	pgoff_t ilx = targ_ilx;
+ 
+-	/* xswap entries live only in zswap; readahead does not help. */
+-	if (si->flags & SWP_XSWAP)
++	/*
++	 * Same target rule as cluster mode. try_to_unuse() reaches here with
++	 * no fault history, so a compressed or unbacked xswap target, or one
++	 * on a device being swapped off, must not start a window either.
++	 */
++	if ((tsi->flags & SWP_XSWAP) &&
++	    !xswap_readahead_wanted(tsi, targ_entry))
+ 		goto skip;
+ 
+ 	win = swap_vma_ra_win(vmf, &start, &end);
+@@ -1054,8 +1232,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 			if (IS_ERR_OR_NULL(si))
+ 				continue;
+ 		}
+-		folio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,
+-					      addr != vmf->address);
++		if (addr != vmf->address &&
++		    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&
++		    !xswap_readahead_wanted(__swap_entry_to_info(entry), entry))
++			folio = NULL;
++		else
++			folio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,
++						      ilx, addr != vmf->address);
+ 		if (si)
+ 			put_swap_device(si);
+ 		if (!folio)
