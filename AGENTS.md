@@ -253,7 +253,23 @@ base and resulting hashes with the campaign (example layout:
 6. **Report** writes the audit and an HTML report (`explainer.html`), then
    publishes for the Coordinator, following
    [Report publication](#report-publication) and
-   [Campaign lifecycle](#campaign-lifecycle).
+   [Campaign lifecycle](#campaign-lifecycle). The page must be produced by
+   [explaining-campaign-results](.agents/skills/explaining-campaign-results/SKILL.md).
+   A generator script in `campaigns/<c>/report/` derives `explainer.json` from
+   the evidence and builds the page from the repository root with
+   `python3 .agents/skills/explaining-campaign-results/scripts/build_page.py campaigns/<c>/report/explainer.json campaigns/<c>/report/explainer.html`.
+   The same generator may post-process the builder output reproducibly, as the
+   skill allows: wrap audit sections in closed `<details>`, add layout CSS, or
+   splice in a self-contained scene fragment kept in `campaigns/<c>/report/`
+   (see `campaigns/xswap-swapin-2026-10-23/report/build-readable-report.py`
+   and `system-story.html`). Do not hand-write the whole page outside the
+   builder, copy styling from older pages, publish the page under any name but
+   `explainer.html`, or keep report sources outside `campaigns/<c>/report/`.
+   The evidence audit is a separate document, not the explainer page. A brief
+   that asks for another format does not override the skill; a `build_page.py`
+   text-budget error means shorten the overview or move detail into evidence,
+   never bypass the builder. Before committing, the Coordinator reruns the
+   generator and confirms it reproduces the committed `explainer.html`.
 
 ### Rules and scaffolding
 
