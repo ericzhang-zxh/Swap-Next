@@ -204,4 +204,11 @@ Origin evidence: [correctness review](../xswap-swapin-2026-10-23/report/lifetime
 | [v2-c1-xs-sync-ra](../xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1-xs-sync-ra.json) | closed | Round 1 complete: FAST_PASS 68de12e0 (non-regression screen). Swap Review NEEDS-MORE-EVIDENCE (campaigns/xswap-tcg-kbench-rev7-2026-10-29/report/c1-v2-c1-xs-sync-ra-round1.md): zram seq.p99 regression and an open SIGBUS TOCTOU; not a parent per review. Superseded by c1c (baseline-parented, same mechanism plus safety gate). Closed to free the single active-candidate slot; worktree, branch and build kept as evidence. |
 | [v2-c1c-xs-ra-safe](../xswap-tcg-kbench-rev7-2026-10-29/candidates/v2-c1c-xs-ra-safe.json) | active | — |
 
+Voided calibration attempts:
+
+| Attempt | Tier | Receipt | Guests | Reason |
+| --- | --- | --- | --- | --- |
+| 16fe9d242ebb4609a14a13fc119ace56 | fast | a7930c5706ca4578b8f5b37369b1efc0 | 16fe9d242ebb4609a14a13fc119ace56-0-swapin-disk-a PASS, 16fe9d242ebb4609a14a13fc119ace56-0-swapin-disk-b PASS, 16fe9d242ebb4609a14a13fc119ace56-0-swapin-zram-64k-a PASS, 16fe9d242ebb4609a14a13fc119ace56-0-swapin-zram-64k-b PASS, 16fe9d242ebb4609a14a13fc119ace56-1-swapin-disk-b PASS, 16fe9d242ebb4609a14a13fc119ace56-1-swapin-disk-a PASS, 16fe9d242ebb4609a14a13fc119ace56-1-swapin-zram-64k-b PASS | Fast calibration 16fe9d24 ended after a false campaign STOP from an external watchdog that treated an exiting TCG QEMU with an empty cmdline as non-TCG. No KVM or safety event occurred. |
+| 0c2cd749d6594a7b9c6c3576b97b3d25 | fast | 820fdc14891e4413875cd25e2034ed3c | 0c2cd749d6594a7b9c6c3576b97b3d25-0-swapin-disk-a STARTED | Fast calibration 0c2cd749 reserved 0-swapin-disk-a then run.py refused before QEMU: need 5120 MiB available host RAM because the virtio balloon left about 4.6 GiB MemAvailable. No guest booted. |
+
 Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (xswap-tcg-kbench-rev7-2026-10-29)

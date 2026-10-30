@@ -22,6 +22,10 @@ def tcg_revision6_protocol():
     return json.loads((ROOT / "campaigns/xswap-tcg-kbench-2026-10-29/protocol.json").read_text())
 
 
+def tcg_revision7_protocol():
+    return json.loads((ROOT / "campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json").read_text())
+
+
 def parse_params(text):
     values = {}
     for line in text.splitlines():
@@ -219,6 +223,49 @@ class ValidityTests(unittest.TestCase):
         built["tiers"]["fast"]["cases"].append("build-zram")
         with self.assertRaisesRegex(ValueError, "build"):
             protocol_rules(built)
+
+    def test_revision7_keeps_swapin_and_replaces_the_metadata_numerator(self):
+        old, new = tcg_revision6_protocol(), tcg_revision7_protocol()
+        campaign = ROOT / "campaigns/xswap-tcg-kbench-rev7-2026-10-29"
+        self.assertEqual(json.loads((campaign / "campaign.json").read_text())["status"], "open")
+        policy = json.loads((campaign / "policy.json").read_text())
+        base = json.loads((ROOT / "evolve/control/config/policy.json").read_text())
+        self.assertEqual(new["campaign"], campaign.name)
+        self.assertEqual(new["protocol_revision"], 7)
+        self.assertEqual(policy["seed_ref"], new["baseline_commit"])
+        self.assertLessEqual(set(policy["allowed_modify"]), set(base["allowed_modify"]))
+        self.assertEqual(policy["allowed_modify"], json.loads((ROOT / "campaigns/xswap-tcg-kbench-2026-10-29/policy.json").read_text())["allowed_modify"])
+        for name in ("swapin-disk", "swapin-zram-64k"):
+            self.assertEqual(old["cases"][name], new["cases"][name])
+        self.assertEqual(old["tiers"], new["tiers"])
+        self.assertEqual(old["probe_band"], new["probe_band"])
+        self.assertEqual(old["noise_ceiling"], new["noise_ceiling"])
+        self.assertEqual(old["guest"], new["guest"])
+        self.assertEqual(old["accelerator"], new["accelerator"])
+        for key in ("probe_guest_attempts", "guest_attempts", "build_attempts", "wall_seconds", "guest_timeout"):
+            self.assertEqual(old["budget"][key], new["budget"][key], key)
+        self.assertEqual(new["budget"]["guest_attempts"] + new["budget"]["probe_guest_attempts"], 120)
+        self.assertEqual(new["cases"]["metadata-brd"]["probe_signals"], old["cases"]["metadata-brd"]["probe_signals"])
+        self.assertEqual(new["cases"]["metadata-brd"]["metrics"], old["cases"]["metadata-brd"]["metrics"])
+        self.assertEqual(new["cases"]["metadata-brd"]["mode"], "plain")
+        rules = protocol_rules(new)
+        self.assertEqual(rules["protocol_revision"], 7)
+        self.assertEqual(rules["noise_ceiling"], 0.25)
+        self.assertEqual(new["metadata_rescore"]["fresh_probe_calibration_required"], False)
+        self.assertEqual(new["metadata_rescore"]["predecessor_probe_spent"], 9)
+        self.assertEqual(new["metadata_rescore"]["predecessor_probe_ceiling"], 24)
+        widened = json.loads(json.dumps(new))
+        widened["probe_band"]["metadata_spread_fraction"] = 0.07
+        with self.assertRaisesRegex(ValueError, "1%"):
+            protocol_rules(widened)
+        dropped = json.loads(json.dumps(new))
+        del dropped["cases"]["metadata-brd"]["metadata_accounting"]
+        with self.assertRaisesRegex(ValueError, "attributable"):
+            protocol_rules(dropped)
+        advisory = json.loads(json.dumps(new))
+        advisory["cases"]["metadata-brd"]["probe_signals"] = []
+        with self.assertRaisesRegex(ValueError, "metadata signal"):
+            protocol_rules(advisory)
 
     @unittest.skipUnless((NEXT_REPORT / "protocol-revision1.json").exists(), "before migration")
     def test_revision1_and_2_protocol_shape(self):

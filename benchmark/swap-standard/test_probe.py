@@ -108,6 +108,36 @@ class ProbeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             probe.signal({"swapin_vmstat_delta": {"swap_ra": 12.5}}, "swapin_vmstat_delta.swap_ra")
 
+    def test_revision7_attributable_metadata_calibrates_and_memavailable_stays_noisy(self):
+        import evidence
+        from test_evidence import CAPACITY_KIB, OBSERVED_METADATA
+        p = json.loads((BASE.parents[1] / "campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json").read_text())
+        self.assertEqual(probe.constants(p), probe.DEFAULT_CONSTANTS)
+        stored = [{"metadata_delta_kib": dict(delta), probe.METADATA: -delta["MemAvailable"] * 4096 / CAPACITY_KIB}
+                  for delta in OBSERVED_METADATA]
+        rescored = [evidence.rescore_metadata_metrics(row, 7) for row in stored]
+        samples = {name: [{"swapin_vmstat_delta": {n: 10 for n in probe.VMSTAT},
+                           "swapin_xswap_snapshots": {"swapin_start": {n: 4 for n in ("grows", "shrinks", "usage_pages", "clusters_mapped")},
+                                                      "swapin_end": {n: 4 for n in ("grows", "shrinks", "usage_pages", "clusters_mapped")}},
+                           probe.METADATA: 0.2} for _ in range(3)]
+                   for name in p["tiers"]["probe"]["cases"]}
+        samples["metadata-brd"] = rescored
+        cal = probe.calibrate(p, samples)
+        self.assertEqual(cal["status"], "CALIBRATED")
+        self.assertTrue(cal["passed"])
+        band = cal["bands"]["metadata-brd"][probe.METADATA]
+        self.assertLess(band["maximum"] - band["minimum"],
+                        probe.DEFAULT_CONSTANTS["metadata_spread_fraction"] * abs(band["median"]))
+        self.assertAlmostEqual(band["median"], rescored[0][probe.METADATA])
+        samples["metadata-brd"] = stored
+        rejected = probe.calibrate(p, samples)
+        self.assertEqual(rejected["status"], "CALIBRATION_NOISY")
+        self.assertIn("metadata-brd: METADATA_CALIBRATION_NOISY", rejected["reasons"])
+        widened = json.loads(json.dumps(p))
+        widened["probe_band"]["metadata_spread_fraction"] = 0.07
+        with self.assertRaisesRegex(ValueError, "1%"):
+            probe.constants(widened)
+
     def test_template_budget_is_planned_and_within_default_cap(self):
         self.assertTrue(self.p["template_only"])
         planned = self.p["planned_guest_counts"]

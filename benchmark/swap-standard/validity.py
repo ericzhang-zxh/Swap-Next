@@ -6,9 +6,25 @@ reports a TSC-unstable clocksource fallback, the wall time exceeds 1.5 times
 the running median of prior valid runs of the same case, or more than 60
 seconds elapse before QEMU is launched. Invalid attempts stay in the report.
 Revision 6 is the TCG kbench screen and additionally excludes the build workload.
+Revision 7 keeps that screen and scores metadata from attributable meminfo counters.
 """
+import importlib.util
 import math
+from pathlib import Path
 import statistics
+
+
+def _attributable_fields():
+    """Load the parser's field list by path. The workflow imports this file by
+    path, so a bare `import evidence` is not on sys.path."""
+    path = Path(__file__).resolve().with_name("evidence.py")
+    spec = importlib.util.spec_from_file_location("swap_standard_evidence_fields", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.ATTRIBUTABLE_FIELDS
+
+
+ATTRIBUTABLE_FIELDS = _attributable_fields()
 
 
 CLOCKSOURCE_FALLBACK_MARKERS = (
@@ -148,67 +164,97 @@ _APPROVED_SHAPE = {
     3: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
     4: {"vcpus": 8, "mem_mib": 8192, "accel": "kvm"},
     6: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
+    7: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
 }
 _TCG_QEMU = ["-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc", "-cpu", "max"]
 
 
-def _revision6(protocol, rules, validity, accelerator):
-    """The TCG kbench screen: 25% ceiling, xswap probe and fast, build excluded."""
+def _kbench_screen(protocol, rules, validity, accelerator, revision):
+    """TCG kbench screen shared by revisions 6 and 7. Swap-in cases stay xswap."""
+    label = "revision " + str(revision)
     if protocol.get("template_only"):
-        raise ValueError("revision 6 protocol is executable")
+        raise ValueError(label + " protocol is executable")
     if rules["noise_ceiling"] != 0.25:
-        raise ValueError("revision 6 noise ceiling is 25%")
+        raise ValueError(label + " noise ceiling is 25%")
     if rules["max_reruns"] != 2:
-        raise ValueError("revision 6 allows two validity reruns")
+        raise ValueError(label + " allows two validity reruns")
     if ".p99_ns" not in rules["advisory_suffixes"]:
-        raise ValueError("revision 6 keeps p99 advisory")
+        raise ValueError(label + " keeps p99 advisory")
     if protocol.get("preallocate_swap") is not True:
-        raise ValueError("revision 6 preallocates swap")
+        raise ValueError(label + " preallocates swap")
     if accelerator.get("qemu") != _TCG_QEMU:
-        raise ValueError("revision 6 QEMU accelerator options")
+        raise ValueError(label + " QEMU accelerator options")
     if validity.get("clocksource_fallback") != "invalid_and_rerun":
-        raise ValueError("revision 6 clocksource gate")
+        raise ValueError(label + " clocksource gate")
     if not isinstance(validity.get("host_load"), str) or not validity["host_load"].strip():
-        raise ValueError("revision 6 records host load")
+        raise ValueError(label + " records host load")
     excluded = protocol.get("excluded")
     if not isinstance(excluded, dict) or not isinstance(excluded.get("build"), str) or not excluded["build"].strip():
-        raise ValueError("revision 6 excludes the build workload")
+        raise ValueError(label + " excludes the build workload")
     tiers = protocol.get("tiers", {})
     if "slow" in tiers or "probe" not in tiers:
-        raise ValueError("revision 6 requires a probe tier and has no slow tier")
+        raise ValueError(label + " requires a probe tier and has no slow tier")
     if protocol.get("baseline_build") != "kb-xs-desc-v1":
-        raise ValueError("revision 6 baseline build is kb-xs-desc-v1")
+        raise ValueError(label + " baseline build is kb-xs-desc-v1")
     if protocol.get("baseline_commit") != "5e84ca928deeacb4eee656806a003f27d1eca82f":
-        raise ValueError("revision 6 baseline commit")
+        raise ValueError(label + " baseline commit")
     if protocol.get("page_cluster", {}).get("value") != 3:
-        raise ValueError("revision 6 page-cluster is the kernel default 3")
+        raise ValueError(label + " page-cluster is the kernel default 3")
     if tiers.get("fast", {}).get("cases") != ["swapin-disk", "swapin-zram-64k"]:
-        raise ValueError("revision 6 fast cases")
+        raise ValueError(label + " fast cases")
     if tiers.get("probe", {}).get("cases") != ["swapin-disk", "swapin-zram-64k", "metadata-brd"]:
-        raise ValueError("revision 6 probe cases")
+        raise ValueError(label + " probe cases")
     cases = protocol.get("cases", {})
     if set(cases) != {"swapin-disk", "swapin-zram-64k", "metadata-brd"}:
-        raise ValueError("revision 6 case set")
+        raise ValueError(label + " case set")
     for name, backend in (("swapin-disk", "disk"), ("swapin-zram-64k", "zram-64k")):
         spec = cases[name]
         if (spec.get("workload") != "swapin" or spec.get("mode") != "xswap" or
                 spec.get("backend") != backend or spec.get("primary") != "swapin_seq.mean_ns"):
-            raise ValueError("revision 6 swap-in cases are xswap")
+            raise ValueError(label + " swap-in cases are xswap")
         if spec.get("metrics", {}).get("swapin_rand.mean_ns") != "lower":
-            raise ValueError("revision 6 keeps swapin_rand as a guard")
+            raise ValueError(label + " keeps swapin_rand as a guard")
     firing = {"swapin_vmstat_delta.swap_ra", "swapin_vmstat_delta.swap_ra_hit",
               "swapin_vmstat_delta.pgmajfault"}
     if not firing <= set(cases["swapin-zram-64k"].get("probe_signals", [])):
-        raise ValueError("revision 6 zram-64k probe keys the swap-in count signals")
+        raise ValueError(label + " zram-64k probe keys the swap-in count signals")
     meta = cases["metadata-brd"]
     # Plain brd: the metadata gate requires the brd SwapTotal delta alone.
     # xswap create adds a swap device and that guest cannot pass swap_capacity.
     if (meta.get("workload") != "metadata" or meta.get("backend") != "brd" or
             meta.get("mode") != "plain" or meta.get("primary") is not None):
-        raise ValueError("revision 6 brd metadata probe is plain mode")
+        raise ValueError(label + " brd metadata probe is plain mode")
+    if meta.get("probe_signals") != ["metadata_delta_bytes_per_capacity_slot"]:
+        raise ValueError(label + " metadata signal")
+    if meta.get("metrics") != {"metadata_delta_bytes_per_capacity_slot": "lower"}:
+        raise ValueError(label + " metadata direction")
     config_hash = protocol.get("input_config_sha256")
     if not isinstance(config_hash, str) or len(config_hash) != 64:
-        raise ValueError("revision 6 kernel config hash")
+        raise ValueError(label + " kernel config hash")
+    band = protocol.get("probe_band")
+    if band != {"relative_padding": 0.01, "integer_padding_floor": 1, "metadata_spread_fraction": 0.01}:
+        raise ValueError(label + " keeps the 1% metadata spread")
+
+
+def _revision7_metadata(protocol):
+    """Revision 7 replaces the MemAvailable numerator and keeps the 1% spread."""
+    accounting = protocol.get("cases", {}).get("metadata-brd", {}).get("metadata_accounting")
+    expected = {
+        "numerator": "attributable_meminfo",
+        "fields": list(ATTRIBUTABLE_FIELDS),
+        "excluded_fields": ["MemFree", "MemAvailable", "Slab"],
+        "on_missing": "fail",
+        "on_vmalloc_decrease": "fail",
+        "on_negative_sum": "fail",
+        "signed_fields": ["SUnreclaim", "PageTables", "Percpu"],
+    }
+    if accounting != expected:
+        raise ValueError("revision 7 metadata numerator is the attributable meminfo sum")
+    rescore = protocol.get("metadata_rescore")
+    if (not isinstance(rescore, dict) or rescore.get("stored_fields_sufficient") is not True or
+            rescore.get("fresh_probe_calibration_required") is not False or
+            rescore.get("eval") != "469ee19c2a064c7393cbd5e9fea3687c"):
+        raise ValueError("revision 7 records the stored-delta rescore")
 
 
 def protocol_rules(protocol):
@@ -271,8 +317,10 @@ def protocol_rules(protocol):
         if revision == 4 and (protocol.get("preallocate_swap") is not True or
                               any(c.get("mode", "plain") != "plain" for c in protocol.get("cases", {}).values())):
             raise ValueError("revision 4 requires plain mode and preallocated swap")
-        if revision == 6:
-            _revision6(protocol, rules, validity, accelerator)
+        if revision in (6, 7):
+            _kbench_screen(protocol, rules, validity, accelerator, revision)
+        if revision == 7:
+            _revision7_metadata(protocol)
         for name, spec in protocol.get("tiers", {}).items():
             if spec.get("kind") == "probe":
                 if name != "probe":

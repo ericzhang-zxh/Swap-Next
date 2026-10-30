@@ -32,7 +32,9 @@ matrix is not itself a calibrated candidate campaign;
 narrower swap-in protocol and recorded both a noisy sparse-image A/A and a
 passing preallocated A/A. QEMU TCG revision 3 is closed. The prepared kbench
 successor is [protocol revision 6](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json).
-It is not opened.
+Its probe calibration on grok-cloud was noisy on the MemAvailable metadata
+numerator. [Protocol revision 7](campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json)
+scores attributable meminfo counters instead; its campaign is open.
 
 ## Upstream landscape
 
@@ -150,10 +152,23 @@ performance evaluation are separate authorized work.
 ## TCG kbench revision 6
 
 [The revision 6 protocol](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json)
-is the TCG measurement on the kbench setup. It is prepared and not opened.
+is the TCG measurement on the kbench setup. Its grok-cloud probe calibration
+returned `CALIBRATION_NOISY` on the MemAvailable metadata numerator.
 Swap-in and correctness run in xswap mode on `kb-xs-desc-v1` (`5e84ca92`),
 not the plain `744e5400` baseline in the revision 4 template. The probe tier
 adds a plain brd metadata guest because that gate expects the brd device
 alone. Fast screening is disk and zram-64k swap-in. The build workload is
 excluded. `vm.page-cluster` stays at the kernel default 3. Builds, the guest
 image, and guests run on grok-cloud. The parameter table lives in the protocol.
+
+## TCG kbench revision 7
+
+[The revision 7 protocol](campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json)
+is the same TCG kbench screen as revision 6, with one measurement change.
+`metadata-brd` scores the swapon deltas of `SUnreclaim`, `VmallocUsed`,
+`PageTables` and `Percpu`, divided by the brd `SwapTotal` delta. `MemFree`,
+`MemAvailable` and `Slab` stay in the meminfo record and out of the ratio.
+The 1% metadata spread, the swap-in cases, and the 25% latency ceiling stay
+as in revision 6. A missing counter, a decrease in `VmallocUsed`, or a
+negative sum fails that guest. Eval `469ee19c` already stored the four
+counters, so the numerator can be recomputed without another guest.

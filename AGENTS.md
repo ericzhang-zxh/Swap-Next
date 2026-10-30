@@ -310,7 +310,7 @@ follow [Campaign lifecycle](#campaign-lifecycle) and go directly to `main`.
 
 ### TCG kbench revision 6
 
-Prepared, not opened:
+Closed 2026-10-29 (probe calibration `CALIBRATION_NOISY`):
 [campaigns/xswap-tcg-kbench-2026-10-29/protocol.json](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json).
 Owner pre-approved 2026-10-29 01:36 PT. It is the TCG protocol on the kbench
 setup: QEMU TCG, 4 vCPU, 4096 MiB, 16 GiB swap, p90 envelope, 25% ceiling,
@@ -328,3 +328,17 @@ image there with `prepare-image.py` before the first guest. The baseline
 config is `benchmark/config/swap-standard.config` (`input_config_sha256` in
 the protocol), which sets `CONFIG_TRANSPARENT_HUGEPAGE` and `CONFIG_THP_SWAP`.
 No slow tier.
+
+### TCG kbench revision 7
+
+Opened 2026-10-29 on grok-cloud, pending owner review of the protocol:
+[campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json](campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json).
+Revision 6's probe calibration eval `469ee19c2a064c7393cbd5e9fea3687c` was
+`CALIBRATION_NOISY` because `metadata-brd` scored `-ΔMemAvailable`. That
+numerator followed MemFree (about −29.6 to −31.4 MiB) while `VmallocUsed`
+stayed at 28728 KiB. Revision 7 scores `SUnreclaim + VmallocUsed +
+PageTables + Percpu` over the same brd capacity, keeps the 1% spread, and
+keeps the revision 6 swap-in cases, 25% ceiling, and guest shape. A missing
+counter, a `VmallocUsed` decrease, or a negative sum fails the guest. The
+stored eval can be re-scored from `metadata_delta_kib` without new guests.
+`calibrate` still boots a tier.

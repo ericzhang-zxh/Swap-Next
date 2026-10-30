@@ -53,6 +53,7 @@ def campaign_tree(test, p):
                 patch.object(w.campaign_store, "CAMPAIGNS", test.campaigns),
                 patch.object(w.campaign_store, "HOSTS", test.campaigns / "hosts.json"),
                 patch.object(w.campaign_store, "GLOBAL_STOP", test.campaigns / "STOP"),
+                patch.object(w.host_preflight, "mem_available_kib", return_value=64 * 1024 * 1024),
                 patch.dict("os.environ", {"SWAP_NEXT_CLAIM": str(test.claim),
                                           "SWAP_NEXT_MACHINE": "hurricpc"})]
     for item in patches:
@@ -176,6 +177,125 @@ class WorkflowTests(unittest.TestCase):
         with patch.object(w, "fingerprint", return_value="fp"):
             row = flow.run("calibrate", "fast")
         self.assertIn("already attempted", row["reason"])
+
+    def test_stop_void_releases_the_slot_and_a_noisy_result_stays_blocked(self):
+        import void_calibration as vc
+        ident = "16fe9d24" + "ab" * 12
+        guests = [{"id": ident + "-guest", "status": "PASS", "run_valid": True}]
+        blocked = {"id": ident, "action": "calibrate", "tier": "fast", "status": "INCOMPLETE",
+                   "reason": "STOP", "execution_started": True, "fingerprint": "fp", "runs": guests}
+        w.save(self.state / "ledger.json", [blocked])
+        w.save(self.state / "budget.json", {"created": w.time.time(), "guests": 7, "builds": 0})
+        report = self.campaign / "runs/evaluations" / ident / "report.json"
+        w.save(report, dict(blocked))
+        budget_bytes, report_bytes = (self.state / "budget.json").read_bytes(), report.read_bytes()
+        with patch.object(vc.store, "PROJECT", self.root), \
+             patch.object(vc.store, "CAMPAIGNS", self.campaigns), \
+             patch.object(vc.store, "HOSTS", self.campaigns / "hosts.json"), \
+             patch.object(vc.store, "GLOBAL_STOP", self.campaigns / "STOP"):
+            receipt = vc.void_calibration(self.p["campaign"], "16fe9d24", "False watchdog STOP; no KVM or safety event")
+        self.assertEqual(receipt["attempt_id"], ident)
+        self.assertEqual(receipt["guests"][0]["id"], ident + "-guest")
+        ledger = w.read(self.state / "ledger.json")
+        self.assertEqual(ledger[0]["runs"], guests)
+        self.assertFalse(ledger[0]["execution_started"])
+        self.assertEqual(ledger[0]["status"], "INCOMPLETE")
+        self.assertEqual((self.state / "budget.json").read_bytes(), budget_bytes)
+        self.assertEqual(report.read_bytes(), report_bytes)
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(flow, "_reserve_guest", side_effect=RuntimeError("reserved")):
+            retried = flow.run("calibrate", "fast")
+        self.assertEqual(retried["reason"], "reserved")
+        self.assertEqual(w.read(self.state / "budget.json")["guests"], 7)
+        noisy_id = "ab" * 16
+        noisy = {"id": noisy_id, "action": "calibrate", "tier": "fast", "status": "CALIBRATION_NOISY",
+                 "reason": "spread", "execution_started": True, "fingerprint": "fp",
+                 "analysis": {"status": "CALIBRATION_NOISY", "passed": False},
+                 "runs": [{"id": noisy_id + "-guest", "status": "PASS", "run_valid": True}]}
+        w.save(self.state / "ledger.json", [noisy])
+        before = (self.state / "ledger.json").read_bytes()
+        with patch.object(vc.store, "PROJECT", self.root), \
+             patch.object(vc.store, "CAMPAIGNS", self.campaigns), \
+             patch.object(vc.store, "HOSTS", self.campaigns / "hosts.json"), \
+             patch.object(vc.store, "GLOBAL_STOP", self.campaigns / "STOP"):
+            with self.assertRaisesRegex(vc.VoidError, "noisy"):
+                vc.void_calibration(self.p["campaign"], noisy_id, "drop the noisy calibration")
+        self.assertEqual((self.state / "ledger.json").read_bytes(), before)
+        self.assertEqual((self.state / "budget.json").read_bytes(), budget_bytes)
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"):
+            refused = flow.run("calibrate", "fast")
+        self.assertIn("already attempted", refused["reason"])
+        self.assertEqual(w.read(self.state / "budget.json")["guests"], 7)
+
+    def _tcg_guest(self):
+        self.p["guest"] = {"vcpus": 4, "mem_mib": 4096, "swap_gib": 16}
+        self.p["accelerator"] = {"require": "tcg"}
+
+    def test_short_host_ram_records_nothing_and_exact_threshold_reserves(self):
+        self._tcg_guest()
+        flow = w.Workflow(self.p)
+        ledger, budget = self.state / "ledger.json", self.state / "budget.json"
+        with patch.object(w.host_preflight, "mem_available_kib", return_value=5120 * 1024 - 1):
+            for tier in ("fast", "probe"):
+                row = flow.run("calibrate", tier)
+                self.assertEqual(row["status"], "BLOCKED")
+                self.assertEqual(row["reason"], "need 5120 MiB available host RAM")
+                self.assertFalse(row.get("execution_started"))
+                self.assertFalse(ledger.exists())
+                self.assertFalse(budget.exists())
+                self.assertFalse((self.campaign / "runs/evaluations" / row["id"]).exists())
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(w.host_preflight, "mem_available_kib", return_value=5120 * 1024), \
+             patch.object(flow, "_reserve_guest", side_effect=RuntimeError("reserved")):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["reason"], "reserved")
+        self.assertFalse(row.get("execution_started"))
+
+    def test_host_ram_drop_before_reserve_removes_the_unstarted_attempt(self):
+        self._tcg_guest()
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(w.host_preflight, "mem_available_kib", side_effect=[5120 * 1024, 1]), \
+             patch.object(flow, "_reserve_guest", side_effect=AssertionError("reserved")):
+            row = flow.run("calibrate", "fast")
+        self.assertEqual(row["status"], "BLOCKED")
+        self.assertEqual(row["reason"], "need 5120 MiB available host RAM")
+        self.assertFalse(row.get("execution_started"))
+        self.assertEqual(w.read(self.state / "ledger.json"), [])
+        self.assertFalse((self.state / "budget.json").exists())
+        self.assertFalse((self.campaign / "runs/evaluations" / row["id"]).exists())
+
+    def test_preflight_void_releases_the_fast_slot(self):
+        import void_calibration as vc
+        ident = "0c2cd749" + "ab" * 12
+        run_id = ident + "-0-swapin-disk-a"
+        guests = [{"id": run_id, "status": "STARTED"}]
+        blocked = {"id": ident, "action": "calibrate", "tier": "fast", "status": "INCOMPLETE",
+                   "reason": "missing run result", "execution_started": True, "fingerprint": "fp",
+                   "runs": guests}
+        w.save(self.state / "ledger.json", [blocked])
+        w.save(self.state / "budget.json", {"created": w.time.time(), "guests": 1, "builds": 0})
+        log = self.campaign / "runs/evaluations" / ident / (run_id + ".log")
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.write_text("need 5120 MiB available host RAM\n")
+        with patch.object(vc.store, "PROJECT", self.root), \
+             patch.object(vc.store, "CAMPAIGNS", self.campaigns), \
+             patch.object(vc.store, "HOSTS", self.campaigns / "hosts.json"), \
+             patch.object(vc.store, "GLOBAL_STOP", self.campaigns / "STOP"):
+            receipt = vc.void_calibration(self.p["campaign"], "0c2cd749",
+                                          "run.py refused before QEMU: need 5120 MiB available host RAM")
+        self.assertEqual(receipt["attempt_id"], ident)
+        self.assertEqual(receipt["preflight"][0]["message"], "need 5120 MiB available host RAM")
+        self.assertEqual(w.read(self.state / "budget.json")["guests"], 1)
+        flow = w.Workflow(self.p)
+        with patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(flow, "_reserve_guest", side_effect=RuntimeError("reserved")):
+            retried = flow.run("calibrate", "fast")
+        self.assertEqual(retried["reason"], "reserved")
+        self.assertEqual(w.read(self.state / "budget.json")["guests"], 1)
 
     def test_new_protocol_scores_swapin_and_probes_metadata(self):
         good = probe_protocol()
@@ -664,6 +784,23 @@ class Revision6WorkflowTests(unittest.TestCase):
         self.assertEqual(row["status"], "INCOMPLETE")
         self.assertIn("accelerator does not match protocol", row["reason"])
         self.assertEqual(row["protocol_revision"], 6)
+
+
+class Revision7ContractTests(unittest.TestCase):
+    def test_contract_forces_tcg_and_keeps_metadata_gating(self):
+        protocol = w.read(REPO / "campaigns/xswap-tcg-kbench-rev7-2026-10-29/protocol.json")
+        self.assertEqual(w.contract_errors(protocol), [])
+        self.assertNotIn(protocol["campaign"], w.CONTRACT_EXEMPT)
+        self.assertEqual(json.loads((REPO / "campaigns/xswap-tcg-kbench-rev7-2026-10-29/campaign.json").read_text())["status"], "open")
+        with patch.dict("os.environ", {"SWAP_NEXT_ACCEL": "kvm"}, clear=False):
+            env = w.child_env(protocol)
+        self.assertEqual(env["SWAP_NEXT_ACCEL"], "tcg")
+        self.assertEqual(env["SWAP_NEXT_TCG_SMP"], "4")
+        self.assertEqual(env["SWAP_NEXT_TCG_MEM_MIB"], "4096")
+        extra = w.runner_extra(protocol)
+        self.assertEqual(extra[extra.index("--protocol-revision") + 1], "7")
+        self.assertIn("metadata-brd", protocol["tiers"]["probe"]["cases"])
+        self.assertEqual(protocol["cases"]["metadata-brd"]["metrics"][w.METADATA_METRIC], "lower")
 
 
 if __name__ == "__main__":
