@@ -1,0 +1,463 @@
+{
+ "title": "Round 3: c1d caps the readahead window at 4 pages — NOT RUN",
+ "subtitle": "c1d b2b8ab86 · tree 8cbebbe1 · base 5e84ca92 · protocol rev7 (not approved) · tool code unmerged · guest 4 vCPU / 4096 MiB / swap 16 GiB · QEMU TCG · 2026-10-29",
+ "links": [
+  {
+   "href": "summary.html",
+   "label": "← Summary"
+  }
+ ],
+ "verdict": {
+  "status": "not-run",
+  "headline": "NOT RUN. c1d was prepared, but no guest booted: tooling blocks a c1c re-run, and since 17:08 PDT host RAM has stayed below the gate. No result exists.",
+  "tiles": [
+   {
+    "label": "Guests spent",
+    "value": "0",
+    "note": "ledger still 11 rows"
+   },
+   {
+    "label": "Host RAM free",
+    "value": "2433–3158 MiB",
+    "note": "gate 5632 MiB; last read 21:09 PDT"
+   },
+   {
+    "label": "Fast reruns left",
+    "value": "0",
+    "note": "96/96 committed"
+   },
+   {
+    "label": "Global cap",
+    "value": "103/200",
+    "note": "per coordinator, 2026-10-29"
+   }
+  ]
+ },
+ "sections": [
+  {
+   "id": "prepared",
+   "title": "What was prepared",
+   "lead": "One change on top of c1c: the xswap readahead window is capped at 4 pages.",
+   "blocks": [
+    {
+     "type": "flow",
+     "takeaway": "c1d committed 16:02 PDT; never built",
+     "nodes": [
+      {
+       "id": "a",
+       "label": "c1c",
+       "sub": "b69e47c9",
+       "col": 0,
+       "row": 0
+      },
+      {
+       "id": "b",
+       "label": "c1d",
+       "sub": "window ≤ 4 pages",
+       "col": 1,
+       "row": 0,
+       "tone": "focus"
+      },
+      {
+       "id": "c",
+       "label": "build + probe",
+       "sub": "not started",
+       "col": 2,
+       "row": 0,
+       "tone": "bad"
+      },
+      {
+       "id": "d",
+       "label": "fast tier, 4 pairs",
+       "sub": "not started",
+       "col": 3,
+       "row": 0,
+       "tone": "bad"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "b"
+      },
+      {
+       "from": "b",
+       "to": "c"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      }
+     ]
+    },
+    {
+     "type": "checklist",
+     "takeaway": "Kill list written before any c1d guest (none evaluated)",
+     "items": [
+      {
+       "status": "missing",
+       "label": "zram-64k seq.p99 < 0.834",
+       "evidence": "proposal L74"
+      },
+      {
+       "status": "missing",
+       "label": "disk seq.p99 < 0.910",
+       "evidence": "proposal L75"
+      },
+      {
+       "status": "missing",
+       "label": "disk rand.mean < 0.874",
+       "evidence": "proposal L76"
+      },
+      {
+       "status": "missing",
+       "label": "disk seq.mean < 1.80 (floor: below this the cap gave up more gain than the estimate allows)",
+       "evidence": "proposal L77"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c1c",
+   "title": "Why c1c was not re-run first",
+   "lead": "The coordinator's GO asked for a fresh c1c fast evaluation.",
+   "blocks": [
+    {
+     "type": "checklist",
+     "takeaway": "Both exits are closed by current tools",
+     "items": [
+      {
+       "status": "fail",
+       "label": "duplicate guard: same tree and commit already started (66a07143)",
+       "evidence": "standard_workflow.py L597-606"
+      },
+      {
+       "status": "fail",
+       "label": "void tool refuses evaluate rows; tried 14:18 PDT, exit 2",
+       "evidence": "void_calibration.py L107-108"
+      },
+      {
+       "status": "warn",
+       "label": "campaign STOP still in place",
+       "evidence": "LOG.md L50"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ram",
+   "title": "Why c1d has not run",
+   "lead": "Build retries at 16:03, 16:20, 16:48 PDT hit action-review service errors; then the RAM gate.",
+   "blocks": [
+    {
+     "type": "strip",
+     "takeaway": "Every reading since 17:08 PDT is below the gate",
+     "x_label": "host available RAM (MiB)",
+     "groups": [
+      "readings"
+     ],
+     "series": [
+      "reading"
+     ],
+     "points": [
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 2563,
+       "tip": "17:08 PDT · LOG.md L49"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 2926,
+       "tip": "17:58 PDT · ram-monitor.log L78"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 3144,
+       "tip": "18:08 PDT · ram-monitor.log L79"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 2949,
+       "tip": "18:12 PDT · ram-monitor.log L80"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 3027,
+       "tip": "18:22 PDT · ram-monitor.log L81"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 2930,
+       "tip": "18:32 PDT · ram-monitor.log L82"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 2937,
+       "tip": "18:36 PDT · ram-monitor.log L83"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 3158,
+       "tip": "18:46 PDT · ram-monitor.log L84"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 3133,
+       "tip": "18:48 PDT · ram-monitor.log L86"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 3136,
+       "tip": "18:48 PDT · ram-monitor.log L85"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 3139,
+       "tip": "18:48 PDT · LOG.md L50"
+      },
+      {
+       "group": "readings",
+       "series": "reading",
+       "value": 2433,
+       "tip": "21:09 PDT · ram-monitor.log L87"
+      }
+     ],
+     "refs": [
+      {
+       "value": 5632,
+       "label": "wait gate"
+      }
+     ],
+     "note": "run.py itself needs 5120 MiB; still above every reading. Wait deadline 01:30 PDT, 10-30."
+    }
+   ]
+  },
+  {
+   "id": "budget",
+   "title": "Budget",
+   "lead": "Fast pool 96 guests; global 103/200 (per coordinator, 2026-10-29).",
+   "blocks": [
+    {
+     "type": "bars",
+     "takeaway": "c1d would leave 0 fast reruns",
+     "categories": [
+      "used (rounds 1–2)",
+      "c1d correctness",
+      "c1d fast eval",
+      "spare"
+     ],
+     "series": [
+      "guests"
+     ],
+     "values": {
+      "guests": [
+       79,
+       1,
+       16,
+       0
+      ]
+     },
+     "y_label": "fast-pool guests",
+     "note": "Fast eval = 4 pairs × 2 backends × 2 arms. Probe pool 15/24."
+    }
+   ]
+  },
+  {
+   "id": "next",
+   "title": "Next",
+   "lead": "Decisions for Hurric; none taken here.",
+   "blocks": [
+    {
+     "type": "note",
+     "text": "Free host RAM or approve another host; one invalid run ends c1d with no rerun, so the clock fix (rev8) matters first."
+    }
+   ]
+  },
+  {
+   "id": "audit-facts",
+   "title": "Verified facts",
+   "blocks": [
+    {
+     "type": "table",
+     "takeaway": "Each round-3 fact and where it was read (PDT)",
+     "columns": [
+      "Fact",
+      "Value",
+      "Source"
+     ],
+     "rows": [
+      [
+       "round 3 GO",
+       "logged 15:55; decision ~15:53",
+       "LOG.md L45; GUEST-ACCOUNTING.md L28"
+      ],
+      [
+       "global cap",
+       "150 then 200; 103 used, ceiling 198",
+       "LOG.md L45 (relayed, per coordinator, 2026-10-29)"
+      ],
+      [
+       "c1c re-eval blocked",
+       "duplicate guard on 66a07143 (tree 58d43c94)",
+       "LOG.md L47; standard_workflow.py L597-606 @9c1468ac"
+      ],
+      [
+       "void refuses evaluate",
+       "exit 2 at 14:18; 'not a calibration attempt'",
+       "LOG.md L41; void_calibration.py L107-108 @9c1468ac, L165-166 @87dc7357"
+      ],
+      [
+       "c1d commit",
+       "b2b8ab86, tree 8cbebbe1, parent 5e84ca92, 16:02 PDT",
+       "LOG.md L49; git rev-parse"
+      ],
+      [
+       "window cap",
+       "4 pages",
+       "c1d proposal L41; commit subject"
+      ],
+      [
+       "proposal written",
+       "16:00 PDT (file time)",
+       "c1d proposal"
+      ],
+      [
+       "action-review errors",
+       "16:03, 16:20, 16:48 PDT",
+       "LOG.md L48"
+      ],
+      [
+       "RAM gate wait",
+       "since 17:08; 2433–3158 MiB < 5632",
+       "LOG.md L49, L50; ram-monitor.log L78-87"
+      ],
+      [
+       "fast pool",
+       "79 + 1 + 16 = 96/96, spare 0",
+       "LOG.md L49; budget.json; protocol.json budget; reservation pool=fast"
+      ],
+      [
+       "guests spent",
+       "0; ledger 11 rows, budget guests 79",
+       "GUEST-ACCOUNTING.md L43; ledger.json; budget.json (live main checkout)"
+      ]
+     ]
+    },
+    {
+     "type": "table",
+     "takeaway": "Other falsifiers in the proposal (verbatim)",
+     "columns": [
+      "Line",
+      "Text"
+     ],
+     "rows": [
+      [
+       "L82",
+       "Probe disk swap_ra outside [90000, 105000]. The expected value is 32768 windows × 3 = 98304 plus ≤ ~300 from the rand phase. ≥ 110k means the cap did not apply (c1c gave 115149). < 90k means admission changed."
+      ],
+      [
+       "L83",
+       "Probe disk pgmajfault outside [155000, 172000] (expected ≈ 131072 + 32768 ≈ 163.8k; c1c 146990; baseline 262149)."
+      ],
+      [
+       "L84",
+       "swap_ra_hit / swap_ra < 0.98 on disk."
+      ],
+      [
+       "L85",
+       "Probe zram-64k swap_ra > 300 (expected 0)."
+      ],
+      [
+       "L86",
+       "pswpin not ≈ 262.1k on either case."
+      ],
+      [
+       "L87",
+       "disk seq.p99 does not improve on c1c's 0.856/0.870 while swap_ra is ≈ 98k. That would mean the window size is not the tail driver, and c1d should be dropped."
+      ],
+      [
+       "L88",
+       "Any WARN (page_io.c xswap no-backend WARN_ON_ONCE), SIGBUS, Oops or correctness gate failure."
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "audit-limits",
+   "title": "Limits and discrepancies",
+   "blocks": [
+    {
+     "type": "table",
+     "takeaway": "Claims checked against files",
+     "columns": [
+      "Kind",
+      "Content",
+      "Source"
+     ],
+     "rows": [
+      [
+       "round 3",
+       "RAM gate: the wait threshold 5632 MiB comes from the run log and ram-wait.sh; run.py's own gate is guest 4096 + 1024 = 5120 MiB. The source of the extra 512 MiB is not recorded. All readings are below both",
+       "LOG.md L49; ram-wait.sh L1; run.py L321-323 @9c1468ac"
+      ],
+      [
+       "round 3",
+       "reruns: LOG.md L47 and GUEST-ACCOUNTING say 1 rerun fits; LOG.md L49 adds the fast-pool correctness reservation and gets 0. This page uses 0",
+       "LOG.md L47, L49; c1c correctness reservation pool=fast"
+      ],
+      [
+       "round 3",
+       "'about 2.5–3 GiB available' (per coordinator, 2026-10-29); logged readings are 2433–3158 MiB, last 2433 MiB at 21:09 PDT",
+       "LOG.md L49, L50; ram-monitor.log L78-87"
+      ],
+      [
+       "round 3",
+       "'c1d pre-registered' (per coordinator, 2026-10-29): the kill list exists only in a proposal file outside the bundle (status: proposal); there is no candidates/ record and no ledger row",
+       "c1d proposal L13, L71; candidates/ and ledger at 729be1c"
+      ],
+      [
+       "round 3",
+       "commit: the proposal names 2b3d238e (parent c1c b69e47c9); the GO used b2b8ab86 (parent 5e84ca92). Both have tree 8cbebbe1, so the code is the same",
+       "c1d proposal L6; LOG.md L49; git rev-parse"
+      ],
+      [
+       "round 3",
+       "stuck since 16:03: LOG.md L48 (main agent) lists retries at 16:03, 16:20, 16:48 PDT rejected by action-review service errors; the errors themselves are not in a file",
+       "LOG.md L48"
+      ],
+      [
+       "round 3",
+       "round-3 sources (run log, guest accounting, RAM log, proposal) are not in the bundle commit, so they cannot be linked",
+       "this page"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "audit-diff",
+   "title": "Patch",
+   "blocks": [
+    {
+     "type": "diff",
+     "takeaway": "c1d incremental on c1c (2b3d238e, same tree as b2b8ab86)",
+     "patch": "diff --git a/mm/swap_state.c b/mm/swap_state.c\nindex c226fe726..ddc8c45ce 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -51,6 +51,15 @@ static bool enable_vma_readahead __read_mostly = true;\n \n #define SWAP_RA_ORDER_CEILING\t5\n \n+/*\n+ * A fault that opens an xswap readahead window waits for the whole window:\n+ * the target is plugged and usually merged with its backend neighbours into\n+ * one read.  In a sequential stream that fault is the only miss of its\n+ * window, so the window size sets the stream's tail latency.  Cap it at\n+ * 4 pages, in cluster and VMA mode, below page_cluster's default of 8.\n+ */\n+#define XSWAP_RA_ORDER\t\t2\n+\n #define SWAP_RA_WIN_SHIFT\t(PAGE_SHIFT / 2)\n #define SWAP_RA_HITS_MASK\t((1UL << SWAP_RA_WIN_SHIFT) - 1)\n #define SWAP_RA_HITS_MAX\tSWAP_RA_HITS_MASK\n@@ -1095,6 +1104,8 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \t\tgoto skip;\n \n \tmask = swapin_nr_pages(offset) - 1;\n+\tif (si->flags & SWP_XSWAP)\n+\t\tmask = min(mask, (1UL << XSWAP_RA_ORDER) - 1);\n \tif (!mask)\n \t\tgoto skip;\n \n@@ -1126,14 +1137,17 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n }\n \n static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n-\t\t\t   unsigned long *end)\n+\t\t\t   unsigned long *end, bool xswap)\n {\n \tstruct vm_area_struct *vma = vmf->vma;\n \tunsigned long ra_val;\n \tunsigned long faddr, prev_faddr, left, right;\n \tunsigned int max_win, hits, prev_win, win;\n+\tint order = min(READ_ONCE(page_cluster), SWAP_RA_ORDER_CEILING);\n \n-\tmax_win = 1 << min(READ_ONCE(page_cluster), SWAP_RA_ORDER_CEILING);\n+\tif (xswap)\n+\t\torder = min(order, XSWAP_RA_ORDER);\n+\tmax_win = 1 << order;\n \tif (max_win == 1)\n \t\treturn 1;\n \n@@ -1200,7 +1214,7 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t    !xswap_readahead_wanted(tsi, targ_entry))\n \t\tgoto skip;\n \n-\twin = swap_vma_ra_win(vmf, &start, &end);\n+\twin = swap_vma_ra_win(vmf, &start, &end, tsi->flags & SWP_XSWAP);\n \tif (win == 1)\n \t\tgoto skip;"
+    }
+   ]
+  }
+ ]
+}

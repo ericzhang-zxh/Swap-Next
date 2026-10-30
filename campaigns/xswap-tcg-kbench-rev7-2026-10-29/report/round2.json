@@ -1,0 +1,1052 @@
+{
+ "title": "Round 2: c1c reads ahead on async backends only",
+ "subtitle": "eval 66a07143 · probe bc73887e · commit b69e47c9 · protocol rev7 (not approved) · tool code unmerged · guest 4 vCPU / 4096 MiB / swap 16 GiB · QEMU TCG · 2026-10-29",
+ "links": [
+  {
+   "href": "summary.html",
+   "label": "← Summary"
+  }
+ ],
+ "verdict": {
+  "status": "inconclusive",
+  "headline": "c1c passed correctness and the mechanism probe, but the fast tier finished only disk 2 and zram 1 of 4 pairs. No performance conclusion.",
+  "tiles": [
+   {
+    "label": "Correctness",
+    "value": "17/17",
+    "note": "disk backend only"
+   },
+   {
+    "label": "Mechanism",
+    "value": "as expected",
+    "note": "disk reads ahead, zram not"
+   },
+   {
+    "label": "Fast tier",
+    "value": "incomplete",
+    "note": "BLOCKED: STOP"
+   },
+   {
+    "label": "Disk seq p99",
+    "value": "red flag",
+    "note": "both pairs below guard (advisory)"
+   }
+  ]
+ },
+ "sections": [
+  {
+   "id": "prereg",
+   "title": "Pre-registered: hypothesis and kill before any guest",
+   "lead": "Written and hashed before the first c1c guest; unchanged since.",
+   "blocks": [
+    {
+     "type": "flow",
+     "takeaway": "Order (PDT): 13:54 registered → 13:56 probe → 13:59 fast tier",
+     "nodes": [
+      {
+       "id": "a",
+       "label": "register",
+       "sub": "13:54",
+       "col": 0,
+       "row": 0,
+       "tone": "focus"
+      },
+      {
+       "id": "b",
+       "label": "correctness",
+       "sub": "17/17 pass",
+       "col": 1,
+       "row": 0,
+       "tone": "good"
+      },
+      {
+       "id": "c",
+       "label": "probe",
+       "sub": "13:56 pass",
+       "col": 2,
+       "row": 0,
+       "tone": "good"
+      },
+      {
+       "id": "d",
+       "label": "fast tier",
+       "sub": "14:13 STOP",
+       "col": 3,
+       "row": 0,
+       "tone": "bad"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "b"
+      },
+      {
+       "from": "b",
+       "to": "c"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mech",
+   "title": "Mechanism: the gate works on zram",
+   "lead": "The probe shows readahead on disk only.",
+   "blocks": [
+    {
+     "type": "strip",
+     "takeaway": "c1c: zero zram readahead; major faults back to baseline",
+     "x_label": "counter delta (events)",
+     "groups": [
+      "disk readahead",
+      "zram readahead",
+      "disk major faults",
+      "zram major faults"
+     ],
+     "series": [
+      "baseline calibration (each run)",
+      "c1 probe",
+      "c1c probe"
+     ],
+     "points": [
+      {
+       "group": "disk readahead",
+       "series": "baseline calibration (each run)",
+       "value": 0,
+       "tip": "calibration run 0"
+      },
+      {
+       "group": "disk readahead",
+       "series": "baseline calibration (each run)",
+       "value": 0,
+       "tip": "calibration run 1"
+      },
+      {
+       "group": "disk readahead",
+       "series": "baseline calibration (each run)",
+       "value": 0,
+       "tip": "calibration run 2"
+      },
+      {
+       "group": "disk readahead",
+       "series": "c1 probe",
+       "value": 115148,
+       "tip": "1 probe run"
+      },
+      {
+       "group": "disk readahead",
+       "series": "c1c probe",
+       "value": 115149,
+       "tip": "1 probe run"
+      },
+      {
+       "group": "zram readahead",
+       "series": "baseline calibration (each run)",
+       "value": 0,
+       "tip": "calibration run 0"
+      },
+      {
+       "group": "zram readahead",
+       "series": "baseline calibration (each run)",
+       "value": 0,
+       "tip": "calibration run 1"
+      },
+      {
+       "group": "zram readahead",
+       "series": "baseline calibration (each run)",
+       "value": 0,
+       "tip": "calibration run 2"
+      },
+      {
+       "group": "zram readahead",
+       "series": "c1 probe",
+       "value": 114684,
+       "tip": "1 probe run"
+      },
+      {
+       "group": "zram readahead",
+       "series": "c1c probe",
+       "value": 0,
+       "tip": "1 probe run"
+      },
+      {
+       "group": "disk major faults",
+       "series": "baseline calibration (each run)",
+       "value": 262149,
+       "tip": "calibration run 0"
+      },
+      {
+       "group": "disk major faults",
+       "series": "baseline calibration (each run)",
+       "value": 262184,
+       "tip": "calibration run 1"
+      },
+      {
+       "group": "disk major faults",
+       "series": "baseline calibration (each run)",
+       "value": 262170,
+       "tip": "calibration run 2"
+      },
+      {
+       "group": "disk major faults",
+       "series": "c1 probe",
+       "value": 147013,
+       "tip": "1 probe run"
+      },
+      {
+       "group": "disk major faults",
+       "series": "c1c probe",
+       "value": 146990,
+       "tip": "1 probe run"
+      },
+      {
+       "group": "zram major faults",
+       "series": "baseline calibration (each run)",
+       "value": 262152,
+       "tip": "calibration run 0"
+      },
+      {
+       "group": "zram major faults",
+       "series": "baseline calibration (each run)",
+       "value": 262156,
+       "tip": "calibration run 1"
+      },
+      {
+       "group": "zram major faults",
+       "series": "baseline calibration (each run)",
+       "value": 262153,
+       "tip": "calibration run 2"
+      },
+      {
+       "group": "zram major faults",
+       "series": "c1 probe",
+       "value": 147456,
+       "tip": "1 probe run"
+      },
+      {
+       "group": "zram major faults",
+       "series": "c1c probe",
+       "value": 262142,
+       "tip": "1 probe run"
+      }
+     ],
+     "note": "Correctness saw only 12 readaheads; no counter proves the discard path ran."
+    }
+   ]
+  },
+  {
+   "id": "results",
+   "title": "Partial results: direction only",
+   "lead": "Disk 2 pairs, zram 1; the protocol needs 4 for a median.",
+   "blocks": [
+    {
+     "type": "strip",
+     "takeaway": "Disk seq mean: both pairs far above noise",
+     "x_label": "disk seq mean: base/cand (>1 = candidate faster)",
+     "groups": [
+      "A/A · 10 pairs",
+      "c1 · 4 pairs",
+      "c1c · incomplete"
+     ],
+     "series": [
+      "pair ratio"
+     ],
+     "points": [
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.8224,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9204,
+       "tip": "pair 1 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.932,
+       "tip": "pair 2 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.0136,
+       "tip": "pair 3 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9687,
+       "tip": "pair 4 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.0063,
+       "tip": "pair 5 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9556,
+       "tip": "pair 6 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9964,
+       "tip": "pair 7 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.975,
+       "tip": "pair 8 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9607,
+       "tip": "pair 9 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 3.2028,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 3.0183,
+       "tip": "pair 1 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 2.8472,
+       "tip": "pair 2 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 3.0898,
+       "tip": "pair 3 · base/cand"
+      },
+      {
+       "group": "c1c · incomplete",
+       "series": "pair ratio",
+       "value": 2.5424,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "c1c · incomplete",
+       "series": "pair ratio",
+       "value": 2.8458,
+       "tip": "pair 1 · base/cand"
+      }
+     ],
+     "refs": [
+      {
+       "value": 1.0,
+       "label": "no change",
+       "tone": "muted"
+      },
+      {
+       "value": 0.92,
+       "label": "A/A guard"
+      }
+     ]
+    },
+    {
+     "type": "strip",
+     "takeaway": "Disk seq p99: both pairs below the guard, worse than c1",
+     "x_label": "disk seq p99: base/cand (>1 = candidate faster)",
+     "groups": [
+      "A/A · 10 pairs",
+      "c1 · 4 pairs",
+      "c1c · incomplete"
+     ],
+     "series": [
+      "pair ratio"
+     ],
+     "points": [
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.895,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.955,
+       "tip": "pair 1 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9104,
+       "tip": "pair 2 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9899,
+       "tip": "pair 3 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9975,
+       "tip": "pair 4 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9916,
+       "tip": "pair 5 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9585,
+       "tip": "pair 6 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.0376,
+       "tip": "pair 7 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9627,
+       "tip": "pair 8 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9229,
+       "tip": "pair 9 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.9856,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.9335,
+       "tip": "pair 1 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.9118,
+       "tip": "pair 2 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.9495,
+       "tip": "pair 3 · base/cand"
+      },
+      {
+       "group": "c1c · incomplete",
+       "series": "pair ratio",
+       "value": 0.8559,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "c1c · incomplete",
+       "series": "pair ratio",
+       "value": 0.8698,
+       "tip": "pair 1 · base/cand"
+      }
+     ],
+     "refs": [
+      {
+       "value": 1.0,
+       "label": "no change",
+       "tone": "muted"
+      },
+      {
+       "value": 0.91,
+       "label": "A/A guard"
+      }
+     ]
+    },
+    {
+     "type": "strip",
+     "takeaway": "Disk rand mean: near the guard; two more pairs could regress",
+     "x_label": "disk rand mean: base/cand (>1 = candidate faster)",
+     "groups": [
+      "A/A · 10 pairs",
+      "c1 · 4 pairs",
+      "c1c · incomplete"
+     ],
+     "series": [
+      "pair ratio"
+     ],
+     "points": [
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.8315,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9461,
+       "tip": "pair 1 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.8739,
+       "tip": "pair 2 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.0866,
+       "tip": "pair 3 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9463,
+       "tip": "pair 4 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9123,
+       "tip": "pair 5 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.8949,
+       "tip": "pair 6 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9857,
+       "tip": "pair 7 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.0097,
+       "tip": "pair 8 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.0918,
+       "tip": "pair 9 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.914,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.9175,
+       "tip": "pair 1 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.9669,
+       "tip": "pair 2 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 1.0398,
+       "tip": "pair 3 · base/cand"
+      },
+      {
+       "group": "c1c · incomplete",
+       "series": "pair ratio",
+       "value": 0.9038,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "c1c · incomplete",
+       "series": "pair ratio",
+       "value": 0.8795,
+       "tip": "pair 1 · base/cand"
+      }
+     ],
+     "refs": [
+      {
+       "value": 1.0,
+       "label": "no change",
+       "tone": "muted"
+      },
+      {
+       "value": 0.874,
+       "label": "A/A guard"
+      }
+     ]
+    },
+    {
+     "type": "strip",
+     "takeaway": "zram seq p99: the one pair recovered; kill not evaluable",
+     "x_label": "zram seq p99: base/cand (>1 = candidate faster)",
+     "groups": [
+      "A/A · 10 pairs",
+      "c1 · 4 pairs",
+      "c1c · incomplete"
+     ],
+     "series": [
+      "pair ratio"
+     ],
+     "points": [
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.2552,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9908,
+       "tip": "pair 1 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.1083,
+       "tip": "pair 2 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.8342,
+       "tip": "pair 3 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.0411,
+       "tip": "pair 4 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.0415,
+       "tip": "pair 5 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9711,
+       "tip": "pair 6 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9317,
+       "tip": "pair 7 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 0.9324,
+       "tip": "pair 8 · base/cand"
+      },
+      {
+       "group": "A/A · 10 pairs",
+       "series": "pair ratio",
+       "value": 1.1094,
+       "tip": "pair 9 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.6244,
+       "tip": "pair 0 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.4444,
+       "tip": "pair 1 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 0.6477,
+       "tip": "pair 2 · base/cand"
+      },
+      {
+       "group": "c1 · 4 pairs",
+       "series": "pair ratio",
+       "value": 1.0676,
+       "tip": "pair 3 · base/cand"
+      },
+      {
+       "group": "c1c · incomplete",
+       "series": "pair ratio",
+       "value": 1.057,
+       "tip": "pair 0 · base/cand"
+      }
+     ],
+     "refs": [
+      {
+       "value": 1.0,
+       "label": "no change",
+       "tone": "muted"
+      },
+      {
+       "value": 0.834,
+       "label": "A/A guard"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "stop",
+   "title": "Why it stopped",
+   "lead": "Two clock faults on pair 1's candidate zram arm hit the one-rerun rule.",
+   "blocks": [
+    {
+     "type": "strip",
+     "takeaway": "9 attempts: all 2 invalid runs on one arm",
+     "x_label": "wall time (s)",
+     "groups": [
+      "pair 0 · disk · base",
+      "pair 0 · disk · cand",
+      "pair 0 · zram · base",
+      "pair 0 · zram · cand",
+      "pair 1 · disk · cand",
+      "pair 1 · disk · base",
+      "pair 1 · zram · cand"
+     ],
+     "series": [
+      "valid",
+      "invalid (clock fallback)"
+     ],
+     "points": [
+      {
+       "group": "pair 0 · disk · base",
+       "series": "valid",
+       "value": 79.1,
+       "tip": "0-swapin-disk-a"
+      },
+      {
+       "group": "pair 0 · disk · cand",
+       "series": "valid",
+       "value": 67.1,
+       "tip": "0-swapin-disk-b"
+      },
+      {
+       "group": "pair 0 · zram · base",
+       "series": "valid",
+       "value": 46.5,
+       "tip": "0-swapin-zram-64k-a"
+      },
+      {
+       "group": "pair 0 · zram · cand",
+       "series": "valid",
+       "value": 45.0,
+       "tip": "0-swapin-zram-64k-b"
+      },
+      {
+       "group": "pair 1 · disk · cand",
+       "series": "valid",
+       "value": 65.1,
+       "tip": "1-swapin-disk-b"
+      },
+      {
+       "group": "pair 1 · disk · base",
+       "series": "valid",
+       "value": 79.1,
+       "tip": "1-swapin-disk-a"
+      },
+      {
+       "group": "pair 1 · zram · cand",
+       "series": "invalid (clock fallback)",
+       "value": 131.0,
+       "tip": "1-swapin-zram-64k-b"
+      },
+      {
+       "group": "pair 1 · zram · cand",
+       "series": "invalid (clock fallback)",
+       "value": 84.8,
+       "tip": "1-swapin-zram-64k-b-r1"
+      }
+     ],
+     "note": "1 more reserved, never started. A/A had the same fault."
+    },
+    {
+     "type": "flow",
+     "takeaway": "Current tools and rules block a rerun",
+     "nodes": [
+      {
+       "id": "i",
+       "label": "2 invalid",
+       "sub": "clocksource_fallback",
+       "col": 0,
+       "row": 0,
+       "tone": "bad"
+      },
+      {
+       "id": "s",
+       "label": "STOP",
+       "sub": "one rerun max",
+       "col": 1,
+       "row": 0
+      },
+      {
+       "id": "v",
+       "label": "void tool",
+       "sub": "calibrations only",
+       "col": 2,
+       "row": 0,
+       "tone": "bad"
+      },
+      {
+       "id": "d",
+       "label": "duplicate guard",
+       "sub": "same code not re-run",
+       "col": 3,
+       "row": 0,
+       "tone": "bad"
+      },
+      {
+       "id": "n",
+       "label": "needs rev8",
+       "sub": "or a reviewed void rule",
+       "col": 3,
+       "row": 1,
+       "tone": "focus"
+      }
+     ],
+     "edges": [
+      {
+       "from": "i",
+       "to": "s"
+      },
+      {
+       "from": "s",
+       "to": "v"
+      },
+      {
+       "from": "v",
+       "to": "d"
+      },
+      {
+       "from": "d",
+       "to": "n"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "next",
+   "title": "Next",
+   "lead": "Finishing needs a protocol change; Hurric decides.",
+   "blocks": [
+    {
+     "type": "flow",
+     "takeaway": "Path and kill conditions",
+     "nodes": [
+      {
+       "id": "a",
+       "label": "rev8 protocol",
+       "sub": "clock + void rule",
+       "col": 0,
+       "row": 0,
+       "tone": "focus"
+      },
+      {
+       "id": "b",
+       "label": "redo A/A",
+       "col": 1,
+       "row": 0
+      },
+      {
+       "id": "c",
+       "label": "c1c or c1d, 4 pairs",
+       "col": 2,
+       "row": 0
+      },
+      {
+       "id": "d",
+       "label": "required gates",
+       "sub": "lockdep/KASAN",
+       "col": 3,
+       "row": 0
+      },
+      {
+       "id": "k1",
+       "label": "kill: zram p99",
+       "sub": "median < 0.834",
+       "col": 2,
+       "row": 1,
+       "tone": "bad"
+      },
+      {
+       "id": "k2",
+       "label": "flag: disk p99",
+       "sub": "median below guard",
+       "col": 3,
+       "row": 1,
+       "tone": "bad"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "b"
+      },
+      {
+       "from": "b",
+       "to": "c"
+      },
+      {
+       "from": "c",
+       "to": "d"
+      },
+      {
+       "from": "c",
+       "to": "k1"
+      },
+      {
+       "from": "c",
+       "to": "k2"
+      }
+     ]
+    },
+    {
+     "type": "note",
+     "text": "For Hurric: rev7 (PR #8), void tool, rev8, host RAM for c1d, KVM cross-check."
+    }
+   ]
+  },
+  {
+   "id": "audit-data",
+   "title": "Exact data",
+   "blocks": [
+    {
+     "type": "table",
+     "takeaway": "c1c partial pair ratios (base/cand)",
+     "columns": [
+      "Metric",
+      "Guard",
+      "c1c pairs",
+      "n"
+     ],
+     "rows": [
+      [
+       "disk seq mean",
+       "0.920",
+       "2.542 / 2.846",
+       "2"
+      ],
+      [
+       "disk seq p99 (advisory)",
+       "0.910",
+       "0.856 / 0.870",
+       "2"
+      ],
+      [
+       "disk rand mean",
+       "0.874",
+       "0.904 / 0.880",
+       "2"
+      ],
+      [
+       "disk rand p99 (advisory)",
+       "0.894",
+       "0.949 / 0.977",
+       "2"
+      ],
+      [
+       "zram seq mean",
+       "0.817",
+       "0.949",
+       "1"
+      ],
+      [
+       "zram seq p99 (advisory)",
+       "0.834",
+       "1.057",
+       "1"
+      ],
+      [
+       "zram rand mean",
+       "0.844",
+       "1.018",
+       "1"
+      ],
+      [
+       "zram rand p99 (advisory)",
+       "0.885",
+       "1.060",
+       "1"
+      ]
+     ]
+    },
+    {
+     "type": "table",
+     "takeaway": "Pre-registration record (verbatim)",
+     "columns": [
+      "Field",
+      "Content"
+     ],
+     "rows": [
+      [
+       "hypothesis",
+       "c1c v2-c1c-xs-ra-safe (commit b69e47c9, tree 58d43c94, parent baseline 5e84ca92): xswap fault readahead admitted only for slots whose physical backend is asynchronous (not SWP_SYNCHRONOUS_IO) and SWP_WRITEOK, with a recheck under ci->lock after swap-cache insertion (xswap_ra_folio_keep) that unwinds the speculative folio before any read. Expect swapin-disk swap_ra up (~115k) and disk swapin_seq.mean_ns down; zram-64k back on the baseline path (swap_ra ~0, seq.p99 ~1.0). PRE-REGISTRATION (before first boot): probe key swapin-disk:swapin_vmstat_delta.swap_ra:up. KILL: MEDIAN zram-64k seq.p99 ratio (baseline/candidate) < 0.834 (A/A guard ratio from noise 0.1988; 0.90 is inside the noise envelope and is advisory only). FALSIFIERS: zram swap_ra not ~0; disk swap_ra not ~115k; disk seq.mean median ratio < 2.5; any page_io.c WARN or SIGBUS in guest serial; any correctness failure. Correctness on the disk backend with swap_ra > 0. A1 (TOCTOU) rests on code reading; zswap-mixed async-backend test NOT RUN."
+      ],
+      [
+       "mechanism",
+       "swapin-disk:swapin_vmstat_delta.swap_ra:up"
+      ],
+      [
+       "protocol_sha256",
+       "cb3c6a09cc16a0c7"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "audit-diff",
+   "title": "Patch",
+   "blocks": [
+    {
+     "type": "diff",
+     "takeaway": "c1c (b69e47c9)",
+     "patch": "diff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..c226fe726 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -718,6 +718,16 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\n \t\t\thits = min_t(int, hits + 1, SWAP_RA_HITS_MAX);\n \t\tatomic_long_set(&vma->swap_readahead_info,\n \t\t\t\tSWAP_RA_VAL(addr, win, hits));\n+\t} else if (vma && readahead) {\n+\t\t/*\n+\t\t * Cluster mode keeps its window in global state, so the VMA\n+\t\t * history is only read by xswap_fault_readahead().  Record a\n+\t\t * readahead hit there: the next miss after a prefetched block\n+\t\t * is then adjacent and stays admitted.  The history is\n+\t\t * advisory and every entry is revalidated by the swap cache.\n+\t\t */\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(addr, 1, 0));\n \t}\n \n \tif (readahead) {\n@@ -727,6 +737,113 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\n \t}\n }\n \n+/*\n+ * xswap_ra_slot_ok - Check an xswap slot for readahead, under its lock.\n+ * @si: the xswap device.\n+ * @ci: the locked cluster of the slot.\n+ * @slot: the slot offset within @ci.\n+ *\n+ * Readahead of an xswap slot is only worth it, and only allowed, when:\n+ *  - the slot has a physical backend: a zswap-only slot would be\n+ *    decompressed inline, and a slot with no backend at all is not read;\n+ *  - that backend is not SWP_SYNCHRONOUS_IO: zram or brd would read the\n+ *    whole window in the faulting task before its own page is mapped;\n+ *  - neither the xswap device nor the backend has lost SWP_WRITEOK.\n+ *    swapoff clears it in swap_info_remove() before try_to_unuse(), and\n+ *    reinsert_swap_info() sets it again if swapoff fails, so no readahead\n+ *    is started on either device while it is being swapped off.\n+ *\n+ * swap_info[] entries are never freed and the flags are only sampled\n+ * here: the swap cache recheck in xswap_ra_folio_keep() is what decides.\n+ */\n+static bool xswap_ra_slot_ok(struct swap_info_struct *si,\n+\t\t\t     struct swap_cluster_info *ci, unsigned int slot)\n+{\n+\tstruct swap_info_struct *psi;\n+\tunsigned long pflags;\n+\tswp_entry_t phys;\n+\n+\tlockdep_assert_held(&ci->lock);\n+\tif (!(READ_ONCE(si->flags) & SWP_WRITEOK))\n+\t\treturn false;\n+\tphys = xswap_slot_backend(ci, slot);\n+\tif (!phys.val)\n+\t\treturn false;\n+\tpsi = READ_ONCE(swap_info[swp_type(phys)]);\n+\tif (!psi)\n+\t\treturn false;\n+\tpflags = READ_ONCE(psi->flags);\n+\n+\treturn (pflags & SWP_WRITEOK) && !(pflags & SWP_SYNCHRONOUS_IO);\n+}\n+\n+/**\n+ * xswap_readahead_wanted - Check whether an xswap slot is worth reading ahead.\n+ * @si: the swap device of @entry.\n+ * @entry: the swap entry, which need not be pinned.\n+ *\n+ * See xswap_ra_slot_ok() for the rule. This is a hint taken before any\n+ * folio exists: the slot may change as soon as the lock is dropped, so\n+ * xswap_ra_folio_keep() checks it again once the folio holds the slot.\n+ *\n+ * Context: Caller must protect @si with a reference count or locks.\n+ * Return: true if @entry is an xswap slot that may be read ahead.\n+ */\n+static bool xswap_readahead_wanted(struct swap_info_struct *si,\n+\t\t\t\t   swp_entry_t entry)\n+{\n+\tstruct swap_cluster_info *ci;\n+\tbool ok;\n+\n+\tif (!(si->flags & SWP_XSWAP))\n+\t\treturn false;\n+\tci = swap_cluster_lock_unpinned(si, swp_offset(entry));\n+\tif (!ci)\n+\t\treturn false;\n+\tok = xswap_ra_slot_ok(si, ci, swp_cluster_offset(entry));\n+\tswap_cluster_unlock(ci);\n+\n+\treturn ok;\n+}\n+\n+/**\n+ * xswap_ra_folio_keep - Recheck a new readahead folio before reading it.\n+ * @folio: locked folio just added to the swap cache, not yet on the LRU.\n+ *\n+ * xswap_readahead_wanted() ran without the folio, so the slot may since\n+ * have been freed and reused, written back, or had its backend dropped by\n+ * swapoff. Now the folio holds the slot in the swap cache, and nothing can\n+ * change its backend until the folio is unlocked: the slot is only freed\n+ * once its swap cache folio is gone (__swap_cluster_free_entries()), and\n+ * zswap writeback and the swapoff paths must first add or lock a swap\n+ * cache folio for the slot. So a slot that passes here is read from a\n+ * live backend, and one that fails is deleted from the swap cache before\n+ * swap_read_folio() can see it, the same way __swap_cache_alloc() and\n+ * xswap_unuse_rmap() unwind.\n+ *\n+ * Context: Caller holds the folio lock and a reference to the folio.\n+ * Return: true to read @folio, false if it was dropped and released.\n+ */\n+static bool xswap_ra_folio_keep(struct folio *folio)\n+{\n+\tstruct swap_info_struct *si = __swap_entry_to_info(folio->swap);\n+\tstruct swap_cluster_info *ci;\n+\tbool ok;\n+\n+\tif (!(si->flags & SWP_XSWAP))\n+\t\treturn true;\n+\tci = swap_cluster_get_and_lock(folio);\n+\tok = xswap_ra_slot_ok(si, ci, swp_cluster_offset(folio->swap));\n+\tswap_cluster_unlock(ci);\n+\tif (ok)\n+\t\treturn true;\n+\n+\tswap_cache_del_folio(folio);\n+\tfolio_unlock(folio);\n+\tfolio_put(folio);\n+\treturn false;\n+}\n+\n static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\n \t\tswp_entry_t entry, gfp_t gfp, struct mempolicy *mpol,\n \t\tpgoff_t ilx, bool readahead)\n@@ -743,6 +860,10 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\n \tif (IS_ERR_OR_NULL(folio))\n \t\treturn NULL;\n \n+\t/* Not yet on the LRU, so a dropped folio unwinds like a failed add. */\n+\tif (readahead && !xswap_ra_folio_keep(folio))\n+\t\treturn NULL;\n+\n \tfolio_add_lru(folio);\n \tswap_read_folio(ctx, folio);\n \tif (readahead) {\n@@ -754,7 +875,41 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\n }\n \n /**\n- * swapin_sync - swap-in one or multiple entries skipping readahead.\n+ * xswap_fault_readahead - Admit physical readahead after adjacent faults.\n+ * @vmf: fault holding a reference to the target swap device.\n+ * @entry: target swap entry.\n+ *\n+ * Keep discontinuous faults on the synchronous demand path. VMA history is\n+ * advisory: racing faults may suppress or admit speculation, but the swap\n+ * cache and I/O paths still validate every entry and own its references.\n+ */\n+static bool xswap_fault_readahead(struct vm_fault *vmf, swp_entry_t entry)\n+{\n+\tstruct swap_info_struct *si = __swap_entry_to_info(entry);\n+\tstruct vm_area_struct *vma = vmf->vma;\n+\tunsigned long prev;\n+\n+\tif (!(si->flags & SWP_XSWAP) || READ_ONCE(page_cluster) <= 0)\n+\t\treturn false;\n+\t/* shmem passes its own vmf; its VMA has no swap PTEs to read ahead. */\n+\tif (vma_is_shmem(vma))\n+\t\treturn false;\n+\tprev = SWAP_RA_ADDR(GET_SWAP_RA_VAL(vma));\n+\tif (vmf->address != prev + PAGE_SIZE &&\n+\t    prev != vmf->address + PAGE_SIZE) {\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(vmf->address, 1, 0));\n+\t\treturn false;\n+\t}\n+\t/* VMA mode updates the history in swap_vma_ra_win(). */\n+\tif (!swap_use_vma_readahead())\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(vmf->address, 1, 0));\n+\treturn xswap_readahead_wanted(si, entry);\n+}\n+\n+/**\n+ * swapin_sync - swap-in one or multiple entries, normally skipping readahead.\n  * @entry: swap entry indicating the target slot\n  * @gfp: memory allocation flags\n  * @orders: allocation orders\n@@ -765,6 +920,12 @@ static struct folio *swap_cache_read_folio(struct swap_io_ctx *ctx,\n  * This allocates a folio suitable for given @orders, or returns the\n  * existing folio in the swap cache for @entry. This initiates the IO, too,\n  * if needed. @entry is rounded down if @orders allow large allocation.\n+ * An order-0 fault on an xswap entry with an asynchronous physical backend\n+ * that follows an adjacent fault goes through swapin_readahead() instead,\n+ * so callers that use swapin_sync() to bypass readahead for\n+ * SWP_SYNCHRONOUS_IO devices get it for xswap entries that pass\n+ * xswap_ra_slot_ok(). try_to_unuse() calls swapin_readahead() directly\n+ * and is gated by the same check on the target.\n  *\n  * Context: Caller must ensure @entry is valid and pin the swap device with refcount.\n  * Return: Returns the folio on success, error code if failed.\n@@ -775,6 +936,12 @@ struct folio *swapin_sync(swp_entry_t entry, gfp_t gfp, unsigned long orders,\n \tstruct swap_io_ctx ctx = {};\n \tstruct folio *folio;\n \n+\tif (vmf && orders == BIT(0) && xswap_fault_readahead(vmf, entry)) {\n+\t\tfolio = swapin_readahead(entry, gfp, vmf);\n+\t\tif (folio)\n+\t\t\treturn folio;\n+\t}\n+\n \tdo {\n \t\tfolio = swap_cache_get_folio(entry);\n \t\tif (folio)\n@@ -920,8 +1087,11 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tstruct blk_plug plug;\n \tswp_entry_t ra_entry;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n+\t/*\n+\t * An xswap target that fails xswap_ra_slot_ok(), including one on a\n+\t * device being swapped off, takes the single-folio path.\n+\t */\n+\tif ((si->flags & SWP_XSWAP) && !xswap_readahead_wanted(si, entry))\n \t\tgoto skip;\n \n \tmask = swapin_nr_pages(offset) - 1;\n@@ -940,6 +1110,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tfor (offset = start_offset; offset <= end_offset ; offset++) {\n \t\t/* Ok, do the async read-ahead now */\n \t\tra_entry = swp_entry(swp_type(entry), offset);\n+\t\tif ((si->flags & SWP_XSWAP) && offset != entry_offset &&\n+\t\t    !xswap_readahead_wanted(si, ra_entry))\n+\t\t\tcontinue;\n \t\tfolio = swap_cache_read_folio(&ctx, ra_entry, gfp_mask, mpol,\n \t\t\t\tilx, offset != entry_offset);\n \t\tif (!folio)\n@@ -1009,7 +1182,7 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\tstruct mempolicy *mpol, pgoff_t targ_ilx, struct vm_fault *vmf)\n {\n-\tstruct swap_info_struct *si = __swap_entry_to_info(targ_entry);\n+\tstruct swap_info_struct *tsi = __swap_entry_to_info(targ_entry);\n \tstruct swap_io_ctx ctx = {};\n \tstruct blk_plug plug;\n \tstruct folio *folio;\n@@ -1018,8 +1191,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \tunsigned long start, end, addr;\n \tpgoff_t ilx = targ_ilx;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n+\t/*\n+\t * Same target rule as cluster mode. try_to_unuse() reaches here with\n+\t * no fault history, so a compressed or unbacked xswap target, or one\n+\t * on a device being swapped off, must not start a window either.\n+\t */\n+\tif ((tsi->flags & SWP_XSWAP) &&\n+\t    !xswap_readahead_wanted(tsi, targ_entry))\n \t\tgoto skip;\n \n \twin = swap_vma_ra_win(vmf, &start, &end);\n@@ -1054,8 +1232,13 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \t\t\tif (IS_ERR_OR_NULL(si))\n \t\t\t\tcontinue;\n \t\t}\n-\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol, ilx,\n-\t\t\t\t\t      addr != vmf->address);\n+\t\tif (addr != vmf->address &&\n+\t\t    (__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&\n+\t\t    !xswap_readahead_wanted(__swap_entry_to_info(entry), entry))\n+\t\t\tfolio = NULL;\n+\t\telse\n+\t\t\tfolio = swap_cache_read_folio(&ctx, entry, gfp_mask, mpol,\n+\t\t\t\t\t\t      ilx, addr != vmf->address);\n \t\tif (si)\n \t\t\tput_swap_device(si);\n \t\tif (!folio)\n"
+    }
+   ]
+  }
+ ]
+}
