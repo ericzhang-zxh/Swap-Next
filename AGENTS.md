@@ -49,8 +49,11 @@ Loading that skill does not authorize running or publishing experiments.
   (`swapin_seq.mean_ns` or `swapin_rand.mean_ns`). The probe tier guards
   metadata bytes per capacity slot for plain-mode campaigns. Other metrics
   are guardrails. Frozen older protocols keep their original contract.
-- **Mechanism**: a new probe candidate declares one case, measured counter and
-  direction. A probe pass establishes cumulative mechanism engagement. Report
+- **Mechanism**: a new candidate declares its evidence type and falsifier before
+  measurement. Approved profiles allow counter shifts or an exact-tree reviewed
+  structural argument; other observables require a capable approved adapter.
+  Structural evidence preserves runtime correctness and metadata guards.
+  A probe pass establishes cumulative mechanism engagement. Report
   parent-to-child evidence separately; an inherited counter change does not
   establish the child's contribution.
 - **Evolution**: a fast pass may enter the exploratory population, including a
@@ -86,8 +89,10 @@ Loading that skill does not authorize running or publishing experiments.
   correctness, memory and CPU cost, throughput, tail latency and regressions;
   retain failed attempts and report uncertainty. Design freedom does not lower
   verification or acceptance standards.
-- The editable file list in `evolve/control/config/policy.json` is fixed.
-  No agent or campaign policy adds files to it; design within those files.
+- The trusted profile fixes editable files and measurement capabilities before
+  a new research campaign opens. Existing campaigns without a profile retain
+  `evolve/control/config/policy.json`. A campaign may narrow its profile but
+  cannot widen it or turn an unsupported profile into an executable one.
 
 ## What needs owner approval
 
@@ -96,7 +101,8 @@ This applies to every agent and runner.
 - **No approval needed**: opening a campaign within the approved measurement
   contract. Write `campaigns/<c>/policy.json` and `protocol.json`, then use
   `controller.py --campaign <c> open-campaign --line L --machine M`.
-  Its file list keeps or narrows the base list. Candidates, probe and fast
+  Its file list keeps or narrows the selected approved profile (the base list
+  for legacy campaigns). Candidates, probe and fast
   calibration, screening, and report delivery follow from that campaign.
 - **Default campaign budget cap**: 120 guest attempts total across probe and
   latency pools, including correctness and validity attempts, and 18 hours
@@ -131,6 +137,31 @@ This applies to every agent and runner.
   or links to [DESIGN.md#limitations](DESIGN.md#limitations).
 - Say a thing once. Link to the document that owns it instead of restating it.
 - Prefer a short table of numbers to a paragraph of qualifiers.
+
+## Research actions and reusable evidence
+
+- Use `evolve/loop.py start` or `resume` and follow durable actions through
+  delivery. The agent owns research reasoning and edits; trusted commands own
+  state changes and measurements. See [session-schema](evolve/session-schema.md).
+- New line contracts fix practical-value thresholds before measurement.
+  Review both parent-relative and cumulative complexity. A tiny gain that adds
+  unjustified obligations can be rejected; equivalent performance with simpler
+  invariants can qualify when the equivalence evidence is sufficient.
+- Record exact-tree review dispositions. A plain pass cannot erase an unresolved
+  finding. Re-check old briefs, descendants and cached evidence against current
+  vetoes; only an explicit exact-tree resolution clears an applicable finding.
+- Reuse retained evidence by exact scientific identity and coverage through the
+  shared reference cache. Keep original timestamps, checksums, protocols and
+  reservations. Reusing a result adds no guest attempt and creates no independent
+  sample. Changed or expired inputs produce a cache miss or historical reference.
+  Never pair an old control observation with a new treatment observation.
+- Relevant upstream patches have pinned source, dependencies, applied trees and
+  a common-base comparison plan. Incompatible arms are reported as incomparable.
+  Reusing a complete upstream contrast does not establish a direct new
+  candidate-versus-upstream measurement.
+- An interrupted launched or ambiguous attempt stays counted. Reconcile artifacts
+  and owned processes before choosing another action; do not silently rerun it.
+  Closeout releases the execution machine and remains resumable after STOP.
 
 ## Report publication
 
@@ -239,8 +270,8 @@ base and resulting hashes with the campaign (example layout:
    frozen TCG protocol revision, baseline, budgets, STOP state and evidence
    destination.
 2. **Hypothesis** proposes candidates, each with a mechanism, expected effect
-   and kill criteria. Every candidate's parent is the campaign baseline; the
-   controller rejects any other parent (see
+   and kill criteria. Choose the exact sampled parent or campaign baseline;
+   the controller rejects unselected parents (see
    [DESIGN.md](DESIGN.md#where-openevolve-fits)).
 3. The most promising candidates run automatically. When the owner triggers a
    round (for example "run 3 experiments"), that is the authorization; do not
@@ -310,7 +341,7 @@ follow [Campaign lifecycle](#campaign-lifecycle) and go directly to `main`.
 
 ### TCG kbench revision 6
 
-Prepared, not opened:
+Retained historical protocol (recorded campaign status is in its campaign.json):
 [campaigns/xswap-tcg-kbench-2026-10-29/protocol.json](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json).
 Owner pre-approved 2026-10-29 01:36 PT. It is the TCG protocol on the kbench
 setup: QEMU TCG, 4 vCPU, 4096 MiB, 16 GiB swap, p90 envelope, 25% ceiling,

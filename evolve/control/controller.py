@@ -138,6 +138,105 @@ def event(kind, payload):
                                  "payload": payload}, ensure_ascii=False) + "\n")
 
 
+def review_api():
+    sys.path.insert(0, str(CONTROL.parent))
+    import reviews
+    return reviews
+
+
+def review_subject(campaign, name, commit):
+    record = campaign_store.candidates(campaign).get(name, {}) if name else {}
+    return dict(record, id=name, candidate_commit=commit,
+                source_tree=git(ROOT, "rev-parse", commit + "^{tree}"))
+
+
+def require_review_clear(campaign, name, commit):
+    vetoes = review_api().blockers(PROJECT, campaign, review_subject(campaign, name, commit))
+    require(not vetoes, "unresolved correctness review: " + json.dumps(vetoes))
+
+
+def record_review(name, path):
+    require(CAMPAIGN, "review-record needs --campaign")
+    require(name in registry(), "unknown review candidate")
+    payload = load_json(path)
+    require(payload.get("candidate") == name and payload.get("campaign") == CAMPAIGN,
+            "review subject does not match controller selection")
+    commit = payload.get("candidate_commit")
+    require(isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit), "review requires exact commit")
+    require(git(ROOT, "rev-parse", "--verify", commit + "^{commit}") == commit,
+            "review commit is not an exact existing commit")
+    require(payload.get("source_tree") == git(ROOT, "rev-parse", commit + "^{tree}"),
+            "review tree does not match commit")
+    known = []
+    population = STATE / "archive/population.json"
+    if population.is_file():
+        known.append(load_json(population).get("entries", {}).get(name, {}).get("candidate_commit"))
+    for filename in ("static.json", "scope.json"):
+        artifact = artifacts(name) / filename
+        if artifact.is_file():
+            known.append(load_json(artifact).get("candidate_commit"))
+    if commit not in known:
+        known.append(git(ROOT, "rev-parse", "--verify", "refs/heads/agents/" + name + "^{commit}"))
+    require(commit in known, "review commit does not belong to the recorded candidate")
+    result = review_api().record(PROJECT, CAMPAIGN, payload)
+    return {"review": result, "blockers": review_api().blockers(
+        PROJECT, CAMPAIGN, review_subject(CAMPAIGN, name, commit))}
+
+
+def research_contract():
+    if not CAMPAIGN or not (STATE / "research.json").is_file():
+        return None
+    sys.path.insert(0, str(CONTROL.parent))
+    import research
+    value = load_json(STATE / "research.json")
+    require(value.get("protocol_sha256") == digest(STATE / "protocol.json") and
+            value.get("policy_sha256") == digest(POLICY), "frozen research inputs changed")
+    research.validate_contract(value["line_contract"], PROJECT)
+    return value
+
+
+def scope_profile():
+    value = research_contract()
+    if value is None:
+        return load_json(BASE_POLICY)
+    import research
+    return research.load_profile(value["line_contract"]["profile"], PROJECT)
+
+
+def export_candidate(name):
+    """Preserve source without executing it, including after STOP or a deadline."""
+    require(CAMPAIGN, "export needs a campaign")
+    campaign_store.require_open(CAMPAIGN)
+    records = registry()
+    require(name in records, "unknown candidate")
+    record = records[name]
+    root = (PROJECT / record["worktree"]).resolve()
+    require(root.parent == WORKTREES.resolve() and root.name == name, "unexpected worktree")
+    target = STATE / "patches" / (name + ".patch")
+    if not root.is_dir():
+        require(target.is_file(), "worktree and retained patch are both missing")
+        return {"status": "EXPORTED", "patch": str(target.relative_to(PROJECT)), "sha256": digest(target)}
+    require(git(root, "rev-parse", "--path-format=absolute", "--git-common-dir") ==
+            git(ROOT, "rev-parse", "--path-format=absolute", "--git-common-dir"),
+            "candidate not in controller repository")
+    base = record.get("baseline_commit", record["parent"])
+    commit = git(root, "rev-parse", "HEAD")
+    git(root, "merge-base", "--is-ancestor", base, commit)
+    patch = git(root, "diff", "--no-ext-diff", "--no-textconv", "--binary", base, commit, "--", binary=True)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(patch)
+    dirty = git(root, "diff", "--no-ext-diff", "--no-textconv", "--binary", "HEAD", "--", binary=True)
+    if dirty:
+        target.with_name(name + "-uncommitted.patch").write_bytes(dirty)
+    untracked = git(root, "ls-files", "--others", "--exclude-standard").splitlines()
+    result = {"status": "EXPORTED", "candidate": name, "candidate_commit": commit,
+              "source_tree": git(root, "rev-parse", "HEAD^{tree}"),
+              "patch": str(target.relative_to(PROJECT)), "sha256": digest(target),
+              "uncommitted_patch_retained": bool(dirty), "untracked_files_retained_in_worktree": untracked}
+    write_json(artifacts(name) / "export.json", result)
+    return result
+
+
 def in_scope(path, status, config):
     if status == "M":
         return path in config["allowed_modify"]
@@ -146,14 +245,14 @@ def in_scope(path, status, config):
                for p in config["allowed_add"])
 
 
-def diff_guard(root, base, config):
+def diff_guard(root, base, config, *, head=None):
     root = Path(root)
-    base_scope = load_json(BASE_POLICY)
+    base_scope = scope_profile()
     require(git(root, "rev-parse", "--show-toplevel") == str(root.resolve()),
             "not an exact worktree root")
     require(not git(root, "status", "--porcelain", "--untracked-files=all", "--ignored"),
             "dirty/untracked/ignored files in candidate; build outside source")
-    head = git(root, "rev-parse", "HEAD")
+    head = git(root, "rev-parse", (head or "HEAD") + "^{commit}")
     require(head != base, "empty candidate")
     git(root, "merge-base", "--is-ancestor", base, head)
     require(not git(root, "rev-list", "--merges", base + ".." + head),
@@ -229,11 +328,11 @@ def line_anchor(line, fallback):
     return fallback
 
 
-def get_candidate(name):
+def get_candidate(name, *, retained=False):
     records = registry()
     require(name in records, "unknown candidate")
     record = records[name]
-    require(record["status"] == "active", "candidate is closed")
+    require(record["status"] == "active" or (retained and record["status"] == "closed"), "candidate is closed")
     root = (PROJECT / record["worktree"]).resolve()
     allowed = WORKTREES.resolve()
     require(root.parent == allowed and root.name == name, "unexpected worktree location")
@@ -247,7 +346,53 @@ def get_candidate(name):
     git(root, "merge-base", "--is-ancestor", parent, "HEAD")
     require(git(root, "rev-parse", "HEAD^{tree}") != git(ROOT, "rev-parse", parent + "^{tree}"),
             "child source tree is unchanged from its parent")
+    if retained and record["status"] == "closed":
+        require(record.get("candidate_commit") == git(root, "rev-parse", "HEAD"),
+                "closed reference commit changed or missing")
+        require(record.get("source_tree") == git(root, "rev-parse", "HEAD^{tree}"),
+                "closed reference source tree changed or missing")
     return record, root
+
+
+def check_reference(name):
+    """Read-only scope/veto checks, including references whose worktree is retired."""
+    trusted_control()
+    records = registry()
+    require(name in records, "unknown reference")
+    record = records[name]
+    require(record.get("status") in {"active", "closed"}, "unknown reference status")
+    expected = dict(record)
+    exported = artifacts(name) / "export.json"
+    if exported.is_file():
+        receipt = load_json(exported)
+        require(receipt.get("candidate") == name, "reference export subject mismatch")
+        for key in ("candidate_commit", "source_tree"):
+            if not expected.get(key):
+                expected[key] = receipt.get(key)
+    worktree = (PROJECT / record["worktree"]).resolve()
+    require(worktree.parent == WORKTREES.resolve() and worktree.name == name, "unexpected reference worktree")
+    if worktree.exists():
+        require(git(worktree, "rev-parse", "--path-format=absolute", "--git-common-dir") ==
+                git(ROOT, "rev-parse", "--path-format=absolute", "--git-common-dir"), "reference belongs to another repository")
+        commit = git(worktree, "rev-parse", "HEAD")
+        tree = git(worktree, "rev-parse", "HEAD^{tree}")
+        if record["status"] == "closed":
+            require(commit == expected.get("candidate_commit"), "closed reference commit changed or missing")
+            require(tree == expected.get("source_tree"), "closed reference tree changed or missing")
+        source = worktree
+    else:
+        require(record["status"] == "closed", "active reference worktree is missing")
+        commit, tree = expected.get("candidate_commit"), expected.get("source_tree")
+        require(isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit), "retained reference commit is missing")
+        require(git(ROOT, "rev-parse", commit + "^{tree}") == tree, "retained reference tree mismatch")
+        source = ROOT
+    baseline = record.get("baseline_commit", record["parent"])
+    require(baseline == seed(), "reference has stale baseline")
+    result = diff_guard(source, baseline, policy(), head=commit)
+    if CAMPAIGN:
+        require_review_clear(CAMPAIGN, name, commit)
+    result.update(source_tree=tree, reference_only=True)
+    return result
 
 
 def doctor():
@@ -287,7 +432,13 @@ def create(name, hypothesis, mechanism=None, parent=None, brief=None):
     config = policy()
     require(not config.get("mechanism_required") or mechanism is not None,
             "campaign policy requires --mechanism CASE:KEY:up|down")
-    if mechanism is not None:
+    if isinstance(mechanism, dict):
+        sys.path.insert(0, str(CONTROL.parent))
+        import mechanisms
+        require(CAMPAIGN and research_contract(), "structural mechanisms need a profiled research campaign")
+        mechanisms.declaration(mechanism, load_json(STATE / "protocol.json"))
+        require("reviewed_structure" in scope_profile()["mechanism_evidence"], "profile has no structural evidence route")
+    elif mechanism is not None:
         mechanism = parse_mechanism(mechanism)
     with lock():
         active()
@@ -321,6 +472,8 @@ def create(name, hypothesis, mechanism=None, parent=None, brief=None):
             population.consume_brief(brief, chosen, name)
         else:
             require(chosen == baseline and not brief, "legacy campaigns use their frozen baseline")
+        if CAMPAIGN and chosen == baseline:
+            require_review_clear(CAMPAIGN, None, baseline)
         git(ROOT, "worktree", "add", "-b", "agents/" + name, str(root), chosen)
         record = {"id": name, "parent": chosen, "parent_commit": chosen,
                   "parent_candidate": parent_candidate, "generation": generation,
@@ -408,6 +561,7 @@ def baseline_from(args, protocol):
         require(git(ROOT, "rev-parse", "--verify", commit + "^{commit}") == commit,
                 "inherited commit is not an exact existing commit")
         require(commit == expected, "inherited commit does not match destination baseline")
+        require_review_clear(source, cand, commit)
         sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
         from population import advancement_evidence
         decision = advancement_evidence(row)
@@ -417,6 +571,8 @@ def baseline_from(args, protocol):
         entry = population.eligible_parents().get(cand)
         require(entry and entry["candidate_commit"] == commit and entry.get("fast_evidence_id") == row["id"],
                 "baseline advancement requires current eligible archived source evidence")
+        require(entry.get("advancement", {}).get("eligible") is True,
+                "baseline advancement is blocked by current review or practical-value decision")
         require(entry["source_tree"] == git(ROOT, "rev-parse", commit + "^{tree}"), "inherited tree differs from archive")
         return {"campaign": source, "candidate": cand, "commit": row["candidate_commit"],
                 "evidence": {"kind": "fast_pass", "ledger_row": args.evidence_row}}
@@ -425,6 +581,7 @@ def baseline_from(args, protocol):
     require(report.is_file(), "evidence report does not exist")
     commit = git(ROOT, "rev-parse", "--verify", f"refs/heads/agents/{cand}^{{commit}}")
     require(commit == expected, "inherited correctness commit does not match destination baseline")
+    require_review_clear(source, cand, commit)
     path = report.relative_to(PROJECT.resolve())
     return {"campaign": source, "candidate": cand, "commit": commit,
             "evidence": {"kind": "correctness_fix", "report": str(path)}}
@@ -441,7 +598,7 @@ def _open_campaign(args):
     directory = campaign_store.campaign_dir(CAMPAIGN)
     require((directory / "protocol.json").is_file(), "protocol.json is missing")
     require(not (directory / "campaign.json").exists(), "campaign.json already exists")
-    config, base = policy(), load_json(BASE_POLICY)
+    config, base = policy(), scope_profile()
     require(set(config["allowed_modify"]) <= set(base["allowed_modify"]) and
             set(config["allowed_add"]) <= set(base["allowed_add"]),
             "campaign policy widens the base scope")
@@ -455,10 +612,26 @@ def _open_campaign(args):
     require(protocol.get("campaign") == CAMPAIGN, "protocol campaign does not match directory")
     require(protocol.get("baseline_commit") == seed(), "protocol baseline_commit does not match policy seed")
     budget = dict(protocol["budget"])
+    frozen = research_contract()
+    if frozen is not None:
+        import research
+        contract = frozen["line_contract"]
+        require(contract["line"] == args.line, "research line mismatch")
+        readiness = research.capability_readout(base, protocol, config, PROJECT)
+        require(readiness["ready"], "; ".join(readiness["missing_capabilities"]))
+        line = research.validate_line(load_json(PROJECT / "campaigns/lines" / (args.line + ".json")))
+        require(research.line_contract(line, base) == contract, "prepared scientific contract differs from line")
+        spending = research.line_spending(PROJECT, args.line)
+        admission = research.line_budget(line, spending, {
+            "guest_attempts": budget["guest_attempts"] + budget.get("probe_guest_attempts", 0),
+            "build_attempts": budget["build_attempts"]})
+        require(admission["ready"], "; ".join(admission["reasons"]))
     if "probe" in protocol.get("tiers", {}):
         require(config["budget"]["max_candidates"] >= protocol["max_probe_candidates"],
                 "controller max_candidates must cover max_probe_candidates")
     anchor = line_anchor(args.line, seed())
+    if frozen is not None:
+        require(frozen["line_contract"]["anchor_commit"] == anchor, "line anchor differs from frozen research contract")
     carried_origin, known_baselines = None, set()
     for path in sorted(campaign_store.CAMPAIGNS.glob("*/campaign.json")):
         old = campaign_store.load(path.parent.name)
@@ -557,10 +730,12 @@ def main():
     p = commands.add_parser("new")
     p.add_argument("name")
     p.add_argument("--hypothesis", required=True)
-    p.add_argument("--mechanism", type=parse_mechanism)
+    mechanisms_group = p.add_mutually_exclusive_group()
+    mechanisms_group.add_argument("--mechanism", type=parse_mechanism)
+    mechanisms_group.add_argument("--mechanism-spec", type=Path, help="reviewed_structure declaration for an approved profile")
     p.add_argument("--parent", default="baseline", help="baseline or the sampled exact parent commit")
     p.add_argument("--brief", help="durable proposal brief ID for a new evolution candidate")
-    for name in ("guard", "check"):
+    for name in ("guard", "check", "check-reference", "export"):
         commands.add_parser(name).add_argument("name")
     p = commands.add_parser("close")
     p.add_argument("name")
@@ -574,6 +749,10 @@ def main():
     p.add_argument("--over-cap-approval")
     for name in ("close-campaign", "release-claim", "resume-campaign"):
         commands.add_parser(name).add_argument("--reason", required=True)
+    p = commands.add_parser("review-record")
+    p.add_argument("name")
+    p.add_argument("--review", type=Path, required=True, help="structured exact-tree review with hashed evidence")
+    commands.add_parser("review-list")
     p = commands.add_parser("analyze")
     p.add_argument("name")
     p.add_argument("manifest", type=Path)
@@ -600,8 +779,18 @@ def main():
         elif args.command == "release-claim":
             campaign_store.release_claim(None, args.reason)
             result = {"status": "RELEASED"}
+        elif args.command == "review-record":
+            result = record_review(args.name, args.review)
+        elif args.command == "review-list":
+            require(CAMPAIGN, "review-list needs --campaign")
+            result = {"reviews": review_api().list_reviews(PROJECT, CAMPAIGN)}
         elif args.command == "new":
-            result = create(args.name, args.hypothesis, args.mechanism, args.parent, args.brief)
+            mechanism = load_json(args.mechanism_spec) if args.mechanism_spec else args.mechanism
+            result = create(args.name, args.hypothesis, mechanism, args.parent, args.brief)
+        elif args.command == "check-reference":
+            result = check_reference(args.name)
+        elif args.command == "export":
+            result = export_candidate(args.name)
         elif args.command in ("guard", "check"):
             result = check_candidate(args.name, args.command == "check")
         elif args.command == "close":

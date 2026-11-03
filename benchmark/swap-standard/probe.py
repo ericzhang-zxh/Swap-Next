@@ -46,6 +46,13 @@ def signals(protocol, case):
 
 
 def validate_mechanism(protocol, text):
+    if isinstance(text, dict):
+        if (set(text) != {"kind", "claim", "falsifier"} or text.get("kind") != "reviewed_structure"
+                or text["kind"] not in protocol.get("mechanism_evidence_types", ["counter_shift"])
+                or not all(isinstance(text.get(k), str) and 10 <= len(text[k].strip()) <= 2000
+                           for k in ("claim", "falsifier"))):
+            raise ValueError("invalid or unapproved structural mechanism declaration")
+        return None, None, None
     case, key, direction = parse_mechanism(text)
     if case not in protocol.get("tiers", {}).get("probe", {}).get("cases", []):
         raise ValueError("mechanism case is absent from the probe tier")
@@ -132,12 +139,15 @@ def compare(protocol, calibration, samples, mechanism):
                 raise ValueError("invalid probe band")
             if counter == METADATA and any(v > b["high"] for v in values):
                 reasons.append(name + ": METADATA_REGRESSION")
-    b, values = calibration["bands"][case][key], observed[case][key]
-    for value in values:
-        if b["low"] <= value <= b["high"]:
-            reasons.append("MECHANISM_NOT_ENGAGED")
-        elif (direction == "up" and value < b["low"]) or (direction == "down" and value > b["high"]):
-            reasons.append("MECHANISM_REVERSED")
+    # Structural evidence is validated against an exact-tree review by the
+    # trusted workflow. Unchanged traffic counts are not a falsifying result.
+    if case is not None:
+        b, values = calibration["bands"][case][key], observed[case][key]
+        for value in values:
+            if b["low"] <= value <= b["high"]:
+                reasons.append("MECHANISM_NOT_ENGAGED")
+            elif (direction == "up" and value < b["low"]) or (direction == "down" and value > b["high"]):
+                reasons.append("MECHANISM_REVERSED")
     reasons = list(dict.fromkeys(reasons))
     return {"status": "PROBE_REJECT" if reasons else "PROBE_PASS", "passed": not reasons,
             "reasons": reasons, "probe_signals": observed, "mechanism": mechanism,

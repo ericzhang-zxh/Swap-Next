@@ -8,14 +8,15 @@ Bot's cloud box); OpenEvolve archives the result
 and picks references for the next proposal. The proposer is the assistant in
 the current session.
 
-Each exploration direction is a campaign with its own baseline, protocol and
-report in `campaigns/<c>/report/`. This document holds what every campaign shares.
+Each research line keeps its question, ideas and value criteria across bounded
+campaigns. Each campaign freezes its baseline, protocol and resource budget, and
+retains its report in `campaigns/<c>/report/`. This document holds what every campaign shares.
 
 ## What swap costs
 
 | Cost | Where it arises | Measured by the harness |
 |---|---|---|
-| Fault latency | swap cache lookup, zswap decompression, block I/O on swap-in | yes: p99 first access to a swapped PTE |
+| Fault latency | swap cache lookup, zswap decompression, block I/O on swap-in | yes: mean first-access latency; p99 is a guard or advisory by protocol |
 | Metadata RAM | per-slot swap table, `cluster_info`, zswap entries; for xswap the mapped part of `cluster_info` | yes: mapped clusters (xswap), requested bytes (kernel suite) |
 | Physical slot use | a zswap-resident page still holds a disk slot on ordinary swap | recorded (disk sectors), not scored |
 | Reclaim CPU | compression, cluster allocation, swap-out path | standard suite records cgroup system/user CPU, not reclaim-only CPU |
@@ -30,9 +31,9 @@ a frozen campaign protocol is recorded in that campaign's report. The default
 matrix is not itself a calibrated candidate campaign;
 [xswap-next-2026-10-24](campaigns/xswap-next-2026-10-24/report/REPORT.md) froze a
 narrower swap-in protocol and recorded both a noisy sparse-image A/A and a
-passing preallocated A/A. QEMU TCG revision 3 is closed. The prepared kbench
-successor is [protocol revision 6](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json).
-It is not opened.
+passing preallocated A/A. QEMU TCG revision 3 is closed. The retained kbench
+[protocol revision 6](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json) has its
+recorded status in the campaign directory.
 
 ## Upstream landscape
 
@@ -69,9 +70,10 @@ recycled integer destroy handle, and interface documentation. See
   regimes, compare regime frequencies over enough boots (at least ten per
   side), not means of two. A fast tier with fewer pairs is a screen; this
   bar applies to acceptance.
-- **Tie every candidate to a mechanism counter.** A change should move a
-  counter it targets, such as grow operations or shrink events, before
-  anyone reads the end-to-end metric.
+- **Declare mechanism evidence before measurement.** Counter shifts show which
+  events changed. An exact-tree structural review can explain reduced work per
+  event even when counts stay equal. Both routes retain runtime correctness,
+  metadata and latency checks; unavailable observables are coverage gaps.
 - **Do not tune constants until the metric is validated.** Tuning a
   threshold only shifts the probability of a regime the protocol cannot
   yet measure.
@@ -110,6 +112,31 @@ local. A layout migration and a machine's evidence import are separate steps.
 The approved design and review corrections are in
 [the framework specification](docs/superpowers/specs/2026-10-27-campaigns-cascade-evolution-design.md)
 and [the evolution review](docs/superpowers/specs/2026-10-27-evolution-review.md).
+
+## Research value and reuse
+
+Practical usefulness and statistical detectability are distinct. New line
+contracts predeclare the smallest useful effect, equivalence margin and
+upstream comparison requirement. Decisions review changes in state, lifetime,
+locking, error paths, configuration, test burden, interfaces and memory cost.
+Parent-relative and cumulative complexity remain separate. No invented
+speed-minus-lines score replaces this reasoning.
+
+The shared reference cache separates immutable scientific identity from the
+identity of an observation. Builds and exact source reviews can remain useful
+without repeating them. Runtime evidence additionally binds the harness,
+environment, coverage and expiry. A reused complete B/P comparison retains its
+own paired controls and measurement date. New B/C measurements cannot be spliced
+into those pairs or reported as a direct C/P contrast. Current review vetoes
+always apply, including to older references.
+
+The durable action driver separates scientific outcome, research disposition and
+delivery state. It verifies artifacts after interruption instead of trusting an
+agent's completion flag. Reports derive numerical content from the same retained
+evidence and keep publication failure distinct from experiment failure. See
+[the approved framework design](docs/superpowers/specs/2026-11-02-research-loop-audit-and-redesign.md),
+[session contract](evolve/session-schema.md), and
+[reference cache](evolve/reference-cache-schema.md).
 
 ## Limitations
 
@@ -150,7 +177,8 @@ performance evaluation are separate authorized work.
 ## TCG kbench revision 6
 
 [The revision 6 protocol](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json)
-is the TCG measurement on the kbench setup. It is prepared and not opened.
+is the retained TCG measurement contract on the kbench setup. Read its
+campaign.json for recorded status.
 Swap-in and correctness run in xswap mode on `kb-xs-desc-v1` (`5e84ca92`),
 not the plain `744e5400` baseline in the revision 4 template. The probe tier
 adds a plain brd metadata guest because that gate expects the brd device

@@ -94,6 +94,50 @@ class Fixture(unittest.TestCase):
         sh(root, "commit", "-qam", "change")
 
 
+class ExportTests(Fixture):
+    def test_stop_preserves_unchanged_and_dirty_candidates_without_running_checks(self):
+        self.open_dir("campaign")
+        c.configure_campaign("campaign")
+        task = c.create("unfinished", "Explore a fixture candidate before stopping")
+        worktree = self.project / task["worktree"]
+        (worktree / "mm/swapfile.c").write_text("int uncommitted_fixture;\n")
+        cs.GLOBAL_STOP.touch()
+        with patch.object(c, "check_candidate", side_effect=AssertionError("no execution on export")):
+            result = c.export_candidate("unfinished")
+        self.assertTrue(result["uncommitted_patch_retained"])
+        self.assertEqual((self.campaigns / "campaign/patches/unfinished.patch").read_bytes(), b"")
+        self.assertTrue((self.campaigns / "campaign/patches/unfinished-uncommitted.patch").is_file())
+        self.assertIn("uncommitted_fixture", (worktree / "mm/swapfile.c").read_text())
+        self.assertEqual(c.close_campaign("Stopped before implementation completed")["status"], "closed")
+
+
+class RetainedReferenceTests(Fixture):
+    def test_closed_reference_is_read_only_and_checks_exact_retained_source(self):
+        self.open_dir("campaign")
+        c.configure_campaign("campaign")
+        task = c.create("reference", "A retained comparison reference")
+        worktree = self.project / task["worktree"]
+        self.commit_change(worktree)
+        c.export_candidate("reference")
+        records = c.registry()
+        record = records["reference"]
+        record["status"] = "closed"
+        c.save(records, record)
+        cs.GLOBAL_STOP.touch()
+        before = {str(p): p.read_bytes() for p in self.campaigns.rglob("*") if p.is_file()}
+        result = c.check_reference("reference")
+        self.assertEqual(result["status"], "SCOPE_PASS")
+        self.assertTrue(result["reference_only"])
+        sh(self.linux, "worktree", "remove", str(worktree))
+        self.assertEqual(c.check_reference("reference")["candidate_commit"], result["candidate_commit"])
+        sh(self.linux, "worktree", "add", str(worktree), "agents/reference")
+        self.assertEqual(before, {str(p): p.read_bytes() for p in self.campaigns.rglob("*") if p.is_file()})
+        (worktree / "mm/swapfile.c").write_text("int changed_reference;\n")
+        sh(worktree, "commit", "-qam", "Changed reference")
+        with self.assertRaisesRegex(Invalid, "closed reference commit"):
+            c.check_reference("reference")
+
+
 class CampaignTests(Fixture):
     def test_invalid_or_unknown_campaign_does_not_mutate_paths(self):
         old = c.POLICY, c.STATE, c.WORKTREES, c.CAMPAIGN

@@ -22,7 +22,7 @@ Each exploration direction runs as a campaign and reports in
 
 ```text
 linux/            frozen upstream submodule; never modified
-campaigns/        one directory per campaign; generated campaign and line indexes
+campaigns/        research line agendas; one directory per campaign; generated indexes
   <campaign>/     campaign.json, policy.json, frozen protocol.json
                   ledger/, candidates/, patches/, archive/, report/
                   runs/ is local raw evidence and remains ignored
@@ -34,43 +34,63 @@ evolve/           controller, probe/latency workflow, population and task briefs
 Clone with `git clone --recurse-submodules`, or run
 `git submodule update --init linux evolve/openevolve`.
 
-## Workflow
+## Start or resume a research loop
 
-New performance work starts with [the standard suite](benchmark/swap-standard/README.md)
-(usemem, kernel build and Valkey), followed by repeated A/A calibration and a
-frozen campaign protocol. The historical evolve adapters below retain their
-original workloads and scores for reproducibility. They have not been admitted
-as evaluators for the new suite.
-
-Kernel builds and guests run on a Linux KVM worker; see
-[benchmark/SETUP.md](benchmark/SETUP.md).
-Experiments launched by Grok Bot run on its cloud box under QEMU TCG (no KVM).
-Revision 3 is closed. The prepared successor is revision 6
-([campaigns/xswap-tcg-kbench-2026-10-29/protocol.json](campaigns/xswap-tcg-kbench-2026-10-29/protocol.json));
-see [AGENTS.md § Grok Bot runs](AGENTS.md#grok-bot-runs-cloud-box-qemu-tcg).
-It is not opened.
+Ask your contributor agent to use
+[closed-loop-evolve](.agents/skills/closed-loop-evolve/SKILL.md) and start a
+research line. The active agent proposes, implements and explains; project code
+persists the next action and verifies measurements. An agent session is needed
+through delivery. This is not a background model service.
 
 ```sh
-python3 evolve/control/controller.py --campaign <c> open-campaign --line <line> --machine <machine>
-evolve/.venv/bin/python evolve/loop.py swap-standard next --campaign <c>
-python3 evolve/control/controller.py --campaign <c> new <name> --hypothesis '<mechanism and falsifier>' \
-  --mechanism '<case>:<counter>:<direction>' --brief <brief-id> --parent <baseline-or-sampled-commit>
-# Implement and commit in the controller-created candidate worktree.
-python3 evolve/control/controller.py --campaign <c> check <name>
-evolve/.venv/bin/python evolve/loop.py swap-standard calibrate --tier probe --campaign <c>
-evolve/.venv/bin/python evolve/loop.py swap-standard evaluate --tier probe --campaign <c> \
-  --candidate <name> --correctness <proof.json>
-# The agent selects probe passes and records why they enter fast screening.
+# A new campaign uses a prepared policy/protocol and a line agenda.
+evolve/.venv/bin/python evolve/loop.py start --campaign <c> --line <line> --idea <idea> --machine <machine>
+# Recover the same campaign, including report delivery after execution closes.
+evolve/.venv/bin/python evolve/loop.py resume --campaign <c>
 ```
 
-The controller keeps candidates inside the allowed files and line budget.
-The evaluator probes mechanisms, then runs AB/BA latency pairs for selected candidates.
-A fast-tier pass enters the exploratory population; baseline advancement additionally
-requires improvement evidence above calibration noise. A fast pass is a screen;
-a human decides whether anything goes upstream.
+Follow the returned action until delivery is complete or an exact external
+blocker remains. Trusted command actions run through
+`evolve/loop.py execute --campaign <c> --action <action-id>`; reasoning and edit
+actions identify the artifact the agent must supply. Re-read `next-action`
+after each result. Never infer completion from a command exit code alone.
+[The session contract](evolve/session-schema.md) documents actions and decision
+payloads. Existing suite-specific commands remain available.
 
-What the harness cannot measure is listed once, in
-[DESIGN.md § Limitations](DESIGN.md#limitations).
+A **line** owns a durable question, prioritized ideas, upstream alternatives,
+complexity/value criteria and lifetime resource ceilings. A **campaign** freezes
+one bounded attempt. A **candidate** is an isolated implementation, which may
+optimize, simplify, redesign or repair. Start from
+[research-schema.md](evolve/research-schema.md) and the approved profiles in
+`evolve/profiles/`. Larger architectural work with missing measurement coverage
+returns the exact capability gap before execution. Candidate workers cannot
+expand a trusted profile.
+
+The loop retains exact parent/tree identities, static and structured reviews,
+correctness evidence, mechanism observations, calibrated latency comparisons,
+and a reasoned value decision. An unresolved review veto blocks inheritance
+and dependent execution immediately. Fast results are exploratory; slow
+confirmation requires explicit approval for each execution. No code is promoted
+automatically.
+
+Upstream alternatives use [frozen comparison arms](evolve/comparison-schema.md).
+The [shared reference cache](evolve/reference-cache-schema.md) retains reusable
+build, review, correctness, calibration and performance provenance. A cache hit
+is checked against current inputs and vetoes. Reuse retains its original
+measurement date; expired or incompatible measurements remain historical
+references. Reports distinguish new measurements and reused evidence.
+
+STOP and spent execution budgets still allow patch preservation, report
+creation, visual checks and publication. Numerical report content comes from
+the retained evidence. Delivery records separately track generation, visual
+verification and verified live publication.
+
+Kernel builds and guests run on a Linux worker; see
+[benchmark/SETUP.md](benchmark/SETUP.md). Grok Bot uses its cloud box with TCG;
+[AGENTS.md](AGENTS.md#grok-bot-runs-cloud-box-qemu-tcg) owns those rules.
+[The campaign index](campaigns/README.md) records campaign state. Frozen older
+protocols preserve their contracts. Read [DESIGN.md](DESIGN.md#limitations) for
+measurement limits.
 
 ## Provenance and license
 

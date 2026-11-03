@@ -25,6 +25,10 @@ import random
 import re
 import statistics
 import tempfile
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import reviews
 
 NAME = re.compile(r"[a-z][a-z0-9-]{0,47}")
 OBJECT = re.compile(r"[0-9a-f]{40}")
@@ -82,7 +86,7 @@ def _analysis_error(analysis):
     return None
 
 
-def advancement_evidence(row):
+def advancement_evidence(row, *, project=None, campaign=None, candidate_record=None):
     """Return an auditable advancement decision; never changes a baseline.
 
     ``analysis.metrics[primary].noise_relative`` is the calibrated envelope
@@ -94,6 +98,11 @@ def advancement_evidence(row):
     result = {"eligible": False, "reason": "requires a fast evaluation pass",
               "evidence_id": row.get("id"), "candidate_commit": row.get("candidate_commit"),
               "fingerprint": row.get("fingerprint"), "score": analysis.get("combined_score")}
+    if project is not None:
+        subject = candidate_record or dict(row, id=row.get("candidate"))
+        vetoes = reviews.blockers(project, campaign, subject)
+        if vetoes:
+            return dict(result, reason="unresolved correctness review", review_blockers=vetoes)
     if not _fast(row):
         return result
     if error := _analysis_error(analysis):
@@ -168,6 +177,7 @@ class _StableSet(set):
 class Population:
     def __init__(self, campaign_dir, protocol, fingerprint):
         self.directory = Path(campaign_dir)
+        self.project = self.directory.parent.parent
         self.protocol = copy.deepcopy(protocol)
         self.fingerprint = str(fingerprint)
         self.campaign = protocol["campaign"]
@@ -224,6 +234,31 @@ class Population:
             reasons.append("stale_fingerprint")
         if entry.get("baseline_commit") != self.baseline:
             reasons.append("baseline_mismatch")
+        vetoes = reviews.blockers(self.project, self.campaign, entry)
+        entry["review_blockers"] = vetoes
+        if vetoes:
+            reasons.append("unresolved_correctness_review")
+            entry["advancement"] = dict(entry.get("advancement", {}), eligible=False,
+                reason="unresolved correctness review", review_blockers=vetoes)
+        if (self.directory / "research.json").is_file():
+            try:
+                import value_evidence
+                value = value_evidence.validate(self.project, self.campaign, entry["id"],
+                    {"candidate_commit": entry["candidate_commit"], "candidate_tree": entry["source_tree"],
+                     "parent_commit": entry["parent_commit"], "baseline_commit": self.baseline,
+                     "evaluation_id": entry["fast_evidence_id"]})
+                entry["research_value"] = value["assessment"]
+                disposition = value["assessment"]["disposition"]
+                if disposition in {"rejected", "review-blocked"}:
+                    reasons.append("research_value_" + disposition)
+                if disposition not in {"worthwhile-to-confirm", "simplification"}:
+                    entry["advancement"] = dict(entry.get("advancement", {}), eligible=False,
+                        reason="research value is " + disposition)
+            except (ValueError, OSError, KeyError, TypeError) as exc:
+                reasons.append("research_value_missing_or_invalid")
+                entry["value_error"] = str(exc)
+                entry["advancement"] = dict(entry.get("advancement", {}), eligible=False,
+                    reason="valid practical-value decision is required")
         entry["parent_eligible"] = not reasons
         entry["invalidation_reasons"] = sorted(set(reasons))
         return entry
@@ -435,15 +470,19 @@ class Population:
         return result
 
     def _baseline_parent(self):
-        return {"id": None, "candidate_commit": self.baseline, "source_tree": None,
+        entry = {"id": None, "candidate_commit": self.baseline, "source_tree": self.protocol.get("baseline_tree"),
                 "baseline_commit": self.baseline, "line_anchor_commit": self.anchor,
                 "patch": "", "generation": 0, "mechanism": None, "probe_signals": {},
                 "analysis": {}, "report": None, "parent_eligible": True, "kind": "baseline"}
+        entry["review_blockers"] = reviews.blockers(self.project, self.campaign, entry)
+        entry["parent_eligible"] = not entry["review_blockers"]
+        return entry
 
     def _brief(self, state, ledger, line_history, remaining, persist):
         from openevolve.config import PromptConfig
         from openevolve.prompt.sampler import PromptSampler
         sequence = state["sample_sequence"] + 1
+        baseline = self._baseline_parent()
         entries = {name: view for name, item in state["entries"].items()
                    if (view := self._view(item))["parent_eligible"]}
         binding = {"campaign": self.campaign, "baseline_commit": self.baseline,
@@ -458,7 +497,9 @@ class Population:
                 parent = dict(entries[sampled.id], kind="exploratory_parent")
                 inspirations = [dict(entries[item.id], kind="exploratory_inspiration") for item in inspired]
             else:
-                parent, inspirations = self._baseline_parent(), []
+                if not baseline["parent_eligible"]:
+                    raise ValueError("campaign baseline has unresolved correctness review")
+                parent, inspirations = baseline, []
         finally:
             random.setstate(rng)
         paths = set(parent.get("changed_paths", []))
@@ -475,7 +516,7 @@ class Population:
             if len(inspirations) >= 2:
                 break
             inspirations.append(dict(item, kind="negative_inspiration", parent_eligible=False))
-        allowed = list(dict.fromkeys([self.baseline, parent["candidate_commit"]]))
+        allowed = list(dict.fromkeys(([self.baseline] if baseline["parent_eligible"] else []) + [parent["candidate_commit"]]))
         ident = f"brief-{sequence:06d}-" + _digest(binding)[:12]
         brief = {"schema_version": 1, "id": ident, **binding, "sample_seed": seed,
                  "persisted": persist, "parent": parent, "allowed_parents": allowed,
@@ -533,6 +574,8 @@ class Population:
             raise ValueError("proposal brief bytes changed")
         if parent_commit not in receipt["allowed_parents"]:
             raise ValueError("parent must be the campaign baseline or the sampled exact commit")
+        if parent_commit == self.baseline and not self._baseline_parent()["parent_eligible"]:
+            raise ValueError("campaign baseline has unresolved correctness review")
         if parent_commit != self.baseline:
             binding = receipt["parent_bindings"][parent_commit]
             entry = self.eligible_parents().get(binding["candidate"])

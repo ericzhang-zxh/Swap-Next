@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "swap-architecture",
+  "version": 1,
+  "description": "Proposed broad swap representation and reclaim interaction scope. Explicitly non-executable until the named measurement and correctness capabilities exist.",
+  "executable": false,
+  "allowed_modify": [
+    "mm/swapfile.c",
+    "mm/swap_state.c",
+    "mm/swap_table.h",
+    "mm/swap.h",
+    "mm/page_io.c",
+    "include/linux/swap.h",
+    "include/linux/swap_ops.h",
+    "include/linux/swapops.h",
+    "mm/memory.c",
+    "mm/vmscan.c",
+    "mm/zswap.c"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "primary_metrics": [
+    "swapin_seq.mean_ns",
+    "swapin_rand.mean_ns",
+    "metadata_bytes_per_slot_peak",
+    "reclaim_cpu_ns_per_page"
+  ],
+  "mechanism_evidence": [
+    "counter_shift",
+    "per_operation_cost",
+    "state_invariant",
+    "reviewed_structure"
+  ],
+  "correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings",
+    "allocation_failure",
+    "io_failure",
+    "memcg_limits",
+    "large_folio",
+    "lockdep",
+    "kasan",
+    "kcsan"
+  ],
+  "correctness_modes": [
+    "plain",
+    "xswap"
+  ],
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ],
+  "resource_cap": {
+    "guest_attempts": 120,
+    "build_attempts": 10,
+    "wall_seconds": 64800
+  },
+  "missing_capabilities": [
+    "Plain-mode full correctness runner and identity-bound proof.",
+    "Structural-change correctness matrix: allocation and I/O failure injection, memcg/large-folio coverage, KASAN, lockdep and KCSAN.",
+    "Trusted per-operation cost and state-invariant mechanism evidence adapters.",
+    "Approved total-metadata and reclaim-CPU endpoints with calibrated protocols."
+  ],
+  "limitations": [
+    "Scope is a design profile, not permission to execute it.",
+    "Candidate workers cannot enable this profile or supply their own capabilities."
+  ],
+  "protocol_revisions": [
+    3,
+    4,
+    6
+  ]
+}

@@ -273,7 +273,7 @@ class WorkflowTests(unittest.TestCase):
         flow = w.Workflow(self.p)
         with self.assertRaisesRegex(RuntimeError, "BLOCKED: historical"):
             flow.candidate("held", None)
-        with patch.object(w.subprocess, "check_output", return_value="exact\n") as git:
+        with patch.object(w.subprocess, "check_output", return_value="exact\n") as git, patch.object(flow, "candidate_tree", return_value="a" * 40):
             w.save(proof, {"source_commit": "exact", "gates": {"swapin_data": True}})
             with self.assertRaisesRegex(RuntimeError, "correctness"):
                 flow.candidate("candidate", proof)
@@ -486,7 +486,8 @@ class ProbeWorkflowTests(unittest.TestCase):
         self.assertEqual(row["status"], "BLOCKED")
         self.assertIn("selection-reason", row["reason"])
         self.assertEqual(len(self.calls), 12)
-        fast_cal = flow.run("calibrate", "fast")
+        with patch.object(w.subprocess, "check_output", return_value="a" * 40):
+            fast_cal = flow.run("calibrate", "fast")
         self.assertEqual(fast_cal["status"], "CALIBRATED", fast_cal.get("reason"))
         fast = flow.run("evaluate", "fast", "candidate", self.root / "synthetic-proof.json", "Agent selects the engaged counter without a metadata regression")
         self.assertEqual(fast["status"], "FAST_PASS", fast.get("reason"))
@@ -659,6 +660,7 @@ class Revision6WorkflowTests(unittest.TestCase):
 
         with patch.dict("os.environ", {"SWAP_NEXT_ACCEL": "kvm"}, clear=False), \
              patch.object(w, "fingerprint", return_value="fp"), \
+             patch.object(w.subprocess, "check_output", return_value="a" * 40), \
              patch.object(flow, "command", side_effect=fake_command):
             row = flow.run("calibrate", "fast")
         self.assertEqual(row["status"], "INCOMPLETE")

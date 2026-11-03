@@ -169,6 +169,12 @@ def next_task(suite, db, ledger):
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] in {"start", "resume", "next-action", "execute", "decide", "value"}:
+        from session import main as session_main
+        arguments = sys.argv[1:]
+        if arguments[0] == "next-action":
+            arguments[0] = "next"
+        return session_main(arguments)
     if len(sys.argv) > 1 and sys.argv[1] == "swap-standard":
         from standard_workflow import main as standard_main
         return standard_main(sys.argv[2:])
@@ -205,4 +211,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -51,6 +51,19 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(result["status"], "PROBE_REJECT")
         self.assertIn("metadata-brd: METADATA_REGRESSION", result["reasons"])
 
+    def test_structural_evidence_preserves_metadata_without_requiring_counter_movement(self):
+        declaration = {"kind": "reviewed_structure", "claim": "Remove redundant ownership state.",
+                       "falsifier": "The states encode independent ownership."}
+        with self.assertRaises(ValueError):
+            probe.compare(self.p, self.cal, samples(self.p, 1), declaration)
+        self.p["mechanism_evidence_types"] = ["counter_shift", "reviewed_structure"]
+        result = probe.compare(self.p, self.cal, samples(self.p, 1), declaration)
+        self.assertEqual(result["status"], "PROBE_PASS")
+        self.assertFalse(result["performance_accepted"])
+        result = probe.compare(self.p, self.cal, samples(self.p, 1, metadata=.3), declaration)
+        self.assertEqual(result["status"], "PROBE_REJECT")
+        self.assertIn("metadata-brd: METADATA_REGRESSION", result["reasons"])
+
     def test_metadata_noise_blocks_probe_calibration(self):
         self.baseline["metadata-brd"][1][probe.METADATA] = .209
         cal = probe.calibrate(self.p, self.baseline)

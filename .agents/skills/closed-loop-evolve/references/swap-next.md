@@ -9,10 +9,22 @@ workflow does not start an experiment.
 
 `campaigns/<c>/` owns `campaign.json`, `policy.json`, immutable `protocol.json`,
 `ledger/`, `candidates/`, `patches/`, `archive/` and `report/`. Raw `runs/` is
-ignored. The base file allowlist stays in `evolve/control/config/policy.json`.
+ignored. Trusted profiles live in `evolve/profiles/`; unprofiled historical campaigns
+retain the base file allowlist in `evolve/control/config/policy.json`.
 Historical suites retain fixed suite protocols and read-only evidence; the
 migration manifest records their locations.
 
+New research uses the durable session and a validated line agenda. Start or
+resume it before issuing manual lower-level commands:
+
+```sh
+evolve/.venv/bin/python evolve/loop.py start --campaign <c> --line <line> --idea <idea> --machine <machine>
+evolve/.venv/bin/python evolve/loop.py resume --campaign <c>
+```
+
+Follow [session-schema.md](../../../../evolve/session-schema.md) to execute the
+returned stable action or supply its evidence. Its research snapshot freezes the
+profile and value criteria. Existing manual commands below remain supported.
 Write policy and protocol, then use:
 
 ```sh
@@ -47,14 +59,18 @@ starting another checkout does not reset the campaign budget.
    required exact-commit correctness evidence. Keep mode/config/backend coverage
    explicit. Revision 4 plain full correctness is not supplied by the existing
    xswap-only guest; keep that real-run capability blocked.
-3. Probe the declared signal and metadata guard under the frozen protocol.
+3. Validate the declared counter or exact-tree structural mechanism and probe
+   metadata under the frozen protocol.
    The agent chooses which probe passes enter fast and records why. No probe
    score auto-advances a candidate.
 4. The paired latency screen admits exploratory fast passes. A neutral parent
    may be useful. Advancement requires improvement beyond calibrated noise;
    preserve the line anchor. Report parent deltas separately from cumulative
    baseline effects.
-5. Update the population from the same evidence. Preserve immutable outcomes,
+5. Compare relevant upstream alternatives and record the practical-value and
+   semantic complexity decision. Reuse verified shared references without
+   resetting their timestamps or turning them into independent observations.
+6. Update the population from the same evidence. Preserve immutable outcomes,
    source identity, fingerprints and negative knowledge. Correctness failure,
    later regression and stale identity remove active parent eligibility.
 
@@ -87,12 +103,12 @@ These are the project tests that [Campaign lifecycle](../../../../AGENTS.md#camp
 requires before pushing `main`.
 
 ```sh
-python3 -m unittest discover -s evolve/control/tests -v
+evolve/.venv/bin/python -m unittest discover -s evolve/control/tests -v
 python3 -m unittest discover -s benchmark/tests -v
 for suite in swap-standard xswap xswap-structure xswap-hole-probe kernel; do
   evolve/.venv/bin/python -m unittest discover -s benchmark/$suite -p 'test_*.py' -v
 done
-evolve/.venv/bin/python -m unittest evolve.test_standard_workflow -v
+evolve/.venv/bin/python -m unittest discover -s evolve -p 'test_*.py' -v
 ```
 
 `XSWAP_EVIDENCE_FIXTURE` and `SWAP_NEXT_EVIDENCE_FIXTURE` enable the

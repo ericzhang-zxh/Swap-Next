@@ -225,4 +225,27 @@ def require_execution(name, protocol=None):
                 errors.append(f"protocol budget.{key} does not match campaign.json")
     if errors:
         raise CampaignError("; ".join(errors))
+    # Profiled campaigns freeze framework scope and practical-value policy once.
+    # Standalone guest reservations obey the same contract as the agent driver.
+    research_path = campaign_dir(name) / "research.json"
+    if research_path.is_file():
+        import hashlib
+        import sys
+        root = CAMPAIGNS.parent
+        sys.path.insert(0, str(root / "evolve"))
+        import research
+        frozen = json.loads(research_path.read_text())
+        p = campaign_dir(name) / "protocol.json"
+        policy_path = campaign_dir(name) / "policy.json"
+        if (frozen.get("protocol_sha256") != hashlib.sha256(p.read_bytes()).hexdigest() or
+                frozen.get("policy_sha256") != hashlib.sha256(policy_path.read_bytes()).hexdigest()):
+            raise CampaignError("frozen research inputs changed")
+        try:
+            contract = research.validate_contract(frozen["line_contract"], root)
+            readiness = research.capability_readout(research.load_profile(contract["profile"], root),
+                json.loads(p.read_text()), json.loads(policy_path.read_text()), root)
+        except (ValueError, KeyError, OSError) as exc:
+            raise CampaignError("research capability: " + str(exc)) from exc
+        if not readiness["ready"]:
+            raise CampaignError("research capability: " + "; ".join(readiness["missing_capabilities"]))
     return record

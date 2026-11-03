@@ -14,6 +14,43 @@ checkout's current AGENTS instructions. For another project, identify equivalent
 entrypoints and evidence requirements before adapting this workflow. Do not
 apply Swap Next's kernel-specific gates to unrelated projects.
 
+## Swap Next: drive the durable session
+
+When asked to start or resume Swap Next research, use the current checkout's
+`evolve/.venv/bin/python evolve/loop.py start --campaign <c> --line <line>
+--idea <idea> --machine <machine>` or `... resume --campaign <c>`.
+Prepare missing routine artifacts from approved profiles and the existing line
+agenda; ask only for an essential new scope, measurement or resource decision.
+Read [the session schema](../../../evolve/session-schema.md) for exact commands
+and decision payloads. Do not launch a real campaign when only framework work or
+inspection was requested.
+
+Drive the returned action through completion. For `kind: command`, use
+`evolve/loop.py execute --campaign <c> --action <id>`. For agent actions, create
+the named artifact or submit the documented `decide`/`value` payload, then read
+`next-action`. Keep reasoning in the active agent, not in a background model
+loop. Reconcile running or interrupted work through `resume`; never relaunch an
+ambiguous measurement to make an action pass.
+
+Reuse the shared reference library before repeating upstream preparation or
+measurements. Current scope/review checks remain live. A reusable A/A keeps its
+original expiry. A reusable upstream contrast keeps its original paired samples
+and timestamp; report it as reused evidence and do not splice it into new pairs.
+Use [the cache contract](../../../evolve/reference-cache-schema.md) and
+[comparison contract](../../../evolve/comparison-schema.md).
+
+A structured review veto blocks runtime, sampling and advancement. A plain pass
+cannot resolve a named finding. Record practical benefit and both incremental
+and cumulative complexity before choosing another idea. A small gain need not
+justify new maintenance obligations; a simplification needs actual equivalence
+evidence. Preserve failures and coverage gaps as useful research outcomes.
+
+Execution closure releases the machine; delivery continues through evidence
+extraction, authored explanation, rendering, desktop/mobile and both-theme
+inspection, publication and live verification. Report a precise delivery blocker
+if any external step fails. Do not call generation or an unchecked upload
+complete delivery. The session never promotes candidate code.
+
 ## Establish or recover the campaign
 
 - Identify the user's objective: completing functionality, fixing a defect, or

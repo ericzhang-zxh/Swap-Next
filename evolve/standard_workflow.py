@@ -23,6 +23,9 @@ sys.path.insert(0, str(ROOT / "benchmark/kernel"))
 from lifetime import bind_child_to_parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from population import Population, advancement_evidence
+import reviews
+import mechanisms
+import permissions
 sys.path.insert(0, str(Path(__file__).resolve().parent / "control"))
 import correctness_proof
 
@@ -131,6 +134,12 @@ METADATA_METRIC = "metadata_delta_bytes_per_capacity_slot"
 def contract_errors(p):
     """Every new campaign scores swap-in latency and screens metadata bytes per slot."""
     errors = []
+    evidence_types = p.get("mechanism_evidence_types", ["counter_shift"])
+    if (not isinstance(evidence_types, list) or not evidence_types or
+            any(not isinstance(kind, str) for kind in evidence_types) or
+            len(set(evidence_types)) != len(evidence_types) or
+            not set(evidence_types) <= mechanisms.KINDS):
+        errors.append("unknown mechanism evidence types")
     cases, tiers = p.get("cases", {}), p.get("tiers", {})
     for name, case in cases.items():
         if case.get("primary") not in SWAPIN_PRIMARIES | {None}:
@@ -170,10 +179,19 @@ def fingerprint(p):
              ROOT / "evolve/control/controller.py", ROOT / "evolve/control/analysis.py",
              ROOT / "evolve/control/campaign_store.py", ROOT / "evolve/control/guest_budget.py",
              ROOT / "evolve/control/correctness_proof.py",
-             ROOT / "evolve/population.py", ROOT / "evolve/templates/swap_next.txt",
+             ROOT / "evolve/population.py", ROOT / "evolve/reviews.py", ROOT / "evolve/mechanisms.py",
+             ROOT / "evolve/research.py", ROOT / "evolve/value_evidence.py", ROOT / "evolve/comparisons.py", ROOT / "evolve/comparison_runtime.py",
+             ROOT / "evolve/permissions.py", ROOT / "evolve/reference_cache.py", ROOT / "evolve/calibration_cache.py",
+             ROOT / "evolve/templates/swap_next.txt",
              ROOT / "evolve/requirements.snapshot.txt",
              CAMPAIGN / "policy.json",
              ROOT / "benchmark/config/swap-standard.config"]
+    if (CAMPAIGN / "research.json").is_file():
+        paths.append(CAMPAIGN / "research.json")
+        profile = read(CAMPAIGN / "research.json")["line_contract"]["profile"]
+        if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", profile):
+            raise ValueError("invalid research profile")
+        paths.append(ROOT / "evolve/profiles" / (profile + ".json"))
     paths += [ROOT / "evolve/openevolve/openevolve" / name for name in ("database.py", "config.py", "prompt/sampler.py")]
     paths += list(BENCH.glob("*.py")) + list(BENCH.glob("*.sh"))
     paths += [BENCH / name for name in ["guest-init", "tools.json", "swapin.c", "correctness.c", "console-drain.c"]]
@@ -231,6 +249,9 @@ class Workflow:
         errors = self.campaign_errors()
         if errors:
             raise RuntimeError("BLOCKED: campaign: " + "; ".join(errors))
+        vetoes = reviews.blockers(ROOT, self.p["campaign"], {"id": None, "candidate_commit": self.p["baseline_commit"]})
+        if vetoes:
+            raise RuntimeError("BLOCKED: baseline has unresolved correctness review: " + json.dumps(vetoes))
         if self.stop.exists() or self.global_stop.exists():
             raise RuntimeError("STOP")
         if time.time() > self.budget["created"] + self.p["budget"]["wall_seconds"]:
@@ -247,6 +268,8 @@ class Workflow:
 
     def reserve(self, kind, pool="fast"):
         # Guest launch reservations use _reserve_guest with a one-use identity ticket.
+        if getattr(self, "slow_permit", None):
+            permissions.consume(ROOT, self.slow_permit)
         with guest_budget.budget_lock(self.p["campaign"]):
             self.budget = guest_budget.read_budget(self.p["campaign"])
             self.check()
@@ -261,6 +284,8 @@ class Workflow:
 
     def _reserve_guest(self, run_id, build, case, pool="fast"):
         self.check()
+        if getattr(self, "slow_permit", None):
+            permissions.consume(ROOT, self.slow_permit)
         try:
             ticket = guest_budget.reserve_guest(self.p["campaign"], run_id, build, case["backend"],
                                                 case.get("mode", "plain"), case["workload"], pool)
@@ -299,6 +324,9 @@ class Workflow:
         if not path.exists():
             raise RuntimeError("missing " + tier + " calibration")
         data = read(path)
+        if data.get("measurement_reused"):
+            import calibration_cache
+            calibration_cache.validate_alias(ROOT, self.p, data)
         if data["fingerprint"] != fp or data["tier"] != tier:
             raise RuntimeError("stale calibration fingerprint")
         if time.time() - data["finished"] > self.p["calibration_max_age_seconds"]:
@@ -306,6 +334,35 @@ class Workflow:
         if not data["analysis"].get("passed"):
             raise RuntimeError("calibration noisy; stabilize baseline before comparison")
         return data
+
+    def reuse_calibration(self, row, fp, dest):
+        if row["tier"] not in ("probe", "fast") or not (ROOT / "benchmark/reference-cache/calibration").is_dir():
+            return False
+        try:
+            import calibration_cache
+            reused = calibration_cache.reuse(ROOT, self.p, row, fp)
+        except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as exc:
+            save(dest / "cache-lookup.json", {"status": "new-measurement-needed", "reason": str(exc)})
+            return False
+        if reused:
+            save(STATE / ("calibration-" + row["tier"] + ".json"), row)
+        return reused
+
+    def register_reference(self, row, dest):
+        if row.get("measurement_reused"):
+            return
+        try:
+            if row.get("comparison"):
+                import comparison_runtime
+                result = comparison_runtime.register_reference(self, ROOT, PROTOCOL, row)
+            elif row.get("action") == "calibrate" and row.get("status") == "CALIBRATED" and row.get("tier") in ("probe", "fast"):
+                import calibration_cache
+                result = calibration_cache.register(ROOT, self.p, row)
+            else:
+                return
+        except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as exc:
+            result = {"status": "registration-failed", "reason": str(exc)}
+        save(dest / "cache-registration.json", result)
 
     def candidate(self, name, correctness):
         # Historical identities are explicitly held even if supplied as commit IDs.
@@ -321,6 +378,11 @@ class Workflow:
         commit = subprocess.check_output(["git", "-C", worktree, "rev-parse", "HEAD"], text=True).strip()
         if commit in self.p["blocked_commits"]:
             raise RuntimeError("BLOCKED: " + self.p["blocked_commits"][commit])
+        tree = self.candidate_tree(commit, record)
+        vetoes = reviews.blockers(ROOT, self.p["campaign"], dict(record, candidate_commit=commit, source_tree=tree))
+        if vetoes:
+            raise RuntimeError("BLOCKED: unresolved correctness review: " + json.dumps(vetoes))
+        mechanisms.validate(ROOT, self.p, record, commit, tree)
         proof = read(correctness) if correctness else {}
         if self.p["campaign"] not in CONTRACT_EXEMPT:
             try:
@@ -446,8 +508,6 @@ class Workflow:
             spec = self.p["tiers"]["probe"]
             count = spec["calibration_runs" if action == "calibrate" else "candidate_runs"]
             needed = count * len(spec["cases"])
-            if self.budget.get("probe_guests", 0) + needed > self.p["budget"].get("probe_guest_attempts", 0):
-                raise RuntimeError("insufficient probe guest budget for the complete tier")
             build, commit, calibration = self.p["baseline_build"], self.p["baseline_commit"], None
             if action == "calibrate":
                 prior = [r for r in self.ledger[:-1] if r.get("action") == action and r.get("tier") == "probe" and
@@ -455,6 +515,8 @@ class Workflow:
                 if prior and not (all(r.get("analysis", {}).get("passed") is True for r in prior) and
                                   time.time() - prior[-1].get("finished", time.time()) > self.p["calibration_max_age_seconds"]):
                     raise RuntimeError("probe calibration already attempted; retained evidence forbids a silent retry")
+                if self.reuse_calibration(row, fp, dest):
+                    return row
             else:
                 commit, record, proof = self.candidate(candidate, correctness)
                 tree = self.candidate_tree(commit, record)
@@ -465,7 +527,10 @@ class Workflow:
                 calibration = self.calibration("probe", fp)
                 build = self.probe_build(candidate, commit, row, dest)
                 row["calibration_id"] = calibration["id"]
+            if self.budget.get("probe_guests", 0) + needed > self.p["budget"].get("probe_guest_attempts", 0):
+                raise RuntimeError("insufficient probe guest budget for the complete tier")
             row["candidate_commit"] = commit
+            row["protocol_sha256"] = sha(PROTOCOL)
             samples = {case: [] for case in spec["cases"]}
             for case_name in spec["cases"]:
                 case = self.p["cases"][case_name]
@@ -538,14 +603,17 @@ class Workflow:
         finally:
             save(dest / "report.json", row)
             save(self.ledger_path, self.ledger)
+        self.register_reference(row, dest)
         if action == "evaluate" and row.get("status") == "CORRECTNESS_FAIL":
             self.archive(row, record)
         print(json.dumps({k: row.get(k) for k in ("id", "action", "tier", "status", "reason", "budget_pools")}), flush=True)
         return row
 
-    def run(self, action, tier, candidate=None, correctness=None, selection_reason=None):
+    def run(self, action, tier, candidate=None, correctness=None, selection_reason=None, approval=None, comparison=None, contrast=None):
         if tier == "probe":
             return self.run_probe(action, candidate, correctness)
+        self.slow_permit = None
+        comparison_context = None
         ident = uuid.uuid4().hex
         row = {"id": ident, "action": action, "tier": tier, "candidate": candidate,
                "status": "RUNNING", "started": time.time(), "runs": [], "pairs": [],
@@ -568,7 +636,8 @@ class Workflow:
                 raise RuntimeError("BLOCKED: protocol contract: " + "; ".join(contract_errors(self.p)))
             fp = fingerprint(self.p)
             row["fingerprint"] = fp
-            if action == "calibrate":
+            row["protocol_sha256"] = sha(PROTOCOL)
+            if action == "calibrate" and not comparison:
                 prior = [r for r in self.ledger[:-1] if r["action"] == action and r["tier"] == tier and
                          r.get("fingerprint") == fp and r.get("execution_started")]
                 # A passed calibration may be renewed once it expires. A noisy or
@@ -577,59 +646,91 @@ class Workflow:
                                   time.time() - prior[-1].get("finished", time.time()) >
                                   self.p["calibration_max_age_seconds"]):
                     raise RuntimeError("calibration already attempted for this protocol; inspect retained evidence")
-            count = self.p["tiers"][tier]["calibration_pairs" if action == "calibrate" else "comparison_pairs"]
-            required_guests = count * 2 * len(self.p["tiers"][tier]["cases"])
-            if self.budget["guests"] + required_guests > self.p["budget"]["guest_attempts"]:
-                raise RuntimeError("insufficient guest budget for complete tier")
-            build = self.p["baseline_build"]
-            commit = self.p["baseline_commit"]
-            calibration = None
-            if action == "evaluate":
-                commit, record, proof = self.candidate(candidate, correctness)
-                row.update(candidate_commit=commit, correctness=proof)
-                if self.p["campaign"] not in CONTRACT_EXEMPT:
-                    tree = self.candidate_tree(commit, record)
-                    row.update(candidate_tree=tree, mechanism=record.get("mechanism"),
-                               parent_comparison={"parent_candidate": record.get("parent_candidate"), "parent_commit": record.get("parent_commit", record.get("parent")), "baseline_commit": self.p["baseline_commit"], "role": "descriptive_only"})
-                    if tier == "fast":
-                        prior_probe = self.probe_prerequisite(commit, tree, fp, record, selection_reason)
-                        row.update(probe_id=prior_probe["id"], probe_signals=prior_probe.get("probe_signals"),
-                                   selection_reason=selection_reason.strip())
-                    same_tree = [r for r in self.ledger[:-1] if r.get("candidate_tree") == tree and
-                                 r.get("action") == action and r.get("tier") == tier and r.get("execution_started")]
-                    if same_tree:
-                        raise RuntimeError("duplicate candidate content tier attempt; prior tree retained")
-                save(dest / "report.json", row)
-                save(self.ledger_path, self.ledger)
-                attempts = [r for r in self.ledger[:-1] if r.get("candidate_commit") == commit and r["tier"] == tier and r["action"] == action and r.get("execution_started")]
-                if attempts:
-                    raise RuntimeError("duplicate candidate tier attempt; retained prior result")
-                candidates = {r.get("candidate_commit") for r in self.ledger[:-1] if r["action"] == action and r.get("candidate_commit") and r.get("tier") != "probe" and (self.p["campaign"] in CONTRACT_EXEMPT or r.get("execution_started"))}
-                if commit not in candidates and len(candidates) >= self.p["max_candidates"]:
-                    raise RuntimeError("candidate budget")
-                if tier == "slow" and not any(r.get("candidate_commit") == commit and r.get("fingerprint") == fp and r.get("analysis", {}).get("eligible_for_slow") is True and r["tier"] == "fast" and r["action"] == "evaluate" for r in self.ledger[:-1]):
-                    raise RuntimeError("slow requires exact-commit current-fingerprint fast pass")
-                checklog = dest / "controller-check.log"
-                self.command([sys.executable, "evolve/control/controller.py", "--campaign", self.p["campaign"], "check", candidate], checklog, 180)
-                checked = read(checklog)
-                if checked.get("status") != "SCOPE_PASS" or checked.get("candidate_commit") != commit or checked.get("parent") != self.p["baseline_commit"]:
-                    raise RuntimeError("controller scope check missing")
-                row["controller_check"] = checked
-                calibration = self.calibration(tier, fp)
-                build = self.p.get("candidate_builds", {}).get(candidate, "std-" + commit[:12])
-                if not re.fullmatch(r"[a-z0-9-]{1,48}", build):
-                    raise RuntimeError("invalid protocol candidate build name")
-                path = ROOT / "benchmark/kernel/builds" / build / "result.json"
-                if not path.exists():
-                    self.reserve("build")
-                    row["execution_started"] = True
+                if self.reuse_calibration(row, fp, dest):
+                    return row
+            control_build = self.p["baseline_build"]
+            control_commit = self.p["baseline_commit"]
+            if comparison:
+                if tier != "fast" or action not in ("calibrate", "evaluate"):
+                    raise RuntimeError("BLOCKED: comparison arms support fast calibration/evaluation only")
+                import comparison_runtime
+                comparison_context = comparison_runtime.prepare(self, ROOT, PROTOCOL, comparison, contrast,
+                                                                action, row, dest, fp)
+                if comparison_context["status"] in ("REUSED", "NOT_COMPARABLE"):
+                    row["finished"] = time.time()
+                    return row
+                count = comparison_context["count"]
+                control_build = comparison_context["control_build"]
+                control_commit = comparison_context["control_commit"]
+                build = comparison_context["treatment_build"]
+                commit = comparison_context["treatment_commit"]
+                calibration = comparison_context["calibration"]
+            else:
+                count = self.p["tiers"][tier]["calibration_pairs" if action == "calibrate" else "comparison_pairs"]
+                required_guests = count * 2 * len(self.p["tiers"][tier]["cases"])
+                if self.budget["guests"] + required_guests > self.p["budget"]["guest_attempts"]:
+                    raise RuntimeError("insufficient guest budget for complete tier")
+                build = self.p["baseline_build"]
+                commit = self.p["baseline_commit"]
+                if tier == "slow":
+                    if not approval:
+                        raise RuntimeError("BLOCKED: slow requires explicit owner approval for this execution")
+                    authorized_commit = commit
+                    if action == "evaluate":
+                        candidate_record = campaign_store.candidates(self.p["campaign"]).get(candidate)
+                        if not candidate_record:
+                            raise RuntimeError("unknown slow candidate")
+                        authorized_commit = subprocess.check_output(["git", "-C", str(ROOT / candidate_record["worktree"]), "rev-parse", "HEAD"], text=True).strip()
+                    authorized_tree = subprocess.check_output(["git", "-C", str(ROOT / "linux"), "rev-parse", authorized_commit + "^{tree}"], text=True).strip()
+                    self.slow_permit = permissions.validate(ROOT, self.p, approval, action, authorized_commit,
+                                                            authorized_tree, fp, row["id"])
+                calibration = None
+                if action == "evaluate":
+                    commit, record, proof = self.candidate(candidate, correctness)
+                    row.update(candidate_commit=commit, correctness=proof)
+                    if self.p["campaign"] not in CONTRACT_EXEMPT:
+                        tree = self.candidate_tree(commit, record)
+                        row.update(candidate_tree=tree, mechanism=record.get("mechanism"),
+                                   parent_comparison={"parent_candidate": record.get("parent_candidate"), "parent_commit": record.get("parent_commit", record.get("parent")), "baseline_commit": self.p["baseline_commit"], "role": "descriptive_only"})
+                        if tier == "fast":
+                            prior_probe = self.probe_prerequisite(commit, tree, fp, record, selection_reason)
+                            row.update(probe_id=prior_probe["id"], probe_signals=prior_probe.get("probe_signals"),
+                                       selection_reason=selection_reason.strip())
+                        same_tree = [r for r in self.ledger[:-1] if r.get("candidate_tree") == tree and
+                                     r.get("action") == action and r.get("tier") == tier and r.get("execution_started")]
+                        if same_tree:
+                            raise RuntimeError("duplicate candidate content tier attempt; prior tree retained")
                     save(dest / "report.json", row)
-                    self.command([sys.executable, "benchmark/kernel/build.py", "--commit", commit, "--name", build, "--config", "benchmark/config/swap-standard.config", "--no-instrumentation"], dest / "build.log", 1200)
-                built = read(path)
-                if (built.get("commit") != commit or built.get("input_config_sha256") != sha(ROOT / "benchmark/config/swap-standard.config") or built.get("passed") is not True or built.get("instrument_sha256", "missing") is not None):
-                    raise RuntimeError("candidate build provenance mismatch")
-            elif action == "reference-check":
-                calibration = self.calibration(tier, fp)
+                    save(self.ledger_path, self.ledger)
+                    attempts = [r for r in self.ledger[:-1] if r.get("candidate_commit") == commit and r["tier"] == tier and r["action"] == action and r.get("execution_started")]
+                    if attempts:
+                        raise RuntimeError("duplicate candidate tier attempt; retained prior result")
+                    candidates = {r.get("candidate_commit") for r in self.ledger[:-1] if r["action"] == action and r.get("candidate_commit") and r.get("tier") != "probe" and (self.p["campaign"] in CONTRACT_EXEMPT or r.get("execution_started"))}
+                    if commit not in candidates and len(candidates) >= self.p["max_candidates"]:
+                        raise RuntimeError("candidate budget")
+                    if tier == "slow" and not any(r.get("candidate_commit") == commit and r.get("fingerprint") == fp and r.get("analysis", {}).get("eligible_for_slow") is True and r["tier"] == "fast" and r["action"] == "evaluate" for r in self.ledger[:-1]):
+                        raise RuntimeError("slow requires exact-commit current-fingerprint fast pass")
+                    checklog = dest / "controller-check.log"
+                    self.command([sys.executable, "evolve/control/controller.py", "--campaign", self.p["campaign"], "check", candidate], checklog, 180)
+                    checked = read(checklog)
+                    if checked.get("status") != "SCOPE_PASS" or checked.get("candidate_commit") != commit or checked.get("parent") != self.p["baseline_commit"]:
+                        raise RuntimeError("controller scope check missing")
+                    row["controller_check"] = checked
+                    calibration = self.calibration(tier, fp)
+                    build = self.p.get("candidate_builds", {}).get(candidate, "std-" + commit[:12])
+                    if not re.fullmatch(r"[a-z0-9-]{1,48}", build):
+                        raise RuntimeError("invalid protocol candidate build name")
+                    path = ROOT / "benchmark/kernel/builds" / build / "result.json"
+                    if not path.exists():
+                        self.reserve("build")
+                        row["execution_started"] = True
+                        save(dest / "report.json", row)
+                        self.command([sys.executable, "benchmark/kernel/build.py", "--commit", commit, "--name", build, "--config", "benchmark/config/swap-standard.config", "--no-instrumentation"], dest / "build.log", 1200)
+                    built = read(path)
+                    if (built.get("commit") != commit or built.get("input_config_sha256") != sha(ROOT / "benchmark/config/swap-standard.config") or built.get("passed") is not True or built.get("instrument_sha256", "missing") is not None):
+                        raise RuntimeError("candidate build provenance mismatch")
+                elif action == "reference-check":
+                    calibration = self.calibration(tier, fp)
             rules = validity_module().protocol_rules(self.p)
             row["protocol_revision"] = rules["protocol_revision"]
             try:
@@ -637,7 +738,9 @@ class Workflow:
             except ValueError:
                 row["protocol"] = PROTOCOL.name
             row["candidate_commit"] = commit
-            count = self.p["tiers"][tier]["calibration_pairs" if action == "calibrate" else "comparison_pairs"]
+            if not row.get("candidate_tree") and self.p["campaign"] not in CONTRACT_EXEMPT:
+                row["candidate_tree"] = subprocess.check_output(
+                    ["git", "-C", str(ROOT / "linux"), "rev-parse", commit + "^{tree}"], text=True).strip()
             env = child_env(self.p)
             extra = runner_extra(self.p)
             for pair_index in range(count):
@@ -656,7 +759,7 @@ class Workflow:
                                 raise RuntimeError("trusted inputs changed during evaluation")
                             suffix = "" if attempt_index == 0 else "-r" + str(attempt_index)
                             run_id = ident + "-" + str(pair_index) + "-" + case_name + "-" + arm + suffix
-                            chosen = self.p["baseline_build"] if arm == "a" else build
+                            chosen = control_build if arm == "a" else build
                             ticket = self._reserve_guest(run_id, chosen, case)
                             row["execution_started"] = True
                             attempt = {"id": run_id, "pair": pair_index, "case": case_name, "arm": arm,
@@ -677,7 +780,7 @@ class Workflow:
                             result = read(result_path)
                             attempt.update(result=str(result_path.relative_to(ROOT)), result_sha256=sha(result_path))
                             json.dumps(result, allow_nan=False)
-                            expected = self.p["baseline_commit"] if arm == "a" else commit
+                            expected = control_commit if arm == "a" else commit
                             if result.get("source_commit") != expected or result.get("run_id") != run_id:
                                 raise RuntimeError("run identity failed")
                             attempt.update(result=str(result_path.relative_to(ROOT)), result_sha256=sha(result_path),
@@ -741,7 +844,7 @@ class Workflow:
             if fingerprint(self.p) != fp:
                 raise RuntimeError("trusted inputs changed during analysis")
             row.update(analysis=result, status=result["status"], finished=time.time())
-            if action == "calibrate":
+            if action == "calibrate" and not comparison:
                 save(STATE / ("calibration-" + tier + ".json"), row)
         except (Exception, KeyboardInterrupt) as exc:
             if isinstance(exc, correctness_proof.CorrectnessFailure):
@@ -754,7 +857,8 @@ class Workflow:
         finally:
             save(dest / "report.json", row)
             save(self.ledger_path, self.ledger)
-        if action == "evaluate" and row.get("candidate_commit"):
+        self.register_reference(row, dest)
+        if action == "evaluate" and row.get("candidate_commit") and not comparison:
             records = campaign_store.candidates(self.p["campaign"])
             if candidate in records:
                 self.archive(row, records[candidate])
@@ -765,6 +869,8 @@ class Workflow:
         return Population(CAMPAIGN, self.p, fp)
 
     def archive(self, row, record):
+        if row.get("comparison") or row.get("measurement_reused"):
+            return None
         if "probe" in self.p.get("tiers", {}):
             population = self.population(row["fingerprint"])
             known = population.path.exists() and record["id"] in read(population.path)["entries"]
@@ -803,8 +909,11 @@ def main(argv=None):
     parser.add_argument("--tier", choices=["probe", "fast", "slow", "auto"], default="fast",
                         help="slow (and auto, which continues into slow) needs explicit owner approval; see AGENTS.md")
     parser.add_argument("--candidate")
+    parser.add_argument("--comparison", help="frozen comparison plan ID")
+    parser.add_argument("--contrast", help="contrast in the frozen comparison plan")
     parser.add_argument("--selection-reason", help="agent rationale for admitting an exact probe pass to the fast screen")
     parser.add_argument("--correctness", type=Path)
+    parser.add_argument("--approval", help="single-run owner approval ID required for slow execution")
     parser.add_argument("--campaign", default=CAMPAIGN.name,
                         help="campaign directory under campaigns/; revision 3 is xswap-tcg-rev3-2026-10-25")
     args = parser.parse_args(argv)
@@ -857,7 +966,9 @@ def main(argv=None):
                         save(TASKS / ("task-" + uuid.uuid4().hex + ".json"), output)
             print(json.dumps(output, indent=2))
             return
-        if args.action == "evaluate" and not args.candidate:
+        if bool(args.comparison) != bool(args.contrast):
+            parser.error("--comparison and --contrast must be supplied together")
+        if args.action == "evaluate" and not (args.candidate or args.comparison):
             parser.error("evaluate requires --candidate")
         if args.action == "reference-check" and args.tier == "slow":
             parser.error("reference-check is fast only")
@@ -868,7 +979,7 @@ def main(argv=None):
                 parser.error("protocol has no " + args.tier + " tier")
             tiers = [args.tier]
         for tier in tiers:
-            row = workflow.run(args.action, tier, args.candidate, args.correctness, args.selection_reason)
+            row = workflow.run(args.action, tier, args.candidate, args.correctness, args.selection_reason, approval=args.approval, comparison=args.comparison, contrast=args.contrast)
             if row["status"] in ("INCOMPLETE", "BLOCKED", "CORRECTNESS_FAIL"):
                 raise SystemExit(1)
             if args.action == "evaluate" and tier == "fast" and not row.get("analysis", {}).get("eligible_for_slow"):

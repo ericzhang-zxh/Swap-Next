@@ -75,3 +75,6 @@ campaigns/*/ledger/.lock
 campaigns/*/ledger/.*.lock
 campaigns/*/candidates/*.json.tmp
 campaigns/*/campaign.json.tmp
+
+# Machine-local reusable reference provenance; reports export sanitized summaries.
+/benchmark/reference-cache/

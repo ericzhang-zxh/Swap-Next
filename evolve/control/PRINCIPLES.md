@@ -9,13 +9,15 @@ crash proves none of them.
 
 ## Scope
 
-Candidates may modify only the swap-core files listed in
-`config/policy.json` and add `tools/testing/selftests/mm/swap_next_*.c`
-tests. The base list is the source files of the `MEMORY MANAGEMENT - SWAP`
-entry in `linux/MAINTAINERS`. `mm/memory.c`, `mm/zswap.c`, `mm/vmscan.c`,
-memcg, arch code, Kconfig, Makefiles, UAPI and global VM policy are out of
-scope. The file list is fixed. A campaign policy may narrow it but never widen
-it, and the controller rejects any path outside the base list.
+New research campaigns select a trusted profile from `evolve/profiles/` before
+opening. The profile fixes allowed files, correctness coverage, observables,
+measurement limits and resource caps. Campaign policies can only narrow it.
+The executable `swap-core` profile preserves the existing swap-file scope;
+`swap-architecture` records broader intent and missing capabilities and cannot
+execute. A worker cannot approve a profile or alter an evaluator.
+
+Frozen campaigns without research metadata retain the base list in
+`config/policy.json`. Historical protocols are never rewritten.
 
 ## Invariants every candidate preserves
 
