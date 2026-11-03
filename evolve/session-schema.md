@@ -57,7 +57,12 @@ The production CLI has no bypass switches. The plan(snapshot) function is pure.
 
 ## Durable records
 
-The campaign's ledger/session.json has schema version 1:
+The campaign's machine-local ledger/session.json has schema version 1. It is
+ignored by Git because live PID/start-tick receipts and executable paths belong
+to this worker. Scientific ledgers, reservations and the immutable
+ledger/session-closeout.json remain tracked for public audit.
+
+Session fields:
 
 | Field | Meaning |
 | --- | --- |

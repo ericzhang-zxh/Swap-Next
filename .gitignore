@@ -78,3 +78,6 @@ campaigns/*/campaign.json.tmp
 
 # Machine-local reusable reference provenance; reports export sanitized summaries.
 /benchmark/reference-cache/
+
+# Mutable PID-bound session receipts stay local; immutable closeout is tracked.
+campaigns/*/ledger/session.json

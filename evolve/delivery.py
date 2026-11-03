@@ -203,9 +203,26 @@ def validate_story(story, summary):
 
 
 def _metric_sections(summary):
-    blocks = []
+    blocks, paired = [], False
     for row in summary["evaluations"]:
         analysis = row.get("analysis") or {}
+        if row.get("action") == "calibrate" and row.get("tier") == "probe":
+            metric = "metadata_delta_bytes_per_capacity_slot"
+            for case, bands in analysis.get("bands", {}).items():
+                if metric not in bands:
+                    continue
+                runs = [run for run in row.get("runs", []) if run.get("case") == case
+                        and run.get("status") == "PASS" and run.get("run_valid") is True
+                        and metric in run.get("metrics", {})]
+                if not runs:
+                    continue
+                groups = ["Run " + str(i + 1) for i in range(len(runs))]
+                blocks.append({"type": "strip", "takeaway": "Baseline metadata calibration: " + row["status"],
+                    "x_label": "Metadata bytes per capacity slot (baseline only)",
+                    "groups": groups, "series": ["Baseline"],
+                    "points": [{"group": group, "series": "Baseline", "value": run["metrics"][metric],
+                                "tip": run["id"]} for group, run in zip(groups, runs)],
+                    "note": "Valid calibration samples; candidate performance was not measured here."})
         if row.get("action") != "evaluate":
             continue
         for metric in analysis.get("primary", []):
@@ -219,11 +236,12 @@ def _metric_sections(summary):
                     points.append({"group": group, "series": label, "value": pair[arm][metric],
                                    "tip": row["id"]})
             if points:
+                paired = True
                 blocks.append({"type": "strip", "takeaway": str(row.get("candidate") or
                                row.get("comparison", {}).get("contrast_id", "Comparison")) + ": " + metric,
                                "x_label": metric + (" (reused measurement)" if row.get("measurement_reused") else " (new measurement)"), "groups": groups, "series": ["Control", "Treatment"],
                                "points": points})
-    if not blocks:
+    if not paired:
         blocks.append({"type": "note", "text": "No complete paired performance result is available."})
     return {"id": "results", "title": "Measured results", "blocks": blocks}
 
@@ -239,8 +257,12 @@ def make_spec(summary, story):
         visible.append("Some raw evidence is unavailable on this machine.")
     if not summary["upstream_comparisons"]:
         visible.append("No upstream comparison has been measured.")
+    for row in summary["evaluations"]:
+        if row.get("action") == "calibrate" and row.get("status") != "CALIBRATED":
+            reasons = (row.get("analysis") or {}).get("reasons", [])
+            visible.append("Calibration stopped performance comparison: " + "; ".join(reasons or [row["status"]]) + ".")
     intro = {"id": "limits", "title": "Material limits",
-             "blocks": [{"type": "note", "text": line} for line in visible]}
+             "blocks": [{"type": "note", "text": " ".join(visible)}]}
     sections = [{k: v for k, v in s.items() if k != "evidence"} for s in story["sections"]]
     sections.insert(4, _metric_sections(summary))
     if visible:
@@ -282,6 +304,21 @@ def render(root, campaign):
                         "@media(max-width:600px){main{padding:20px 12px}.card{padding:14px}"
                         ".verdict{flex-wrap:wrap}svg{min-width:600px}.card:has(svg){overflow-x:auto}}"
                         "</style>")
+    # Optional public source links are pinned before report publication.
+    source_commit = story.get("source_commit")
+    if source_commit:
+        if not re.fullmatch(r"[0-9a-f]{40}", source_commit):
+            raise ValueError("report sources need an exact Git commit")
+        references = sorted(set(summary["sources"]) | set(story.get("reading", [])))
+        links = []
+        for ref in references:
+            local = at(root, ref)
+            if digest_bytes(_git(root, "show", source_commit + ":" + ref)) != digest_bytes(local.read_bytes()):
+                raise ValueError("pinned report source differs from current evidence: " + ref)
+            url = "https://github.com/ericzhang-zxh/Swap-Next/blob/" + source_commit + "/" + ref
+            links.append('<li><a href="' + html.escape(url, quote=True) + '">' + html.escape(ref) + '</a></li>')
+        source_links = '<details class="audit"><summary>Pinned sources and review</summary><ul>' + "".join(links) + '</ul></details>'
+        page = page.replace("</main>", source_links + "</main>")
     write(report / "summary.json", summary)
     write(report / "explainer.json", spec)
     (report / "explainer.html").write_text(page)

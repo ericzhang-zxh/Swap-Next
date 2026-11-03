@@ -93,6 +93,47 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(d.status(self.root, "test-line")["state"], "generated")
         self.assertFalse((self.campaign / "runs").exists())
 
+    def test_noisy_calibration_exposes_samples_without_candidate_claim(self):
+        metric = "metadata_delta_bytes_per_capacity_slot"
+        samples = [0.115, 0.115, 0.123]
+        row = {"id": "cal-one", "action": "calibrate", "tier": "probe",
+               "status": "CALIBRATION_NOISY", "analysis": {
+                   "bands": {"metadata-brd": {metric: {"n": 3}}},
+                   "reasons": ["metadata-brd: METADATA_CALIBRATION_NOISY"]},
+               "runs": [{"id": "run-" + str(i), "case": "metadata-brd", "status": "PASS",
+                         "run_valid": True, "metrics": {metric: value}}
+                        for i, value in enumerate(samples)]}
+        d.write(self.campaign / "ledger/ledger.json", [row])
+        explain(self.root)
+        d.render(self.root, "test-line")
+        summary = d.read(self.campaign / "report/summary.json")
+        self.assertEqual(summary["verdict"], "inconclusive")
+        spec = d.read(self.campaign / "report/explainer.json")
+        results = next(s for s in spec["sections"] if s["id"] == "results")
+        chart = results["blocks"][0]
+        self.assertEqual([p["value"] for p in chart["points"]], samples)
+        self.assertEqual(chart["series"], ["Baseline"])
+        self.assertIn("No complete paired", results["blocks"][-1]["text"])
+        limits = next(s for s in spec["sections"] if s["id"] == "limits")
+        self.assertIn("METADATA_CALIBRATION_NOISY", limits["blocks"][0]["text"])
+
+    def test_pinned_source_links_require_matching_committed_bytes(self):
+        story = explain(self.root)
+        story["source_commit"] = "e" * 40
+        d.write(self.campaign / "report/story.json", story)
+        def committed(root, command, spec):
+            self.assertEqual(command, "show")
+            commit, path = spec.split(":", 1)
+            self.assertEqual(commit, "e" * 40)
+            return (root / path).read_bytes()
+        with patch.object(d, "_git", side_effect=committed):
+            d.render(self.root, "test-line")
+        html = (self.campaign / "report/explainer.html").read_text()
+        self.assertIn("/blob/" + "e" * 40 + "/campaigns/test-line/protocol.json", html)
+        with patch.object(d, "_git", return_value=b"different source"):
+            with self.assertRaisesRegex(ValueError, "differs from current evidence"):
+                d.render(self.root, "test-line")
+
     def test_drift_invalidates_explanation_and_delivery(self):
         explain(self.root)
         d.render(self.root, "test-line")
