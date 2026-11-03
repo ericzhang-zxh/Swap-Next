@@ -302,6 +302,8 @@ def _value_policy(policy):
 def validate_line(line):
     _version(line)
     _name(line.get("line"), "line")
+    if "contributor" in line:
+        _name(line["contributor"], "contributor")
     _text(line.get("question"), "research question")
     _name(line.get("profile"), "profile")
     _need(line.get("status") in {"active", "paused", "retired"}, "unknown line status")
@@ -333,12 +335,16 @@ def line_contract(line, profile=None, root=ROOT):
     scientific = {"schema_version": 1, "line": line["line"], "profile": profile["id"],
                   "profile_version": profile["version"], "profile_sha256": digest(profile),
                   "anchor_commit": line["anchor_commit"], "value_policy": copy.deepcopy(line["value_policy"])}
+    if "contributor" in line:
+        scientific["contributor"] = line["contributor"]
     return {**scientific, "scientific_sha256": digest(scientific)}
 
 
 def validate_contract(contract, root=ROOT):
     _version(contract)
     _name(contract.get("line"), "line")
+    if "contributor" in contract:
+        _name(contract["contributor"], "contributor")
     profile = load_profile(contract.get("profile"), root)
     _need(contract.get("profile_version") == profile["version"] and
           contract.get("profile_sha256") == digest(profile), "frozen profile identity changed")
@@ -419,14 +425,26 @@ def line_budget(line, spending, requested=None, exclude_campaign=None):
             "committed": reserved, "reasons": reasons}
 
 
-def select_line(root=ROOT, line_id=None):
-    """Rank declared priorities deterministically; selection never launches work."""
+def select_line(root=ROOT, line_id=None, *, contributor=None):
+    """Rank only this contributor's priorities; never adopt unowned or foreign work."""
+    _name(contributor or os.environ.get("SWAP_NEXT_CONTRIBUTOR"), "contributor")
+    contributor = contributor or os.environ["SWAP_NEXT_CONTRIBUTOR"]
     root = Path(root)
     paths = ([root / "campaigns/lines" / (_name(line_id, "line") + ".json")] if line_id else
              sorted((root / "campaigns/lines").glob("*.json")))
     choices, blocked = [], []
     for path in paths:
-        line = validate_line(read_json(path))
+        try:
+            raw = read_json(path)
+        except ResearchError as exc:
+            if line_id:
+                raise
+            blocked.append({"line": path.stem, "reasons": ["unreadable agenda: " + str(exc)]})
+            continue
+        if not isinstance(raw, dict) or raw.get("contributor") != contributor:
+            blocked.append({"line": path.stem, "reasons": ["owned by another contributor or unowned historical line"]})
+            continue
+        line = validate_line(raw)
         _need(line["line"] == path.stem, "line id differs from filename")
         profile = load_profile(line["profile"], root)
         if line["status"] != "active":
@@ -676,6 +694,7 @@ def main(argv=None):
     p.add_argument("line_file", type=Path)
     p = commands.add_parser("select")
     p.add_argument("--line")
+    p.add_argument("--contributor", default=os.environ.get("SWAP_NEXT_CONTRIBUTOR"))
     p = commands.add_parser("profile")
     p.add_argument("name")
     p.add_argument("--protocol", type=Path)
@@ -687,7 +706,7 @@ def main(argv=None):
         if args.action == "validate":
             result = line_contract(validate_line(read_json(args.line_file)), root=args.root)
         elif args.action == "select":
-            result = select_line(args.root, args.line)
+            result = select_line(args.root, args.line, contributor=args.contributor)
         elif args.action == "profile":
             result = capability_readout(load_profile(args.name, args.root),
                 read_json(args.protocol) if args.protocol else None, root=args.root)

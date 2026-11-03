@@ -126,3 +126,12 @@ immutable. Revised interpretation needs an appended revision workflow.
 
 CLI previews do not reserve resources or persist decisions. The controller
 records value only after reconciling runtime evidence and review.
+
+## Contributor partition
+
+New executable line agendas include `contributor`, a stable caller ID. The
+field is frozen into `line_contract`; backlog changes cannot transfer the
+campaign. `research.py select --contributor <id>` (or `SWAP_NEXT_CONTRIBUTOR`)
+only ranks that contributor's lines. Other contributors' drafts and legacy
+unowned histories are not an automatic work queue. Shared reference evidence
+is still available under the cache contract.

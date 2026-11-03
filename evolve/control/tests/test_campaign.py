@@ -45,7 +45,7 @@ class Fixture(unittest.TestCase):
         sh(self.linux, "add", "-A")
         sh(self.linux, "commit", "-qm", "seed")
         sh(self.linux, "tag", "seed")
-        env = patch.dict(os.environ, {"SWAP_NEXT_CLAIM": str(self.project / "claim"),
+        env = patch.dict(os.environ, {"SWAP_NEXT_CONTRIBUTOR": "fixture-contributor", "SWAP_NEXT_CLAIM": str(self.project / "claim"),
                                       "SWAP_NEXT_MACHINE": "hurricpc"})
         env.start()
         self.addCleanup(env.stop)
@@ -75,6 +75,8 @@ class Fixture(unittest.TestCase):
     def open_dir(self, name, **changes):
         self.policy(name)
         cs.write(name, self.record(name, **changes))
+        (self.campaigns / name / "owner.json").write_text(json.dumps(
+            {"schema_version": 1, "campaign": name, "contributor": "fixture-contributor"}))
 
     def prep(self, name, **budget):
         """policy.json + protocol.json, ready for open-campaign."""
@@ -92,6 +94,58 @@ class Fixture(unittest.TestCase):
     def commit_change(self, root):
         (root / "mm/swapfile.c").write_text("int swap_fixture_updated;\n")
         sh(root, "commit", "-qam", "change")
+
+
+class ContributorTests(Fixture):
+    def owned(self, name, contributor="alice"):
+        self.open_dir(name)
+        (self.campaigns / name / "owner.json").write_text(json.dumps(
+            {"schema_version": 1, "campaign": name, "contributor": contributor}))
+
+    def test_foreign_controller_mutation_and_claim_release_are_refused(self):
+        self.owned("owned")
+        self.project.joinpath("claim").write_text("owned\n")
+        before = {str(p): p.read_bytes() for p in self.campaigns.rglob("*") if p.is_file()}
+        with patch.dict(os.environ, {"SWAP_NEXT_CONTRIBUTOR": "bob"}):
+            for argv in (("--campaign", "owned", "close-campaign", "--reason", "foreign"),
+                         ("--campaign", "owned", "resume-campaign", "--reason", "foreign"),
+                         ("release-claim", "--reason", "foreign")):
+                rc, result = self.run_cli(*argv)
+                self.assertEqual(rc, 2)
+                self.assertIn("belongs to contributor", result["error"])
+            with self.assertRaisesRegex(ValueError, "belongs to contributor"):
+                cs.require_execution("owned")
+        self.assertEqual(before, {str(p): p.read_bytes() for p in self.campaigns.rglob("*") if p.is_file()})
+        self.assertEqual(self.project.joinpath("claim").read_text(), "owned\n")
+        with patch.dict(os.environ, {"SWAP_NEXT_CONTRIBUTOR": "alice"}):
+            self.assertEqual(cs.require_execution("owned")["campaign"], "owned")
+
+    def test_direct_new_campaign_cannot_use_foreign_agenda(self):
+        self.prep("new-work")
+        lines = self.campaigns / "lines"
+        lines.mkdir()
+        (lines / "alice-line.json").write_text(json.dumps({"contributor": "alice"}))
+        with patch.dict(os.environ, {"SWAP_NEXT_CONTRIBUTOR": "bob"}):
+            rc, result = self.run_cli("--campaign", "new-work", "open-campaign",
+                                     "--line", "alice-line", "--machine", "hurricpc")
+        self.assertEqual(rc, 2)
+        self.assertIn("another contributor", result["error"])
+        self.assertFalse((self.campaigns / "new-work/campaign.json").exists())
+        self.assertFalse((self.campaigns / "new-work/owner.json").exists())
+        self.assertFalse(self.project.joinpath("claim").exists())
+
+    def test_inheritance_requires_same_contributor_and_references_remain_readable(self):
+        self.owned("destination", "alice")
+        self.owned("own-source", "alice")
+        self.owned("foreign-source", "bob")
+        self.open_dir("legacy-source")
+        (self.campaigns / "legacy-source/owner.json").unlink()
+        with patch.dict(os.environ, {"SWAP_NEXT_CONTRIBUTOR": "alice"}):
+            cs.require_same_contributor("destination", "own-source")
+            for source in ("foreign-source", "legacy-source"):
+                with self.assertRaises(ValueError):
+                    cs.require_same_contributor("destination", source)
+            self.assertEqual(cs.load("foreign-source")["campaign"], "foreign-source")
 
 
 class ExportTests(Fixture):

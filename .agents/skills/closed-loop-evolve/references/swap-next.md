@@ -113,3 +113,11 @@ evolve/.venv/bin/python -m unittest discover -s evolve -p 'test_*.py' -v
 
 `XSWAP_EVIDENCE_FIXTURE` and `SWAP_NEXT_EVIDENCE_FIXTURE` enable the
 real-run parser tests. These checks never boot a kernel.
+
+## Contributor identity
+
+Use the same stable `SWAP_NEXT_CONTRIBUTOR` for this contributor across resumes,
+and a distinct identity for each independent contributor. The Session entry
+and controller guards enforce campaign ownership; the research selector filters
+line agendas by it. Do not adopt unowned history or release another owner's
+active machine claim. Shared retained reference evidence remains readable.

@@ -43,7 +43,9 @@ persists the next action and verifies measurements. An agent session is needed
 through delivery. This is not a background model service.
 
 ```sh
-# A new campaign uses a prepared policy/protocol and a line agenda.
+# Use your stable contributor identity, not another campaign's owner.
+export SWAP_NEXT_CONTRIBUTOR=your-stable-id
+# A new campaign uses a prepared policy/protocol and your own line agenda.
 evolve/.venv/bin/python evolve/loop.py start --campaign <c> --line <line> --idea <idea> --machine <machine>
 # Recover the same campaign, including report delivery after execution closes.
 evolve/.venv/bin/python evolve/loop.py resume --campaign <c>
@@ -56,6 +58,12 @@ actions identify the artifact the agent must supply. Re-read `next-action`
 after each result. Never infer completion from a command exit code alone.
 [The session contract](evolve/session-schema.md) documents actions and decision
 payloads. Existing suite-specific commands remain available.
+
+Each contributor owns separate line and campaign state. Start selects only your
+lines; Resume only continues your sessions. Other contributors' work is a
+read-only reference, not a shared to-do queue. Shared upstream/cache evidence
+remains reusable. A busy machine does not authorize releasing someone else's
+claim or taking over their experiment.
 
 A **line** owns a durable question, prioritized ideas, upstream alternatives,
 complexity/value criteria and lifetime resource ceilings. A **campaign** freezes

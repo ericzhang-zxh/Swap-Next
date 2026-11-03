@@ -5,9 +5,37 @@ metadata and report delivery. An active contributor supplies hypotheses,
 implementation, independent review and explanations; verified artifacts
 determine progress. The driver never invokes a model or promotes candidate code.
 
+## Contributor ownership
+
+Every contributor has a stable caller-supplied ID. Pass `--contributor <id>`
+or export `SWAP_NEXT_CONTRIBUTOR=<id>` for all commands and delegated workers.
+The driver never infers that identity from the target session, Git account,
+machine, or model name. Several contributors can use the same model and host.
+
+Fresh campaigns create immutable `owner.json`; the session, frozen line
+contract and action identity carry the same contributor. Start and Resume may
+only continue that owner's campaign. Every action rechecks ownership. Starting
+a second campaign creates separate state; it does not import an active
+candidate or to-do list from another campaign.
+
+Automatic selection considers only agendas with a matching `contributor`.
+An explicitly named foreign or unowned line cannot be frozen. Prepare a new
+owned line if none is available. Historical unowned campaigns are not adopted
+by Start or Resume. Deliberate ownership reconciliation is separate from this
+automatic flow and must have explicit owner direction.
+
+Controller mutations, execution and claim release enforce owned campaigns too.
+A busy machine is a resource conflict, not permission to take over its campaign.
+Baseline inheritance requires the same contributor. Read-only historical
+reports, retained upstream references and validated cache evidence remain
+shared. This is routing for cooperative contributors, not OS authentication
+against someone who can rewrite the repository.
+
 ## CLI and API
 
-The repository entry point is evolve/loop.py:
+The repository entry point is evolve/loop.py. Set your own identity first:
+
+    export SWAP_NEXT_CONTRIBUTOR=your-stable-id
 
     evolve/.venv/bin/python evolve/loop.py start --campaign example --line research --idea first --machine worker
     evolve/.venv/bin/python evolve/loop.py resume --campaign example
@@ -22,7 +50,7 @@ to the wrapper's next-action. The required arguments are the same. Start can
 select a prepared active line and proposed idea when their IDs are omitted.
 It never invents baseline or protocol parameters.
 
-Session(campaign, root) exposes start(line=..., idea=..., machine=...), resume(),
+Session(campaign, root, contributor=...) exposes start(line=..., idea=..., machine=...), resume(),
 next(), execute(action_id), decide(action_id, payload), and
 value(candidate, decision). Tests inject a clock, snapshotter or executor.
 The production CLI has no bypass switches. The plan(snapshot) function is pure.
@@ -33,6 +61,7 @@ The campaign's ledger/session.json has schema version 1:
 
 | Field | Meaning |
 | --- | --- |
+| contributor | Stable owner, checked against owner.json before every action. |
 | campaign, line, machine, idea_id | Exact campaign and current research selection. |
 | mode | preparing, research, or legacy recovery. |
 | allowed_tiers | Exactly probe and fast. |

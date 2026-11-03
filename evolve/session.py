@@ -34,6 +34,7 @@ import correctness_proof
 import delivery
 import research
 import reviews
+import ownership
 
 NAME = re.compile(r"[a-z][a-z0-9-]{0,47}")
 OBJECT = re.compile(r"[0-9a-f]{40}")
@@ -363,8 +364,9 @@ def _token_processes(token):
 
 
 class Session:
-    def __init__(self, campaign, root=ROOT, *, snapshotter=None, executor=None, clock=None):
+    def __init__(self, campaign, root=ROOT, *, contributor=None, snapshotter=None, executor=None, clock=None):
         self.campaign = name(campaign, "campaign")
+        self.contributor = ownership.contributor(contributor)
         self.root = Path(root).resolve()
         self.directory = self.root / "campaigns" / campaign
         need(not self.directory.is_symlink(), "campaign directory must not be a symlink")
@@ -376,16 +378,20 @@ class Session:
 
     @contextmanager
     def lock(self):
+        if ownership.owner(self.root, self.campaign) is not None:
+            ownership.require(self.root, self.campaign, self.contributor)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with (self.path.parent / ".session.lock").open("a") as stream:
             fcntl.flock(stream, fcntl.LOCK_EX)
             yield
 
     def state(self):
+        ownership.require(self.root, self.campaign, self.contributor)
         need(self.path.is_file(), "Run session start or resume before requesting actions.")
         value = read(self.path)
         need(value.get("schema_version") == 1 and value.get("campaign") == self.campaign,
              "session identity/schema mismatch")
+        need(value.get("contributor") == self.contributor, "session contributor differs from campaign ownership")
         need(value.get("allowed_tiers") == ALLOWED_TIERS, "session automatic tiers must remain probe and fast")
         return value
 
@@ -420,7 +426,7 @@ class Session:
         line_id, idea_id = state.get("line"), state.get("idea_id")
         if not line_id:
             try:
-                selected = research.select_line(self.root).get("selected")
+                selected = research.select_line(self.root, contributor=self.contributor).get("selected")
                 if selected:
                     line_id, idea_id = selected["line"], idea_id or selected["idea"]
                 else:
@@ -431,6 +437,8 @@ class Session:
         if line_id:
             try:
                 line = research.validate_line(read(self.root / "campaigns/lines" / (name(line_id, "line") + ".json")))
+                need(line.get("contributor") == self.contributor,
+                     "selected line belongs to another contributor or is unowned; prepare your own line")
                 need(line["status"] == "active", "selected research line is not active")
                 profile = research.load_profile(line["profile"], self.root)
                 ideas = [item for item in line["ideas"] if item["status"] == "proposed"
@@ -454,12 +462,14 @@ class Session:
     def start(self, *, line=None, idea=None, machine=None):
         """Freeze prepared inputs or return a concrete preparation action. Never launches."""
         with self.lock():
+            ownership.claim(self.root, self.campaign, self.contributor)
             if self.path.exists():
                 state = self.state()
                 if state["mode"] != "preparing":
                     return self._next_locked(state)
             else:
                 state = {"schema_version": 1, "campaign": self.campaign, "mode": "preparing",
+                         "contributor": self.contributor,
                          "created_unix": self.clock(), "allowed_tiers": list(ALLOWED_TIERS),
                          "line": line, "idea_id": idea, "machine": machine,
                          "pins": {}, "rounds": [], "decisions": [], "executions": [], "stop_reason": None}
@@ -470,6 +480,9 @@ class Session:
             existing = read(self.directory / "campaign.json") if (self.directory / "campaign.json").exists() else None
             frozen_path = self.directory / "research.json"
             if existing:
+                if frozen_path.exists():
+                    need(read(frozen_path).get("line_contract", {}).get("contributor") == self.contributor,
+                         "frozen research belongs to another contributor or is unowned")
                 state.update(line=existing.get("line"), machine=existing.get("machine"))
                 state["mode"] = "research" if frozen_path.exists() else "legacy"
                 if frozen_path.exists():
@@ -509,7 +522,7 @@ class Session:
             return self._next_locked(state)
 
     def _pin(self, state, *, research_file):
-        names = ["policy.json", "protocol.json"] + (["research.json"] if research_file else [])
+        names = ["owner.json", "policy.json", "protocol.json"] + (["research.json"] if research_file else [])
         state["pins"] = {key: sha(self.directory / key) for key in names if (self.directory / key).is_file()}
 
     def resume(self):
@@ -1079,6 +1092,7 @@ class Session:
         guard = {key: s.get(key) for key in ("opened", "closed", "claim", "stop", "budget", "fingerprint")}
         if item.get("command") in {"render", "verify-live"}:
             item["identity"]["delivery_retry_generation"] = s.get("delivery_retry_generation", 0)
+        item["contributor"] = self.contributor
         item["input_hashes"] = inputs
         item["guard"] = guard
         item["id"] = "action-" + digest(item)[:24]
@@ -1196,6 +1210,7 @@ class Session:
 
     def _run(self, argv, log, token, on_spawn):
         env = os.environ.copy()
+        env["SWAP_NEXT_CONTRIBUTOR"] = self.contributor
         env["SWAP_NEXT_ACTION_TOKEN"] = token
         env["PYTHONDONTWRITEBYTECODE"] = "1"
         with log.open("wb") as output:
@@ -1382,6 +1397,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["start", "resume", "next", "execute", "decide", "value"])
     parser.add_argument("--campaign", required=True)
+    parser.add_argument("--contributor", help="stable caller identity; defaults to SWAP_NEXT_CONTRIBUTOR")
     parser.add_argument("--line")
     parser.add_argument("--idea")
     parser.add_argument("--machine")
@@ -1390,7 +1406,7 @@ def main(argv=None):
     parser.add_argument("--candidate")
     args = parser.parse_args(argv)
     try:
-        session = Session(args.campaign)
+        session = Session(args.campaign, contributor=args.contributor)
         if args.command == "start":
             result = session.start(line=args.line, idea=args.idea, machine=args.machine)
         elif args.command == "resume":

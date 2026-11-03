@@ -16,6 +16,22 @@ apply Swap Next's kernel-specific gates to unrelated projects.
 
 ## Swap Next: drive the durable session
 
+Use a stable contributor ID from the caller's own context and export
+`SWAP_NEXT_CONTRIBUTOR=<id>` for every command and delegated worker. For a
+new independent contributor chat, choose and retain a distinct ID; do not use
+the model name, Git account, another campaign's owner, or a project-wide shared
+default. Resume only that contributor's own prior work. Start selects only
+owned line agendas; create an independent agenda when none is available.
+Never take over a foreign campaign, rewrite its owner, release its active claim,
+or treat its pending ideas as your queue. Read-only results and verified
+upstream/cache evidence remain shared references. Deliberate transfer requires
+explicit owner direction and provenance reconciliation outside automatic Start.
+
+The contributor agent originates hypotheses from code costs, retained evidence
+and relevant upstream work, then records provenance, mechanism, expected value,
+simpler alternatives and falsifiers before measurement. The framework ranks
+that contributor's recorded ideas; it does not generate hypotheses by itself.
+
 When asked to start or resume Swap Next research, use the current checkout's
 `evolve/.venv/bin/python evolve/loop.py start --campaign <c> --line <line>
 --idea <idea> --machine <machine>` or `... resume --campaign <c>`.

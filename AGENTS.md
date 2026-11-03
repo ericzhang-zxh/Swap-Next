@@ -140,6 +140,16 @@ This applies to every agent and runner.
 
 ## Research actions and reusable evidence
 
+- Give every contributor a stable, distinct `SWAP_NEXT_CONTRIBUTOR` identity.
+  Start only owned lines/campaigns and resume only that contributor's prior
+  work. Never infer your identity from the target's owner or use a shared model
+  name as ownership. Unowned historical work is reference-only until explicitly
+  reconciled; no automatic adoption, transfer or foreign claim release.
+- Separate research ownership from shared resources. Reports and validated
+  upstream/cache evidence can be referenced across contributors. Own candidates,
+  pending ideas, decisions and budgets stay in the owner's campaign. Machine
+  contention is resolved by waiting or reporting the busy claim.
+
 - Use `evolve/loop.py start` or `resume` and follow durable actions through
   delivery. The agent owns research reasoning and edits; trusted commands own
   state changes and measurements. See [session-schema](evolve/session-schema.md).

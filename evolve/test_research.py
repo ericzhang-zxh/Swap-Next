@@ -32,7 +32,7 @@ def idea(name="first", priority=1):
 
 
 def line(name="research"):
-    return {"schema_version": 1, "line": name, "question": "Can fault work be reduced?",
+    return {"schema_version": 1, "line": name, "contributor": "fixture-contributor", "question": "Can fault work be reduced?",
             "status": "active", "profile": "swap-core", "anchor_commit": "a" * 40,
             "baseline_commit": "b" * 40, "ideas": [idea()], "upstream_refs": [],
             "no_upstream_reason": "Fixture has no relevant alternative.",
@@ -230,7 +230,7 @@ class ResearchTest(unittest.TestCase):
         self.line["ideas"] = [idea("first", 1), idea("second", 3), idea("third", 10)]
         self.line["ideas"][2]["mechanism_evidence_type"] = "per_operation_cost"
         self.put("campaigns/lines/research.json", self.line)
-        selected = r.select_line(self.root)
+        selected = r.select_line(self.root, contributor="fixture-contributor")
         self.assertEqual(selected["selected"]["idea"], "second")
         self.assertEqual(selected["blocked"][0]["idea"], "third")
         self.assertFalse(selected["execution_authorized"])

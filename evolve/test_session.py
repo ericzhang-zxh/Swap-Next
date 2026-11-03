@@ -55,7 +55,7 @@ class SessionTests(unittest.TestCase):
         s.write(self.directory / "policy.json", self.policy)
         s.write(self.root / "campaigns/hosts.json", {"fixture": {"hostnames": []}})
         self.claim = self.root / "claim"
-        env = patch.dict(os.environ, {"SWAP_NEXT_MACHINE": "fixture", "SWAP_NEXT_CLAIM": str(self.claim)})
+        env = patch.dict(os.environ, {"SWAP_NEXT_CONTRIBUTOR": "fixture-contributor", "SWAP_NEXT_MACHINE": "fixture", "SWAP_NEXT_CLAIM": str(self.claim)})
         env.start()
         self.addCleanup(env.stop)
         self.driver = s.Session(CAMPAIGN, self.root, executor=self.execute, clock=lambda: 1000)
@@ -432,6 +432,79 @@ class SessionTests(unittest.TestCase):
         s.write(self.directory / "ledger/guest-reservations/retained.json", {"campaign": CAMPAIGN, "pool": "fast"})
         self.assertEqual(self.driver.next()["stage"], "integrity_blocked")
         self.assertEqual(s.read(self.directory / "ledger/budget.json")["guests"], 0)
+
+    def test_foreign_contributor_cannot_continue_any_session_action(self):
+        item = self.driver.start(line="research", idea="first", machine="fixture")
+        before = {str(p): p.read_bytes() for p in self.directory.rglob("*") if p.is_file()}
+        other = s.Session(CAMPAIGN, self.root, contributor="another-contributor")
+        calls = [lambda: other.start(), lambda: other.resume(), lambda: other.next(),
+                 lambda: other.execute(item["id"]),
+                 lambda: other.decide(item["id"], {"kind": "stop", "reason": "foreign"}),
+                 lambda: other.value("one", {})]
+        for call in calls:
+            with self.assertRaisesRegex(ValueError, "belongs to contributor"):
+                call()
+        self.assertEqual(before, {str(p): p.read_bytes() for p in self.directory.rglob("*") if p.is_file()})
+        same = s.Session(CAMPAIGN, self.root, contributor="fixture-contributor")
+        self.assertEqual(same.resume()["stage"], "open")
+
+    def test_auto_selection_ignores_foreign_priority_and_unowned_history(self):
+        foreign = copy.deepcopy(self.agenda)
+        foreign.update(line="foreign", contributor="another-contributor")
+        foreign["ideas"][0]["priority"] = 9999
+        s.write(self.root / "campaigns/lines/foreign.json", foreign)
+        s.write(self.root / "campaigns/lines/foreign-draft.json", {"contributor": "another-contributor"})
+        legacy = copy.deepcopy(foreign)
+        legacy["line"] = "unowned"
+        legacy.pop("contributor")
+        s.write(self.root / "campaigns/lines/unowned.json", legacy)
+        self.assertEqual(self.driver.start(machine="fixture")["stage"], "open")
+        self.assertEqual(self.driver.state()["line"], "research")
+        frozen = s.read(self.directory / "research.json")
+        self.assertEqual(frozen["line_contract"]["contributor"], "fixture-contributor")
+
+    def test_explicit_foreign_line_is_not_frozen(self):
+        self.agenda["contributor"] = "another-contributor"
+        s.write(self.root / "campaigns/lines/research.json", self.agenda)
+        result = self.driver.start(line="research", machine="fixture")
+        self.assertEqual(result["stage"], "prepare")
+        self.assertIn("another contributor", result["reason"])
+        self.assertFalse((self.directory / "research.json").exists())
+
+    def test_unowned_existing_campaign_is_not_automatically_adopted(self):
+        self.campaign_record()
+        before = (self.directory / "campaign.json").read_bytes()
+        with self.assertRaisesRegex(ValueError, "automatic adoption is forbidden"):
+            self.driver.resume()
+        self.assertFalse((self.directory / "owner.json").exists())
+        self.assertFalse(self.driver.path.exists())
+        self.assertEqual(before, (self.directory / "campaign.json").read_bytes())
+
+    def test_nested_execution_remnants_are_not_automatically_adopted(self):
+        retained = self.directory / "ledger/guest-reservations/orphan-attempt.json"
+        s.write(retained, {"status": "STARTED", "campaign": CAMPAIGN})
+        before = retained.read_bytes()
+        with self.assertRaisesRegex(ValueError, "automatic adoption is forbidden"):
+            self.driver.start(line="research", machine="fixture")
+        self.assertFalse((self.directory / "owner.json").exists())
+        self.assertFalse((self.directory / "research.json").exists())
+        self.assertFalse(self.driver.path.exists())
+        self.assertEqual(before, retained.read_bytes())
+
+    def test_missing_caller_identity_never_infers_target_owner(self):
+        self.driver.start(line="research", machine="fixture")
+        with patch.dict(os.environ, {"SWAP_NEXT_CONTRIBUTOR": ""}):
+            with self.assertRaisesRegex(ValueError, "stable contributor ID"):
+                s.Session(CAMPAIGN, self.root)
+
+    def test_same_contributor_new_campaign_has_independent_session(self):
+        self.driver.start(line="research", machine="fixture")
+        before = self.driver.path.read_bytes()
+        other = s.Session("second-campaign", self.root, contributor="fixture-contributor")
+        self.assertEqual(other.start(line="research", machine="fixture")["stage"], "prepare")
+        self.assertNotEqual(other.path, self.driver.path)
+        self.assertEqual(before, self.driver.path.read_bytes())
+        self.assertEqual(other.state()["rounds"], [])
 
     def test_protocol_mutation_cannot_refreeze(self):
         self.driver.start(line="research", idea="first", machine="fixture")

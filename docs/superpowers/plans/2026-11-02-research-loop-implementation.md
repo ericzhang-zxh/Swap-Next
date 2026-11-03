@@ -112,3 +112,34 @@ The next acceptance step is the separately authorized bounded pilot: one
 substantive idea, a pinned relevant upstream alternative, current machine
 preflight, real probe/fast evidence and the full explanatory report delivery.
 No slow tier or candidate promotion follows automatically.
+
+## Contributor isolation follow-up, 2026-11-03
+
+The owner clarified that contributors keep independent research agendas and
+continue only their own prior work. A stable caller identity now binds
+`owner.json`, line contracts, sessions and actions. Start ranks only owned
+agendas; all session operations reject a foreign owner. Unowned historical
+campaigns require explicit provenance reconciliation and are never adopted
+automatically. Controller mutations, execution, inherited baselines and active
+claim release check owned campaigns too. Shared read-only references and
+validated cache evidence remain available across contributors.
+
+This is a cooperative workflow boundary, not filesystem authentication. Legacy
+controller-only records retain their historical contract; the new Session entry
+cannot automatically take them over. The contributor identity comes from the
+caller, never from the target's owner, model name or shared Git account.
+
+Validation: 208 evolve tests and 161 controller tests passed. Ten new
+regressions cover foreign session actions with unchanged files, scoped line
+selection, explicit foreign lines, historical adoption refusal, missing caller
+identity, independent new campaigns, protected controller/claim operations and
+same-contributor inheritance, direct-controller foreign-line refusal, and
+nested historical evidence adoption refusal. Independent probes found the last
+two gaps; both were fixed before dispatching the new experiment chat.
+The installed skill validator and changed
+Markdown link checks passed. No real experiment ran in this framework check.
+
+The owner separately authorized a longer end-to-end experiment in a new main
+chat using the same model. That contributor will originate its own hypothesis
+from evidence and run its own campaign, rather than receive a preselected
+hypothesis or continue another contributor's unfinished work.

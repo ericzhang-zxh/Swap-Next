@@ -545,6 +545,8 @@ def baseline_from(args, protocol):
     require(source and cand and bool(args.evidence_row) != bool(args.evidence_report),
             "--baseline-from CAMPAIGN:CANDIDATE needs exactly one of --evidence-row, --evidence-report")
     source_dir = campaign_store.campaign_dir(source)
+    if CAMPAIGN:
+        campaign_store.require_same_contributor(CAMPAIGN, source)
     require(campaign_store.load(source)["line"] == args.line,
             "inherited baseline must come from the same line")
     expected = seed()
@@ -598,6 +600,15 @@ def _open_campaign(args):
     directory = campaign_store.campaign_dir(CAMPAIGN)
     require((directory / "protocol.json").is_file(), "protocol.json is missing")
     require(not (directory / "campaign.json").exists(), "campaign.json already exists")
+    ownership = campaign_store.ownership_api()
+    actor = ownership.contributor()
+    agenda_path = PROJECT / "campaigns/lines" / (campaign_store._name(args.line, "line") + ".json")
+    if agenda_path.exists():
+        agenda = load_json(agenda_path)
+        require(agenda.get("contributor") == actor, "research line belongs to another contributor or is unowned")
+    # A fresh low-level open is never a legacy exemption. Session-prepared
+    # campaigns already have this immutable owner; direct callers create it.
+    ownership.claim(PROJECT, CAMPAIGN, actor)
     config, base = policy(), scope_profile()
     require(set(config["allowed_modify"]) <= set(base["allowed_modify"]) and
             set(config["allowed_add"]) <= set(base["allowed_add"]),
@@ -617,6 +628,8 @@ def _open_campaign(args):
         import research
         contract = frozen["line_contract"]
         require(contract["line"] == args.line, "research line mismatch")
+        if actor is not None:
+            require(contract.get("contributor") == actor, "research line belongs to another contributor or is unowned")
         readiness = research.capability_readout(base, protocol, config, PROJECT)
         require(readiness["ready"], "; ".join(readiness["missing_capabilities"]))
         line = research.validate_line(load_json(PROJECT / "campaigns/lines" / (args.line + ".json")))
@@ -637,6 +650,8 @@ def _open_campaign(args):
         old = campaign_store.load(path.parent.name)
         if old["line"] != args.line:
             continue
+        if actor is not None and campaign_store.ownership_api().owner(PROJECT, old["campaign"]) != actor:
+            continue
         source = path.with_name("protocol.json")
         if not source.exists() and old.get("protocol_ref"):
             source = PROJECT / old["protocol_ref"]
@@ -655,6 +670,8 @@ def _open_campaign(args):
                          "wall_seconds": budget["wall_seconds"],
                          "probe_guest_attempts": budget.get("probe_guest_attempts", 0),
                          "approved_over_cap": args.over_cap_approval or None}}
+    if actor is not None:
+        record["contributor"] = actor
     errors = campaign_store.budget_errors(record)
     require(not errors, "; ".join(errors))
     campaign_store.take_claim(CAMPAIGN, locked=True)
@@ -759,6 +776,8 @@ def main():
     args = parser.parse_args()
     try:
         host_check()
+        if args.campaign and args.command not in {"doctor", "status", "protocol", "review-list", "check-reference"}:
+            campaign_store.require_contributor(args.campaign)
         if args.campaign and args.command != "release-claim":
             configure_campaign(args.campaign)
         if args.command == "doctor":

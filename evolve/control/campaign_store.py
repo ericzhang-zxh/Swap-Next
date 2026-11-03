@@ -89,7 +89,29 @@ def load(name):
         raise CampaignError(f"cannot read {path}: {e}")
     return _check(name, r)
 
+def ownership_api():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import ownership
+    return ownership
+
+
+def require_contributor(name):
+    # Old controller-only records retain their original contract. Sessions may
+    # not adopt them; newly owned campaigns enforce caller identity everywhere.
+    return ownership_api().require(CAMPAIGNS.parent, name, allow_legacy=True)
+
+
+def require_same_contributor(destination, source):
+    actor = require_contributor(destination)
+    if actor is not None:
+        ownership_api().require(CAMPAIGNS.parent, source, actor)
+
+
 def write(name, record):
+    actor = require_contributor(name)
+    if actor is not None and record.get("contributor") not in (None, actor):
+        raise CampaignError("campaign contributor differs from ownership")
     _dump(campaign_dir(name) / "campaign.json", _check(name, record))
 
 def candidates(name):
@@ -105,6 +127,7 @@ def candidates(name):
     return out
 
 def write_candidate(name, record):
+    require_contributor(name)
     cid = _name(record.get("id"), "candidate")
     _dump(campaign_dir(name) / "candidates" / f"{cid}.json", record)
 
@@ -124,6 +147,7 @@ def budget_errors(record):
     return errs
 
 def require_open(name):
+    require_contributor(name)
     r = load(name)
     if r["status"] != "open":
         raise CampaignError(f"campaign {name} is closed")
@@ -167,6 +191,7 @@ def take_claim(name, *, locked=False):
 
 def _take_claim(name):
     _name(name)
+    require_contributor(name)
     held = read_claim()
     if held not in (None, name):
         try:
@@ -195,6 +220,7 @@ def _release_claim(name, reason):
         raise CampaignError(f"claim is {held!r}, not {name!r}")
     if held is None:
         return
+    require_contributor(held)
     with claim_path().with_suffix(".log").open("a") as f:
         f.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')} released {held}: {reason}\n")
     claim_path().unlink()
