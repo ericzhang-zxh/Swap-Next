@@ -1,0 +1,82 @@
+[
+  {
+    "suite": "evolve/control/tests",
+    "returncode": 0,
+    "seconds": 5.46,
+    "log": "campaigns/codex-r01-demand-2026-11-03/runs/framework-tests/final-evolve-control-tests.log",
+    "summary": "Ran 161 tests in 5.330s\nOK",
+    "log_sha256": "2932bf7073890fc168d8aee6ec40e29fe15643b23a12c760aecd08f5d3a16057",
+    "checked_source_commit": "bf9a0d32b771573621f5679a3affca2cde009628"
+  },
+  {
+    "suite": "benchmark/tests",
+    "returncode": 0,
+    "seconds": 0.22,
+    "log": "campaigns/codex-r01-demand-2026-11-03/runs/framework-tests/final-benchmark-tests.log",
+    "summary": "Ran 12 tests in 0.163s\nOK",
+    "log_sha256": "3b3b2546d4002198aea2589c11515e89b04552679620d07f4867ea5cbb5d83f7",
+    "checked_source_commit": "bf9a0d32b771573621f5679a3affca2cde009628"
+  },
+  {
+    "suite": "benchmark/swap-standard",
+    "returncode": 0,
+    "seconds": 1.29,
+    "log": "campaigns/codex-r01-demand-2026-11-03/runs/framework-tests/final-benchmark-swap-standard.log",
+    "summary": "Ran 91 tests in 1.235s\nOK",
+    "log_sha256": "1828cf3c6958c73d748e202fc70ae466d914e75d8026043206d24d1790b7b960",
+    "checked_source_commit": "bf9a0d32b771573621f5679a3affca2cde009628"
+  },
+  {
+    "suite": "benchmark/xswap",
+    "returncode": 0,
+    "seconds": 0.07,
+    "log": "campaigns/codex-r01-demand-2026-11-03/runs/framework-tests/final-benchmark-xswap.log",
+    "summary": "Ran 18 tests in 0.036s\nOK (skipped=1)",
+    "log_sha256": "11c71d82f964ad66cf6e7dffd9445cc7fe164758084ce9ee2724ff71b1c479aa",
+    "checked_source_commit": "bf9a0d32b771573621f5679a3affca2cde009628"
+  },
+  {
+    "suite": "benchmark/xswap-structure",
+    "returncode": 0,
+    "seconds": 0.13,
+    "log": "campaigns/codex-r01-demand-2026-11-03/runs/framework-tests/final-benchmark-xswap-structure.log",
+    "summary": "Ran 29 tests in 0.072s\nOK (skipped=1)",
+    "log_sha256": "3da8e091c853a6486a2e3819e3558b4c71d86182cf0c2c95652bef819c900148",
+    "checked_source_commit": "bf9a0d32b771573621f5679a3affca2cde009628"
+  },
+  {
+    "suite": "benchmark/xswap-hole-probe",
+    "returncode": 0,
+    "seconds": 0.1,
+    "log": "campaigns/codex-r01-demand-2026-11-03/runs/framework-tests/final-benchmark-xswap-hole-probe.log",
+    "summary": "Ran 20 tests in 0.050s\nOK",
+    "log_sha256": "598c1419a015555b900e8173a3d0662636b7927b877a747348ced372c70b3395",
+    "checked_source_commit": "bf9a0d32b771573621f5679a3affca2cde009628"
+  },
+  {
+    "suite": "benchmark/kernel",
+    "returncode": 0,
+    "seconds": 0.04,
+    "log": "campaigns/codex-r01-demand-2026-11-03/runs/framework-tests/final-benchmark-kernel.log",
+    "summary": "Ran 0 tests in 0.000s\nOK (skipped=1)",
+    "log_sha256": "2b11b9848944e91bd1339cb9ef285681498cef889d7789ac1ab1e00a6057d572",
+    "checked_source_commit": "bf9a0d32b771573621f5679a3affca2cde009628"
+  },
+  {
+    "suite": "evolve",
+    "returncode": 0,
+    "seconds": 16.85,
+    "log": "campaigns/codex-r01-demand-2026-11-03/runs/framework-tests/final-evolve.log",
+    "summary": "Ran 210 tests in 16.720s\nOK",
+    "log_sha256": "00e6d842571b48f4782325b4fc0235209dd08a75eaf66de3e7daee4de98afcfb",
+    "checked_source_commit": "bf9a0d32b771573621f5679a3affca2cde009628"
+  },
+  {
+    "suite": "evolve.test_delivery",
+    "reason": "Chart display unit changed after full suite pass; metadata values scaled with an explicit axis unit to preserve visible sub-byte differences.",
+    "returncode": 0,
+    "summary": "Ran 10 tests; OK",
+    "checked_source_commit": "b92eff0a26ed226c620a621cb13c805cf11c0f7c",
+    "evidence": "Targeted unittest invocation completed in the controller; full-suite logs above retain the earlier required check run."
+  }
+]

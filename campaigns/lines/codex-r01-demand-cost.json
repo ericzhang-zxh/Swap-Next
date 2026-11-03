@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "line": "codex-r01-demand-cost",
+  "contributor": "codex-research-01",
+  "question": "Can the ordinary demand swap-in path do less fixed work while preserving the upstream speculative and large-folio protections?",
+  "status": "active",
+  "profile": "swap-core",
+  "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "value_policy": {
+    "min_useful_effect": 0.05,
+    "equivalence_margin": 0.03,
+    "requires_upstream_comparison": false,
+    "rationale": "Require at least 5% useful gain beyond calibrated noise and passing guards for this specialization. The upstream algorithm is the measured baseline; no separate unapplied alternative was identified. Equivalent performance alone does not justify a new branch or wasted-allocation tradeoff."
+  },
+  "resource_ceiling": {
+    "guest_attempts": 120,
+    "build_attempts": 10
+  },
+  "upstream_refs": [],
+  "no_upstream_reason": "The relevant upstream universal-precheck implementation is already the algorithm in the frozen baseline (mm/swap_state.c __swap_cache_alloc). The candidate directly contrasts it. No distinct unapplied compatible upstream optimization was identified; reapplying that integrated patch would be an identical or conflicting arm, not an independent alternative. Original upstream rationale is retained in provenance.",
+  "ideas": [
+    {
+      "id": "demand-precheck",
+      "status": "proposed",
+      "priority": 100,
+      "change_type": "optimize",
+      "bottleneck": "The order-0 cold-fault path acquires the cluster lock and validates a slot twice around a small folio allocation.",
+      "mechanism": "Omit only the preliminary locked check for order-0 calls with a vm_fault; retain speculative and large-folio prechecks and all post-allocation validation.",
+      "mechanism_evidence_type": "reviewed_structure",
+      "affected_paths": [
+        "mm/swap_state.c"
+      ],
+      "expected_benefit": "Reduce per-demand-fault CPU work without altering readahead or swap-event counts. A 5% latency ratio gain is the minimum useful effect; direction and magnitude remain unverified.",
+      "simpler_alternative": "Keep the upstream universal precheck, which avoids wasted allocation and needs no specialization.",
+      "falsifier": "Reject if concurrency or lifetime checks fail, random-latency guards regress, or fresh paired evidence does not resolve a useful gain. Same event counts alone cannot establish performance.",
+      "required_evidence": [
+        "Independent exact-tree lifetime and error-path review",
+        "Counted exact-commit xswap correctness",
+        "Structural mechanism proof",
+        "Fresh probe and fast calibration",
+        "Paired baseline/candidate latency and guard evidence"
+      ],
+      "upstream_refs": [],
+      "no_upstream_reason": "The relevant upstream universal-precheck implementation is already the algorithm in the frozen baseline (mm/swap_state.c __swap_cache_alloc). The candidate directly contrasts it. No distinct unapplied compatible upstream optimization was identified; reapplying that integrated patch would be an identical or conflicting arm, not an independent alternative. Original upstream rationale is retained in provenance.",
+      "estimated_cost": {
+        "guest_attempts": 70,
+        "build_attempts": 2
+      },
+      "selection_reason": "Prior readahead candidates traded sequential gains for random regressions. This hypothesis changes fixed demand cost rather than prefetch policy, with a small reviewable implementation and explicit upstream counterargument.",
+      "complexity": {
+        "parent": {
+          "state": {
+            "change": "unchanged",
+            "reason": "No new stored state or cache."
+          },
+          "lifetime": {
+            "change": "unchanged",
+            "reason": "The authoritative post-allocation cluster relookup and slot validation remain."
+          },
+          "locking": {
+            "change": "decreased",
+            "reason": "Same lock order and publication lock; one optional precheck acquisition is omitted for eligible calls."
+          },
+          "error_paths": {
+            "change": "mixed",
+            "reason": "All allocation and authoritative-validation rollback paths retained; stale order-0 calls can allocate before rejection."
+          },
+          "configuration": {
+            "change": "unchanged",
+            "reason": "No tunables or kernel configuration changes."
+          },
+          "test_burden": {
+            "change": "unchanged",
+            "reason": "Existing exact-commit data, COW, concurrent-fault and swapoff checks cover the changed path; no new ABI."
+          },
+          "interfaces": {
+            "change": "unchanged",
+            "reason": "No signature or userspace interface changes."
+          },
+          "memory_cost": {
+            "change": "mixed",
+            "reason": "No persistent metadata; possible transient wasted order-0 allocation on races."
+          }
+        },
+        "baseline": {
+          "state": {
+            "change": "unchanged",
+            "reason": "No new stored state or cache."
+          },
+          "lifetime": {
+            "change": "unchanged",
+            "reason": "The authoritative post-allocation cluster relookup and slot validation remain."
+          },
+          "locking": {
+            "change": "decreased",
+            "reason": "Same lock order and publication lock; one optional precheck acquisition is omitted for eligible calls."
+          },
+          "error_paths": {
+            "change": "mixed",
+            "reason": "All allocation and authoritative-validation rollback paths retained; stale order-0 calls can allocate before rejection."
+          },
+          "configuration": {
+            "change": "unchanged",
+            "reason": "No tunables or kernel configuration changes."
+          },
+          "test_burden": {
+            "change": "unchanged",
+            "reason": "Existing exact-commit data, COW, concurrent-fault and swapoff checks cover the changed path; no new ABI."
+          },
+          "interfaces": {
+            "change": "unchanged",
+            "reason": "No signature or userspace interface changes."
+          },
+          "memory_cost": {
+            "change": "mixed",
+            "reason": "No persistent metadata; possible transient wasted order-0 allocation on races."
+          }
+        }
+      },
+      "provenance": [
+        {
+          "kind": "source",
+          "path": "linux:mm/swap_state.c",
+          "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "lines": "443-537"
+        },
+        {
+          "kind": "upstream-rationale",
+          "url": "https://lore.kernel.org/20260517-swap-table-p4-v5-4-88ae43e064c7@tencent.com",
+          "commit": "e1e6750df3b47380a5c1ba9f517e634a8328283f"
+        },
+        {
+          "kind": "negative-evidence",
+          "path": "campaigns/xswap-next-2026-10-24/report/REPORT.md"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "id": "codex-r01-precheck-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-26ab800847d8",
+  "worktree": "worktrees/codex-r01-demand-2026-11-03/codex-r01-precheck-v1",
+  "status": "active",
+  "hypothesis": "For order-0 calls with a fault context, skipping the preliminary cluster-lock range check reduces fixed swap-in latency cost while preserving authoritative post-allocation validation. Reject on correctness failure, scored regression, or absence of a useful resolved gain.",
+  "created_unix": 1793741307.2011318,
+  "protocol_sha256": "bd386fc7c68d6e657f4c086cb07dfef57f50371d1246c1e8aeeedf39cc334c58",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "Order-0 demand allocation executes one fewer swap_cluster_lock_unpinned and __swap_cache_add_check before a successful allocation; post-allocation relookup, locked validation, publication and rollback remain mandatory.",
+    "falsifier": "The exact-tree review finds a removed lifetime/count protection, another caller bypasses required checks, or the eligible success path still executes the preliminary lock/check. Runtime correctness, metadata and calibrated latency must independently pass."
+  },
+  "allowed_modify": [
+    "mm/swapfile.c",
+    "mm/swap_state.c",
+    "mm/swap_table.h",
+    "mm/swap.h",
+    "mm/page_io.c",
+    "include/linux/swap.h",
+    "include/linux/swap_ops.h",
+    "include/linux/swapops.h"
+  ],
+  "allowed_add": [
+    "tools/testing/selftests/mm/swap_next_*.c"
+  ],
+  "budget": {
+    "max_candidates": 3,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 4,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 900,
+    "max_total_campaign_seconds": 64800,
+    "max_build_attempts": 10
+  },
+  "primary_metric": "swapin_seq.mean_ns",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

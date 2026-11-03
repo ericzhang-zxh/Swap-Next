@@ -1,0 +1,12 @@
+{
+  "source_url": "https://git.zx2c4.com/wireguard-linux/commit/mm/swap.h?id=e1e6750df3b47380a5c1ba9f517e634a8328283f",
+  "author": "Kairui Song",
+  "upstream_commit": "e1e6750df3b47380a5c1ba9f517e634a8328283f",
+  "upstream_tree": "244ac765498ca399ae01049b98c1b3ff4b75bf7c",
+  "source_thread": "https://lore.kernel.org/20260517-swap-table-p4-v5-4-88ae43e064c7@tencent.com",
+  "rationale": "Universal locked checks before allocation and before insertion avoid wasted large allocations and stale readahead work. The author expects lightly contended cluster locks.",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_description": "Experimental xswap reference stack with descriptor lifetime repair, containing the universal-precheck algorithm. It is not pristine upstream.",
+  "comparison": "The new B/C contrast tests the existing upstream algorithm in B against the narrow demand/order-0 exception in C. No distinct B/P measurement is claimed, and no historical latency sample is reused.",
+  "ancestry_limit": "The original upstream object is not retained in this local object store; source rationale and baseline code were inspected, but exact upstream ancestry is not inferred from a matching helper."
+}

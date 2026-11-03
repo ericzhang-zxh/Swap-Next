@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-r01-demand-2026-11-03",
+  "mode": "research",
+  "reason": "All nine fresh probe-calibration guests were valid, but metadata-brd spread exceeded the frozen 1% gate. Candidate correctness passed; no candidate probe or paired latency result exists. Stop this campaign without rerunning calibration or changing the protocol; retain the candidate and complete report delivery. Further demand-cost hypotheses cannot be compared with this failed calibration.",
+  "frozen_inputs": {
+    "owner.json": "73a628a342f525dcb004fa9a2edcdd92557ff7236788fd27af109ec223b064a5",
+    "policy.json": "dc09322e465a3b856026a303d7f3720ecb55d54350ac2b9ea5de757a80f6977f",
+    "protocol.json": "3800399d81848439268a9267bac708b7c323665cc313008a37e8e9f00e44b843",
+    "research.json": "97d92376fff97810e7b6b6c7bc018c15d5927644ca1c24bfdc953d627286123a"
+  },
+  "decisions": [
+    {
+      "id": "decision-2de69fd81d2b74a277c23fc7",
+      "action_id": "action-fc36e09ee725f33f720a3586",
+      "kind": "propose",
+      "identity": {
+        "brief_id": "brief-000001-26ab800847d8",
+        "brief_sha256": "20a4502aad7a3c1278623a93efa5e564fc5d6eb6102ac642a935923b1c473b44",
+        "allowed_parents": [
+          "5e84ca928deeacb4eee656806a003f27d1eca82f"
+        ],
+        "idea": "demand-precheck"
+      },
+      "input_hashes": {
+        "evolve/session.py": "af5662a988a72ca8eaad63496fee0bfc257903e443a927ea789d105afdaba9bb",
+        "evolve/control/controller.py": "1770ef0ccf49b718cd1a892422881bcfb9114738bd2274eb03e93eb7742bd130",
+        "evolve/standard_workflow.py": "56616b65756244b5e6aa58191d0036bc426b963a400c9f49925664ed4bd5e712",
+        "evolve/research.py": "2cd6f725ea6ddc2cead27055cf5c8a20d0ff602591b5ea5161c5d7bc0571a027",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "f121c08420909b42527b15c193e46d7d003205f01969a9311c688b8db5092ab7",
+        "evolve/calibration_cache.py": "7ee8e8b22aca5736d07ab37c1f5455d1799861d1929881856ee7493700373afc",
+        "evolve/reference_cache.py": "f623013ba1b2de86be29e906704a7437eeaff5d9f7c58b1fddd8eca3e6560c01",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "campaigns/codex-r01-demand-2026-11-03/campaign.json": "61b26a8a7955b5e80ad4bf57e3b31278caf7ec984c2fdf807ce3299323a2a9fd",
+        "campaigns/codex-r01-demand-2026-11-03/protocol.json": "3800399d81848439268a9267bac708b7c323665cc313008a37e8e9f00e44b843",
+        "campaigns/codex-r01-demand-2026-11-03/policy.json": "dc09322e465a3b856026a303d7f3720ecb55d54350ac2b9ea5de757a80f6977f",
+        "campaigns/codex-r01-demand-2026-11-03/research.json": "97d92376fff97810e7b6b6c7bc018c15d5927644ca1c24bfdc953d627286123a",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/ledger.json": null,
+        "campaigns/codex-r01-demand-2026-11-03/ledger/budget.json": "5d5031bc804a22ea82c430550b9377cc5ac57f6ef3b7d07be819bb3e2be2219c",
+        "benchmark/kernel/builds/codex-r01-base/result.json": "9cc33bb57b77759a9ca881eb46861a5d3fbbcb78c592c82adff425501b9bd759",
+        "benchmark/swap-standard/image.json": "77a2905e98bd798b6ec338dd25bd0e9df4249bb5f23964369e2e83cfee1f5a6b",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/calibration-probe.json": null,
+        "campaigns/codex-r01-demand-2026-11-03/ledger/calibration-fast.json": null,
+        "campaigns/codex-r01-demand-2026-11-03/archive/population.json": "d6977202e69132bd07ecb2ba276f7d801caa3b3aa5c27b2f39e7d4239d65c340",
+        "campaigns/codex-r01-demand-2026-11-03/archive/briefs/brief-000001-26ab800847d8.json": "20a4502aad7a3c1278623a93efa5e564fc5d6eb6102ac642a935923b1c473b44"
+      },
+      "payload": {
+        "kind": "propose",
+        "candidate": "codex-r01-precheck-v1",
+        "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "hypothesis": "For order-0 calls with a fault context, skipping the preliminary cluster-lock range check reduces fixed swap-in latency cost while preserving authoritative post-allocation validation. Reject on correctness failure, scored regression, or absence of a useful resolved gain.",
+        "mechanism": {
+          "kind": "reviewed_structure",
+          "claim": "Order-0 demand allocation executes one fewer swap_cluster_lock_unpinned and __swap_cache_add_check before a successful allocation; post-allocation relookup, locked validation, publication and rollback remain mandatory.",
+          "falsifier": "The exact-tree review finds a removed lifetime/count protection, another caller bypasses required checks, or the eligible success path still executes the preliminary lock/check. Runtime correctness, metadata and calibrated latency must independently pass."
+        },
+        "reason": "Distinct fixed-cost hypothesis from baseline source and upstream precheck rationale; avoids repeating historical readahead candidates."
+      }
+    },
+    {
+      "id": "decision-743ffc9484c7ff2a7ebed018",
+      "action_id": "action-eff5c41ce9a0aea914fd6df2",
+      "kind": "stop",
+      "identity": {
+        "candidate": "codex-r01-precheck-v1",
+        "candidate_commit": "4068681982a044debd290884719e9bdbd4ac5ba9",
+        "source_tree": "912225c401b2df2c160479533f0d9c961b06771c",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "evaluation_id": null,
+        "value_disposition": null
+      },
+      "input_hashes": {
+        "evolve/session.py": "af5662a988a72ca8eaad63496fee0bfc257903e443a927ea789d105afdaba9bb",
+        "evolve/control/controller.py": "1770ef0ccf49b718cd1a892422881bcfb9114738bd2274eb03e93eb7742bd130",
+        "evolve/standard_workflow.py": "56616b65756244b5e6aa58191d0036bc426b963a400c9f49925664ed4bd5e712",
+        "evolve/research.py": "2cd6f725ea6ddc2cead27055cf5c8a20d0ff602591b5ea5161c5d7bc0571a027",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "f864d7645772c5ab8a5bb26db6174df038a8206c788a1cb120cdceaf99a25b0a",
+        "evolve/calibration_cache.py": "7ee8e8b22aca5736d07ab37c1f5455d1799861d1929881856ee7493700373afc",
+        "evolve/reference_cache.py": "f623013ba1b2de86be29e906704a7437eeaff5d9f7c58b1fddd8eca3e6560c01",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "campaigns/codex-r01-demand-2026-11-03/campaign.json": "61b26a8a7955b5e80ad4bf57e3b31278caf7ec984c2fdf807ce3299323a2a9fd",
+        "campaigns/codex-r01-demand-2026-11-03/protocol.json": "3800399d81848439268a9267bac708b7c323665cc313008a37e8e9f00e44b843",
+        "campaigns/codex-r01-demand-2026-11-03/policy.json": "dc09322e465a3b856026a303d7f3720ecb55d54350ac2b9ea5de757a80f6977f",
+        "campaigns/codex-r01-demand-2026-11-03/research.json": "97d92376fff97810e7b6b6c7bc018c15d5927644ca1c24bfdc953d627286123a",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/ledger.json": "55d6763d3c78867a4ccb44e9599a7c262fbba0429af52433dd19803d517351a0",
+        "campaigns/codex-r01-demand-2026-11-03/runs/evaluations/99f37fe54bb4410ab3d3337138bd522d/report.json": "804826f140850100dd952b18d00fc6676399ab6a7a8c0cf92a9ef4ea9ecb019f",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/budget.json": "b25793ab8ee4f7eb742b295bdb22251dfac8d279984703a1ae42e308de78a6df",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/99f37fe54bb4410ab3d3337138bd522d-metadata-brd-0.json": "a34c5b3c927410d581201175be01b37573360cd1562a48f0296797d4921804d2",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/codex-r01-base-correctness.json": "385757df065a3eb5b1650248a8a267c7ee4633bc1dab9a78de71b464cc855dc7",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/99f37fe54bb4410ab3d3337138bd522d-metadata-brd-2.json": "92a43eca1fbbf3d0a7cefb8d6d94794af83ad4567cba16c1e61bdab7b4b5e48c",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/99f37fe54bb4410ab3d3337138bd522d-swapin-zram-64k-2.json": "2b0370edc39942b6a671429c26e2f8da1cf65ce15499e2739c059dacb64c35c3",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/99f37fe54bb4410ab3d3337138bd522d-swapin-disk-1.json": "503e8f83dd508cdbbba4c6ef8ca47c53bcff23fff1aa8596fcb80f5a4029de1d",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/99f37fe54bb4410ab3d3337138bd522d-metadata-brd-1.json": "9477cc98ae4739923d6ea0666fa64476143714f4b7dc4b9f03887de388c82f12",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/99f37fe54bb4410ab3d3337138bd522d-swapin-disk-2.json": "10380ac68893c025fa902333363ac82fd63651049b049f1de33f4c1f2f1b82d1",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/99f37fe54bb4410ab3d3337138bd522d-swapin-zram-64k-1.json": "c51c368cdddbf9ea019a45083288e324eed90668959de00caffedce09e6000c2",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/99f37fe54bb4410ab3d3337138bd522d-swapin-disk-0.json": "ce888a4e99c7c392297dd8d5c8a61e49e1aee58ad584c40c2210083fabe36f42",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/99f37fe54bb4410ab3d3337138bd522d-swapin-zram-64k-0.json": "ef730bb25a33f9aa3b595a70c8051a7a8ac44618a8b62b044a1eddec0b348b0c",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/guest-reservations/codex-r01-precheck-v1-correctness.json": "e3dbb63b430785171bc7e2fc9c7957776dd8beaba96d90f6011dcf476f21886b",
+        "benchmark/kernel/builds/codex-r01-base/result.json": "9cc33bb57b77759a9ca881eb46861a5d3fbbcb78c592c82adff425501b9bd759",
+        "benchmark/swap-standard/image.json": "77a2905e98bd798b6ec338dd25bd0e9df4249bb5f23964369e2e83cfee1f5a6b",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/calibration-probe.json": "804826f140850100dd952b18d00fc6676399ab6a7a8c0cf92a9ef4ea9ecb019f",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/calibration-fast.json": null,
+        "campaigns/codex-r01-demand-2026-11-03/candidates/codex-r01-precheck-v1.json": "ff9bbc6cd98f2d1ece47ec412ff7dfd19308501d4a41e46f66b9b0589764c287",
+        "campaigns/codex-r01-demand-2026-11-03/candidates/codex-r01-precheck-v1/static.json": "9853f89ff6e1ffcd325ab1b1890803c625506963d8796ecf4b7c19b1bfb04b25",
+        "campaigns/codex-r01-demand-2026-11-03/archive/population.json": "9d84550778bd3fa5e1030ad448a253c56e1ed7d35a88548e64347d95c585ee58",
+        "campaigns/codex-r01-demand-2026-11-03/candidates/codex-r01-precheck-v1/mechanism.json": "9b967629eabd1bc9c923bcf4d266e3823d5a1fb4929ee54ece286e39a2f6cb7f",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/99f37fe54bb4410ab3d3337138bd522d-metadata-brd-0/result.json": "b3f4b45705e8bab4db023b804fbd043f3bf57a886e20ab6316dd48def58b3a77",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/99f37fe54bb4410ab3d3337138bd522d-metadata-brd-1/result.json": "f02d42b47a41e65e6e5dab54d72ea3ff4a28273b249aafe3271821555f3a27c0",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/99f37fe54bb4410ab3d3337138bd522d-metadata-brd-2/result.json": "17ecdf15ce18c88894e945ab7a9385eede0fab4471b1649d772c09c79e43752e",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/99f37fe54bb4410ab3d3337138bd522d-swapin-disk-0/result.json": "e367810f085631d1121824edc972d196599ae773db7dc1f6ee635030917ddebb",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/99f37fe54bb4410ab3d3337138bd522d-swapin-disk-1/result.json": "e3f503060b46786e8f437d9fa94d0ea8372a62a590915ef13a2c4b1f89b784e5",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/99f37fe54bb4410ab3d3337138bd522d-swapin-disk-2/result.json": "1cb5057a0be479798a7ac649254454fbcc9e27ac4b7f0d4970028139d7d4dd3e",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/99f37fe54bb4410ab3d3337138bd522d-swapin-zram-64k-0/result.json": "ba2d936d03dcb26999aa5f3618e34b202463e287680b5547f3ed1bce12758934",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/99f37fe54bb4410ab3d3337138bd522d-swapin-zram-64k-1/result.json": "0c523661c7656865bf2d4a2daca2225472df67088ea75feb3671f045abd69c7a",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/99f37fe54bb4410ab3d3337138bd522d-swapin-zram-64k-2/result.json": "5237439a8e43e32cd4596b565f3795829c3fe846ab70d79690b5d2862874b253",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/codex-r01-base-correctness/result.json": "467c4967f1f538f9bec2c7390ae8da363323514db1211333d00330850c7e1b7a",
+        "campaigns/codex-r01-demand-2026-11-03/runs/guests/codex-r01-precheck-v1-correctness/result.json": "467c1f498a018c00ce27927ac94ea6e7e592c623aa09310f41c1eed87bb53166"
+      },
+      "payload": {
+        "kind": "stop",
+        "reason": "All nine fresh probe-calibration guests were valid, but metadata-brd spread exceeded the frozen 1% gate. Candidate correctness passed; no candidate probe or paired latency result exists. Stop this campaign without rerunning calibration or changing the protocol; retain the candidate and complete report delivery. Further demand-cost hypotheses cannot be compared with this failed calibration."
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "action-525e65802959c25cb8a230fd",
+      "command": "open",
+      "identity": {
+        "protocol_sha256": "3800399d81848439268a9267bac708b7c323665cc313008a37e8e9f00e44b843",
+        "policy_sha256": "dc09322e465a3b856026a303d7f3720ecb55d54350ac2b9ea5de757a80f6977f"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-r01-demand-2026-11-03/runs/session/action-525e65802959c25cb8a230fd-52229fdc.log"
+    },
+    {
+      "action_id": "action-07b0b6e4d9311e1719158eef",
+      "command": "brief",
+      "identity": {
+        "fingerprint": "a992790dd83104779545dc28422c252320116f8848a2dd50b797db274c287031",
+        "idea": "demand-precheck"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-r01-demand-2026-11-03/runs/session/action-07b0b6e4d9311e1719158eef-235ce98c.log"
+    },
+    {
+      "action_id": "action-97f65be3983d8b6702e8036c",
+      "command": "new",
+      "identity": {
+        "brief_id": "brief-000001-26ab800847d8",
+        "idea": "demand-precheck"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-r01-demand-2026-11-03/runs/session/action-97f65be3983d8b6702e8036c-79c33894.log"
+    },
+    {
+      "action_id": "action-57acc0f028a8b67839c11140",
+      "command": "check",
+      "identity": {
+        "candidate": "codex-r01-precheck-v1",
+        "candidate_commit": "4068681982a044debd290884719e9bdbd4ac5ba9",
+        "source_tree": "912225c401b2df2c160479533f0d9c961b06771c",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-r01-demand-2026-11-03/runs/session/action-57acc0f028a8b67839c11140-b8a67b2a.log"
+    },
+    {
+      "action_id": "action-a2b10478a7134861e5aa96f2",
+      "command": "calibrate",
+      "identity": {
+        "fingerprint": "a992790dd83104779545dc28422c252320116f8848a2dd50b797db274c287031",
+        "prior_calibration": null
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-r01-demand-2026-11-03/runs/session/action-a2b10478a7134861e5aa96f2-e46c11f2.log"
+    },
+    {
+      "action_id": "action-e70542fcf52726e09973bdb7",
+      "command": "close-candidate",
+      "identity": {
+        "candidate": "codex-r01-precheck-v1",
+        "candidate_commit": "4068681982a044debd290884719e9bdbd4ac5ba9",
+        "source_tree": "912225c401b2df2c160479533f0d9c961b06771c",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-r01-demand-2026-11-03/runs/session/action-e70542fcf52726e09973bdb7-116a1538.log"
+    },
+    {
+      "action_id": "action-cb38e838eb3d9f7453a10feb",
+      "command": "close-campaign",
+      "identity": {},
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-r01-demand-2026-11-03/runs/session/action-cb38e838eb3d9f7453a10feb-14d60cf3.log"
+    }
+  ],
+  "candidate_reasons": {
+    "codex-r01-precheck-v1": "Retained probe calibration is incomplete or noisy; no silent retry."
+  },
+  "performance_accepted": false,
+  "auto_promote": false
+}

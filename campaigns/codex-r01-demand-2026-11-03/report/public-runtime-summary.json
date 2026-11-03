@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-r01-demand-2026-11-03",
+  "status": "inconclusive",
+  "stop_reason": "metadata calibration spread exceeded the frozen gate",
+  "build_reservations": 3,
+  "build_items": [
+    "baseline kernel",
+    "trusted guest image",
+    "candidate kernel"
+  ],
+  "guest_attempts_total": 11,
+  "guest_attempts_correctness": 2,
+  "guest_attempts_probe_calibration": 9,
+  "candidate_probe_attempts": 0,
+  "fast_attempts": 0,
+  "slow_attempts": 0,
+  "invalid_attempts": 0,
+  "elapsed_budget_seconds_to_close": 1458.199198961258,
+  "metadata_baseline_values": [
+    0.12319946334957876,
+    0.11521911664016216,
+    0.11521911664016216
+  ],
+  "metadata_spread_fraction": 0.06926234935770097,
+  "metadata_spread_limit": 0.01,
+  "measurement_reused": false,
+  "auto_promote": false,
+  "correctness": [
+    {
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "run_valid": true,
+      "integration_pass": true,
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 22.536649057874456,
+      "run_id": "codex-r01-base-correctness",
+      "result_sha256": "467c4967f1f538f9bec2c7390ae8da363323514db1211333d00330850c7e1b7a"
+    },
+    {
+      "source_commit": "4068681982a044debd290884719e9bdbd4ac5ba9",
+      "run_valid": true,
+      "integration_pass": true,
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 22.038942546816543,
+      "run_id": "codex-r01-precheck-v1-correctness",
+      "result_sha256": "467c1f498a018c00ce27927ac94ea6e7e592c623aa09310f41c1eed87bb53166"
+    }
+  ],
+  "builds": [
+    {
+      "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "passed": true,
+      "wall_seconds": 100.81910906196572,
+      "input_config_sha256": "c7a95cd1a937bb5268843511eadb672a31c0f40c717e85e519ebf3eb155f4417",
+      "image_sha256": "afd80c845391fafa676e4d64bfc72af6a4c164eecfb62862308de5b28037b6b5",
+      "name": "codex-r01-base",
+      "manifest_sha256": "9cc33bb57b77759a9ca881eb46861a5d3fbbcb78c592c82adff425501b9bd759"
+    },
+    {
+      "commit": "4068681982a044debd290884719e9bdbd4ac5ba9",
+      "passed": true,
+      "wall_seconds": 100.82188999699429,
+      "input_config_sha256": "c7a95cd1a937bb5268843511eadb672a31c0f40c717e85e519ebf3eb155f4417",
+      "image_sha256": "58d9ea1675818b00057bede0835b1ff965edac1d92b6b1af20ec87da56eebe21",
+      "name": "std-4068681982a0",
+      "manifest_sha256": "16437f5b90bc55cfb5f1e176e81a30741dcfd4b8b23cd122d7f5ddfda6902351"
+    }
+  ],
+  "protocol_sha256": "3800399d81848439268a9267bac708b7c323665cc313008a37e8e9f00e44b843",
+  "image_manifest_sha256": "77a2905e98bd798b6ec338dd25bd0e9df4249bb5f23964369e2e83cfee1f5a6b"
+}

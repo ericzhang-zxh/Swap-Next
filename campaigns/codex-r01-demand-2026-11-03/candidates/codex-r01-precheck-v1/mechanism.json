@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "kind": "reviewed_structure",
+  "claim": "Order-0 demand allocation executes one fewer swap_cluster_lock_unpinned and __swap_cache_add_check before a successful allocation; post-allocation relookup, locked validation, publication and rollback remain mandatory.",
+  "falsifier": "The exact-tree review finds a removed lifetime/count protection, another caller bypasses required checks, or the eligible success path still executes the preliminary lock/check. Runtime correctness, metadata and calibrated latency must independently pass.",
+  "candidate_commit": "4068681982a044debd290884719e9bdbd4ac5ba9",
+  "source_tree": "912225c401b2df2c160479533f0d9c961b06771c",
+  "protocol_sha256": "3800399d81848439268a9267bac708b7c323665cc313008a37e8e9f00e44b843",
+  "review_id": "codex-r01-independent-v1",
+  "review_record_sha256": "96abe223e917a8e26a061e77be328f82e6b8559cf949019f09d4a9e30b1ba20f"
+}

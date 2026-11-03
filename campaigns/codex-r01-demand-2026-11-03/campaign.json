@@ -1,0 +1,17 @@
+{
+  "campaign": "codex-r01-demand-2026-11-03",
+  "status": "closed",
+  "line": "codex-r01-demand-cost",
+  "baseline_from": null,
+  "machine": "hurricpc",
+  "opened": "2026-11-03",
+  "closed": "2026-11-03",
+  "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "budget": {
+    "guest_attempts": 96,
+    "wall_seconds": 64800,
+    "probe_guest_attempts": 24,
+    "approved_over_cap": null
+  },
+  "contributor": "codex-research-01"
+}

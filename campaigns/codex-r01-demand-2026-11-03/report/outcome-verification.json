@@ -1,0 +1,80 @@
+{
+  "reviewer": "Primary contributor outcome reconciliation",
+  "independent_source_review": "reviews/codex-r01-independent-v1.json",
+  "calibration_id": "99f37fe54bb4410ab3d3337138bd522d",
+  "status": "CALIBRATION_NOISY",
+  "analysis_recomputed_identically": true,
+  "calibration_runs": [
+    {
+      "run": "99f37fe54bb4410ab3d3337138bd522d-swapin-disk-0",
+      "result_sha256": "e367810f085631d1121824edc972d196599ae773db7dc1f6ee635030917ddebb",
+      "serial_and_manifest_hashes": "matched",
+      "raw_reparse": "matched"
+    },
+    {
+      "run": "99f37fe54bb4410ab3d3337138bd522d-swapin-disk-1",
+      "result_sha256": "e3f503060b46786e8f437d9fa94d0ea8372a62a590915ef13a2c4b1f89b784e5",
+      "serial_and_manifest_hashes": "matched",
+      "raw_reparse": "matched"
+    },
+    {
+      "run": "99f37fe54bb4410ab3d3337138bd522d-swapin-disk-2",
+      "result_sha256": "1cb5057a0be479798a7ac649254454fbcc9e27ac4b7f0d4970028139d7d4dd3e",
+      "serial_and_manifest_hashes": "matched",
+      "raw_reparse": "matched"
+    },
+    {
+      "run": "99f37fe54bb4410ab3d3337138bd522d-swapin-zram-64k-0",
+      "result_sha256": "ba2d936d03dcb26999aa5f3618e34b202463e287680b5547f3ed1bce12758934",
+      "serial_and_manifest_hashes": "matched",
+      "raw_reparse": "matched"
+    },
+    {
+      "run": "99f37fe54bb4410ab3d3337138bd522d-swapin-zram-64k-1",
+      "result_sha256": "0c523661c7656865bf2d4a2daca2225472df67088ea75feb3671f045abd69c7a",
+      "serial_and_manifest_hashes": "matched",
+      "raw_reparse": "matched"
+    },
+    {
+      "run": "99f37fe54bb4410ab3d3337138bd522d-swapin-zram-64k-2",
+      "result_sha256": "5237439a8e43e32cd4596b565f3795829c3fe846ab70d79690b5d2862874b253",
+      "serial_and_manifest_hashes": "matched",
+      "raw_reparse": "matched"
+    },
+    {
+      "run": "99f37fe54bb4410ab3d3337138bd522d-metadata-brd-0",
+      "result_sha256": "b3f4b45705e8bab4db023b804fbd043f3bf57a886e20ab6316dd48def58b3a77",
+      "serial_and_manifest_hashes": "matched",
+      "raw_reparse": "matched"
+    },
+    {
+      "run": "99f37fe54bb4410ab3d3337138bd522d-metadata-brd-1",
+      "result_sha256": "f02d42b47a41e65e6e5dab54d72ea3ff4a28273b249aafe3271821555f3a27c0",
+      "serial_and_manifest_hashes": "matched",
+      "raw_reparse": "matched"
+    },
+    {
+      "run": "99f37fe54bb4410ab3d3337138bd522d-metadata-brd-2",
+      "result_sha256": "17ecdf15ce18c88894e945ab7a9385eede0fab4471b1649d772c09c79e43752e",
+      "serial_and_manifest_hashes": "matched",
+      "raw_reparse": "matched"
+    }
+  ],
+  "correctness_proofs": [
+    {
+      "run": "codex-r01-base-correctness",
+      "status": "CORRECTNESS_PASS",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f"
+    },
+    {
+      "run": "codex-r01-precheck-v1-correctness",
+      "status": "CORRECTNESS_PASS",
+      "source_commit": "4068681982a044debd290884719e9bdbd4ac5ba9"
+    }
+  ],
+  "reservation_count": 11,
+  "guest_budget": 11,
+  "build_reservations": 3,
+  "performance_comparison_present": false,
+  "metadata_cause": "Whole-guest MemAvailable loss differs by 2092 KiB; responsible allocation or background activity is not identified."
+}

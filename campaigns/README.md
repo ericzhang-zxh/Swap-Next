@@ -2,7 +2,7 @@
 
 Generated from campaign identities, protocols and candidate outcomes.
 
-Lines: [plain](lines/plain.md) · [xswap](lines/xswap.md)
+Lines: [codex-r01-demand-cost](lines/codex-r01-demand-cost.md) · [plain](lines/plain.md) · [xswap](lines/xswap.md)
 
 | Campaign | Status | Line | Machine | Opened | Closed | Baseline |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -21,3 +21,4 @@ Lines: [plain](lines/plain.md) · [xswap](lines/xswap.md)
 | [kbench-smoke-2026-10-27](kbench-smoke-2026-10-27/report/README.md) | closed | [xswap](lines/xswap.md) | hurricpc | 2026-10-28 | 2026-10-28 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
 | [xswap-tcg-kbench-2026-10-29](xswap-tcg-kbench-2026-10-29/campaign.json) | closed | [xswap](lines/xswap.md) | grok-cloud | 2026-10-29 | 2026-10-29 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
 | [xswap-tcg-kbench-rev7-2026-10-29](xswap-tcg-kbench-rev7-2026-10-29/campaign.json) | open | [xswap](lines/xswap.md) | grok-cloud | 2026-10-29 | — | 5e84ca928deeacb4eee656806a003f27d1eca82f |
+| [codex-r01-demand-2026-11-03](codex-r01-demand-2026-11-03/campaign.json) | closed | [codex-r01-demand-cost](lines/codex-r01-demand-cost.md) | hurricpc | 2026-11-03 | 2026-11-03 | 5e84ca928deeacb4eee656806a003f27d1eca82f |

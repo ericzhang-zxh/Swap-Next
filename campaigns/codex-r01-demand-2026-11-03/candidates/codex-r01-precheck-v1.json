@@ -1,0 +1,20 @@
+{
+  "id": "codex-r01-precheck-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-26ab800847d8",
+  "worktree": "worktrees/codex-r01-demand-2026-11-03/codex-r01-precheck-v1",
+  "status": "closed",
+  "hypothesis": "For order-0 calls with a fault context, skipping the preliminary cluster-lock range check reduces fixed swap-in latency cost while preserving authoritative post-allocation validation. Reject on correctness failure, scored regression, or absence of a useful resolved gain.",
+  "created_unix": 1793741307.2011318,
+  "protocol_sha256": "bd386fc7c68d6e657f4c086cb07dfef57f50371d1246c1e8aeeedf39cc334c58",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "Order-0 demand allocation executes one fewer swap_cluster_lock_unpinned and __swap_cache_add_check before a successful allocation; post-allocation relookup, locked validation, publication and rollback remain mandatory.",
+    "falsifier": "The exact-tree review finds a removed lifetime/count protection, another caller bypasses required checks, or the eligible success path still executes the preliminary lock/check. Runtime correctness, metadata and calibrated latency must independently pass."
+  },
+  "reason": "Retained probe calibration is incomplete or noisy; no silent retry."
+}

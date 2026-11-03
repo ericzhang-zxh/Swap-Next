@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "codex-r01-independent-v1",
+  "campaign": "codex-r01-demand-2026-11-03",
+  "candidate": "codex-r01-precheck-v1",
+  "candidate_commit": "4068681982a044debd290884719e9bdbd4ac5ba9",
+  "source_tree": "912225c401b2df2c160479533f0d9c961b06771c",
+  "reviewer": "Independent agent candidate_review",
+  "disposition": "pass",
+  "summary": "Pass for bounded runtime. Exact-tree source review establishes one fewer preliminary lock/check for eligible demand order-0 attempts. Post-allocation protection and rollback remain. The widened ENOMEM race and missing failure-injection coverage are material nonblocking tradeoffs retained in the review.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/codex-r01-demand-2026-11-03/report/independent-review.md",
+      "sha256": "dc64d9315dbf36f68205899407a1d5eafbbd7dc955668cc5028bf8c9b5aba49d"
+    },
+    {
+      "path": "campaigns/codex-r01-demand-2026-11-03/candidates/codex-r01-precheck-v1/static.json",
+      "sha256": "9853f89ff6e1ffcd325ab1b1890803c625506963d8796ecf4b7c19b1bfb04b25"
+    },
+    {
+      "path": "campaigns/codex-r01-demand-2026-11-03/patches/codex-r01-precheck-v1.patch",
+      "sha256": "21412f78da16f5c0dda58fefe85b971d48c53740507b9359a909afeb693b19f8"
+    }
+  ],
+  "recorded_unix": 1793741927.754745,
+  "record_sha256": "96abe223e917a8e26a061e77be328f82e6b8559cf949019f09d4a9e30b1ba20f"
+}

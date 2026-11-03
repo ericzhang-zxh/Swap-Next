@@ -1,0 +1,12 @@
+{
+  "kind": "propose",
+  "candidate": "codex-r01-precheck-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "hypothesis": "For order-0 calls with a fault context, skipping the preliminary cluster-lock range check reduces fixed swap-in latency cost while preserving authoritative post-allocation validation. Reject on correctness failure, scored regression, or absence of a useful resolved gain.",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "Order-0 demand allocation executes one fewer swap_cluster_lock_unpinned and __swap_cache_add_check before a successful allocation; post-allocation relookup, locked validation, publication and rollback remain mandatory.",
+    "falsifier": "The exact-tree review finds a removed lifetime/count protection, another caller bypasses required checks, or the eligible success path still executes the preliminary lock/check. Runtime correctness, metadata and calibrated latency must independently pass."
+  },
+  "reason": "Distinct fixed-cost hypothesis from baseline source and upstream precheck rationale; avoids repeating historical readahead candidates."
+}

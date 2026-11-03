@@ -1,0 +1,15 @@
+{
+  "id": "99f37fe54bb4410ab3d3337138bd522d-swapin-disk-2",
+  "campaign": "codex-r01-demand-2026-11-03",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1793742274.1789296,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "3800399d81848439268a9267bac708b7c323665cc313008a37e8e9f00e44b843",
+  "started_unix": 1793742274.2205982
+}
