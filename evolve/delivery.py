@@ -218,9 +218,9 @@ def _metric_sections(summary):
                     continue
                 groups = ["Run " + str(i + 1) for i in range(len(runs))]
                 blocks.append({"type": "strip", "takeaway": "Baseline metadata calibration: " + row["status"],
-                    "x_label": "Metadata bytes per capacity slot (baseline only)",
+                    "x_label": "Metadata bytes per 1,000 capacity slots (baseline only)",
                     "groups": groups, "series": ["Baseline"],
-                    "points": [{"group": group, "series": "Baseline", "value": run["metrics"][metric],
+                    "points": [{"group": group, "series": "Baseline", "value": 1000 * run["metrics"][metric],
                                 "tip": run["id"]} for group, run in zip(groups, runs)],
                     "note": "Valid calibration samples; candidate performance was not measured here."})
         if row.get("action") != "evaluate":

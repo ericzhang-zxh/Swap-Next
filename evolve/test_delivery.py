@@ -111,7 +111,8 @@ class DeliveryTests(unittest.TestCase):
         spec = d.read(self.campaign / "report/explainer.json")
         results = next(s for s in spec["sections"] if s["id"] == "results")
         chart = results["blocks"][0]
-        self.assertEqual([p["value"] for p in chart["points"]], samples)
+        self.assertEqual([p["value"] for p in chart["points"]], [1000 * v for v in samples])
+        self.assertIn("1,000 capacity slots", chart["x_label"])
         self.assertEqual(chart["series"], ["Baseline"])
         self.assertIn("No complete paired", results["blocks"][-1]["text"])
         limits = next(s for s in spec["sections"] if s["id"] == "limits")
