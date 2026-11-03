@@ -8,6 +8,7 @@ seconds elapse before QEMU is launched. Invalid attempts stay in the report.
 Revision 6 is the TCG kbench screen and additionally excludes the build workload.
 """
 import math
+import re
 import statistics
 
 
@@ -176,8 +177,10 @@ def _revision6(protocol, rules, validity, accelerator):
     tiers = protocol.get("tiers", {})
     if "slow" in tiers or "probe" not in tiers:
         raise ValueError("revision 6 requires a probe tier and has no slow tier")
-    if protocol.get("baseline_build") != "kb-xs-desc-v1":
-        raise ValueError("revision 6 baseline build is kb-xs-desc-v1")
+    # Build names locate immutable artifacts; commit and config bind the science.
+    build = protocol.get("baseline_build")
+    if not isinstance(build, str) or not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", build):
+        raise ValueError("revision 6 baseline build must be a safe artifact name")
     if protocol.get("baseline_commit") != "5e84ca928deeacb4eee656806a003f27d1eca82f":
         raise ValueError("revision 6 baseline commit")
     if protocol.get("page_cluster", {}).get("value") != 3:

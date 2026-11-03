@@ -113,6 +113,20 @@ class ValidityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "requires KVM"):
             protocol_rules(p)
 
+    def test_revision6_rebuild_label_preserves_scientific_pins(self):
+        protocol = tcg_revision6_protocol()
+        original = protocol_rules(protocol)
+        protocol["baseline_build"] = "codex-r01-base"
+        self.assertEqual(protocol_rules(protocol), original)
+        for bad in ("../old-build", "", None):
+            protocol["baseline_build"] = bad
+            with self.assertRaisesRegex(ValueError, "safe artifact name"):
+                protocol_rules(protocol)
+        protocol["baseline_build"] = "codex-r01-base"
+        protocol["baseline_commit"] = "a" * 40
+        with self.assertRaisesRegex(ValueError, "baseline commit"):
+            protocol_rules(protocol)
+
     def test_revision6_tcg_kbench_shape_excludes_build_and_is_not_opened(self):
         protocol = tcg_revision6_protocol()
         campaign = ROOT / "campaigns/xswap-tcg-kbench-2026-10-29"

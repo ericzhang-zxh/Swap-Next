@@ -128,7 +128,7 @@ class SessionTests(unittest.TestCase):
             s.write(self.directory / "ledger/guest-reservations" / (ident + ".json"),
                     {"campaign": CAMPAIGN, "pool": tier, "identity": {"synthetic": True}})
         elif command == "export":
-            target = self.directory / "patches/one.patch"
+            target = self.directory / "patches" / "one.patch"
             target.parent.mkdir(exist_ok=True)
             target.write_text("Synthetic retained patch fixture.\n")
         elif command == "close-candidate":

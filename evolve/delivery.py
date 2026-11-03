@@ -95,8 +95,9 @@ def extract(root, campaign):
     paths += [directory / name for name in ("research.json", "ledger/ledger.json", "ledger/budget.json", "ledger/session-closeout.json")
               if (directory / name).is_file()]
     for pattern in ("candidates/*.json", "candidates/*/value.json", "reviews/*.json",
-                    "comparisons/*.json", "patches/*.patch"):
+                    "comparisons/*.json"):
         paths += sorted(directory.glob(pattern))
+    paths += sorted((directory / "patches").glob("*.patch"))
     manifest = {}
     for path in sorted(set(paths)):
         ref = path.relative_to(root).as_posix()
