@@ -12,6 +12,7 @@ import html
 import json
 import math
 import sys
+import textwrap
 
 MAX_TEXT_WORDS = 40      # any single text field
 MAX_PAGE_WORDS = 700     # all prose on the page, excluding tables and diffs
@@ -81,6 +82,8 @@ border-radius:0 8px 8px 0;margin:12px 0}
 .tip{position:fixed;pointer-events:none;background:var(--surface-1);color:var(--ink);border:1px solid var(--ring);
 border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);display:none;max-width:280px}
 .tip b{display:block;font-size:14px}
+.narrow-only{display:none}
+@media(max-width:600px){.wide-only{display:none}.narrow-only{display:block}.narrow-only svg{min-width:0}}
 """
 
 JS = """
@@ -179,33 +182,40 @@ def details(columns, rows, numeric=()):
     return f"<details><summary>Table view</summary>{table_view(columns, rows, numeric)}</details>"
 
 
-def x_axis(lo, hi, x, y0, height, label):
+def x_axis(lo, hi, x, y0, height, label, *, width=W, left=PAD_L, right=PAD_R, compact=False):
     out = []
-    for t in ticks(lo, hi):
+    for t in ticks(lo, hi, n=3 if compact else 5):
         if lo <= t <= hi:
             px = x(t)
             out.append(f'<line x1="{px:.1f}" x2="{px:.1f}" y1="{PAD_T}" y2="{y0}" stroke="var(--grid)"/>'
                        f'<text x="{px:.1f}" y="{y0 + 16}" text-anchor="middle">{fmt(t)}</text>')
-    out.append(f'<line x1="{PAD_L}" x2="{W - PAD_R}" y1="{y0}" y2="{y0}" stroke="var(--axis)"/>')
-    out.append(f'<text class="axis-label" x="{W - PAD_R}" y="{height - 4}" text-anchor="end">{esc(label)}</text>')
+    out.append(f'<line x1="{left}" x2="{width - right}" y1="{y0}" y2="{y0}" stroke="var(--axis)"/>')
+    lines = textwrap.wrap(label, 32) if compact else [label]
+    for i, line in enumerate(lines):
+        y = height - 4 - 14 * (len(lines) - i - 1)
+        out.append(f'<text class="axis-label" x="{width - right}" y="{y}" text-anchor="end">{esc(line)}</text>')
     return out
 
 
-def strip(block, budget):
+def strip(block, budget, *, width=W, compact=False, svg_only=False):
     """One row per group, one dot per observation: shows regimes and spread."""
     names = block.get("series", [])[:SERIES] or [""]
     groups = block["groups"]
     values = [p["value"] for p in block["points"]]
     lo, hi = min(0, min(values)), max(values) * 1.05
+    left, right = (70, 16) if compact else (PAD_L, PAD_R)
     row_h = 34
     height = PAD_T + row_h * len(groups) + PAD_B
+    if compact:
+        height += 14 * max(0, len(textwrap.wrap(block.get("x_label", ""), 32)) - 1)
     y0 = PAD_T + row_h * len(groups)
-    x = lambda v: PAD_L + (v - lo) / (hi - lo) * (W - PAD_L - PAD_R)
-    out = x_axis(lo, hi, x, y0, height, block.get("x_label", ""))
+    x = lambda v: left + (v - lo) / (hi - lo) * (width - left - right)
+    out = x_axis(lo, hi, x, y0, height, block.get("x_label", ""),
+                 width=width, left=left, right=right, compact=compact)
     offsets = {n: (i - (len(names) - 1) / 2) * 9 for i, n in enumerate(names)}
     for gi, g in enumerate(groups):
         cy = PAD_T + row_h * gi + row_h / 2
-        out.append(f'<text x="{PAD_L - 10}" y="{cy + 4:.1f}" text-anchor="end">{esc(g)}</text>')
+        out.append(f'<text x="{left - 10}" y="{cy + 4:.1f}" text-anchor="end">{esc(g)}</text>')
     rows = []
     # Identical values in one row would hide each other: draw one dot and label the count.
     buckets = {}
@@ -236,8 +246,12 @@ def strip(block, budget):
             else:
                 pos = f'x="{cx:.1f}" y="{cy - 9:.1f}" text-anchor="middle"'
             out.append(f'<text {pos}>×{len(pts)}</text>')
-    svg = f'<svg viewBox="0 0 {W} {height}" role="img" aria-label="{esc(block["takeaway"])}">{"".join(out)}</svg>'
-    return chart_card(block, budget, legend(names) + svg, details(["Group", "Series", "Value", "Note"], rows, (2,)))
+    svg = f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{esc(block["takeaway"])}">{"".join(out)}</svg>'
+    if svg_only:
+        return svg
+    mobile = strip(block, Budget(), width=340, compact=True, svg_only=True)
+    body = legend(names) + '<div class="wide-only">' + svg + '</div><div class="narrow-only">' + mobile + '</div>'
+    return chart_card(block, budget, body, details(["Group", "Series", "Value", "Note"], rows, (2,)))
 
 
 def lines(block, budget):
@@ -320,16 +334,24 @@ def bars(block, budget):
                       details(["Category"] + names, rows, tuple(range(1, len(names) + 1))))
 
 
-def flow(block, budget):
+def flow(block, budget, *, width=W, compact=False, svg_only=False):
     """Boxes on a (col,row) grid joined by arrows; tone marks where the story is."""
-    nodes = {n["id"]: n for n in block["nodes"]}
+    nodes = {n["id"]: dict(n) for n in block["nodes"]}
+    if compact:
+        groups = {row: sorted((n for n in nodes.values() if n["row"] == row), key=lambda n: n["col"])
+                  for row in sorted({n["row"] for n in nodes.values()})}
+        offset = 0
+        for group in groups.values():
+            for i, node in enumerate(group):
+                node.update(col=i % 2, row=offset + i // 2)
+            offset += (len(group) + 1) // 2
     cols = max(n["col"] for n in nodes.values()) + 1
     nrows = max(n["row"] for n in nodes.values()) + 1
-    bw, bh, gap_x, gap_y = 150, 58, 0, 26
-    gap_x = (W - 20 - cols * bw) / max(1, cols - 1) if cols > 1 else 0
+    bw, bh, gap_x, gap_y = 150, 58, 0, 38
+    gap_x = (width - 20 - cols * bw) / max(1, cols - 1) if cols > 1 else 0
     height = nrows * bh + (nrows - 1) * gap_y + 20
     pos = lambda n: (10 + n["col"] * (bw + gap_x), 10 + n["row"] * (bh + gap_y))
-    out = ['<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
+    out = [f'<defs><marker id="arr-{width}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
            'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>']
     for e in block.get("edges", []):
         a, b = nodes[e["from"]], nodes[e["to"]]
@@ -343,12 +365,13 @@ def flow(block, budget):
             x1, y1 = ax + bw / 2, ay + (bh if by > ay else 0)
             x2, y2 = bx + bw / 2, by + (0 if by > ay else bh)
             d = f"M{x1:.1f},{y1:.1f} V{y2:.1f}"
-        else:  # elbow: down out of the source, then across into the target's side
+        else:  # Cross between rows, rather than through a neighboring node.
             x1, y1 = ax + bw / 2, ay + (bh if by > ay else 0)
-            x2, y2 = (bx if bx > ax else bx + bw), by + bh / 2
-            d = f"M{x1:.1f},{y1:.1f} V{y2:.1f} H{x2:.1f}"
-        out.append(f'<path d="{d}" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr)"/>')
-        if e.get("label"):
+            x2, y2 = bx + bw / 2, by + (0 if by > ay else bh)
+            middle = (y1 + y2) / 2
+            d = f"M{x1:.1f},{y1:.1f} V{middle:.1f} H{x2:.1f} V{y2:.1f}"
+        out.append(f'<path d="{d}" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arr-{width})"/>')
+        if e.get("label") and not compact:
             out.append(f'<text x="{(x1 + x2) / 2:.1f}" y="{(y1 + y2) / 2 - 6:.1f}" text-anchor="middle" '
                        f'class="axis-label">{budget.text(e["label"], "edge label")}</text>')
     for n in nodes.values():
@@ -362,8 +385,12 @@ def flow(block, budget):
         if n.get("sub"):
             out.append(f'<text x="{x + bw / 2:.1f}" y="{y + 42:.1f}" text-anchor="middle">'
                        f'{budget.text(n["sub"], "flow node")}</text>')
-    svg = f'<svg viewBox="0 0 {W} {height}" role="img" aria-label="{esc(block["takeaway"])}">{"".join(out)}</svg>'
-    return chart_card(block, budget, svg, "")
+    svg = f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{esc(block["takeaway"])}">{"".join(out)}</svg>'
+    if svg_only:
+        return svg
+    mobile = flow(block, Budget(), width=340, compact=True, svg_only=True)
+    body = '<div class="wide-only">' + svg + '</div><div class="narrow-only">' + mobile + '</div>'
+    return chart_card(block, budget, body, "")
 
 
 def chart_card(block, budget, body, table):

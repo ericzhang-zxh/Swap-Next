@@ -1,0 +1,536 @@
+{
+  "title": "Demand swap-in: a smaller path, an unresolved benefit",
+  "subtitle": "codex-r01-demand-cost \u00b7 5e84ca928dee",
+  "verdict": {
+    "status": "inconclusive",
+    "headline": "Stop this pilot: baseline metadata noise blocked candidate timing.",
+    "tiles": [
+      {
+        "label": "Evidence",
+        "value": "No paired result",
+        "note": "Human review controls promotion."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "limits",
+      "title": "Material limits",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "No upstream comparison has been measured. Calibration stopped performance comparison: metadata-brd: METADATA_CALIBRATION_NOISY."
+        }
+      ]
+    },
+    {
+      "id": "context",
+      "title": "A small fixed cost was worth testing",
+      "lead": "Earlier prefetch experiments exposed random-latency regressions. This independent idea targets duplicate validation on demand allocation, while keeping the upstream algorithm as the baseline.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The candidate skips a preliminary lock-and-slot check for demand base-page allocation. Review confirms reduced source-level work; both kernels passed the required correctness route. The useful-effect threshold was frozen before measurement. No candidate latency comparison was reached."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "The missing page must return to RAM",
+      "lead": "The application waits while a new resident page is allocated and filled from swap backing. The changed allocator sits before the data read.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The change sits between the fault and the backing read",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "col": 0,
+              "row": 0,
+              "tone": "default",
+              "sub": "Needs a page"
+            },
+            {
+              "id": "ram",
+              "label": "Resident page",
+              "col": 1,
+              "row": 0,
+              "tone": "good",
+              "sub": "Physical RAM"
+            },
+            {
+              "id": "fault",
+              "label": "Page fault",
+              "col": 0,
+              "row": 1,
+              "tone": "default",
+              "sub": "Page absent"
+            },
+            {
+              "id": "alloc",
+              "label": "Cache allocator",
+              "col": 1,
+              "row": 1,
+              "tone": "focus",
+              "sub": "Changed here"
+            },
+            {
+              "id": "cache",
+              "label": "Swap cache",
+              "col": 2,
+              "row": 1,
+              "tone": "default",
+              "sub": "Locked folio"
+            },
+            {
+              "id": "map",
+              "label": "xswap mapping",
+              "col": 2,
+              "row": 2,
+              "tone": "default",
+              "sub": "Locate backing"
+            },
+            {
+              "id": "zram",
+              "label": "Compressed RAM",
+              "col": 1,
+              "row": 3,
+              "tone": "muted",
+              "sub": "zram pages"
+            },
+            {
+              "id": "disk",
+              "label": "Disk backing",
+              "col": 3,
+              "row": 3,
+              "tone": "muted",
+              "sub": "Swap pages"
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "ram",
+              "label": "read"
+            },
+            {
+              "from": "app",
+              "to": "fault",
+              "label": "absent"
+            },
+            {
+              "from": "fault",
+              "to": "alloc"
+            },
+            {
+              "from": "alloc",
+              "to": "cache"
+            },
+            {
+              "from": "cache",
+              "to": "map",
+              "label": "load"
+            },
+            {
+              "from": "map",
+              "to": "zram"
+            },
+            {
+              "from": "map",
+              "to": "disk"
+            }
+          ],
+          "note": "Schematic locations. Backing contents fill the resident page; backing choice and readahead policy stay unchanged."
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Ownership stays with the existing objects",
+      "lead": "The device owns the cluster table. Its cache slot publishes the allocated folio under the cluster lock. The retained lookup and validation remain the lifetime boundary.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The final locked check still guards publication",
+          "nodes": [
+            {
+              "id": "dev",
+              "label": "Swap device",
+              "col": 0,
+              "row": 0,
+              "tone": "default",
+              "sub": "Device reference"
+            },
+            {
+              "id": "cluster",
+              "label": "Cluster table",
+              "col": 1,
+              "row": 0,
+              "tone": "focus",
+              "sub": "RCU + lock"
+            },
+            {
+              "id": "slot",
+              "label": "Cache slot",
+              "col": 2,
+              "row": 0,
+              "tone": "default",
+              "sub": "Count + type"
+            },
+            {
+              "id": "memcg",
+              "label": "Memory group",
+              "col": 1,
+              "row": 1,
+              "tone": "default",
+              "sub": "Charge owner"
+            },
+            {
+              "id": "folio",
+              "label": "Allocated folio",
+              "col": 2,
+              "row": 1,
+              "tone": "good",
+              "sub": "Cache reference"
+            }
+          ],
+          "edges": [
+            {
+              "from": "dev",
+              "to": "cluster",
+              "label": "owns"
+            },
+            {
+              "from": "cluster",
+              "to": "slot",
+              "label": "indexes"
+            },
+            {
+              "from": "slot",
+              "to": "folio",
+              "label": "publishes"
+            },
+            {
+              "from": "folio",
+              "to": "memcg",
+              "label": "charge"
+            }
+          ],
+          "note": "No descriptor pointer is carried across allocation on the changed branch. Charge failure retains the existing cache-removal rollback."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "One early check is skipped; the final check remains",
+      "lead": "Only order-0 allocations with a fault context take the new branch. Large folios and speculative callers keep the preliminary check.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Baseline and candidate differ before allocation",
+          "nodes": [
+            {
+              "id": "b0",
+              "label": "Baseline",
+              "col": 0,
+              "row": 0,
+              "tone": "default",
+              "sub": "Precheck lock + slot"
+            },
+            {
+              "id": "c0",
+              "label": "Demand candidate",
+              "col": 2,
+              "row": 0,
+              "tone": "focus",
+              "sub": "Skip precheck"
+            },
+            {
+              "id": "b1",
+              "label": "Allocate page",
+              "col": 0,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "c1",
+              "label": "Allocate page",
+              "col": 2,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "b2",
+              "label": "Recheck slot",
+              "col": 0,
+              "row": 2,
+              "tone": "good",
+              "sub": "Locked + authoritative"
+            },
+            {
+              "id": "c2",
+              "label": "Recheck slot",
+              "col": 2,
+              "row": 2,
+              "tone": "good",
+              "sub": "Locked + authoritative"
+            },
+            {
+              "id": "b3",
+              "label": "Publish + charge",
+              "col": 0,
+              "row": 3,
+              "tone": "default",
+              "sub": "Existing rollback"
+            },
+            {
+              "id": "c3",
+              "label": "Publish + charge",
+              "col": 2,
+              "row": 3,
+              "tone": "default",
+              "sub": "Existing rollback"
+            }
+          ],
+          "edges": [
+            {
+              "from": "b0",
+              "to": "b1"
+            },
+            {
+              "from": "b1",
+              "to": "b2"
+            },
+            {
+              "from": "b2",
+              "to": "b3"
+            },
+            {
+              "from": "c0",
+              "to": "c1"
+            },
+            {
+              "from": "c1",
+              "to": "c2"
+            },
+            {
+              "from": "c2",
+              "to": "c3"
+            }
+          ],
+          "note": "Tradeoff: a racing cache fill can cause unnecessary allocation. Under allocation failure, the existing OOM race has a wider window."
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Baseline metadata calibration: CALIBRATION_NOISY",
+          "x_label": "Metadata bytes per 1,000 capacity slots (baseline only)",
+          "groups": [
+            "Run 1",
+            "Run 2",
+            "Run 3"
+          ],
+          "series": [
+            "Baseline"
+          ],
+          "points": [
+            {
+              "group": "Run 1",
+              "series": "Baseline",
+              "value": 123.19946334957876,
+              "tip": "99f37fe54bb4410ab3d3337138bd522d-metadata-brd-0"
+            },
+            {
+              "group": "Run 2",
+              "series": "Baseline",
+              "value": 115.21911664016216,
+              "tip": "99f37fe54bb4410ab3d3337138bd522d-metadata-brd-1"
+            },
+            {
+              "group": "Run 3",
+              "series": "Baseline",
+              "value": 115.21911664016216,
+              "tip": "99f37fe54bb4410ab3d3337138bd522d-metadata-brd-2"
+            }
+          ],
+          "note": "Valid calibration samples; candidate performance was not measured here."
+        },
+        {
+          "type": "note",
+          "text": "No complete paired performance result is available."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Keep the baseline; diagnose measurement first",
+      "lead": "The failed baseline gate ends this pilot. No measured benefit justifies the added branch and allocation-failure validation burden. The candidate remains unmerged.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "A future comparison needs a capable measurement first",
+          "nodes": [
+            {
+              "id": "stop",
+              "label": "Closed pilot",
+              "col": 0,
+              "row": 0,
+              "tone": "bad",
+              "sub": "Evidence retained"
+            },
+            {
+              "id": "diag",
+              "label": "Diagnose proxy",
+              "col": 1,
+              "row": 0,
+              "tone": "focus",
+              "sub": "Guest memory delta"
+            },
+            {
+              "id": "new",
+              "label": "New approved run",
+              "col": 2,
+              "row": 0,
+              "tone": "default",
+              "sub": "Fresh calibration"
+            },
+            {
+              "id": "value",
+              "label": "Reassess value",
+              "col": 3,
+              "row": 0,
+              "tone": "default",
+              "sub": "Gain versus cost"
+            }
+          ],
+          "edges": [
+            {
+              "from": "stop",
+              "to": "diag"
+            },
+            {
+              "from": "diag",
+              "to": "new"
+            },
+            {
+              "from": "new",
+              "to": "value"
+            }
+          ],
+          "note": "Future work must preserve the failed samples. The alternative synchronous-I/O idea adds completion and lifetime obligations; it remains untested."
+        },
+        {
+          "type": "note",
+          "text": "Limits: whole-guest memory variation has an unknown cause. Runtime correctness covers anonymous base-page xswap on disk. Shmem, THP, memcg limits and forced failures remain untested. No fast result, separate upstream arm, slow confirmation or promotion exists."
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every retained outcome",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "99f37fe54bb4410ab3d3337138bd522d",
+              "control",
+              "probe",
+              "CALIBRATION_NOISY",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": []
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "codex-r01-precheck-v1",
+              "null"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/codex-r01-demand-2026-11-03/campaign.json",
+              "46b72363ef12bad02d39f81e6b2dca88aa9ca9c8b5f12aed04355019c685c98c"
+            ],
+            [
+              "campaigns/codex-r01-demand-2026-11-03/candidates/codex-r01-precheck-v1.json",
+              "ff9bbc6cd98f2d1ece47ec412ff7dfd19308501d4a41e46f66b9b0589764c287"
+            ],
+            [
+              "campaigns/codex-r01-demand-2026-11-03/ledger/budget.json",
+              "b25793ab8ee4f7eb742b295bdb22251dfac8d279984703a1ae42e308de78a6df"
+            ],
+            [
+              "campaigns/codex-r01-demand-2026-11-03/ledger/ledger.json",
+              "55d6763d3c78867a4ccb44e9599a7c262fbba0429af52433dd19803d517351a0"
+            ],
+            [
+              "campaigns/codex-r01-demand-2026-11-03/ledger/session-closeout.json",
+              "0a8e48d1439c70ac7370156c2723e45c6fb4b1e685718991d7e49b088959ff87"
+            ],
+            [
+              "campaigns/codex-r01-demand-2026-11-03/patches/codex-r01-precheck-v1.patch",
+              "21412f78da16f5c0dda58fefe85b971d48c53740507b9359a909afeb693b19f8"
+            ],
+            [
+              "campaigns/codex-r01-demand-2026-11-03/policy.json",
+              "dc09322e465a3b856026a303d7f3720ecb55d54350ac2b9ea5de757a80f6977f"
+            ],
+            [
+              "campaigns/codex-r01-demand-2026-11-03/protocol.json",
+              "3800399d81848439268a9267bac708b7c323665cc313008a37e8e9f00e44b843"
+            ],
+            [
+              "campaigns/codex-r01-demand-2026-11-03/research.json",
+              "97d92376fff97810e7b6b6c7bc018c15d5927644ca1c24bfdc953d627286123a"
+            ],
+            [
+              "campaigns/codex-r01-demand-2026-11-03/reviews/codex-r01-independent-v1.json",
+              "0886fdf50e30e790d2d0f6442c1c816ac006380fd71b7b087db3115dc5924d65"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

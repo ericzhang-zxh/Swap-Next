@@ -1,0 +1,53 @@
+{
+  "kind": "visual",
+  "evidence": {
+    "artifact_sha256": "03db8dbf7a0510488ab2cced57ad244dd2d3794d96eb6382b78ca30ede08dd84",
+    "method": "Chromium browser checks and direct screenshot inspection; 1280px and 390px, light and dark. Evidence disclosure and theme controls exercised.",
+    "views": [
+      {
+        "width": 1280,
+        "theme": "light",
+        "screenshot": "campaigns/codex-r01-demand-2026-11-03/runs/visual-qa/visual-qa-final/1280-light.png",
+        "sha256": "a049308a7aaf71796ea4e940d866508b48ba449541c7995a03274d9c5ec601ad",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-r01-demand-2026-11-03/runs/visual-qa/visual-qa-final/1280-dark.png",
+        "sha256": "8344c47433b3f3f9ef53731fdae4053527190877d0b7e5e3fa4fc676c345293a",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/codex-r01-demand-2026-11-03/runs/visual-qa/visual-qa-final/390-light.png",
+        "sha256": "949febc2c73f6609ce40daafa19458946833fa64e6774cda2fc356c302bbab22",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-r01-demand-2026-11-03/runs/visual-qa/visual-qa-final/390-dark.png",
+        "sha256": "c15745b1c00a4a900ac65ef50bec7dedc35f7e689c4f185be0f145f204a8ea77",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true
+      }
+    ]
+  }
+}

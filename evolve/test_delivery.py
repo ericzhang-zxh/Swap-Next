@@ -117,6 +117,10 @@ class DeliveryTests(unittest.TestCase):
         self.assertIn("No complete paired", results["blocks"][-1]["text"])
         limits = next(s for s in spec["sections"] if s["id"] == "limits")
         self.assertIn("METADATA_CALIBRATION_NOISY", limits["blocks"][0]["text"])
+        self.assertEqual(spec["verdict"]["tiles"][0]["value"], "No paired result")
+        html = (self.campaign / "report/explainer.html").read_text()
+        self.assertIn('class="narrow-only"', html)
+        self.assertIn('viewBox="0 0 340 ', html)
 
     def test_pinned_source_links_require_matching_committed_bytes(self):
         story = explain(self.root)

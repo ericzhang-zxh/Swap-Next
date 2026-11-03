@@ -279,7 +279,7 @@ def make_spec(summary, story):
         {"type": "table", "takeaway": "Pinned sources", "columns": ["Source", "SHA256"], "rows": list(summary["sources"].items())}]})
     return {"title": story["title"], "subtitle": summary["line"] + " · " + summary["baseline_commit"][:12],
             "verdict": {"status": summary["verdict"], "headline": story["headline"],
-                        "tiles": [{"label": "Evidence", "value": "Screen only", "note": "Human review controls promotion."}]},
+                        "tiles": [{"label": "Evidence", "value": "Screen only" if any(r.get("action") == "evaluate" for r in summary["evaluations"]) else "No paired result", "note": "Human review controls promotion."}]},
             "sections": sections}
 
 

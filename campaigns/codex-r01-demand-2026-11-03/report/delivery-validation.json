@@ -1,0 +1,13 @@
+{
+  "suite": "evolve.test_delivery",
+  "result": "10 tests passed",
+  "reason": "Targeted verification after mobile reflow and no-paired-result label changes.",
+  "source_sha256": {
+    ".agents/skills/explaining-campaign-results/scripts/build_page.py": "fc317ed3420a2787598821cb84e586023af2fbbcc4247e98a5d6d36af248e4f7",
+    "evolve/delivery.py": "cada337eb0bb6c3e1feef4954748137dea2eae289847ebc966529106a46cbbbf",
+    "evolve/test_delivery.py": "fdca11461ba4a688caf1c38dd3a1ed66d778a183b29ec7575c39d1ed63a930d4"
+  },
+  "report_reproduction": "All generated artifact hashes and visual receipt unchanged on generator rerun.",
+  "pages_index": "8 campaign pages; this campaign present.",
+  "visual_evidence": "visual-verification.json"
+}

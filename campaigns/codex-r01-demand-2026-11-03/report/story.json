@@ -1,0 +1,407 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-r01-demand-2026-11-03",
+  "evidence_sha256": "dc28c75bf1047911ef052962dd861711e2f9196f920c0110e1917970ba3b101e",
+  "title": "Demand swap-in: a smaller path, an unresolved benefit",
+  "headline": "Stop this pilot: baseline metadata noise blocked candidate timing.",
+  "sections": [
+    {
+      "id": "context",
+      "title": "A small fixed cost was worth testing",
+      "lead": "Earlier prefetch experiments exposed random-latency regressions. This independent idea targets duplicate validation on demand allocation, while keeping the upstream algorithm as the baseline.",
+      "evidence": [
+        "campaigns/codex-r01-demand-2026-11-03/research.json",
+        "campaigns/codex-r01-demand-2026-11-03/protocol.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The candidate skips a preliminary lock-and-slot check for demand base-page allocation. Review confirms reduced source-level work; both kernels passed the required correctness route. The useful-effect threshold was frozen before measurement. No candidate latency comparison was reached."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "The missing page must return to RAM",
+      "lead": "The application waits while a new resident page is allocated and filled from swap backing. The changed allocator sits before the data read.",
+      "evidence": [
+        "campaigns/codex-r01-demand-2026-11-03/patches/codex-r01-precheck-v1.patch",
+        "campaigns/codex-r01-demand-2026-11-03/reviews/codex-r01-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The change sits between the fault and the backing read",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "col": 0,
+              "row": 0,
+              "tone": "default",
+              "sub": "Needs a page"
+            },
+            {
+              "id": "ram",
+              "label": "Resident page",
+              "col": 1,
+              "row": 0,
+              "tone": "good",
+              "sub": "Physical RAM"
+            },
+            {
+              "id": "fault",
+              "label": "Page fault",
+              "col": 0,
+              "row": 1,
+              "tone": "default",
+              "sub": "Page absent"
+            },
+            {
+              "id": "alloc",
+              "label": "Cache allocator",
+              "col": 1,
+              "row": 1,
+              "tone": "focus",
+              "sub": "Changed here"
+            },
+            {
+              "id": "cache",
+              "label": "Swap cache",
+              "col": 2,
+              "row": 1,
+              "tone": "default",
+              "sub": "Locked folio"
+            },
+            {
+              "id": "map",
+              "label": "xswap mapping",
+              "col": 2,
+              "row": 2,
+              "tone": "default",
+              "sub": "Locate backing"
+            },
+            {
+              "id": "zram",
+              "label": "Compressed RAM",
+              "col": 1,
+              "row": 3,
+              "tone": "muted",
+              "sub": "zram pages"
+            },
+            {
+              "id": "disk",
+              "label": "Disk backing",
+              "col": 3,
+              "row": 3,
+              "tone": "muted",
+              "sub": "Swap pages"
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "ram",
+              "label": "read"
+            },
+            {
+              "from": "app",
+              "to": "fault",
+              "label": "absent"
+            },
+            {
+              "from": "fault",
+              "to": "alloc"
+            },
+            {
+              "from": "alloc",
+              "to": "cache"
+            },
+            {
+              "from": "cache",
+              "to": "map",
+              "label": "load"
+            },
+            {
+              "from": "map",
+              "to": "zram"
+            },
+            {
+              "from": "map",
+              "to": "disk"
+            }
+          ],
+          "note": "Schematic locations. Backing contents fill the resident page; backing choice and readahead policy stay unchanged."
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Ownership stays with the existing objects",
+      "lead": "The device owns the cluster table. Its cache slot publishes the allocated folio under the cluster lock. The retained lookup and validation remain the lifetime boundary.",
+      "evidence": [
+        "campaigns/codex-r01-demand-2026-11-03/patches/codex-r01-precheck-v1.patch",
+        "campaigns/codex-r01-demand-2026-11-03/reviews/codex-r01-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The final locked check still guards publication",
+          "nodes": [
+            {
+              "id": "dev",
+              "label": "Swap device",
+              "col": 0,
+              "row": 0,
+              "tone": "default",
+              "sub": "Device reference"
+            },
+            {
+              "id": "cluster",
+              "label": "Cluster table",
+              "col": 1,
+              "row": 0,
+              "tone": "focus",
+              "sub": "RCU + lock"
+            },
+            {
+              "id": "slot",
+              "label": "Cache slot",
+              "col": 2,
+              "row": 0,
+              "tone": "default",
+              "sub": "Count + type"
+            },
+            {
+              "id": "memcg",
+              "label": "Memory group",
+              "col": 1,
+              "row": 1,
+              "tone": "default",
+              "sub": "Charge owner"
+            },
+            {
+              "id": "folio",
+              "label": "Allocated folio",
+              "col": 2,
+              "row": 1,
+              "tone": "good",
+              "sub": "Cache reference"
+            }
+          ],
+          "edges": [
+            {
+              "from": "dev",
+              "to": "cluster",
+              "label": "owns"
+            },
+            {
+              "from": "cluster",
+              "to": "slot",
+              "label": "indexes"
+            },
+            {
+              "from": "slot",
+              "to": "folio",
+              "label": "publishes"
+            },
+            {
+              "from": "folio",
+              "to": "memcg",
+              "label": "charge"
+            }
+          ],
+          "note": "No descriptor pointer is carried across allocation on the changed branch. Charge failure retains the existing cache-removal rollback."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "One early check is skipped; the final check remains",
+      "lead": "Only order-0 allocations with a fault context take the new branch. Large folios and speculative callers keep the preliminary check.",
+      "evidence": [
+        "campaigns/codex-r01-demand-2026-11-03/patches/codex-r01-precheck-v1.patch",
+        "campaigns/codex-r01-demand-2026-11-03/reviews/codex-r01-independent-v1.json",
+        "campaigns/codex-r01-demand-2026-11-03/candidates/codex-r01-precheck-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Baseline and candidate differ before allocation",
+          "nodes": [
+            {
+              "id": "b0",
+              "label": "Baseline",
+              "col": 0,
+              "row": 0,
+              "tone": "default",
+              "sub": "Precheck lock + slot"
+            },
+            {
+              "id": "c0",
+              "label": "Demand candidate",
+              "col": 2,
+              "row": 0,
+              "tone": "focus",
+              "sub": "Skip precheck"
+            },
+            {
+              "id": "b1",
+              "label": "Allocate page",
+              "col": 0,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "c1",
+              "label": "Allocate page",
+              "col": 2,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "b2",
+              "label": "Recheck slot",
+              "col": 0,
+              "row": 2,
+              "tone": "good",
+              "sub": "Locked + authoritative"
+            },
+            {
+              "id": "c2",
+              "label": "Recheck slot",
+              "col": 2,
+              "row": 2,
+              "tone": "good",
+              "sub": "Locked + authoritative"
+            },
+            {
+              "id": "b3",
+              "label": "Publish + charge",
+              "col": 0,
+              "row": 3,
+              "tone": "default",
+              "sub": "Existing rollback"
+            },
+            {
+              "id": "c3",
+              "label": "Publish + charge",
+              "col": 2,
+              "row": 3,
+              "tone": "default",
+              "sub": "Existing rollback"
+            }
+          ],
+          "edges": [
+            {
+              "from": "b0",
+              "to": "b1"
+            },
+            {
+              "from": "b1",
+              "to": "b2"
+            },
+            {
+              "from": "b2",
+              "to": "b3"
+            },
+            {
+              "from": "c0",
+              "to": "c1"
+            },
+            {
+              "from": "c1",
+              "to": "c2"
+            },
+            {
+              "from": "c2",
+              "to": "c3"
+            }
+          ],
+          "note": "Tradeoff: a racing cache fill can cause unnecessary allocation. Under allocation failure, the existing OOM race has a wider window."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Keep the baseline; diagnose measurement first",
+      "lead": "The failed baseline gate ends this pilot. No measured benefit justifies the added branch and allocation-failure validation burden. The candidate remains unmerged.",
+      "evidence": [
+        "campaigns/codex-r01-demand-2026-11-03/ledger/ledger.json",
+        "campaigns/codex-r01-demand-2026-11-03/ledger/session-closeout.json",
+        "campaigns/codex-r01-demand-2026-11-03/research.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "A future comparison needs a capable measurement first",
+          "nodes": [
+            {
+              "id": "stop",
+              "label": "Closed pilot",
+              "col": 0,
+              "row": 0,
+              "tone": "bad",
+              "sub": "Evidence retained"
+            },
+            {
+              "id": "diag",
+              "label": "Diagnose proxy",
+              "col": 1,
+              "row": 0,
+              "tone": "focus",
+              "sub": "Guest memory delta"
+            },
+            {
+              "id": "new",
+              "label": "New approved run",
+              "col": 2,
+              "row": 0,
+              "tone": "default",
+              "sub": "Fresh calibration"
+            },
+            {
+              "id": "value",
+              "label": "Reassess value",
+              "col": 3,
+              "row": 0,
+              "tone": "default",
+              "sub": "Gain versus cost"
+            }
+          ],
+          "edges": [
+            {
+              "from": "stop",
+              "to": "diag"
+            },
+            {
+              "from": "diag",
+              "to": "new"
+            },
+            {
+              "from": "new",
+              "to": "value"
+            }
+          ],
+          "note": "Future work must preserve the failed samples. The alternative synchronous-I/O idea adds completion and lifetime obligations; it remains untested."
+        },
+        {
+          "type": "note",
+          "text": "Limits: whole-guest memory variation has an unknown cause. Runtime correctness covers anonymous base-page xswap on disk. Shmem, THP, memcg limits and forced failures remain untested. No fast result, separate upstream arm, slow confirmation or promotion exists."
+        }
+      ]
+    }
+  ],
+  "source_commit": "e3ad0227e636aabf026626e385850fe88dee6d01",
+  "reading": [
+    "campaigns/codex-r01-demand-2026-11-03/report/DECISION.md",
+    "campaigns/codex-r01-demand-2026-11-03/report/PREPARATION.md",
+    "campaigns/codex-r01-demand-2026-11-03/report/independent-review.md",
+    "campaigns/codex-r01-demand-2026-11-03/report/public-runtime-summary.json",
+    "campaigns/codex-r01-demand-2026-11-03/report/outcome-verification.json",
+    "campaigns/codex-r01-demand-2026-11-03/report/upstream-context.json",
+    "campaigns/codex-r01-demand-2026-11-03/report/baseline-correctness-summary.json",
+    "campaigns/codex-r01-demand-2026-11-03/report/candidate-correctness-summary.json",
+    "campaigns/codex-r01-demand-2026-11-03/report/final-framework-tests.json"
+  ]
+}
