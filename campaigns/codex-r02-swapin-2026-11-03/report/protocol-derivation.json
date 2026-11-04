@@ -1,0 +1,17 @@
+{
+  "source": "campaigns/codex-r01-demand-2026-11-03/protocol.json",
+  "source_sha256": "3800399d81848439268a9267bac708b7c323665cc313008a37e8e9f00e44b843",
+  "changed_top_level_fields": [
+    "approval",
+    "campaign",
+    "max_candidates",
+    "max_probe_candidates",
+    "planned_guest_counts",
+    "protocol_id",
+    "purpose"
+  ],
+  "numeric_measurements_changed": false,
+  "source_report": "campaigns/codex-r01-demand-2026-11-03/report/DECISION.md",
+  "fresh_calibration_required": true,
+  "one_attempt_only": true
+}

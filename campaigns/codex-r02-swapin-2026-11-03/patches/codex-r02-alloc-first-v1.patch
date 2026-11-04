@@ -1,0 +1,24 @@
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 7ac1808ae..de6815970 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -775,12 +775,16 @@ struct folio *swapin_sync(swp_entry_t entry, gfp_t gfp, unsigned long orders,
+ 	struct swap_io_ctx ctx = {};
+ 	struct folio *folio;
+ 
+-	do {
++	/* Callers already missed the cache; let the allocator check races. */
++	for (;;) {
++		folio = __swap_cache_alloc_folio(entry, gfp, orders, vmf, mpol, ilx);
++		if (PTR_ERR(folio) != -EEXIST)
++			break;
++
+ 		folio = swap_cache_get_folio(entry);
+ 		if (folio)
+ 			return folio;
+-		folio = __swap_cache_alloc_folio(entry, gfp, orders, vmf, mpol, ilx);
+-	} while (PTR_ERR(folio) == -EEXIST);
++	}
+ 
+ 	if (IS_ERR(folio))
+ 		return folio;

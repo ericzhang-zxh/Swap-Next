@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-r02-swapin-2026-11-03",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "entries": {},
+  "sample_sequence": 1,
+  "briefs": {
+    "brief-000001-d4921db74d34": {
+      "fingerprint": "f618e201de4ceb056c1737237a587abf39a7063082d96b13eaf4c43d21eaabe5",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "allowed_parents": [
+        "5e84ca928deeacb4eee656806a003f27d1eca82f"
+      ],
+      "parent_bindings": {
+        "5e84ca928deeacb4eee656806a003f27d1eca82f": {
+          "candidate": null,
+          "source_tree": null
+        }
+      },
+      "sample_seed": 15317337955751998527,
+      "sequence": 1,
+      "file": "archive/briefs/brief-000001-d4921db74d34.json",
+      "sha256": "338bd92fa4a2e64b8bd9ec2cad57f269d58c9232008f17e4ec90fd16ccbf1550",
+      "consumed_by": "codex-r02-alloc-first-v1",
+      "chosen_parent": "5e84ca928deeacb4eee656806a003f27d1eca82f"
+    }
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "all_passed": true,
+  "groups": [
+    {
+      "group": "controller",
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "evolve/control/tests",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 5.442247152328491,
+      "summary": [
+        "Ran 161 tests in 5.305s",
+        "OK"
+      ],
+      "log": "campaigns/codex-r02-swapin-2026-11-03/runs/framework-tests/controller.log"
+    },
+    {
+      "group": "benchmark-common",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "benchmark/tests",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 0.21773409843444824,
+      "summary": [
+        "Ran 12 tests in 0.165s",
+        "OK"
+      ],
+      "log": "campaigns/codex-r02-swapin-2026-11-03/runs/framework-tests/benchmark-common.log"
+    },
+    {
+      "group": "swap-standard",
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "benchmark/swap-standard",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 1.3074674606323242,
+      "summary": [
+        "Ran 91 tests in 1.249s",
+        "OK"
+      ],
+      "log": "campaigns/codex-r02-swapin-2026-11-03/runs/framework-tests/swap-standard.log"
+    },
+    {
+      "group": "xswap",
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "benchmark/xswap",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0734395980834961,
+      "summary": [
+        "Ran 18 tests in 0.036s",
+        "OK (skipped=1)"
+      ],
+      "log": "campaigns/codex-r02-swapin-2026-11-03/runs/framework-tests/xswap.log"
+    },
+    {
+      "group": "xswap-structure",
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "benchmark/xswap-structure",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 0.12630915641784668,
+      "summary": [
+        "Ran 29 tests in 0.070s",
+        "OK (skipped=1)"
+      ],
+      "log": "campaigns/codex-r02-swapin-2026-11-03/runs/framework-tests/xswap-structure.log"
+    },
+    {
+      "group": "xswap-hole-probe",
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "benchmark/xswap-hole-probe",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10242509841918945,
+      "summary": [
+        "Ran 20 tests in 0.050s",
+        "OK"
+      ],
+      "log": "campaigns/codex-r02-swapin-2026-11-03/runs/framework-tests/xswap-hole-probe.log"
+    },
+    {
+      "group": "kernel",
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "benchmark/kernel",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 0.038939476013183594,
+      "summary": [
+        "Ran 0 tests in 0.000s",
+        "OK (skipped=1)"
+      ],
+      "log": "campaigns/codex-r02-swapin-2026-11-03/runs/framework-tests/kernel.log"
+    },
+    {
+      "group": "evolve",
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "evolve",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 17.44629454612732,
+      "summary": [
+        "Ran 210 tests in 17.311s",
+        "OK"
+      ],
+      "log": "campaigns/codex-r02-swapin-2026-11-03/runs/framework-tests/evolve.log"
+    }
+  ]
+}

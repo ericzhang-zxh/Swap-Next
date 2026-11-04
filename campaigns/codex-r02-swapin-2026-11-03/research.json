@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "line_contract": {
+    "schema_version": 1,
+    "line": "codex-r02-swapin-cost",
+    "profile": "swap-core",
+    "profile_version": 1,
+    "profile_sha256": "276dbb04eef03146d52bfb92dd30b12f0aa58f1e1886a23c9dcc42f1127adf30",
+    "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "value_policy": {
+      "min_useful_effect": 0.05,
+      "equivalence_margin": 0.03,
+      "requires_upstream_comparison": false,
+      "rationale": "The unchanged integrated upstream lookup-first algorithm is the control. Require at least 5% useful gain beyond calibrated noise with passing guards; lower lookup count alone does not justify a cache-race lock cost or added test burden."
+    },
+    "contributor": "codex-r02-20261103",
+    "scientific_sha256": "d308fce2c7c94dd5f46da1fb305d23bcba0109da6a76015372a82fe0ff106ed2"
+  },
+  "selected_idea": {
+    "id": "alloc-first",
+    "status": "proposed",
+    "priority": 100,
+    "change_type": "optimize",
+    "bottleneck": "The synchronous cold-fault path repeats a lockless swap-cache lookup after its caller has already missed, immediately before a locked allocator lookup.",
+    "mechanism": "Try __swap_cache_alloc_folio first inside swapin_sync. On -EEXIST obtain the existing referenced folio with swap_cache_get_folio and retry if it vanished. Keep both allocator checks and all I/O, charge and rollback paths unchanged.",
+    "mechanism_evidence_type": "reviewed_structure",
+    "affected_paths": [
+      "mm/swap_state.c"
+    ],
+    "expected_benefit": "Remove one RCU-protected descriptor/table lookup per successful cold synchronous swap-in. A useful latency effect is uncertain and may be too small under TCG; require a resolved 5% gain with passing guards before engineering adoption is worth considering.",
+    "simpler_alternative": "Keep the existing lookup-first helper, which returns a raced cache hit without acquiring the allocator cluster lock.",
+    "falsifier": "Reject on a lifetime/refcount/error counterexample, failed correctness or metadata gate, scored random-latency regression, or no useful gain above calibrated noise. A source-level lookup reduction alone is not a latency win.",
+    "required_evidence": [
+      "Exact-tree independent source review including anonymous/shmem callers and cache-only races",
+      "Counted exact-commit xswap correctness",
+      "Structural mechanism proof",
+      "Fresh same-protocol probe and fast calibration",
+      "Paired baseline/candidate latency and scored guards"
+    ],
+    "upstream_refs": [],
+    "no_upstream_reason": "The exact baseline already contains the upstream lookup-first swapin_sync and locked allocation checks. The directly relevant control is this unchanged algorithm. A targeted source and mailing-list search found no separate compatible allocation-first patch; this is not an exhaustive absence claim. Large-folio/zswap and LRU patches change different paths or are integrated and are not interchangeable arms.",
+    "estimated_cost": {
+      "guest_attempts": 70,
+      "build_attempts": 1
+    },
+    "selection_reason": "This independently removes a duplicate cache miss while preserving the allocator precheck changed by the earlier r01 pilot. It avoids readahead policy tuning and creates no persistent state. Known metadata noise is an explicit early-stop risk.",
+    "complexity": {
+      "parent": {
+        "state": {
+          "change": "unchanged",
+          "reason": "No new stored state, cache, flag or tunable."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "Existing device pins, descriptor relookup, folio references and pre/post-allocation validation remain."
+        },
+        "locking": {
+          "change": "mixed",
+          "reason": "A cold success removes one RCU lookup; a raced cache hit now first reaches the existing locked allocator precheck."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "All allocator failures retain their original return; -EEXIST triggers refcounted cache lookup and retry if the cache entry vanished."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "No new build option or runtime control."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Review cache-hit races, shmem and large-order fallback after reordering; the automatic guest covers anonymous base pages only."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Same helper signature, folio return and caller lock/revalidation contract."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Both allocation prechecks remain; no persistent metadata and no intentionally added speculative allocation."
+        }
+      },
+      "baseline": {
+        "state": {
+          "change": "unchanged",
+          "reason": "No new stored state, cache, flag or tunable."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "Existing device pins, descriptor relookup, folio references and pre/post-allocation validation remain."
+        },
+        "locking": {
+          "change": "mixed",
+          "reason": "A cold success removes one RCU lookup; a raced cache hit now first reaches the existing locked allocator precheck."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "All allocator failures retain their original return; -EEXIST triggers refcounted cache lookup and retry if the cache entry vanished."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "No new build option or runtime control."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Review cache-hit races, shmem and large-order fallback after reordering; the automatic guest covers anonymous base pages only."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Same helper signature, folio return and caller lock/revalidation contract."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Both allocation prechecks remain; no persistent metadata and no intentionally added speculative allocation."
+        }
+      }
+    },
+    "provenance": [
+      {
+        "kind": "source",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "path": "linux:mm/swap_state.c",
+        "lines": "772-791; 443-537; 178-232"
+      },
+      {
+        "kind": "callers",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "path": "linux:mm/memory.c",
+        "lines": "4994-5004"
+      },
+      {
+        "kind": "callers",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "path": "linux:mm/shmem.c",
+        "lines": "2505-2514; 2251-2277"
+      },
+      {
+        "kind": "path-engagement",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "path": "linux:mm/swapfile.c",
+        "lines": "5507-5512"
+      },
+      {
+        "kind": "upstream-counterargument",
+        "url": "https://lkml.iu.edu/hypermail/linux/kernel/2607.0/00722.html"
+      },
+      {
+        "kind": "historical-measurement-risk",
+        "path": "campaigns/codex-r01-demand-2026-11-03/report/DECISION.md"
+      }
+    ]
+  },
+  "upstream_refs": [],
+  "protocol_sha256": "ea93eb3ea92e0fa10d7daa16cd19d75451c64bbd3f6f88ccbbb1f52d4c720a42",
+  "policy_sha256": "f5a1f452c502a45bab9780bcced462aff5f61e4b49410303afab81ba9b034891",
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ]
+}

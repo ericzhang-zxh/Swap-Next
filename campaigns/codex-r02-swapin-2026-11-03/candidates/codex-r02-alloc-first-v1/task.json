@@ -1,0 +1,44 @@
+{
+  "id": "codex-r02-alloc-first-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-d4921db74d34",
+  "worktree": "worktrees/codex-r02-swapin-2026-11-03/codex-r02-alloc-first-v1",
+  "status": "active",
+  "hypothesis": "Trying the existing allocator before repeating a cold cache lookup in swapin_sync reduces fixed synchronous swap-in work without changing allocator checks. Reject on correctness or metadata failure, random-latency regression, or no useful resolved paired gain.",
+  "created_unix": 1793761907.5677538,
+  "protocol_sha256": "c7f4c93b0a1a30de8f9a905beefcdeac7dc989736c6dcc3836c04e1875626571",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "A successful cold synchronous swap-in executes one fewer swap_cache_get_folio lookup inside swapin_sync. Both locked allocation checks remain; -EEXIST falls back to a referenced cached folio and retries if it vanished.",
+    "falsifier": "An exact-tree review finds that a caller loses cache-hit progress, required lifetime/error protection or a preserved allocator check, or the cold success path still performs the duplicate lookup. Correctness, metadata and calibrated latency independently gate execution."
+  },
+  "allowed_modify": [
+    "mm/swap_state.c"
+  ],
+  "allowed_add": [],
+  "budget": {
+    "max_candidates": 1,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 4,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 900,
+    "max_total_campaign_seconds": 64800,
+    "max_build_attempts": 10
+  },
+  "primary_metric": "swapin_seq.mean_ns",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

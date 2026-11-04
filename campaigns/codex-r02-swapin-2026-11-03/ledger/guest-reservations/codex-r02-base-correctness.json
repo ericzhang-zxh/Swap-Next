@@ -1,0 +1,15 @@
+{
+  "id": "codex-r02-base-correctness",
+  "campaign": "codex-r02-swapin-2026-11-03",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793761982.8725145,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "correctness"
+  },
+  "protocol_sha256": "ea93eb3ea92e0fa10d7daa16cd19d75451c64bbd3f6f88ccbbb1f52d4c720a42",
+  "started_unix": 1793761991.7008853
+}

@@ -12,6 +12,8 @@ Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
 
 Baseline origin: upstream or imported reference.
 
+[Campaign report](../codex-r01-demand-2026-11-03/report/REPORT.md)
+
 | Candidate | Status | Reason |
 | --- | --- | --- |
 | [codex-r01-precheck-v1](../codex-r01-demand-2026-11-03/candidates/codex-r01-precheck-v1.json) | closed | Retained probe calibration is incomplete or noisy; no silent retry. |

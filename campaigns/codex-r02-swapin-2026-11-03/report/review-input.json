@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "codex-r02-independent-v1",
+  "campaign": "codex-r02-swapin-2026-11-03",
+  "candidate": "codex-r02-alloc-first-v1",
+  "candidate_commit": "3fe7af01da59a8ade95823a13c25a8c796c6321f",
+  "source_tree": "0c83218561a357c129c5d93ac45a0530e0ad1df6",
+  "reviewer": "Independent candidate_review agent",
+  "disposition": "pass",
+  "summary": "No actionable correctness blocker in the exact one-function reorder. Both allocator checks, cached-zero-count fallback, descriptor lifetime, references, charge rollback and caller revalidation remain. Cold successful helper calls omit one lookup; raced hits pay a locked precheck. Bounded runtime and performance gates remain required.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/codex-r02-swapin-2026-11-03/report/independent-review.md",
+      "sha256": "2d11893e75909bebf9bc983d3514392dc5444bcbbf43808601fe3729b3d3bdfa"
+    },
+    {
+      "path": "campaigns/codex-r02-swapin-2026-11-03/patches/codex-r02-alloc-first-v1.patch",
+      "sha256": "344e08c598998d7b376bf788ce67099dfceaadc58e98474339cb321a1e1d7233"
+    },
+    {
+      "path": "campaigns/codex-r02-swapin-2026-11-03/candidates/codex-r02-alloc-first-v1/static.json",
+      "sha256": "11cd472f80a24e8cd12c38e6959c2580d82feb0725f63d374c60e1b8f12ff777"
+    }
+  ]
+}

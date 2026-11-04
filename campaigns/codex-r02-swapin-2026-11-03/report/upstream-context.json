@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "role": "source context, not reused measurement or a separately measured upstream arm",
+  "integrated_control": {
+    "algorithm": "lookup-first swapin_sync with unified allocation/fallback checks",
+    "source_url": "https://lkml.iu.edu/hypermail/linux/kernel/2605.2/01257.html",
+    "revision": "[PATCH v5 05/12] mm, swap: unify large folio allocation, 2026-05-17",
+    "relevance": "The author unified anon/shmem allocation, cache checking and order fallback. The experimental baseline already has this organization. The new candidate only changes when the existing helper looks for a cached folio.",
+    "local_source": "linux:mm/swap_state.c:772-791",
+    "identity_note": "The reviewed exact experimental baseline is pinned above. No separate original-series apply tree or new upstream contrast is claimed."
+  },
+  "counterargument": {
+    "source_url": "https://lkml.iu.edu/hypermail/linux/kernel/2607.0/00722.html",
+    "title": "Re: [BUG] shmem: shmem_get_folio_gfp livelock",
+    "author": "Baolin Wang",
+    "date": "2026-07-01",
+    "relevance": "The reply describes cached-folio return as the progress path for competing shmem faults. The allocation-first candidate retains that return after the allocator detects -EEXIST."
+  },
+  "search": {
+    "queries": [
+      "swapin_sync swap_cache_get_folio",
+      "swapin_sync EEXIST allocate"
+    ],
+    "result": "No separate compatible allocation-first optimization identified in the targeted source and mailing-list search.",
+    "limitation": "Not an exhaustive survey. Large-folio/zswap/LRU series are different changes; no superiority over them is inferred."
+  },
+  "comparison": {
+    "status": "not-applicable",
+    "reason": "The directly relevant lookup-first upstream algorithm is already the same-base baseline control. No compatible unapplied alternative was identified for a separate arm.",
+    "measured": false
+  }
+}

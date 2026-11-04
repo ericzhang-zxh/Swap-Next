@@ -1,0 +1,19 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "3fe7af01da59a8ade95823a13c25a8c796c6321f",
+  "changed_paths": [
+    "mm/swap_state.c"
+  ],
+  "changed_lines": 10,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "campaigns/codex-r02-swapin-2026-11-03/candidates/codex-r02-alloc-first-v1/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "campaigns/codex-r02-swapin-2026-11-03/candidates/codex-r02-alloc-first-v1/checkpatch.log",
+    "sha256": "ca23ceec00f4402e3295ab07d0956e2035f98f3c1383c29f3d6f2e34b8332f69"
+  }
+}

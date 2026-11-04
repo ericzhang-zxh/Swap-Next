@@ -1,0 +1,19 @@
+{
+  "campaign": "codex-r02-swapin-2026-11-03",
+  "all_passed": true,
+  "checks": [
+    "all result sidecar and ledger hashes",
+    "all serial hashes and parser replay",
+    "all counted reservation bindings",
+    "source/config/build/protocol identities",
+    "retained and current harness hashes",
+    "guest shape and accelerator",
+    "run validity replay",
+    "probe analysis exact replay",
+    "budget and run reconciliation"
+  ],
+  "verified_guest_results": 10,
+  "calibration_analysis_sha256": "cf04eb296349ded44e207dcacd5995122a92e6ffa0ffe4058bd3b7881af37635",
+  "public_runtime_summary_sha256": "b778a7d87f4d772059e3caf0c1e8346f309e5397f4c17e4fac2318be32d54a9a",
+  "interpretation": "Evidence integrity passed. The metadata calibration stability gate failed."
+}

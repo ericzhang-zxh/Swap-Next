@@ -1,0 +1,43 @@
+{
+  "baseline_build": {
+    "status": "reusable",
+    "record_sha256": "66231dfdae56a240762d593d37a769f7f6f19370388544229a1fe6360a92ebae",
+    "provenance": {
+      "artifact": "benchmark/kernel/builds/codex-r01-base/result.json",
+      "artifact_sha256": "9cc33bb57b77759a9ca881eb46861a5d3fbbcb78c592c82adff425501b9bd759",
+      "observed_unix": 1793741197.2680151
+    },
+    "coverage": {
+      "gates": [
+        "build"
+      ],
+      "cases": [],
+      "backends": []
+    },
+    "reasons": [],
+    "reference_only": false,
+    "new_measurement_required": false,
+    "reconciliation_required": false,
+    "cross_campaign_reused": false,
+    "independent_measurement": false,
+    "may_pair_with_new_arm": false,
+    "original_budget_unchanged": true,
+    "identity_key": "98fba9c0cfdd250cc04a67c1308e14a3d87ba27067669041c7d71093679148bb",
+    "alternatives": [],
+    "mismatches": []
+  },
+  "image_hash_checks": {
+    "bench.img": true,
+    "initramfs.cpio.gz": true,
+    "guest-init": true,
+    "bench.sh": true,
+    "params.sh": true,
+    "swapin.c": true,
+    "churn.c": true,
+    "correctness.c": true,
+    "console-drain.c": true,
+    "prepare-image.py": true,
+    "tools.json": true
+  },
+  "source_checkout": "1069d379d9253a0bbec6bc33208d70a0b82a9149"
+}
