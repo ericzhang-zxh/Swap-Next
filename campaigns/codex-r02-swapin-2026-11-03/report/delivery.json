@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "codex-r02-swapin-2026-11-03",
-  "state": "visually_checked",
+  "state": "live_verified",
   "evidence_sha256": "651427a902d62ad1135647a7d6853b425f0faa250ca9f81e5c7af03073e6daf4",
   "artifacts": {
     "summary.json": "b8c81c3ac33fef20abec127b1db827ed00110e23b0df4a258ede87198e21a3d2",
@@ -23,6 +23,10 @@
     {
       "state": "visually_checked",
       "time": 1793763236.3434043
+    },
+    {
+      "state": "live_verified",
+      "time": 1793763334.3758194
     }
   ],
   "visual_check": {
@@ -78,5 +82,13 @@
         "charts_visible": true
       }
     ]
+  },
+  "publication": {
+    "commit": "72e8c657e1aa93f57ef526527439f9ed33fbab75",
+    "run_id": "41767987038",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/codex-r02-swapin-2026-11-03/",
+    "html_sha256": "aa4d56efe415b98ae0fe59a82bf0aa6d656377c1ca041dc2b055d73805185537",
+    "index_sha256": "84a0b4d8deab9b186e674b87e24cffcae0ca17b75a3ffa09fc182adeb15c3353",
+    "verified_unix": 1793763334.3758173
   }
 }

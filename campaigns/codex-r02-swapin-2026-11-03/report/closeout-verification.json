@@ -1,0 +1,17 @@
+{
+  "campaign": "codex-r02-swapin-2026-11-03",
+  "execution_status": "closed",
+  "delivery_status": "live_verified",
+  "candidate_worktree_removed": true,
+  "candidate_branch_retained": "agents/codex-r02-alloc-first-v1",
+  "candidate_commit": "3fe7af01da59a8ade95823a13c25a8c796c6321f",
+  "owned_runtime_processes": [],
+  "budget": {
+    "created": 1793761982.8724234,
+    "guests": 1,
+    "probe_guests": 9,
+    "builds": 0
+  },
+  "html_sha256": "aa4d56efe415b98ae0fe59a82bf0aa6d656377c1ca041dc2b055d73805185537",
+  "verified_unix": 1793763371.3340247
+}
