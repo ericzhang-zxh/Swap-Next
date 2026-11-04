@@ -1,0 +1,57 @@
+{
+  "kind": "visual",
+  "evidence": {
+    "artifact_sha256": "aa4d56efe415b98ae0fe59a82bf0aa6d656377c1ca041dc2b055d73805185537",
+    "method": "Chromium screenshots plus primary-agent pixel inspection of both themes and desktop/mobile; DOM overflow, disclosure and theme-toggle checks.",
+    "views": [
+      {
+        "width": 1280,
+        "theme": "light",
+        "sha256": "acee210d2c9a874feb741d2e18af07837f9ccc9f554dcec5ed183d67dd1fad0e",
+        "theme_toggle_works": true,
+        "disclosure_works": true,
+        "screenshot": "campaigns/codex-r02-swapin-2026-11-03/runs/visual-qa/desktop-light.png",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "sha256": "06b9e367f988716499d3f48e0631aebccd47a194fa921317376a25ccf2584229",
+        "theme_toggle_works": true,
+        "disclosure_works": true,
+        "screenshot": "campaigns/codex-r02-swapin-2026-11-03/runs/visual-qa/desktop-dark.png",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "sha256": "f5c62e6ac54be985c63344274b307153bbcb9f1db884573243a3d7a665a86661",
+        "theme_toggle_works": true,
+        "disclosure_works": true,
+        "screenshot": "campaigns/codex-r02-swapin-2026-11-03/runs/visual-qa/mobile-light.png",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "sha256": "3e8e820c09cbc2a881c415e7b3f48f9f74facfa86ca54cc1851e0968b3b9d875",
+        "theme_toggle_works": true,
+        "disclosure_works": true,
+        "screenshot": "campaigns/codex-r02-swapin-2026-11-03/runs/visual-qa/mobile-dark.png",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      }
+    ]
+  }
+}

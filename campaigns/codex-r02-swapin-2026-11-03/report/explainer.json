@@ -1,0 +1,565 @@
+{
+  "title": "Can a cold swap-in skip a repeated lookup?",
+  "subtitle": "codex-r02-swapin-cost \u00b7 5e84ca928dee",
+  "verdict": {
+    "status": "inconclusive",
+    "headline": "Inconclusive: baseline calibration failed before candidate runtime testing. Retain the patch; diagnose measurement stability next.",
+    "tiles": [
+      {
+        "label": "Evidence",
+        "value": "No paired result",
+        "note": "Human review controls promotion."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "limits",
+      "title": "Material limits",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "No upstream comparison has been measured. Calibration stopped performance comparison: metadata-brd: METADATA_CALIBRATION_NOISY."
+        }
+      ]
+    },
+    {
+      "id": "context",
+      "title": "A small repeated cost on every cold fault",
+      "lead": "Restoring a swapped page pauses the application. The caller already missed the cache, yet the synchronous helper looks again before an allocator that performs its own locked checks.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis: remove the repeated cold-path lookup. Source review passed; the candidate was not built or booted. Fresh baseline correctness passed, but unstable metadata calibration stopped runtime evaluation."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "From a paused application back to resident RAM",
+      "lead": "Schematic system view: page contents return from disk or compressed RAM. The highlighted cache path is shared; storage and decompression remain unchanged.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The cache path sits between the fault and a usable RAM page",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "col": 0,
+              "row": 0,
+              "sub": "waiting for page",
+              "tone": "default"
+            },
+            {
+              "id": "ram",
+              "label": "Resident folio",
+              "col": 1,
+              "row": 0,
+              "sub": "page in physical RAM",
+              "tone": "good"
+            },
+            {
+              "id": "fault",
+              "label": "Fault handler",
+              "col": 0,
+              "row": 1,
+              "sub": "restore missing page",
+              "tone": "default"
+            },
+            {
+              "id": "cache",
+              "label": "Swap cache",
+              "col": 1,
+              "row": 1,
+              "sub": "folio reference/index",
+              "tone": "focus"
+            },
+            {
+              "id": "disk",
+              "label": "Disk",
+              "col": 0,
+              "row": 2,
+              "sub": "stored page contents",
+              "tone": "muted"
+            },
+            {
+              "id": "zram",
+              "label": "Compressed RAM",
+              "col": 1,
+              "row": 2,
+              "sub": "zram page contents",
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "fault",
+              "label": "page fault"
+            },
+            {
+              "from": "fault",
+              "to": "cache",
+              "label": "find / restore"
+            },
+            {
+              "from": "disk",
+              "to": "fault",
+              "label": "read"
+            },
+            {
+              "from": "zram",
+              "to": "cache",
+              "label": "decompress"
+            },
+            {
+              "from": "cache",
+              "to": "ram",
+              "label": "publish"
+            },
+            {
+              "from": "ram",
+              "to": "app",
+              "label": "resume"
+            }
+          ],
+          "note": "Illustrative locations and arrows, not measured timing. The patch changes cache control work, not stored page contents."
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Zoom into the synchronous cache-miss path",
+      "lead": "Anonymous and shmem callers first look in the swap cache. On a miss, the helper enters an allocator with checks before and after allocation.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Keep both locked allocator checks and the read path",
+          "nodes": [
+            {
+              "id": "caller",
+              "label": "Caller miss",
+              "col": 0,
+              "row": 0,
+              "sub": "anonymous / shmem",
+              "tone": "default"
+            },
+            {
+              "id": "helper",
+              "label": "Sync helper",
+              "col": 1,
+              "row": 0,
+              "sub": "swapin_sync",
+              "tone": "focus"
+            },
+            {
+              "id": "cache",
+              "label": "Cache index",
+              "col": 0,
+              "row": 1,
+              "sub": "folio or empty slot",
+              "tone": "focus"
+            },
+            {
+              "id": "pre",
+              "label": "Locked precheck",
+              "col": 1,
+              "row": 1,
+              "sub": "existing allocator",
+              "tone": "default"
+            },
+            {
+              "id": "folio",
+              "label": "New RAM folio",
+              "col": 1,
+              "row": 2,
+              "sub": "allocate, then recheck",
+              "tone": "good"
+            },
+            {
+              "id": "io",
+              "label": "Read page",
+              "col": 0,
+              "row": 2,
+              "sub": "existing I/O",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "caller",
+              "to": "helper",
+              "label": "already missed"
+            },
+            {
+              "from": "helper",
+              "to": "pre",
+              "label": "try allocation"
+            },
+            {
+              "from": "pre",
+              "to": "cache",
+              "label": "check slot"
+            },
+            {
+              "from": "pre",
+              "to": "folio",
+              "label": "empty slot"
+            },
+            {
+              "from": "folio",
+              "to": "io",
+              "label": "publish + submit"
+            }
+          ],
+          "note": "The candidate retains descriptor locking, device references, charging rollback and caller identity validation. A raced hit follows the fallback shown below."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Before and after: move lookup onto the raced-hit path",
+      "lead": "One independent candidate changes only the helper loop. Cold success skips its repeated lookup; a raced cache hit pays the allocator's lock before fetching a reference.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Baseline: repeat lookup before entering the allocator",
+          "nodes": [
+            {
+              "id": "miss",
+              "label": "Caller miss",
+              "col": 0,
+              "row": 0,
+              "sub": "",
+              "tone": "default"
+            },
+            {
+              "id": "lookup",
+              "label": "Cache lookup",
+              "col": 1,
+              "row": 0,
+              "sub": "repeated cold work",
+              "tone": "bad"
+            },
+            {
+              "id": "alloc",
+              "label": "Allocator",
+              "col": 1,
+              "row": 1,
+              "sub": "both checks kept",
+              "tone": "focus"
+            },
+            {
+              "id": "read",
+              "label": "Read page",
+              "col": 1,
+              "row": 2,
+              "sub": "new folio",
+              "tone": "good"
+            },
+            {
+              "id": "hit",
+              "label": "Cached folio",
+              "col": 0,
+              "row": 1,
+              "sub": "return reference",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "miss",
+              "to": "lookup",
+              "label": ""
+            },
+            {
+              "from": "lookup",
+              "to": "alloc",
+              "label": "miss"
+            },
+            {
+              "from": "lookup",
+              "to": "hit",
+              "label": "raced hit"
+            },
+            {
+              "from": "alloc",
+              "to": "read",
+              "label": "success"
+            }
+          ],
+          "note": ""
+        },
+        {
+          "type": "flow",
+          "takeaway": "Candidate: allocate first; retrieve cache only on a race",
+          "nodes": [
+            {
+              "id": "miss",
+              "label": "Caller miss",
+              "col": 0,
+              "row": 0,
+              "sub": "",
+              "tone": "default"
+            },
+            {
+              "id": "alloc",
+              "label": "Allocator",
+              "col": 1,
+              "row": 0,
+              "sub": "both checks kept",
+              "tone": "focus"
+            },
+            {
+              "id": "read",
+              "label": "Read page",
+              "col": 0,
+              "row": 1,
+              "sub": "new folio",
+              "tone": "good"
+            },
+            {
+              "id": "lookup",
+              "label": "Cache lookup",
+              "col": 1,
+              "row": 1,
+              "sub": "only after EEXIST",
+              "tone": "default"
+            },
+            {
+              "id": "hit",
+              "label": "Cached folio",
+              "col": 1,
+              "row": 2,
+              "sub": "return reference",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "miss",
+              "to": "alloc",
+              "label": ""
+            },
+            {
+              "from": "alloc",
+              "to": "read",
+              "label": "success"
+            },
+            {
+              "from": "alloc",
+              "to": "lookup",
+              "label": "EEXIST"
+            },
+            {
+              "from": "lookup",
+              "to": "hit",
+              "label": "found"
+            }
+          ],
+          "note": "If the raced folio disappears, retry the allocator. No persistent state or new cleanup path is added. The locked precheck can cost more on raced hits; that effect remains unmeasured."
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Baseline metadata calibration: CALIBRATION_NOISY",
+          "x_label": "Metadata bytes per 1,000 capacity slots (baseline only)",
+          "groups": [
+            "Run 1",
+            "Run 2",
+            "Run 3"
+          ],
+          "series": [
+            "Baseline"
+          ],
+          "points": [
+            {
+              "group": "Run 1",
+              "series": "Baseline",
+              "value": 120.88012740343856,
+              "tip": "a097eaa148a34678ad8f32675bf1624d-metadata-brd-0"
+            },
+            {
+              "group": "Run 2",
+              "series": "Baseline",
+              "value": 112.457275809561,
+              "tip": "a097eaa148a34678ad8f32675bf1624d-metadata-brd-1"
+            },
+            {
+              "group": "Run 3",
+              "series": "Baseline",
+              "value": 124.55749558120033,
+              "tip": "a097eaa148a34678ad8f32675bf1624d-metadata-brd-2"
+            }
+          ],
+          "note": "Valid calibration samples; candidate performance was not measured here."
+        },
+        {
+          "type": "note",
+          "text": "No complete paired performance result is available."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Resolve the measurement gate before another trial",
+      "lead": "Every fresh probe guest was valid, while metadata stability failed. Candidate latency, runtime correctness and formal acceptance coverage remain open. The closed campaign launched no replacement measurement.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "An approved diagnostic should separate allocation from accounting",
+          "nodes": [
+            {
+              "id": "proxy",
+              "label": "Memory proxy",
+              "col": 0,
+              "row": 0,
+              "sub": "guest-wide delta",
+              "tone": "bad"
+            },
+            {
+              "id": "check",
+              "label": "Locate variation",
+              "col": 1,
+              "row": 0,
+              "sub": "allocation vs accounting",
+              "tone": "focus"
+            },
+            {
+              "id": "approve",
+              "label": "Review protocol",
+              "col": 2,
+              "row": 0,
+              "sub": "before new measurements",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "proxy",
+              "to": "check",
+              "label": ""
+            },
+            {
+              "from": "check",
+              "to": "approve",
+              "label": ""
+            }
+          ],
+          "note": "Inference: unrelated guest accounting may move the proxy. Direct allocation variation tracking the proxy would weaken that explanation."
+        },
+        {
+          "type": "note",
+          "text": "Candidate scope and independent review passed. Baseline runtime passed; candidate build, boot, shmem, large-folio and failure-path coverage did not run. Preserve these limits and the failed calibration with the patch."
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every retained outcome",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "a097eaa148a34678ad8f32675bf1624d",
+              "control",
+              "probe",
+              "CALIBRATION_NOISY",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": []
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "codex-r02-alloc-first-v1",
+              "null"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/campaign.json",
+              "8c562396c5e3a8c2c577aba7a866d939d850b1974bd2ac18882862db4eb35adc"
+            ],
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/candidates/codex-r02-alloc-first-v1.json",
+              "fbf4588d7a9dbaf2262120c170cef223e683ac45d40a3dc118f1e527e8492f8f"
+            ],
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/ledger/budget.json",
+              "4208733a58e091e2085de4fde457a854b9f8408dcbbc04a6f9cf5210ee59617d"
+            ],
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/ledger/ledger.json",
+              "dd6fb162e23a043349d88c0d8410c8a5b080dc7e97cdac92242ee5ef7651acb9"
+            ],
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/ledger/session-closeout.json",
+              "c7db2bcee2647530319d7f0fba42ae66d221a6f810ecbe1f8208afc87e169644"
+            ],
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/patches/codex-r02-alloc-first-v1.patch",
+              "344e08c598998d7b376bf788ce67099dfceaadc58e98474339cb321a1e1d7233"
+            ],
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/policy.json",
+              "f5a1f452c502a45bab9780bcced462aff5f61e4b49410303afab81ba9b034891"
+            ],
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/protocol.json",
+              "ea93eb3ea92e0fa10d7daa16cd19d75451c64bbd3f6f88ccbbb1f52d4c720a42"
+            ],
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/research.json",
+              "de655c6a9193e82450a6de20193162db78fd72761fac7518ced32a7ca61b8dd7"
+            ],
+            [
+              "campaigns/codex-r02-swapin-2026-11-03/reviews/codex-r02-independent-v1.json",
+              "c3845d45af4a3123163dd1156efa490917d830d330f6b24cc16c81441fbe14e7"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

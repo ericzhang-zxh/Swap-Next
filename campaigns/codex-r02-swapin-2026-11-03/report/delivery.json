@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-r02-swapin-2026-11-03",
+  "state": "visually_checked",
+  "evidence_sha256": "651427a902d62ad1135647a7d6853b425f0faa250ca9f81e5c7af03073e6daf4",
+  "artifacts": {
+    "summary.json": "b8c81c3ac33fef20abec127b1db827ed00110e23b0df4a258ede87198e21a3d2",
+    "REPORT.md": "8cc853b9836607a1efa5baba7c5b3f2267f20b1e9ca532b85303d55b3b5e4bf6",
+    "explainer.json": "9cd6a7517693eef8a5eebad9beb1dd7723c8405031b3d55c4bca038752dc9574",
+    "explainer.html": "aa4d56efe415b98ae0fe59a82bf0aa6d656377c1ca041dc2b055d73805185537",
+    "generate_report.py": "40efd880d291d4d74f30a0163634bf3688f988aa8ab1faf0357622c4d0fa8d32"
+  },
+  "story_sha256": "90342df54e3cfd5c15ab61af3d7c1f650f7e41ccf54b505a96ab57d24027b174",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1793763040.6493309
+    },
+    {
+      "state": "generated",
+      "time": 1793763199.9965541
+    },
+    {
+      "state": "visually_checked",
+      "time": 1793763236.3434043
+    }
+  ],
+  "visual_check": {
+    "artifact_sha256": "aa4d56efe415b98ae0fe59a82bf0aa6d656377c1ca041dc2b055d73805185537",
+    "method": "Chromium screenshots plus primary-agent pixel inspection of both themes and desktop/mobile; DOM overflow, disclosure and theme-toggle checks.",
+    "views": [
+      {
+        "width": 1280,
+        "theme": "light",
+        "sha256": "acee210d2c9a874feb741d2e18af07837f9ccc9f554dcec5ed183d67dd1fad0e",
+        "theme_toggle_works": true,
+        "disclosure_works": true,
+        "screenshot": "campaigns/codex-r02-swapin-2026-11-03/runs/visual-qa/desktop-light.png",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "sha256": "06b9e367f988716499d3f48e0631aebccd47a194fa921317376a25ccf2584229",
+        "theme_toggle_works": true,
+        "disclosure_works": true,
+        "screenshot": "campaigns/codex-r02-swapin-2026-11-03/runs/visual-qa/desktop-dark.png",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "sha256": "f5c62e6ac54be985c63344274b307153bbcb9f1db884573243a3d7a665a86661",
+        "theme_toggle_works": true,
+        "disclosure_works": true,
+        "screenshot": "campaigns/codex-r02-swapin-2026-11-03/runs/visual-qa/mobile-light.png",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "sha256": "3e8e820c09cbc2a881c415e7b3f48f9f74facfa86ca54cc1851e0968b3b9d875",
+        "theme_toggle_works": true,
+        "disclosure_works": true,
+        "screenshot": "campaigns/codex-r02-swapin-2026-11-03/runs/visual-qa/mobile-dark.png",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      }
+    ]
+  }
+}

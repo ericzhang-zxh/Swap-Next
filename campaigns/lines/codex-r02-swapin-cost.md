@@ -12,6 +12,8 @@ Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
 
 Baseline origin: upstream or imported reference.
 
+[Campaign report](../codex-r02-swapin-2026-11-03/report/REPORT.md)
+
 | Candidate | Status | Reason |
 | --- | --- | --- |
 | [codex-r02-alloc-first-v1](../codex-r02-swapin-2026-11-03/candidates/codex-r02-alloc-first-v1.json) | closed | All nine fresh baseline probe guests were valid, but metadata-brd range/median spread was 10.01009846% against the frozen 1% gate. Stop after this single calibration without retries or threshold changes. Early calibration avoided an unjustified candidate build: the source candidate and independent structural review are retained, while candidate runtime and paired latency remain unmeasured. Complete report delivery. |
