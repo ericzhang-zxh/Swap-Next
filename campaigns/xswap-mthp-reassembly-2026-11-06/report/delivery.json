@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "xswap-mthp-reassembly-2026-11-06",
-  "state": "visually_checked",
+  "state": "live_verified",
   "evidence_sha256": "d760b47cdbff2e9c5089943cb571718b0814e1bb2f5d8176878fa0fc87255bc3",
   "artifacts": {
     "summary.json": "c390f5ca7255e09dc80a0521a4eff6d25d04b093cd308ec1d7af0ae107d63f2d",
@@ -19,6 +19,10 @@
     {
       "state": "visually_checked",
       "time": 1794003384.0795193
+    },
+    {
+      "state": "live_verified",
+      "time": 1794003536.1076214
     }
   ],
   "visual_check": {
@@ -74,5 +78,13 @@
         "disclosure_works": true
       }
     ]
+  },
+  "publication": {
+    "commit": "f46b79aede9f64b0359df51cea91a3a73a7d9571",
+    "run_id": "42303677570",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/xswap-mthp-reassembly-2026-11-06/",
+    "html_sha256": "31ea2f51ab2155b2c7d0bd931ad6d3d4e1ac2808de5e482c273131c58ce623c0",
+    "index_sha256": "61fdb6c1584f7bf3df79b580a9fe943f48751bcb7d7ffb42de5a3e64e6e2340d",
+    "verified_unix": 1794003536.1076179
   }
 }
