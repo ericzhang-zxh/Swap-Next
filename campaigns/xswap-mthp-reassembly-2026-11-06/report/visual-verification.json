@@ -1,0 +1,57 @@
+{
+  "kind": "visual",
+  "evidence": {
+    "artifact_sha256": "31ea2f51ab2155b2c7d0bd931ad6d3d4e1ac2808de5e482c273131c58ce623c0",
+    "method": "Direct Chrome headless render and screenshot inspection of desktop (1280px) and mobile (390px) viewports across light and dark themes; DOM overflow, disclosure and theme-toggle checks verified.",
+    "views": [
+      {
+        "width": 1280,
+        "theme": "light",
+        "screenshot": "campaigns/xswap-mthp-reassembly-2026-11-06/runs/visual-qa/desktop-light.png",
+        "sha256": "f82d0688408f3e18e605b79eebef0b155c1bbb91b6d1557e904898e003dbe4bf",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "screenshot": "campaigns/xswap-mthp-reassembly-2026-11-06/runs/visual-qa/desktop-dark.png",
+        "sha256": "ce0357d075d8e47d4b9749c56c23b396e090df87b0cc00be733c86c8fb98bf54",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/xswap-mthp-reassembly-2026-11-06/runs/visual-qa/mobile-light.png",
+        "sha256": "de08cbadfc8747c2f60db40503bbbf2c3e8422ac69ce9e4c3e46ad4a3cae54e8",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/xswap-mthp-reassembly-2026-11-06/runs/visual-qa/mobile-dark.png",
+        "sha256": "8c37c866a3a0a3cfe962cc73ec7b5a4bc1e1135bb030dfa537ed9fd65a0292ed",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      }
+    ]
+  }
+}

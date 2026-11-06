@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-mthp-reassembly-2026-11-06",
+  "evidence_sha256": "d760b47cdbff2e9c5089943cb571718b0814e1bb2f5d8176878fa0fc87255bc3",
+  "title": "Contiguous mTHP Swapin Reassembly (xswap-mthp-reassembly-v1)",
+  "headline": "Milestone 2 evaluation: lifting the zswap mTHP blackout with two-phase commit decompression passes all 17 integration gates while base-page latency remains equivalent to control.",
+  "date": "2026-11-06",
+  "harness": "teamwork",
+  "model": "gemini-2.5-pro",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Lifting the zswap mTHP swapin blackout",
+      "lead": "Upstream mm/memory.c unconditionally returns 0 in thp_swapin_suitable_orders() when zswap is active, forcing 16 individual order-0 page faults. Milestone 2 lifts this blackout via contiguous zswap reassembly.",
+      "evidence": [
+        "campaigns/xswap-mthp-reassembly-2026-11-06/research.json",
+        "campaigns/xswap-mthp-reassembly-2026-11-06/patches/xswap-mthp-reassembly-v1.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Milestone 2 builds on Milestone 1 allocator-first sync swapin by reassembling contiguous swap entries into orders 2 and 4 folios directly from zswap under a single page table lock hold."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Contiguous swap slot checking and high-order folio allocation",
+      "lead": "thp_swapin_suitable_orders() queries zswap_all_present() across orders 2 and 4. If all swap slots in the cluster reside in zswap, high-order folios enter swapin_sync() under a single PTL hold.",
+      "evidence": [
+        "campaigns/xswap-mthp-reassembly-2026-11-06/research.json",
+        "campaigns/xswap-mthp-reassembly-2026-11-06/protocol.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Atomic multi-slot presence check admits only fully-cached clusters to high-order swapin",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "do_swap_page",
+              "tone": "default"
+            },
+            {
+              "id": "check",
+              "label": "zswap_all_present",
+              "col": 1,
+              "row": 0,
+              "sub": "orders 2 & 4",
+              "tone": "focus"
+            },
+            {
+              "id": "mthp",
+              "label": "High-order Sync",
+              "col": 2,
+              "row": 0,
+              "sub": "swapin_sync(orders)",
+              "tone": "good"
+            },
+            {
+              "id": "order0",
+              "label": "Order-0 Fallback",
+              "col": 1,
+              "row": 1,
+              "sub": "partial slots missing",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "check",
+              "label": "aligned range"
+            },
+            {
+              "from": "check",
+              "to": "mthp",
+              "label": "all present"
+            },
+            {
+              "from": "check",
+              "to": "order0",
+              "label": "any missing"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Two-phase commit subpage decompression in mm/zswap.c",
+      "lead": "Two-phase commit decompression in mm/zswap.c loads each subpage into kmap_local_folio offsets. If any slot fails, all are cleanly aborted without state corruption; otherwise all slots commit atomically.",
+      "evidence": [
+        "campaigns/xswap-mthp-reassembly-2026-11-06/patches/xswap-mthp-reassembly-v1.patch",
+        "campaigns/xswap-mthp-reassembly-2026-11-06/reviews/xswap-mthp-reassembly-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Two-phase commit guarantees atomic high-order decompression without orphan slots",
+          "nodes": [
+            {
+              "id": "decompress",
+              "label": "Phase 1: Decompress",
+              "col": 0,
+              "row": 0,
+              "sub": "kmap subpage offsets",
+              "tone": "focus"
+            },
+            {
+              "id": "commit",
+              "label": "Phase 2: Commit",
+              "col": 1,
+              "row": 0,
+              "sub": "atomic zswap_entry_free",
+              "tone": "good"
+            },
+            {
+              "id": "abort",
+              "label": "Decomp Error",
+              "col": 0,
+              "row": 1,
+              "sub": "order-0 fallback",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "decompress",
+              "to": "commit",
+              "label": "all subpages OK"
+            },
+            {
+              "from": "decompress",
+              "to": "abort",
+              "label": "decomp failure"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Kernel changes across memory management and zswap",
+      "lead": "Modified include/linux/zswap.h, mm/zswap.c, mm/memory.c, and mm/swap_state.c. Passed controller check with 0 checkpatch errors, 17/17 QEMU TCG integration gates, and probe evaluation under Revision 7.",
+      "evidence": [
+        "campaigns/xswap-mthp-reassembly-2026-11-06/patches/xswap-mthp-reassembly-v1.patch",
+        "campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1/value.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Rigorous static and dynamic gates verify functional correctness and stability",
+          "nodes": [
+            {
+              "id": "code",
+              "label": "Kernel Implementation",
+              "col": 0,
+              "row": 0,
+              "sub": "zswap.h + zswap.c + memory.c",
+              "tone": "default"
+            },
+            {
+              "id": "gates",
+              "label": "Correctness Suite",
+              "col": 1,
+              "row": 0,
+              "sub": "17/17 QEMU TCG gates",
+              "tone": "good"
+            },
+            {
+              "id": "screen",
+              "label": "Screening Benchmark",
+              "col": 2,
+              "row": 0,
+              "sub": "16 guests (4 pairs)",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "code",
+              "to": "gates",
+              "label": "build std-53e02e8615a3"
+            },
+            {
+              "from": "gates",
+              "to": "screen",
+              "label": "admit to evaluation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural verdict: Milestone 2 contiguous mTHP reassembly verified",
+      "lead": "Candidate xswap-mthp-reassembly-v1 verified the feasibility of contiguous mTHP zswap decompression with 17/17 correctness gates passing, establishing the foundational reassembly engine for Milestone 3 stride-aware batching.",
+      "evidence": [
+        "campaigns/xswap-mthp-reassembly-2026-11-06/ledger/ledger.json",
+        "campaigns/xswap-mthp-reassembly-2026-11-06/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Milestone 2 delivers verified contiguous mTHP reassembly from zswap with two-phase commit decompression and batch PTE mapping, providing the structural foundation for Milestone 3 stride-aware batching."
+        }
+      ]
+    }
+  ]
+}

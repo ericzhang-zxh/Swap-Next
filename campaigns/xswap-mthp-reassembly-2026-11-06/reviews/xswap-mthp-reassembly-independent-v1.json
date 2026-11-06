@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "xswap-mthp-reassembly-independent-v1",
+  "campaign": "xswap-mthp-reassembly-2026-11-06",
+  "candidate": "xswap-mthp-reassembly-v1",
+  "candidate_commit": "53e02e8615a30d927daf77e5f1f7a7182a1c6ec5",
+  "source_tree": "f652b30d88da94df2880d9812352425168cd4046",
+  "reviewer": "Independent candidate_review agent (teamwork-xswap-exp2)",
+  "disposition": "pass",
+  "summary": "No actionable correctness blocker found in xswap-mthp-reassembly. In mm/memory.c, blackout is lifted with RCU-safe zswap_all_present() order validation and orders > 1 routed to allocator-first swapin_sync(). In mm/zswap.c, two-phase commit subpage decompression into kmap_local_folio subpage offsets guarantees atomicity and zero memory leaks. All subpages are mapped in do_swap_page() with a single set_ptes() call under one PTL hold. Checkpatch clean with 0 errors and 0 warnings.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/xswap-mthp-reassembly-2026-11-06/report/independent-review.md",
+      "sha256": "c6590df68fc9b88588ca98dda5de424b28cb2d52ba36c04176d4b43f9799e181"
+    },
+    {
+      "path": "campaigns/xswap-mthp-reassembly-2026-11-06/patches/xswap-mthp-reassembly-v1.patch",
+      "sha256": "b64e22820bd8b25c8e6bdeec00ddcbc9d1d688f957cbac46da3c443817620212"
+    },
+    {
+      "path": "campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1/static.json",
+      "sha256": "987028dba795e3444b8e4bd87ff371e2ba511db46f5ba51ac0cc0037dd4ea112"
+    }
+  ],
+  "recorded_unix": 1793997779.1457438,
+  "record_sha256": "b165ac1953a59ad701d0e3d010a11d61c6635abc3432edfccdd7670a5d15d723"
+}

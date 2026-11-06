@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "line_contract": {
+    "schema_version": 1,
+    "line": "xswap-mthp-reassembly",
+    "profile": "swap-core",
+    "profile_version": 1,
+    "profile_sha256": "f11b8b3a9a5d1819dc4bc82c92f5424055aad4f237da07ef8971b73e56cd3cf8",
+    "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "value_policy": {
+      "min_useful_effect": 0.05,
+      "equivalence_margin": 0.02,
+      "requires_upstream_comparison": false,
+      "rationale": "The integrated baseline 5e84ca928dee is the control. Target an 8% to 12% geomean swapin latency reduction beyond calibrated noise with all 17 correctness gates passing."
+    },
+    "contributor": "teamwork-xswap-exp2",
+    "scientific_sha256": "2f849fe3f8e3ef6a93dd91567cece1bbe65899c4c141dcee5880d8cf208e5e06"
+  },
+  "selected_idea": {
+    "id": "contiguous-mthp-reassembly",
+    "status": "proposed",
+    "priority": 100,
+    "change_type": "optimize",
+    "bottleneck": "When mTHP folios are swapped out to zswap, mm/memory.c:4816 unconditionally returns 0 in thp_swapin_suitable_orders() when zswap is active, forcing 16 separate order-0 page faults, 16 individual allocations, and 16 page table lock acquisitions for a single 64kB folio.",
+    "mechanism": "Lift the blackout in mm/memory.c when an aligned contiguous swap cluster resides in zswap. Extend mm/zswap.c to verify contiguous residency for orders 2 and 4, decompress each subpage directly into high-order folio subpages (kmap_local_folio), and install all PTEs in do_swap_page() with a single set_ptes() call under one PTL hold, building on Milestone 1's allocator-first sync swapin engine.",
+    "mechanism_evidence_type": "reviewed_structure",
+    "affected_paths": [
+      "mm/memory.c",
+      "mm/zswap.c",
+      "mm/swap_state.c",
+      "include/linux/zswap.h"
+    ],
+    "expected_benefit": "Slashing page fault entries and PTL hold cycles by 75% to 93.75% during mTHP swapin, delivering 5% to 10% latency reductions on swapin-zram-64k while preserving disk swapin performance and passing all 17 correctness gates.",
+    "simpler_alternative": "Fall back to individual order-0 faults on every subpage as upstream currently does.",
+    "falsifier": "Reject on partial decompression failure without clean order-0 fallback, slot leakage, race condition during concurrent faulting, failed correctness gate, or latency regression beyond calibrated noise.",
+    "required_evidence": [
+      "Exact-tree independent source review including caller contracts",
+      "Counted exact-commit xswap correctness",
+      "Structural mechanism proof",
+      "Fresh probe calibration under Protocol Revision 7 (or reference cache reuse)",
+      "Paired baseline/candidate latency screen"
+    ],
+    "upstream_refs": [],
+    "no_upstream_reason": "The relevant upstream implementation is already in the frozen baseline.",
+    "estimated_cost": {
+      "guest_attempts": 70,
+      "build_attempts": 2
+    },
+    "selection_reason": "Combines demand-path allocator-first sync swapin with multi-slot zswap reassembly to eliminate redundant PTL hold overhead during mTHP swapin.",
+    "complexity": {
+      "parent": {
+        "state": {
+          "change": "unchanged",
+          "reason": "No persistent stored kernel state added."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "Folio and swap slot lifetime contracts preserved."
+        },
+        "locking": {
+          "change": "decreased",
+          "reason": "Single PTL hold installs all subpages of high-order folio."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Standard fallback to order-0 on partial decompression failure."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "Uses existing transparent THP sysfs configuration."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying mTHP zswap decompression, partial zswap presence, and PTL batching."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Kernel swapin and zswap interface signatures maintained."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Allocates mTHP folios only when all slots reside in zswap."
+        }
+      },
+      "baseline": {
+        "state": {
+          "change": "unchanged",
+          "reason": "No persistent stored kernel state added."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "Folio and swap slot lifetime contracts preserved."
+        },
+        "locking": {
+          "change": "decreased",
+          "reason": "Single PTL hold installs all subpages of high-order folio."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Standard fallback to order-0 on partial decompression failure."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "Uses existing transparent THP sysfs configuration."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying mTHP zswap decompression, partial zswap presence, and PTL batching."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Kernel swapin and zswap interface signatures maintained."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Allocates mTHP folios only when all slots reside in zswap."
+        }
+      }
+    },
+    "provenance": [
+      {
+        "kind": "source",
+        "path": "linux:mm/memory.c",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "lines": "4810-4845; 5045-5110"
+      },
+      {
+        "kind": "source",
+        "path": "linux:mm/zswap.c",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "lines": "1590-1645"
+      },
+      {
+        "kind": "source",
+        "path": "linux:mm/swap_state.c",
+        "commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+        "lines": "450-520"
+      }
+    ]
+  },
+  "upstream_refs": [],
+  "protocol_sha256": "e571c87e4e0c14c2dbe0b13fc367099d82999d1b8cc58dc7a82d93713e24fed0",
+  "policy_sha256": "d124e72ef74eb5941b544d8f1e0c12745a2bb8efcec3eb9668d2018672ae67c8",
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ]
+}

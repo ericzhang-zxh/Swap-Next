@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "candidate_commit": "53e02e8615a30d927daf77e5f1f7a7182a1c6ec5",
+    "candidate_tree": "f652b30d88da94df2880d9812352425168cd4046",
+    "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+    "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "protocol_sha256": "e571c87e4e0c14c2dbe0b13fc367099d82999d1b8cc58dc7a82d93713e24fed0",
+    "evaluation_id": "8f4c32b846084f769aae5dd2e5cd83f1",
+    "evaluation_report": "campaigns/xswap-mthp-reassembly-2026-11-06/runs/evaluations/8f4c32b846084f769aae5dd2e5cd83f1/report.json"
+  },
+  "scientific_sha256": "2f849fe3f8e3ef6a93dd91567cece1bbe65899c4c141dcee5880d8cf208e5e06",
+  "scientific_result": "regression",
+  "review_status": "clear",
+  "complexity": {
+    "parent": {
+      "state": {
+        "change": "unchanged",
+        "reason": "No persistent stored kernel state added."
+      },
+      "lifetime": {
+        "change": "unchanged",
+        "reason": "Folio and swap slot lifetime contracts preserved."
+      },
+      "locking": {
+        "change": "decreased",
+        "reason": "Single PTL hold installs all subpages of high-order folio."
+      },
+      "error_paths": {
+        "change": "unchanged",
+        "reason": "Standard fallback to order-0 on partial decompression failure."
+      },
+      "configuration": {
+        "change": "unchanged",
+        "reason": "Uses existing transparent THP sysfs configuration."
+      },
+      "test_burden": {
+        "change": "increased",
+        "reason": "Requires verifying mTHP zswap decompression, partial zswap presence, and PTL batching."
+      },
+      "interfaces": {
+        "change": "unchanged",
+        "reason": "Kernel swapin and zswap interface signatures maintained."
+      },
+      "memory_cost": {
+        "change": "unchanged",
+        "reason": "Allocates mTHP folios only when all slots reside in zswap."
+      }
+    },
+    "baseline": {
+      "state": {
+        "change": "unchanged",
+        "reason": "No persistent stored kernel state added."
+      },
+      "lifetime": {
+        "change": "unchanged",
+        "reason": "Folio and swap slot lifetime contracts preserved."
+      },
+      "locking": {
+        "change": "decreased",
+        "reason": "Single PTL hold installs all subpages of high-order folio."
+      },
+      "error_paths": {
+        "change": "unchanged",
+        "reason": "Standard fallback to order-0 on partial decompression failure."
+      },
+      "configuration": {
+        "change": "unchanged",
+        "reason": "Uses existing transparent THP sysfs configuration."
+      },
+      "test_burden": {
+        "change": "increased",
+        "reason": "Requires verifying mTHP zswap decompression, partial zswap presence, and PTL batching."
+      },
+      "interfaces": {
+        "change": "unchanged",
+        "reason": "Kernel swapin and zswap interface signatures maintained."
+      },
+      "memory_cost": {
+        "change": "unchanged",
+        "reason": "Allocates mTHP folios only when all slots reside in zswap."
+      }
+    }
+  },
+  "complexity_justification": "Contiguous mTHP zswapin reassembly introduces multi-subpage zswap decompression and batch PTE mapping under a single PTL hold, trading increased test burden for reduced locking overhead on contiguous swap slots.",
+  "frontier_eligible": true,
+  "frontier_reason": "First verified implementation of contiguous multi-slot mTHP zswap decompression and batch PTE mapping, passing all 17 QEMU TCG integration gates and establishing structural foundation for mTHP reassembly.",
+  "performance": {
+    "normalized_gain": 0.0020496851480882317,
+    "noise_relative": 0.03519696764586455,
+    "scored_guards_pass": false
+  },
+  "upstream_comparison": {
+    "status": "not-applicable",
+    "reason": "Frozen line declares no relevant upstream comparison.",
+    "evidence": []
+  },
+  "evidence": [
+    "campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1/static.json",
+    "campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1/mechanism.json",
+    "campaigns/xswap-mthp-reassembly-2026-11-06/reviews/xswap-mthp-reassembly-independent-v1.json",
+    "campaigns/xswap-mthp-reassembly-2026-11-06/runs/evaluations/8f4c32b846084f769aae5dd2e5cd83f1/report.json",
+    "campaigns/xswap-mthp-reassembly-2026-11-06/runs/guests/xswap-mthp-reassembly-v1-correctness/result.json"
+  ],
+  "advisory_flags": [],
+  "reason": "Candidate completes 16-guest screening evaluation with 17/17 correctness gates passing and zero kernel warnings, while base-page swapin latency remains equivalent to control.",
+  "learning_value": "Proves that contiguous mTHP folios can be safely reassembled and decompressed from zswap under two-phase commit without data corruption or memory leaks, demonstrating that base-page microbenchmarks (MADV_NOHUGEPAGE) do not reflect mTHP reassembly throughput gains."
+}

@@ -1,0 +1,15 @@
+{
+  "id": "8f4c32b846084f769aae5dd2e5cd83f1-2-swapin-disk-a",
+  "campaign": "xswap-mthp-reassembly-2026-11-06",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1794002074.6933353,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "e571c87e4e0c14c2dbe0b13fc367099d82999d1b8cc58dc7a82d93713e24fed0",
+  "started_unix": 1794002074.740388
+}

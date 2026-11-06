@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-mthp-reassembly-2026-11-06",
+  "state": "visually_checked",
+  "evidence_sha256": "d760b47cdbff2e9c5089943cb571718b0814e1bb2f5d8176878fa0fc87255bc3",
+  "artifacts": {
+    "summary.json": "c390f5ca7255e09dc80a0521a4eff6d25d04b093cd308ec1d7af0ae107d63f2d",
+    "REPORT.md": "458fb8aa31b6a641b425ec167643c951f2075a7671a3dbf5345957558f81b092",
+    "explainer.json": "7fc47657688fd7157302b37e5d2adfd507be724fdc923d9f0ac93a46bc773192",
+    "explainer.html": "31ea2f51ab2155b2c7d0bd931ad6d3d4e1ac2808de5e482c273131c58ce623c0",
+    "generate_report.py": "40efd880d291d4d74f30a0163634bf3688f988aa8ab1faf0357622c4d0fa8d32"
+  },
+  "story_sha256": "f4a0ce57ed5545414ac6976e4e7e607861223121fbc3217d5ca7d5c72e25d40d",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1794002957.9202125
+    },
+    {
+      "state": "visually_checked",
+      "time": 1794003384.0795193
+    }
+  ],
+  "visual_check": {
+    "artifact_sha256": "31ea2f51ab2155b2c7d0bd931ad6d3d4e1ac2808de5e482c273131c58ce623c0",
+    "method": "Direct Chrome headless render and screenshot inspection of desktop (1280px) and mobile (390px) viewports across light and dark themes; DOM overflow, disclosure and theme-toggle checks verified.",
+    "views": [
+      {
+        "width": 1280,
+        "theme": "light",
+        "screenshot": "campaigns/xswap-mthp-reassembly-2026-11-06/runs/visual-qa/desktop-light.png",
+        "sha256": "f82d0688408f3e18e605b79eebef0b155c1bbb91b6d1557e904898e003dbe4bf",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "screenshot": "campaigns/xswap-mthp-reassembly-2026-11-06/runs/visual-qa/desktop-dark.png",
+        "sha256": "ce0357d075d8e47d4b9749c56c23b396e090df87b0cc00be733c86c8fb98bf54",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/xswap-mthp-reassembly-2026-11-06/runs/visual-qa/mobile-light.png",
+        "sha256": "de08cbadfc8747c2f60db40503bbbf2c3e8422ac69ce9e4c3e46ad4a3cae54e8",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/xswap-mthp-reassembly-2026-11-06/runs/visual-qa/mobile-dark.png",
+        "sha256": "8c37c866a3a0a3cfe962cc73ec7b5a4bc1e1135bb030dfa537ed9fd65a0292ed",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      }
+    ]
+  }
+}

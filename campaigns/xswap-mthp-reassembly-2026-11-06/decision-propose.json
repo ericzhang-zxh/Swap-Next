@@ -1,0 +1,12 @@
+{
+  "kind": "propose",
+  "candidate": "xswap-mthp-reassembly-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "hypothesis": "Lifting the zswap mTHP swapin blackout in mm/memory.c when an aligned contiguous swap cluster resides in zswap and assembling contiguous compressed slots into high-order folios (orders 2 and 4) eliminates repeated PTL acquisitions and per-page fault overhead, compounding Milestone 1's allocator-first engine to achieve an 8% to 12% geomean latency improvement without regressions or correctness violations.",
+  "reason": "Authoring Milestone 2 proposal for contiguous mTHP zswapin reassembly compounding Milestone 1 (xswap-mthp-reassembly-v1).",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "In mm/memory.c, thp_swapin_suitable_orders() checks zswap_all_present() across candidate orders 2 and 4 instead of unconditionally returning 0 when zswap is active, and do_swap_page() routes orders > 1 directly to swapin_sync(). In mm/zswap.c, zswap_all_present() verifies contiguous slot residency under RCU, and zswap_load() uses two-phase commit subpage decompression into kmap_local_folio subpage offsets, atomically installing all PTEs via set_ptes() under a single PTL hold.",
+    "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, missing order-0 fallback, or broken RCU presence checking. Correctness gates, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+  }
+}

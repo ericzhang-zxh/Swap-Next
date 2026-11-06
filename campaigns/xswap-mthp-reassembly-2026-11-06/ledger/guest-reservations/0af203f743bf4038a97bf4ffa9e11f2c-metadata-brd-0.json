@@ -1,0 +1,15 @@
+{
+  "id": "0af203f743bf4038a97bf4ffa9e11f2c-metadata-brd-0",
+  "campaign": "xswap-mthp-reassembly-2026-11-06",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1793998822.7784681,
+  "identity": {
+    "build": "std-53e02e8615a3",
+    "backend": "brd",
+    "mode": "plain",
+    "workload": "metadata"
+  },
+  "protocol_sha256": "e571c87e4e0c14c2dbe0b13fc367099d82999d1b8cc58dc7a82d93713e24fed0",
+  "started_unix": 1793998822.8247545
+}

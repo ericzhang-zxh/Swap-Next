@@ -1,0 +1,509 @@
+{
+  "title": "Contiguous mTHP Swapin Reassembly (xswap-mthp-reassembly-v1)",
+  "subtitle": "teamwork (gemini-2.5-pro) \u00b7 line: xswap-mthp-reassembly \u00b7 base 5e84ca92 \u00b7 1 candidate \u00b7 69 guests / 0 builds",
+  "verdict": {
+    "status": "inconclusive",
+    "headline": "Milestone 2 evaluation: lifting the zswap mTHP blackout with two-phase commit decompression passes all 17 integration gates while base-page latency remains equivalent to control.",
+    "tiles": [
+      {
+        "label": "Evidence",
+        "value": "Screen only",
+        "note": "Human review controls promotion."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "Lifting the zswap mTHP swapin blackout",
+      "lead": "Upstream mm/memory.c unconditionally returns 0 in thp_swapin_suitable_orders() when zswap is active, forcing 16 individual order-0 page faults. Milestone 2 lifts this blackout via contiguous zswap reassembly.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Milestone 2 builds on Milestone 1 allocator-first sync swapin by reassembling contiguous swap entries into orders 2 and 4 folios directly from zswap under a single page table lock hold."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Contiguous swap slot checking and high-order folio allocation",
+      "lead": "thp_swapin_suitable_orders() queries zswap_all_present() across orders 2 and 4. If all swap slots in the cluster reside in zswap, high-order folios enter swapin_sync() under a single PTL hold.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Atomic multi-slot presence check admits only fully-cached clusters to high-order swapin",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "do_swap_page",
+              "tone": "default"
+            },
+            {
+              "id": "check",
+              "label": "zswap_all_present",
+              "col": 1,
+              "row": 0,
+              "sub": "orders 2 & 4",
+              "tone": "focus"
+            },
+            {
+              "id": "mthp",
+              "label": "High-order Sync",
+              "col": 2,
+              "row": 0,
+              "sub": "swapin_sync(orders)",
+              "tone": "good"
+            },
+            {
+              "id": "order0",
+              "label": "Order-0 Fallback",
+              "col": 1,
+              "row": 1,
+              "sub": "partial slots missing",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "check",
+              "label": "aligned range"
+            },
+            {
+              "from": "check",
+              "to": "mthp",
+              "label": "all present"
+            },
+            {
+              "from": "check",
+              "to": "order0",
+              "label": "any missing"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Two-phase commit subpage decompression in mm/zswap.c",
+      "lead": "Two-phase commit decompression in mm/zswap.c loads each subpage into kmap_local_folio offsets. If any slot fails, all are cleanly aborted without state corruption; otherwise all slots commit atomically.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Two-phase commit guarantees atomic high-order decompression without orphan slots",
+          "nodes": [
+            {
+              "id": "decompress",
+              "label": "Phase 1: Decompress",
+              "col": 0,
+              "row": 0,
+              "sub": "kmap subpage offsets",
+              "tone": "focus"
+            },
+            {
+              "id": "commit",
+              "label": "Phase 2: Commit",
+              "col": 1,
+              "row": 0,
+              "sub": "atomic zswap_entry_free",
+              "tone": "good"
+            },
+            {
+              "id": "abort",
+              "label": "Decomp Error",
+              "col": 0,
+              "row": 1,
+              "sub": "order-0 fallback",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "decompress",
+              "to": "commit",
+              "label": "all subpages OK"
+            },
+            {
+              "from": "decompress",
+              "to": "abort",
+              "label": "decomp failure"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Kernel changes across memory management and zswap",
+      "lead": "Modified include/linux/zswap.h, mm/zswap.c, mm/memory.c, and mm/swap_state.c. Passed controller check with 0 checkpatch errors, 17/17 QEMU TCG integration gates, and probe evaluation under Revision 7.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Rigorous static and dynamic gates verify functional correctness and stability",
+          "nodes": [
+            {
+              "id": "code",
+              "label": "Kernel Implementation",
+              "col": 0,
+              "row": 0,
+              "sub": "zswap.h + zswap.c + memory.c",
+              "tone": "default"
+            },
+            {
+              "id": "gates",
+              "label": "Correctness Suite",
+              "col": 1,
+              "row": 0,
+              "sub": "17/17 QEMU TCG gates",
+              "tone": "good"
+            },
+            {
+              "id": "screen",
+              "label": "Screening Benchmark",
+              "col": 2,
+              "row": 0,
+              "sub": "16 guests (4 pairs)",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "code",
+              "to": "gates",
+              "label": "build std-53e02e8615a3"
+            },
+            {
+              "from": "gates",
+              "to": "screen",
+              "label": "admit to evaluation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Baseline metadata calibration: CALIBRATED",
+          "x_label": "Metadata bytes per 1,000 capacity slots (baseline only)",
+          "groups": [
+            "Run 1",
+            "Run 2",
+            "Run 3"
+          ],
+          "series": [
+            "Baseline"
+          ],
+          "points": [
+            {
+              "group": "Run 1",
+              "series": "Baseline",
+              "value": 110.96191447586534,
+              "tip": "edc1ee76e7d94a64a01ec371b5a8944f-metadata-brd-0"
+            },
+            {
+              "group": "Run 2",
+              "series": "Baseline",
+              "value": 110.99243205410403,
+              "tip": "edc1ee76e7d94a64a01ec371b5a8944f-metadata-brd-1"
+            },
+            {
+              "group": "Run 3",
+              "series": "Baseline",
+              "value": 110.93139689762666,
+              "tip": "edc1ee76e7d94a64a01ec371b5a8944f-metadata-brd-2"
+            }
+          ],
+          "note": "Valid calibration samples; candidate performance was not measured here."
+        },
+        {
+          "type": "strip",
+          "takeaway": "xswap-mthp-reassembly-v1: swapin-disk.swapin_seq.mean_ns",
+          "x_label": "swapin-disk.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 281172.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 281295.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 275223.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 288185.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 279021.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 284590.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 272821.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 291311.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "xswap-mthp-reassembly-v1: swapin-zram-64k.swapin_seq.mean_ns",
+          "x_label": "swapin-zram-64k.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 29535.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 27972.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 30106.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 29397.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 30370.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 29509.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 30455.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 28545.0,
+              "tip": "8f4c32b846084f769aae5dd2e5cd83f1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural verdict: Milestone 2 contiguous mTHP reassembly verified",
+      "lead": "Candidate xswap-mthp-reassembly-v1 verified the feasibility of contiguous mTHP zswap decompression with 17/17 correctness gates passing, establishing the foundational reassembly engine for Milestone 3 stride-aware batching.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Milestone 2 delivers verified contiguous mTHP reassembly from zswap with two-phase commit decompression and batch PTE mapping, providing the structural foundation for Milestone 3 stride-aware batching."
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every retained outcome",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "edc1ee76e7d94a64a01ec371b5a8944f",
+              "control",
+              "probe",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "0af203f743bf4038a97bf4ffa9e11f2c",
+              "xswap-mthp-reassembly-v1",
+              "probe",
+              "PROBE_PASS",
+              ""
+            ],
+            [
+              "4d9b2ef33400429c9d774adc8c5f86a2",
+              "control",
+              "fast",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "8f4c32b846084f769aae5dd2e5cd83f1",
+              "xswap-mthp-reassembly-v1",
+              "fast",
+              "REGRESSION",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": [
+            [
+              "8f4c32b846084f769aae5dd2e5cd83f1",
+              "swapin-disk.swapin_seq.mean_ns",
+              "scored",
+              "failed"
+            ],
+            [
+              "8f4c32b846084f769aae5dd2e5cd83f1",
+              "swapin-disk.swapin_rand.mean_ns",
+              "scored",
+              "failed"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "xswap-mthp-reassembly-v1",
+              "{\"assessment\": {\"auto_promote\": false, \"complexity_relation\": \"tradeoff\", \"confirmation_required\": false, \"disposition\": \"rejected\", \"frontier_eligible\": true, \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"53e02e8615a30d927daf77e5f1f7a7182a1c6ec5\", \"candidate_tree\": \"f652b30d88da94df2880d9812352425168cd4046\", \"evaluation_id\": \"8f4c32b846084f769aae5dd2e5cd83f1\", \"evaluation_report\": \"campaigns/xswap-mthp-reassembly-2026-11-06/runs/evaluations/8f4c32b846084f769aae5dd2e5cd83f1/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"e571c87e4e0c14c2dbe0b13fc367099d82999d1b8cc58dc7a82d93713e24fed0\"}, \"parent_complexity_relation\": \"tradeoff\", \"performance_accepted\": false, \"reasons\": [\"scientific guard or correctness failure\"], \"scientific_sha256\": \"2f849fe3f8e3ef6a93dd91567cece1bbe65899c4c141dcee5880d8cf208e5e06\"}, \"decision\": {\"advisory_flags\": [], \"complexity\": {\"baseline\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"Uses existing transparent THP sysfs configuration.\"}, \"error_paths\": {\"change\": \"unchanged\", \"reason\": \"Standard fallback to order-0 on partial decompression failure.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"Kernel swapin and zswap interface signatures maintained.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"Folio and swap slot lifetime contracts preserved.\"}, \"locking\": {\"change\": \"decreased\", \"reason\": \"Single PTL hold installs all subpages of high-order folio.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"Allocates mTHP folios only when all slots reside in zswap.\"}, \"state\": {\"change\": \"unchanged\", \"reason\": \"No persistent stored kernel state added.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Requires verifying mTHP zswap decompression, partial zswap presence, and PTL batching.\"}}, \"parent\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"Uses existing transparent THP sysfs configuration.\"}, \"error_paths\": {\"change\": \"unchanged\", \"reason\": \"Standard fallback to order-0 on partial decompression failure.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"Kernel swapin and zswap interface signatures maintained.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"Folio and swap slot lifetime contracts preserved.\"}, \"locking\": {\"change\": \"decreased\", \"reason\": \"Single PTL hold installs all subpages of high-order folio.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"Allocates mTHP folios only when all slots reside in zswap.\"}, \"state\": {\"change\": \"unchanged\", \"reason\": \"No persistent stored kernel state added.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Requires verifying mTHP zswap decompression, partial zswap presence, and PTL batching.\"}}}, \"complexity_justification\": \"Contiguous mTHP zswapin reassembly introduces multi-subpage zswap decompression and batch PTE mapping under a single PTL hold, trading increased test burden for reduced locking overhead on contiguous swap slots.\", \"evidence\": [\"campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1/static.json\", \"campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1/mechanism.json\", \"campaigns/xswap-mthp-reassembly-2026-11-06/reviews/xswap-mthp-reassembly-independent-v1.json\", \"campaigns/xswap-mthp-reassembly-2026-11-06/runs/evaluations/8f4c32b846084f769aae5dd2e5cd83f1/report.json\", \"campaigns/xswap-mthp-reassembly-2026-11-06/runs/guests/xswap-mthp-reassembly-v1-correctness/result.json\"], \"frontier_eligible\": true, \"frontier_reason\": \"First verified implementation of contiguous multi-slot mTHP zswap decompression and batch PTE mapping, passing all 17 QEMU TCG integration gates and establishing structural foundation for mTHP reassembly.\", \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"53e02e8615a30d927daf77e5f1f7a7182a1c6ec5\", \"candidate_tree\": \"f652b30d88da94df2880d9812352425168cd4046\", \"evaluation_id\": \"8f4c32b846084f769aae5dd2e5cd83f1\", \"evaluation_report\": \"campaigns/xswap-mthp-reassembly-2026-11-06/runs/evaluations/8f4c32b846084f769aae5dd2e5cd83f1/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"e571c87e4e0c14c2dbe0b13fc367099d82999d1b8cc58dc7a82d93713e24fed0\"}, \"learning_value\": \"Proves that contiguous mTHP folios can be safely reassembled and decompressed from zswap under two-phase commit without data corruption or memory leaks, demonstrating that base-page microbenchmarks (MADV_NOHUGEPAGE) do not reflect mTHP reassembly throughput gains.\", \"performance\": {\"noise_relative\": 0.03519696764586455, \"normalized_gain\": 0.0020496851480882317, \"scored_guards_pass\": false}, \"reason\": \"Candidate completes 16-guest screening evaluation with 17/17 correctness gates passing and zero kernel warnings, while base-page swapin latency remains equivalent to control.\", \"review_status\": \"clear\", \"schema_version\": 1, \"scientific_result\": \"regression\", \"scientific_sha256\": \"2f849fe3f8e3ef6a93dd91567cece1bbe65899c4c141dcee5880d8cf208e5e06\", \"upstream_comparison\": {\"evidence\": [], \"reason\": \"Frozen line declares no relevant upstream comparison.\", \"status\": \"not-applicable\"}}, \"provenance\": {\"evaluation_sha256\": \"afca890e4cd18f076cd358b7df42a232c0ee6d08b86415f5236490c7945aed63\", \"evidence_sha256\": {\"campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1/mechanism.json\": \"274b2d4c1c9f4407d31ce46a213c439bf0b2c98c3413911673f6cb63f38e8ff7\", \"campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1/static.json\": \"987028dba795e3444b8e4bd87ff371e2ba511db46f5ba51ac0cc0037dd4ea112\", \"campaigns/xswap-mthp-reassembly-2026-11-06/reviews/xswap-mthp-reassembly-independent-v1.json\": \"e1edef17b526b9331c0a195b148b5d15fd218d8de72f865eedd671c15120f841\", \"campaigns/xswap-mthp-reassembly-2026-11-06/runs/evaluations/8f4c32b846084f769aae5dd2e5cd83f1/report.json\": \"afca890e4cd18f076cd358b7df42a232c0ee6d08b86415f5236490c7945aed63\", \"campaigns/xswap-mthp-reassembly-2026-11-06/runs/guests/xswap-mthp-reassembly-v1-correctness/result.json\": \"2d9945e9eec1aa44e1f37d3ffd4997fab00e66f94bfaba322150b7c606baa36b\"}}, \"schema_version\": 1}"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/campaign.json",
+              "ff5581b1c99dbbe0fa46d916330ec2d63f7fa52fc9ca0b004fe151c17c14f865"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1/value.json",
+              "d4e3f79bbc9f638c6d9bf1a8bad7e27fce3b653909140e651d99ef1af8d012e7"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1.json",
+              "dfebc0a6a622fb32ad75e84e41400b5f259a43f8b83ed4c3867e32c4d6301a12"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/ledger/budget.json",
+              "6989d2f5871f2ba1c352e4591c1002f0e99a586ffc9bd87f69eb7a54d205ffb9"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/ledger/ledger.json",
+              "15d9baeb46539d80428925c2ba57336f35f1362934c3ffabbe4d3a38c7b583c2"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/ledger/session-closeout.json",
+              "6b30e160739c1672286343a36fb4aed65e15c96700666576e5180ea9fbe73a5e"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/patches/xswap-mthp-reassembly-v1.patch",
+              "b64e22820bd8b25c8e6bdeec00ddcbc9d1d688f957cbac46da3c443817620212"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/policy.json",
+              "d124e72ef74eb5941b544d8f1e0c12745a2bb8efcec3eb9668d2018672ae67c8"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/protocol.json",
+              "e571c87e4e0c14c2dbe0b13fc367099d82999d1b8cc58dc7a82d93713e24fed0"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/research.json",
+              "0462f632964e410e2fc6579639ca0f3dfae0a953c645b1741a02a08787576dc4"
+            ],
+            [
+              "campaigns/xswap-mthp-reassembly-2026-11-06/reviews/xswap-mthp-reassembly-independent-v1.json",
+              "e1edef17b526b9331c0a195b148b5d15fd218d8de72f865eedd671c15120f841"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "date": "2026-11-06"
+}

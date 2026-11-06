@@ -334,12 +334,12 @@ class GuardTests(unittest.TestCase):
             self.guard()
 
     def test_campaign_cannot_widen_base_scope(self):
-        (self.root / "mm/memory.c").write_text("int memory_fixture;\n")
+        (self.root / "mm/filemap.c").write_text("int memory_fixture;\n")
         self.commit()
         self.base = self.git("rev-parse", "HEAD").strip()
-        (self.root / "mm/memory.c").write_text("int memory_fixture_updated;\n")
+        (self.root / "mm/filemap.c").write_text("int memory_fixture_updated;\n")
         self.commit()
-        self.policy["allowed_modify"].append("mm/memory.c")
+        self.policy["allowed_modify"].append("mm/filemap.c")
         with self.assertRaisesRegex(Invalid, "outside"):
             self.guard()
 

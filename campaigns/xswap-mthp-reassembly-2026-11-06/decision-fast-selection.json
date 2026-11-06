@@ -1,0 +1,9 @@
+{
+  "kind": "fast_selection",
+  "candidate": "xswap-mthp-reassembly-v1",
+  "candidate_commit": "53e02e8615a30d927daf77e5f1f7a7182a1c6ec5",
+  "source_tree": "f652b30d88da94df2880d9812352425168cd4046",
+  "probe_id": "0af203f743bf4038a97bf4ffa9e11f2c",
+  "disposition": "screen",
+  "reason": "Probe evaluation passed with metadata delta 0.11 B/slot (<1%) and valid swapin throughput, justifying full fast latency screening."
+}

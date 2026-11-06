@@ -14,7 +14,8 @@
     "include/linux/swap_ops.h",
     "include/linux/swapops.h",
     "mm/memory.c",
-    "mm/zswap.c"
+    "mm/zswap.c",
+    "include/linux/zswap.h"
   ],
   "allowed_add": [
     "tools/testing/selftests/mm/swap_next_*.c"
