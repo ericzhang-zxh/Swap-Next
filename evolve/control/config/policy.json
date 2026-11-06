@@ -14,7 +14,9 @@
     "mm/page_io.c",
     "include/linux/swap.h",
     "include/linux/swap_ops.h",
-    "include/linux/swapops.h"
+    "include/linux/swapops.h",
+    "mm/memory.c",
+    "mm/zswap.c"
   ],
   "allowed_add": [
     "tools/testing/selftests/mm/swap_next_*.c"

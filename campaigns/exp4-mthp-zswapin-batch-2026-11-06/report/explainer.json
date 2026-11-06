@@ -1,0 +1,499 @@
+{
+  "title": "Batched High-Order mTHP Swap-in for Zswap",
+  "subtitle": "agy (gemini4argon) \u00b7 line: exp4-mthp-zswapin-batch \u00b7 base 5e84ca92 \u00b7 1 candidate \u00b7 20 guests / 0 builds",
+  "verdict": {
+    "status": "needs-review",
+    "headline": "Screening benchmark: assembling contiguous compressed zswap slots into high-order folios yields -4.7% sequential and -5.8% p99 latency reduction on zswap, but geomean effect (-2.3%) remains within the calibrated noise floor.",
+    "tiles": [
+      {
+        "label": "Evidence",
+        "value": "Screen only",
+        "note": "Human review controls promotion."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "Eliminating repeated order-0 page faults in zswap mTHP swapin",
+      "lead": "Linux disables mTHP swap-in when zswap is enabled, forcing 16 or 64 independent order-0 faults with repeated page table allocations and PTL acquisitions.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis 4 enables high-order folios (orders 2 and 4) when contiguous slots reside in zswap, assembling compressed slots into one folio under a single set_ptes hold."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where the fault overhead appears",
+      "lead": "Under standard order-0 swapin, each subpage triggers a distinct fault, PTE lookup, and spinlock acquisition. Batched swap-in amortizes these costs under a single lock hold.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Batched swapin amortizes PTL acquisitions and folio allocations across multiple compressed slots",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "do_swap_page",
+              "tone": "default"
+            },
+            {
+              "id": "check",
+              "label": "zswap_all_present",
+              "col": 1,
+              "row": 0,
+              "sub": "order 2 / 4",
+              "tone": "focus"
+            },
+            {
+              "id": "batch_load",
+              "label": "Batched Decompress",
+              "col": 2,
+              "row": 0,
+              "sub": "subpage offset",
+              "tone": "good"
+            },
+            {
+              "id": "ptes",
+              "label": "set_ptes hold",
+              "col": 3,
+              "row": 0,
+              "sub": "single PTL hold",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "check",
+              "label": "mTHP orders"
+            },
+            {
+              "from": "check",
+              "to": "batch_load",
+              "label": "all resident"
+            },
+            {
+              "from": "batch_load",
+              "to": "ptes",
+              "label": "install folio"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "The affected path: thp_swapin_suitable_orders and zswap_load",
+      "lead": "In mm/memory.c, thp_swapin_suitable_orders permits orders <= 4 when zswap_all_present() is true; in mm/zswap.c, zswap_load decompresses each slot directly into folio subpages.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Multi-subpage decompression addresses subpages directly within high-order folio",
+          "nodes": [
+            {
+              "id": "orders",
+              "label": "thp_swapin_orders",
+              "col": 0,
+              "row": 0,
+              "sub": "suitable orders",
+              "tone": "default"
+            },
+            {
+              "id": "load",
+              "label": "zswap_load",
+              "col": 1,
+              "row": 0,
+              "sub": "decompress loop",
+              "tone": "focus"
+            },
+            {
+              "id": "subpage",
+              "label": "folio_page",
+              "col": 2,
+              "row": 0,
+              "sub": "dst_offset >> PAGE_SHIFT",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "orders",
+              "to": "load",
+              "label": "order 2/4 folio"
+            },
+            {
+              "from": "load",
+              "to": "subpage",
+              "label": "sg_set_page"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Kernel modifications in mm/memory.c and mm/zswap.c",
+      "lead": "Updated zswap_decompress to accept subpage offset via folio_page, implemented zswap_all_present with tree read locking, and mapped high-order folios via swapin_sync.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Direct subpage decompression into high-order folio",
+          "nodes": [
+            {
+              "id": "check_func",
+              "label": "zswap_all_present",
+              "col": 0,
+              "row": 0,
+              "sub": "tree read-lock",
+              "tone": "default"
+            },
+            {
+              "id": "decompress_func",
+              "label": "zswap_decompress",
+              "col": 1,
+              "row": 0,
+              "sub": "dst_offset subpage",
+              "tone": "focus"
+            },
+            {
+              "id": "map_func",
+              "label": "set_ptes",
+              "col": 1,
+              "row": 1,
+              "sub": "PTL held once",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "check_func",
+              "to": "decompress_func",
+              "label": "all present"
+            },
+            {
+              "from": "decompress_func",
+              "to": "map_func",
+              "label": "all decompressed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Baseline metadata calibration: CALIBRATED",
+          "x_label": "Metadata bytes per 1,000 capacity slots (baseline only)",
+          "groups": [
+            "Run 1",
+            "Run 2",
+            "Run 3"
+          ],
+          "series": [
+            "Baseline"
+          ],
+          "points": [
+            {
+              "group": "Run 1",
+              "series": "Baseline",
+              "value": 110.93139689762666,
+              "tip": "ed772865e8a54c329732012874b42bce-metadata-brd-0"
+            },
+            {
+              "group": "Run 2",
+              "series": "Baseline",
+              "value": 110.88562053026862,
+              "tip": "ed772865e8a54c329732012874b42bce-metadata-brd-1"
+            },
+            {
+              "group": "Run 3",
+              "series": "Baseline",
+              "value": 111.02294963234272,
+              "tip": "ed772865e8a54c329732012874b42bce-metadata-brd-2"
+            }
+          ],
+          "note": "Valid calibration samples; candidate performance was not measured here."
+        },
+        {
+          "type": "strip",
+          "takeaway": "exp4-mthp-zswapin-batch-v1: swapin-disk.swapin_seq.mean_ns",
+          "x_label": "swapin-disk.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 275288.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 267830.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 279263.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 272716.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 272057.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 277418.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 274699.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 274920.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "exp4-mthp-zswapin-batch-v1: swapin-zram-64k.swapin_seq.mean_ns",
+          "x_label": "swapin-zram-64k.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 29199.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 31666.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 30016.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 30683.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 30919.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 31503.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 29289.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 31418.0,
+              "tip": "3106cb5ec7ec4853a9601f3ac5f37169"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural decision: exploratory screening completed",
+      "lead": "Candidate passed all 17 correctness gates, probe calibration, and fast screening. Latency dropped -4.7% sequential on zram-64k, but geomean (-2.3%) stayed within noise.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Batched high-order swapin confirms viability for zswap folios, but without asynchronous prefetch (Exp 3), decompression latency stays on the critical fault path."
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every retained outcome",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "d8e5c310f51541038a77849ae5319295",
+              "control",
+              "probe",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "c4ef584656a547ba8d68afe1871308fd",
+              "exp4-mthp-zswapin-batch-v1",
+              "probe",
+              "PROBE_PASS",
+              ""
+            ],
+            [
+              "cda6e4e074d64676a019ac14dc4597dd",
+              "control",
+              "fast",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "3106cb5ec7ec4853a9601f3ac5f37169",
+              "exp4-mthp-zswapin-batch-v1",
+              "fast",
+              "FAST_PASS",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": [
+            [
+              "3106cb5ec7ec4853a9601f3ac5f37169",
+              "swapin-zram-64k.swapin_seq.p99_ns",
+              "advisory",
+              "failed"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "exp4-mthp-zswapin-batch-v1",
+              "{\"assessment\": {\"auto_promote\": false, \"complexity_relation\": \"more-complex\", \"confirmation_required\": false, \"disposition\": \"rejected\", \"frontier_eligible\": true, \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"df05fa2d39cfcdbb83326227cba278a96be2fddc\", \"candidate_tree\": \"d4bf80a59d7a4be0e87fece3f8c81bfac767b396\", \"evaluation_id\": \"3106cb5ec7ec4853a9601f3ac5f37169\", \"evaluation_report\": \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/evaluations/3106cb5ec7ec4853a9601f3ac5f37169/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"f25cb1d8982ab741fcebbf1dcf8a2fe6da948b586ccd01a4b398c06e618d37a1\"}, \"parent_complexity_relation\": \"more-complex\", \"performance_accepted\": false, \"reasons\": [\"benefit does not justify added complexity\"], \"scientific_sha256\": \"8a8a1940a1c85e26aa1b0073cfc5cd03f410a8ae5fbf6e51449a3f865e4c8f21\"}, \"decision\": {\"advisory_flags\": [], \"complexity\": {\"baseline\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"Transparently active when mTHP and zswap are enabled without new user configuration.\"}, \"error_paths\": {\"change\": \"unchanged\", \"reason\": \"Falls back cleanly to order-0 single swapin if any slot is missing or allocation fails.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"zswap_load and thp_swapin_suitable_orders interface signatures preserved or extended cleanly.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"High-order folios allocated with standard GFP flags and locked/unlocked under page table lock.\"}, \"locking\": {\"change\": \"unchanged\", \"reason\": \"Single set_ptes hold retains PTL once per batch instead of per-page acquisition.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"Uses standard folio allocation without persistent auxiliary heap structures.\"}, \"state\": {\"change\": \"increased\", \"reason\": \"Adds zswap contiguous presence check and multi-subpage folio decompression dispatch in swap-in path.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Requires verifying batched decompression, alignment checks, and swapoff correctness for high-order folios.\"}}, \"parent\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"Transparently active when mTHP and zswap are enabled without new user configuration.\"}, \"error_paths\": {\"change\": \"unchanged\", \"reason\": \"Falls back cleanly to order-0 single swapin if any slot is missing or allocation fails.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"zswap_load and thp_swapin_suitable_orders interface signatures preserved or extended cleanly.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"High-order folios allocated with standard GFP flags and locked/unlocked under page table lock.\"}, \"locking\": {\"change\": \"unchanged\", \"reason\": \"Single set_ptes hold retains PTL once per batch instead of per-page acquisition.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"Uses standard folio allocation without persistent auxiliary heap structures.\"}, \"state\": {\"change\": \"increased\", \"reason\": \"Adds zswap contiguous presence check and multi-subpage folio decompression dispatch in swap-in path.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Requires verifying batched decompression, alignment checks, and swapoff correctness for high-order folios.\"}}}, \"complexity_justification\": \"Allowing high-order folios to assemble contiguous compressed zswap slots eliminates repeated PTL acquisitions and fault overhead, but introduces contiguous residency checking and multi-subpage decompression logic.\", \"evidence\": [\"campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/static.json\", \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/mechanism.json\", \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/report/independent-review.md\", \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/evaluations/3106cb5ec7ec4853a9601f3ac5f37169/report.json\", \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/guests/exp4-mthp-zswapin-batch-v1-correctness/result.json\"], \"frontier_eligible\": true, \"frontier_reason\": \"First validated batched high-order mTHP swap-in implementation for zswap with full 17-gate correctness proof and calibrated screening.\", \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"df05fa2d39cfcdbb83326227cba278a96be2fddc\", \"candidate_tree\": \"d4bf80a59d7a4be0e87fece3f8c81bfac767b396\", \"evaluation_id\": \"3106cb5ec7ec4853a9601f3ac5f37169\", \"evaluation_report\": \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/evaluations/3106cb5ec7ec4853a9601f3ac5f37169/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"f25cb1d8982ab741fcebbf1dcf8a2fe6da948b586ccd01a4b398c06e618d37a1\"}, \"learning_value\": \"Demonstrates that assembling contiguous compressed zswap entries into high-order folios (orders 2 and 4) successfully avoids repeated page table lock holds and delivers noticeable latency improvements on zswap, but the geometric mean effect (-2.3%) remains within the calibrated noise floor (+/-6.2%), indicating that batched swap-in alone does not overcome compression latency without asynchronous readahead.\", \"performance\": {\"noise_relative\": 0.06200354493533711, \"normalized_gain\": -0.0227056093177197, \"scored_guards_pass\": true}, \"reason\": \"Candidate achieves FAST_PASS with measured latency reductions (-4.7% sequential mean, -5.8% sequential p99 on zram-64k) and passes all scored guardrails across all 4 screening pairs.\", \"review_status\": \"clear\", \"schema_version\": 1, \"scientific_result\": \"screen\", \"scientific_sha256\": \"8a8a1940a1c85e26aa1b0073cfc5cd03f410a8ae5fbf6e51449a3f865e4c8f21\", \"upstream_comparison\": {\"evidence\": [], \"reason\": \"Frozen line declares no relevant upstream comparison.\", \"status\": \"not-applicable\"}}, \"provenance\": {\"evaluation_sha256\": \"f66ee753290bd78740b0ce4a3b0b995e5eae8475c90c36e1f3fdad8aeefa4f45\", \"evidence_sha256\": {\"campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/mechanism.json\": \"0eec3214528905b15eef959d6c9f7c37366d5d82a293b1a7e8788b5bcd7b25a2\", \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/static.json\": \"89eaabf0793aebef731bf750b196d7b30f9910345e3806f4a775de21de4a841a\", \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/report/independent-review.md\": \"c48561bd1aa93d4341f01586442b2ab9fdf58fb0702b9dd0e42d323be133cc70\", \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/evaluations/3106cb5ec7ec4853a9601f3ac5f37169/report.json\": \"f66ee753290bd78740b0ce4a3b0b995e5eae8475c90c36e1f3fdad8aeefa4f45\", \"campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/guests/exp4-mthp-zswapin-batch-v1-correctness/result.json\": \"7511713996ab715d933cf8c2040784dbe8d4cbc491e251f01719e4346edbbe51\"}}, \"schema_version\": 1}"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/campaign.json",
+              "f9ad30e080b699bcfb699a80a78df70d4e5027754219cd632515f24f25ec7179"
+            ],
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/value.json",
+              "e2cc4b686cfc855e4eaedef8c1e43a11c5a2d3cd26b1aa86e11ec961ff406c20"
+            ],
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1.json",
+              "67e766ce4ffb40e5beb1c91684ca5b9c61a149a975c1d6c3499bf143a7db8bb9"
+            ],
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/ledger/budget.json",
+              "ba0a7f0460383799e833ffd2214192f2351a0bca58180043444b8279023ef7e6"
+            ],
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/ledger/ledger.json",
+              "91ac7a3b89061a556f9de93bc9e3842e80a1b652896eca0a8c3f9c1a09cddd42"
+            ],
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/patches/exp4-mthp-zswapin-batch-v1.patch",
+              "a6d6f8e5079193deae338db0d1fe46a18d68bb33e969a8d2de8d4860d5f33478"
+            ],
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/policy.json",
+              "3b224c88119d0b5e0f69bd9526daf46ba9b28e47dae6d56b391004c675fd69eb"
+            ],
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/protocol.json",
+              "f25cb1d8982ab741fcebbf1dcf8a2fe6da948b586ccd01a4b398c06e618d37a1"
+            ],
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/research.json",
+              "2c2bd5f05345742a1108914e262d1698b9a3769e0582c5b64d74c46248e278a8"
+            ],
+            [
+              "campaigns/exp4-mthp-zswapin-batch-2026-11-06/reviews/exp4-independent-v1.json",
+              "d1c7265f03d64ba58dae2c490027626b848bce5a15d197d3da36ffa39d5a2c54"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "date": "2026-11-06"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "exp4-mthp-zswapin-batch-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-732a48894a36",
+  "worktree": "worktrees/exp4-mthp-zswapin-batch-2026-11-06/exp4-mthp-zswapin-batch-v1",
+  "status": "closed",
+  "hypothesis": "In mm/memory.c and mm/zswap.c / mm/swap_state.c, allowing high-order folios (orders 2 and 4) when all swap slots in the aligned cluster range reside in zswap enables assembling contiguous compressed swap slots into a single high-order folio during swap-in and installing with a single set_ptes() hold, eliminating repeated PTL acquisition and per-page fault overhead while preserving latency and memory stability. Reject if candidate causes data corruption, slot leakage in zswap, page table locking races, fails correctness gates, or fails calibrated screening.",
+  "created_unix": 1793961795.9487555,
+  "protocol_sha256": "fc4f03f56ead9f7f96a69610c7db9967dcb64bd9004f42e46ff4a8e1cc1a073d",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "In mm/memory.c (thp_swapin_suitable_orders) and mm/zswap.c (zswap_load), when all swap slots in an aligned order-2 or order-4 range reside in zswap, thp_swapin_suitable_orders permits the high-order folio and zswap_load assembles contiguous compressed slots into the allocated high-order folio, installing them in do_swap_page with a single set_ptes() call under one page table lock hold.",
+    "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+  },
+  "reason": "Research disposition: rejected"
+}

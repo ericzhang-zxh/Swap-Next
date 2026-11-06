@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "exp4-independent-v1",
+  "campaign": "exp4-mthp-zswapin-batch-2026-11-06",
+  "candidate": "exp4-mthp-zswapin-batch-v1",
+  "candidate_commit": "df05fa2d39cfcdbb83326227cba278a96be2fddc",
+  "source_tree": "d4bf80a59d7a4be0e87fece3f8c81bfac767b396",
+  "reviewer": "Independent candidate_review agent (teamwork-exp4)",
+  "disposition": "pass",
+  "summary": "No actionable correctness blocker found in batched high-order mTHP swap-in for zswap. Allowing orders up to order 4 when all slots in the aligned range reside in zswap eliminates repeated PTL acquisitions and fault overhead. Decompressing each compressed slot into subpage i of the compound folio and installing with set_ptes under a single PTL hold preserves folio and slot lifetimes, cgroup and vmstat accounting, and fault concurrency semantics.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/report/independent-review.md",
+      "sha256": "c48561bd1aa93d4341f01586442b2ab9fdf58fb0702b9dd0e42d323be133cc70"
+    },
+    {
+      "path": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/patches/exp4-mthp-zswapin-batch-v1.patch",
+      "sha256": "a6d6f8e5079193deae338db0d1fe46a18d68bb33e969a8d2de8d4860d5f33478"
+    },
+    {
+      "path": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/static.json",
+      "sha256": "89eaabf0793aebef731bf750b196d7b30f9910345e3806f4a775de21de4a841a"
+    }
+  ]
+}

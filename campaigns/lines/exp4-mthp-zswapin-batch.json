@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "line": "exp4-mthp-zswapin-batch",
+  "contributor": "teamwork-exp4",
+  "question": "Can batched high-order mTHP swap-in for zswap assemble contiguous compressed entries into orders 2 and 4 folios to eliminate repeated PTL acquisition while preserving latency and memory stability",
+  "status": "active",
+  "profile": "swap-core",
+  "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "value_policy": {
+    "min_useful_effect": 0.05,
+    "equivalence_margin": 0.03,
+    "requires_upstream_comparison": false,
+    "rationale": "The unchanged upstream order-0 fallback for zswap in thp_swapin_suitable_orders is the control. Require at least 5% useful gain beyond calibrated noise with passing guards."
+  },
+  "resource_ceiling": {
+    "guest_attempts": 120,
+    "build_attempts": 10
+  },
+  "upstream_refs": [],
+  "no_upstream_reason": "The exact baseline contains the upstream order-0 zswap fallback. The directly relevant control is this unchanged algorithm.",
+  "ideas": [
+    {
+      "id": "mthp-zswapin-batch",
+      "status": "proposed",
+      "priority": 100,
+      "change_type": "optimize",
+      "bottleneck": "When mTHP folios are swapped to zswap, Linux disables mTHP swap-in (thp_swapin_suitable_orders returns 0 when zswap is enabled), forcing 16 or 64 independent order-0 faults, repeated allocations, and repeated page table lock acquisitions.",
+      "mechanism": "In mm/memory.c and mm/zswap.c / mm/swap_state.c, allow high-order folios (orders 2 and 4) when all swap slots in the aligned cluster range reside in zswap, assembling contiguous compressed swap slots into a single high-order folio during swap-in and installing with a single set_ptes() and single page table lock hold.",
+      "mechanism_evidence_type": "reviewed_structure",
+      "affected_paths": [
+        "mm/memory.c",
+        "mm/zswap.c",
+        "mm/swap_state.c"
+      ],
+      "expected_benefit": "Eliminate redundant per-page fault overhead and repeated PTL acquisition during mTHP zswap-in, amortizing decompression and page table installation.",
+      "simpler_alternative": "Fall back to individual order-0 faults on every subpage as upstream currently does.",
+      "falsifier": "Reject if candidate causes data corruption, slot leakage in zswap, page table locking races, fails correctness gates, or fails calibrated screening.",
+      "required_evidence": [
+        "Exact-tree independent source review including caller contracts",
+        "Counted exact-commit xswap correctness",
+        "Structural mechanism proof",
+        "Fresh probe calibration under Protocol Revision 7",
+        "Paired baseline/candidate latency screen"
+      ],
+      "upstream_refs": [],
+      "no_upstream_reason": "The relevant upstream implementation is already in the frozen baseline.",
+      "estimated_cost": {
+        "guest_attempts": 70,
+        "build_attempts": 2
+      },
+      "selection_reason": "Directly eliminates repeated PTL holds and per-page fault handling by batching high-order mTHP decompression from zswap.",
+      "complexity": {
+        "parent": {
+          "state": {
+            "change": "unchanged",
+            "reason": "No persistent stored kernel state added."
+          },
+          "lifetime": {
+            "change": "unchanged",
+            "reason": "Folio and swap slot lifetime contracts preserved."
+          },
+          "locking": {
+            "change": "unchanged",
+            "reason": "Single PTL hold matches existing anon THP swapin."
+          },
+          "error_paths": {
+            "change": "unchanged",
+            "reason": "Standard fallback to order-0 on partial decompression failure."
+          },
+          "configuration": {
+            "change": "unchanged",
+            "reason": "Uses existing transparent THP sysfs configuration."
+          },
+          "test_burden": {
+            "change": "increased",
+            "reason": "Requires verifying mTHP zswap decompression, partial zswap presence, and PTL batching."
+          },
+          "interfaces": {
+            "change": "unchanged",
+            "reason": "Kernel swapin and zswap interface signatures maintained."
+          },
+          "memory_cost": {
+            "change": "unchanged",
+            "reason": "Allocates mTHP folios only when all slots reside in zswap."
+          }
+        },
+        "baseline": {
+          "state": {
+            "change": "unchanged",
+            "reason": "No persistent stored kernel state added."
+          },
+          "lifetime": {
+            "change": "unchanged",
+            "reason": "Folio and swap slot lifetime contracts preserved."
+          },
+          "locking": {
+            "change": "unchanged",
+            "reason": "Single PTL hold matches existing anon THP swapin."
+          },
+          "error_paths": {
+            "change": "unchanged",
+            "reason": "Standard fallback to order-0 on partial decompression failure."
+          },
+          "configuration": {
+            "change": "unchanged",
+            "reason": "Uses existing transparent THP sysfs configuration."
+          },
+          "test_burden": {
+            "change": "increased",
+            "reason": "Requires verifying mTHP zswap decompression, partial zswap presence, and PTL batching."
+          },
+          "interfaces": {
+            "change": "unchanged",
+            "reason": "Kernel swapin and zswap interface signatures maintained."
+          },
+          "memory_cost": {
+            "change": "unchanged",
+            "reason": "Allocates mTHP folios only when all slots reside in zswap."
+          }
+        }
+      },
+      "provenance": [
+        {
+          "kind": "source",
+          "path": "linux:mm/memory.c",
+          "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "lines": "4835-4880"
+        }
+      ]
+    }
+  ]
+}

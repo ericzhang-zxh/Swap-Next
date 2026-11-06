@@ -1,0 +1,356 @@
+{
+  "swap_image_allocation": "preallocated",
+  "swap_bytes": 17179869184,
+  "protocol_revision": 7,
+  "accelerator": "tcg",
+  "qemu_accel": [
+    "-accel",
+    "tcg,thread=multi,tb-size=256",
+    "-machine",
+    "pc",
+    "-cpu",
+    "max"
+  ],
+  "guest_vcpus": 4,
+  "guest_mem_mib": 4096,
+  "run_id": "exp4-mthp-zswapin-batch-v1-correctness",
+  "stop_file": null,
+  "build": "std-df05fa2d39cf",
+  "backend": "disk",
+  "mode": "xswap",
+  "workload": "correctness",
+  "source_commit": "df05fa2d39cfcdbb83326227cba278a96be2fddc",
+  "image_sha256": "b9b68a696e718c3cacf636cf97ab88eb9a869f8bb3f47a21c1b4b71a164b98cc",
+  "config_sha256": "9dcdc44d2c9459a486a5f58657823d2c507811b7301d46a09ed9d8c20e0ed03a",
+  "guest_provenance": {
+    "image_sha256": "63d51a03828de9b907628dfdfa98e0393c5d8dacfe89b29584ed5c87b4a2a8bf",
+    "image_mib": 3742,
+    "initrd_sha256": "0c753c513564be7c9eef6c6b07f15687c8ad77f386f4eb4fe8a39b7a1daaa197",
+    "sources": {
+      "guest-init": "381fd710634085de78ab8f432e87154f7144115fbdc13b8a514822b84735120d",
+      "bench.sh": "0945259bac4b1637bf628616dffdf79abbbf83c6e430cedf55bd9e38c6b4c87a",
+      "params.sh": "0eaa3bba3a33b2b53d90aa35c5a5ef581a3c60eb678817ecb7198a6ed38e7f96",
+      "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+      "churn.c": "0c81e556b7c8c374687523a09241f73aa15fcd331531e099bb85747e9d380ddb",
+      "correctness.c": "cc459f2daacff59fda3d82e0dba1ee2da90f609998bcb4b44f2f30613c14a6a2",
+      "console-drain.c": "76b7bf5d6e0ab346416a273b25a9c851043d476d054a3a51d97984f870a7e2e1",
+      "prepare-image.py": "d3c4782e447390635728f03207f9a839a6e7f0b812acba54ad94825d078f06d4",
+      "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+    },
+    "linux_source_commit": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+    "tools": {
+      "valkey": "a9245aaf3286dee1795763661f0da6886acd8ef4",
+      "vm-scalability": "b3c2ded99b52ff92cafc408e407a6e1b22c96487"
+    },
+    "calibrated": false,
+    "host_dirs": [
+      "etc/alternatives",
+      "usr/bin",
+      "usr/sbin",
+      "usr/include",
+      "usr/lib/x86_64-linux-gnu",
+      "usr/lib/gcc",
+      "usr/libexec",
+      "usr/lib/bfd-plugins",
+      "usr/lib/locale",
+      "usr/share/perl",
+      "usr/share/perl5",
+      "usr/share/misc",
+      "usr/share/bison"
+    ],
+    "binary_sha256": {
+      "usemem": "ba79e810ba8b967024a7f1d8711bb02f10c4d7f6abaaad23dcb541a9d5dca3f8",
+      "valkey-server": "2045cba511c078f24256c183c4ce22245f9ca26c842cbf27f15e51fe38e92e21",
+      "valkey-benchmark": "bd9facbfd929f65b33d2600b590a715319830022dc542069d3161062c4ee372a",
+      "valkey-cli": "bc8220b997b7523884268ddb7ba365923f2a5192c5aec1787e2226a7bd0ba9d9",
+      "swapin": "d791b74a5b0a658cbaafc4e4eeb9756d1ecc5efbd9d5e4a85c733f7f7db70948",
+      "churn": "c6e78e703ee3ccbdc4f3c528ca15972507f771e217cd9c6a34bd215d652c48a8",
+      "correctness": "840679e5b63008444040379ce3dd7db374793684cdd113e241ad77cecdae10be",
+      "console-drain": "b955085dab6e59797d1b6dd221d0c14a68610ff79ddeafca648a35ef1de30a71"
+    },
+    "toolchain": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"
+  },
+  "command": [
+    "qemu-system-x86_64",
+    "-accel",
+    "tcg,thread=multi,tb-size=256",
+    "-machine",
+    "pc",
+    "-cpu",
+    "max",
+    "-smp",
+    "4",
+    "-m",
+    "4096",
+    "-nodefaults",
+    "-display",
+    "none",
+    "-serial",
+    "stdio",
+    "-monitor",
+    "none",
+    "-nic",
+    "none",
+    "-no-reboot",
+    "-sandbox",
+    "on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny",
+    "-kernel",
+    "/home/xuanhao/playground/Swap-Next/benchmark/kernel/builds/std-df05fa2d39cf/output/arch/x86/boot/bzImage",
+    "-initrd",
+    "/home/xuanhao/playground/Swap-Next/benchmark/swap-standard/initramfs.cpio.gz",
+    "-append",
+    "console=ttyS0 rdinit=/init panic=-1 loglevel=4 zswap.enabled=1 zswap.compressor=lzo brd.rd_size=1073741824 bench.backend=disk bench.mode=xswap bench.workload=correctness bench.image_sha=b9b68a696e718c3cacf636cf97ab88eb9a869f8bb3f47a21c1b4b71a164b98cc",
+    "-drive",
+    "file=/home/xuanhao/playground/Swap-Next/campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/guests/exp4-mthp-zswapin-batch-v1-correctness/swap.raw,format=raw,if=virtio,cache=none",
+    "-drive",
+    "file=/home/xuanhao/playground/Swap-Next/benchmark/swap-standard/bench.img,format=raw,if=virtio,readonly=on"
+  ],
+  "performance_accepted": false,
+  "calibrated": false,
+  "auto_promote": false,
+  "harness_sha256": {
+    "evidence.py": "49b1688f4e69e5960a6bff41b2dc1ea9bb2fcfd17602fa9726a4ddbbc6ba3c18",
+    "validity.py": "ff8690f201e7923a2affe2ba2953d0de8bfe5c6a7735a3ee6be6eb844b884d5a",
+    "run.py": "c5d560cbb36e86fb94df4fa4b26d3be45493d39570794a3710ba8ca449beaecf",
+    "test_evidence.py": "5394f10c45cb6227caaeea2a0a926a525a664eb1c36676c8e62976ddd568db53",
+    "test_probe.py": "d8fc56a783c473474fde4dfe8f78080c04289e9840e4b5b9a109c0af659539ac",
+    "analysis.py": "9be6a6c9fa6facfd39efde8cc89b5db7d6801465f27dd021ad72806963237bc0",
+    "params.sh": "0eaa3bba3a33b2b53d90aa35c5a5ef581a3c60eb678817ecb7198a6ed38e7f96",
+    "test_runner.py": "2a24d673bdbb3175709d7afd979745bde5a18dd29140204420f6e5abffb0a1aa",
+    "churn.c": "0c81e556b7c8c374687523a09241f73aa15fcd331531e099bb85747e9d380ddb",
+    "test_validity.py": "f1fedb208b489d8a7586cdd19c6140edc57764f5c16028b0d8d70cc57e710bbb",
+    "correctness.c": "cc459f2daacff59fda3d82e0dba1ee2da90f609998bcb4b44f2f30613c14a6a2",
+    "swapin.c": "167e495ecc9c12d0864620c3dea1182222ed4f4a860147056279d87ea2301955",
+    "test_analysis.py": "0a18bc417a70aa1e5f73bbeee5186d17d6eea1c6f08403e99f1b70f426cfdc9b",
+    "console-drain.c": "76b7bf5d6e0ab346416a273b25a9c851043d476d054a3a51d97984f870a7e2e1",
+    "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784",
+    "revision4-protocol-template.json": "c19fbb7f81a83a493b0c631d4cd5118061f09c955c91224449c731a36bb6a911",
+    "summarize.py": "a037a9030ce83a86e78564f3e59a102b7adbb79c70492d5bf4a16f463642b8ff",
+    "probe.py": "46cdc8c9c51e7891a7efc7e7d11f3f13e058c48fd9b49783a3e5beacd89a0bda",
+    "bench.sh": "0945259bac4b1637bf628616dffdf79abbbf83c6e430cedf55bd9e38c6b4c87a",
+    "prepare-image.py": "d3c4782e447390635728f03207f9a839a6e7f0b812acba54ad94825d078f06d4"
+  },
+  "proof_schema_version": 1,
+  "campaign": "exp4-mthp-zswapin-batch-2026-11-06",
+  "result_path": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/guests/exp4-mthp-zswapin-batch-v1-correctness/result.json",
+  "reservation": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/ledger/guest-reservations/exp4-mthp-zswapin-batch-v1-correctness.json",
+  "reservation_sha256": "a7c9fb33d48aab0bfe6185b3b59834d83260e069271a3e19bb9a83c6e8112b3e",
+  "protocol_sha256": "f25cb1d8982ab741fcebbf1dcf8a2fe6da948b586ccd01a4b398c06e618d37a1",
+  "build_manifest": "benchmark/kernel/builds/std-df05fa2d39cf/result.json",
+  "build_manifest_sha256": "7886183298344a0f206182a7bf48821a43bfca912011be731ef3ee750b460048",
+  "input_config_sha256": "c7a95cd1a937bb5268843511eadb672a31c0f40c717e85e519ebf3eb155f4417",
+  "serial_log": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/guests/exp4-mthp-zswapin-batch-v1-correctness/serial.log",
+  "exit_code": 0,
+  "stop_reason": null,
+  "wall_seconds": 22.539704996859655,
+  "pre_qemu_seconds": 0.02539930702187121,
+  "clocksource_invalid": false,
+  "host_load": {
+    "before_launch": {
+      "loadavg_1m": 2.31,
+      "loadavg_5m": 1.07,
+      "loadavg_15m": 0.62,
+      "psi": {
+        "cpu": {
+          "some": {
+            "avg10": 0.0,
+            "avg60": 0.07,
+            "avg300": 0.1,
+            "total": 1301021447.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 0.0
+          }
+        },
+        "memory": {
+          "some": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 9842597.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 9720874.0
+          }
+        },
+        "io": {
+          "some": {
+            "avg10": 0.0,
+            "avg60": 0.01,
+            "avg300": 0.65,
+            "total": 2687303563.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.01,
+            "avg300": 0.65,
+            "total": 2680809860.0
+          }
+        }
+      }
+    },
+    "after_exit": {
+      "loadavg_1m": 1.79,
+      "loadavg_5m": 1.05,
+      "loadavg_15m": 0.63,
+      "psi": {
+        "cpu": {
+          "some": {
+            "avg10": 0.1,
+            "avg60": 0.1,
+            "avg300": 0.11,
+            "total": 1301179289.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 0.0
+          }
+        },
+        "memory": {
+          "some": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 9842597.0
+          },
+          "full": {
+            "avg10": 0.0,
+            "avg60": 0.0,
+            "avg300": 0.0,
+            "total": 9720874.0
+          }
+        },
+        "io": {
+          "some": {
+            "avg10": 0.54,
+            "avg60": 0.23,
+            "avg300": 0.65,
+            "total": 2687546601.0
+          },
+          "full": {
+            "avg10": 0.54,
+            "avg60": 0.23,
+            "avg300": 0.65,
+            "total": 2681052824.0
+          }
+        }
+      }
+    }
+  },
+  "invalid_reasons": [],
+  "run_valid": true,
+  "metrics": {
+    "vmstat_delta": {
+      "pswpin": 49168,
+      "pswpout": 49337,
+      "pgmajfault": 16417,
+      "swap_ra": 0,
+      "swap_ra_hit": 0,
+      "swpin_zero": 33,
+      "swpout_zero": 33,
+      "zswpin": 0,
+      "zswpout": 0,
+      "zswpwb": 0
+    },
+    "kernel_diagnostics": [],
+    "swapin_latency_hist": null,
+    "swap_peak_kib": {
+      "/dev/vda": 65848,
+      "xswap1": 65980
+    },
+    "correctness_vmstat_delta": {
+      "pswpin": 49168,
+      "pswpout": 49337,
+      "pgmajfault": 16402,
+      "swap_ra": 0,
+      "swap_ra_hit": 0,
+      "swpin_zero": 33,
+      "swpout_zero": 33,
+      "zswpin": 0,
+      "zswpout": 0,
+      "zswpwb": 0
+    },
+    "correctness_snapshots": {
+      "before": {
+        "clusters_max": 3951,
+        "clusters_mapped": 73,
+        "usage_pages": 0,
+        "tail_free": 72,
+        "grows": 0,
+        "shrinks": 0
+      },
+      "after_pressure": {
+        "clusters_max": 3951,
+        "clusters_mapped": 73,
+        "usage_pages": 16486,
+        "tail_free": 40,
+        "grows": 0,
+        "shrinks": 0
+      },
+      "fork_shared": {
+        "clusters_max": 3951,
+        "clusters_mapped": 73,
+        "usage_pages": 16486,
+        "tail_free": 40,
+        "grows": 0,
+        "shrinks": 0
+      },
+      "after_children": {
+        "clusters_max": 3951,
+        "clusters_mapped": 73,
+        "usage_pages": 16486,
+        "tail_free": 40,
+        "grows": 0,
+        "shrinks": 0
+      },
+      "after_reads": {
+        "clusters_max": 3951,
+        "clusters_mapped": 73,
+        "usage_pages": 37,
+        "tail_free": 40,
+        "grows": 0,
+        "shrinks": 0
+      },
+      "after_settle": {
+        "clusters_max": 3951,
+        "clusters_mapped": 73,
+        "usage_pages": 37,
+        "tail_free": 40,
+        "grows": 0,
+        "shrinks": 0
+      }
+    },
+    "correctness_samples": 16384,
+    "physical_swapoff_live_ptes": 16384,
+    "physical_swapoff_used_kib": 65684
+  },
+  "gates": {
+    "boot": true,
+    "cmdline_identity": true,
+    "workload_complete": true,
+    "kernel_log_present": true,
+    "no_kernel_warnings": true,
+    "thp_policy": true,
+    "swap_activity": true,
+    "backend_exercised": true,
+    "swap_routing": true,
+    "correctness_evidence": true,
+    "data_roundtrip": true,
+    "fork_cow": true,
+    "concurrent_fault": true,
+    "destroy_live_pages": true,
+    "swapoff_live_pages": true,
+    "no_new_kernel_warnings": true,
+    "qemu_exit": true
+  },
+  "integration_pass": true,
+  "serial_sha256": "92121bb0c18542f1176e5f989b11ae89c289e0d434e839b6a9eb73da7aea6775"
+}

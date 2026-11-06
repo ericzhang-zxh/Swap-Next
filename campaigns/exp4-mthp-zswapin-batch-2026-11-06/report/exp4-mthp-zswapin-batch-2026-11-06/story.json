@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "campaign": "exp4-mthp-zswapin-batch-2026-11-06",
+  "evidence_sha256": "02c184ca1e6a758500dbe446c73508bf0e79b40459dafcad117f80c935486b91",
+  "title": "Batched High-Order mTHP Swap-in for Zswap",
+  "headline": "Screening benchmark: assembling contiguous compressed zswap slots into high-order folios yields -4.7% sequential and -5.8% p99 latency reduction on zswap, but geomean effect (-2.3%) remains within the calibrated noise floor.",
+  "date": "2026-11-06",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Eliminating repeated order-0 page faults in zswap mTHP swapin",
+      "lead": "Linux disables mTHP swap-in when zswap is enabled, forcing 16 or 64 independent order-0 faults with repeated page table allocations and PTL acquisitions.",
+      "evidence": [
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/research.json",
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/patches/exp4-mthp-zswapin-batch-v1.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis 4 enables high-order folios (orders 2 and 4) when contiguous slots reside in zswap, assembling compressed slots into one folio under a single set_ptes hold."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where the fault overhead appears",
+      "lead": "Under standard order-0 swapin, each subpage triggers a distinct fault, PTE lookup, and spinlock acquisition. Batched swap-in amortizes these costs under a single lock hold.",
+      "evidence": [
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/research.json",
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/protocol.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Batched swapin amortizes PTL acquisitions and folio allocations across multiple compressed slots",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "do_swap_page",
+              "tone": "default"
+            },
+            {
+              "id": "check",
+              "label": "zswap_all_present",
+              "col": 1,
+              "row": 0,
+              "sub": "order 2 / 4",
+              "tone": "focus"
+            },
+            {
+              "id": "batch_load",
+              "label": "Batched Decompress",
+              "col": 2,
+              "row": 0,
+              "sub": "subpage offset",
+              "tone": "good"
+            },
+            {
+              "id": "ptes",
+              "label": "set_ptes hold",
+              "col": 3,
+              "row": 0,
+              "sub": "single PTL hold",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "check",
+              "label": "mTHP orders"
+            },
+            {
+              "from": "check",
+              "to": "batch_load",
+              "label": "all resident"
+            },
+            {
+              "from": "batch_load",
+              "to": "ptes",
+              "label": "install folio"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "The affected path: thp_swapin_suitable_orders and zswap_load",
+      "lead": "In mm/memory.c, thp_swapin_suitable_orders permits orders <= 4 when zswap_all_present() is true; in mm/zswap.c, zswap_load decompresses each slot directly into folio subpages.",
+      "evidence": [
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/patches/exp4-mthp-zswapin-batch-v1.patch",
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/reviews/exp4-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Multi-subpage decompression addresses subpages directly within high-order folio",
+          "nodes": [
+            {
+              "id": "orders",
+              "label": "thp_swapin_orders",
+              "col": 0,
+              "row": 0,
+              "sub": "suitable orders",
+              "tone": "default"
+            },
+            {
+              "id": "load",
+              "label": "zswap_load",
+              "col": 1,
+              "row": 0,
+              "sub": "decompress loop",
+              "tone": "focus"
+            },
+            {
+              "id": "subpage",
+              "label": "folio_page",
+              "col": 2,
+              "row": 0,
+              "sub": "dst_offset >> PAGE_SHIFT",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "orders",
+              "to": "load",
+              "label": "order 2/4 folio"
+            },
+            {
+              "from": "load",
+              "to": "subpage",
+              "label": "sg_set_page"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Kernel modifications in mm/memory.c and mm/zswap.c",
+      "lead": "Updated zswap_decompress to accept subpage offset via folio_page, implemented zswap_all_present with tree read locking, and mapped high-order folios via swapin_sync.",
+      "evidence": [
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/patches/exp4-mthp-zswapin-batch-v1.patch",
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/value.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Direct subpage decompression into high-order folio",
+          "nodes": [
+            {
+              "id": "check_func",
+              "label": "zswap_all_present",
+              "col": 0,
+              "row": 0,
+              "sub": "tree read-lock",
+              "tone": "default"
+            },
+            {
+              "id": "decompress_func",
+              "label": "zswap_decompress",
+              "col": 1,
+              "row": 0,
+              "sub": "dst_offset subpage",
+              "tone": "focus"
+            },
+            {
+              "id": "map_func",
+              "label": "set_ptes",
+              "col": 1,
+              "row": 1,
+              "sub": "PTL held once",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "check_func",
+              "to": "decompress_func",
+              "label": "all present"
+            },
+            {
+              "from": "decompress_func",
+              "to": "map_func",
+              "label": "all decompressed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural decision: exploratory screening completed",
+      "lead": "Candidate passed all 17 correctness gates, probe calibration, and fast screening. Latency dropped -4.7% sequential on zram-64k, but geomean (-2.3%) stayed within noise.",
+      "evidence": [
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/ledger/ledger.json",
+        "campaigns/exp4-mthp-zswapin-batch-2026-11-06/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Batched high-order swapin confirms viability for zswap folios, but without asynchronous prefetch (Exp 3), decompression latency stays on the critical fault path."
+        }
+      ]
+    }
+  ]
+}

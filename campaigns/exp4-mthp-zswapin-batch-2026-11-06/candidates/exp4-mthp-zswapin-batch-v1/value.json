@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "decision": {
+    "schema_version": 1,
+    "identity": {
+      "candidate_commit": "df05fa2d39cfcdbb83326227cba278a96be2fddc",
+      "candidate_tree": "d4bf80a59d7a4be0e87fece3f8c81bfac767b396",
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "protocol_sha256": "f25cb1d8982ab741fcebbf1dcf8a2fe6da948b586ccd01a4b398c06e618d37a1",
+      "evaluation_id": "3106cb5ec7ec4853a9601f3ac5f37169",
+      "evaluation_report": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/evaluations/3106cb5ec7ec4853a9601f3ac5f37169/report.json"
+    },
+    "scientific_sha256": "8a8a1940a1c85e26aa1b0073cfc5cd03f410a8ae5fbf6e51449a3f865e4c8f21",
+    "scientific_result": "screen",
+    "review_status": "clear",
+    "complexity": {
+      "parent": {
+        "state": {
+          "change": "increased",
+          "reason": "Adds zswap contiguous presence check and multi-subpage folio decompression dispatch in swap-in path."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "High-order folios allocated with standard GFP flags and locked/unlocked under page table lock."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Single set_ptes hold retains PTL once per batch instead of per-page acquisition."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Falls back cleanly to order-0 single swapin if any slot is missing or allocation fails."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "Transparently active when mTHP and zswap are enabled without new user configuration."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying batched decompression, alignment checks, and swapoff correctness for high-order folios."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "zswap_load and thp_swapin_suitable_orders interface signatures preserved or extended cleanly."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Uses standard folio allocation without persistent auxiliary heap structures."
+        }
+      },
+      "baseline": {
+        "state": {
+          "change": "increased",
+          "reason": "Adds zswap contiguous presence check and multi-subpage folio decompression dispatch in swap-in path."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "High-order folios allocated with standard GFP flags and locked/unlocked under page table lock."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Single set_ptes hold retains PTL once per batch instead of per-page acquisition."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Falls back cleanly to order-0 single swapin if any slot is missing or allocation fails."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "Transparently active when mTHP and zswap are enabled without new user configuration."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying batched decompression, alignment checks, and swapoff correctness for high-order folios."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "zswap_load and thp_swapin_suitable_orders interface signatures preserved or extended cleanly."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Uses standard folio allocation without persistent auxiliary heap structures."
+        }
+      }
+    },
+    "complexity_justification": "Allowing high-order folios to assemble contiguous compressed zswap slots eliminates repeated PTL acquisitions and fault overhead, but introduces contiguous residency checking and multi-subpage decompression logic.",
+    "frontier_eligible": true,
+    "frontier_reason": "First validated batched high-order mTHP swap-in implementation for zswap with full 17-gate correctness proof and calibrated screening.",
+    "performance": {
+      "normalized_gain": -0.0227056093177197,
+      "noise_relative": 0.06200354493533711,
+      "scored_guards_pass": true
+    },
+    "upstream_comparison": {
+      "status": "not-applicable",
+      "reason": "Frozen line declares no relevant upstream comparison.",
+      "evidence": []
+    },
+    "evidence": [
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/static.json",
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/mechanism.json",
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/report/independent-review.md",
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/evaluations/3106cb5ec7ec4853a9601f3ac5f37169/report.json",
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/guests/exp4-mthp-zswapin-batch-v1-correctness/result.json"
+    ],
+    "advisory_flags": [],
+    "reason": "Candidate achieves FAST_PASS with measured latency reductions (-4.7% sequential mean, -5.8% sequential p99 on zram-64k) and passes all scored guardrails across all 4 screening pairs.",
+    "learning_value": "Demonstrates that assembling contiguous compressed zswap entries into high-order folios (orders 2 and 4) successfully avoids repeated page table lock holds and delivers noticeable latency improvements on zswap, but the geometric mean effect (-2.3%) remains within the calibrated noise floor (+/-6.2%), indicating that batched swap-in alone does not overcome compression latency without asynchronous readahead."
+  },
+  "assessment": {
+    "disposition": "rejected",
+    "reasons": [
+      "benefit does not justify added complexity"
+    ],
+    "complexity_relation": "more-complex",
+    "parent_complexity_relation": "more-complex",
+    "frontier_eligible": true,
+    "identity": {
+      "candidate_commit": "df05fa2d39cfcdbb83326227cba278a96be2fddc",
+      "candidate_tree": "d4bf80a59d7a4be0e87fece3f8c81bfac767b396",
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "protocol_sha256": "f25cb1d8982ab741fcebbf1dcf8a2fe6da948b586ccd01a4b398c06e618d37a1",
+      "evaluation_id": "3106cb5ec7ec4853a9601f3ac5f37169",
+      "evaluation_report": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/evaluations/3106cb5ec7ec4853a9601f3ac5f37169/report.json"
+    },
+    "scientific_sha256": "8a8a1940a1c85e26aa1b0073cfc5cd03f410a8ae5fbf6e51449a3f865e4c8f21",
+    "performance_accepted": false,
+    "auto_promote": false,
+    "confirmation_required": false
+  },
+  "provenance": {
+    "evaluation_sha256": "f66ee753290bd78740b0ce4a3b0b995e5eae8475c90c36e1f3fdad8aeefa4f45",
+    "evidence_sha256": {
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/static.json": "89eaabf0793aebef731bf750b196d7b30f9910345e3806f4a775de21de4a841a",
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1/mechanism.json": "0eec3214528905b15eef959d6c9f7c37366d5d82a293b1a7e8788b5bcd7b25a2",
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/report/independent-review.md": "c48561bd1aa93d4341f01586442b2ab9fdf58fb0702b9dd0e42d323be133cc70",
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/evaluations/3106cb5ec7ec4853a9601f3ac5f37169/report.json": "f66ee753290bd78740b0ce4a3b0b995e5eae8475c90c36e1f3fdad8aeefa4f45",
+      "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/guests/exp4-mthp-zswapin-batch-v1-correctness/result.json": "7511713996ab715d933cf8c2040784dbe8d4cbc491e251f01719e4346edbbe51"
+    }
+  }
+}

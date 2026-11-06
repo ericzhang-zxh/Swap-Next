@@ -280,8 +280,10 @@ class Verifier:
         self.build(result["build_manifest"], commit, build)
         serial = self.file(result.get("serial_log"), result.get("serial_sha256"))
         parser = self.native("benchmark/swap-standard/evidence.py")
+        revision = result.get("protocol_revision", protocol.get("protocol_revision", 1))
         parsed = parser.parse(serial.read_text(errors="replace"), result["image_sha256"],
-                              result["backend"], result["mode"], result["workload"])
+                              result["backend"], result["mode"], result["workload"],
+                              revision)
         expected_gates = dict(parsed["gates"], qemu_exit=result.get("exit_code") == 0 and result.get("stop_reason") is None)
         need(result.get("gates") == expected_gates and result.get("metrics") == parsed["metrics"],
              "raw serial differs from result gates/metrics")

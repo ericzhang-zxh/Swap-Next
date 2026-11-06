@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "campaign": "exp4-mthp-zswapin-batch-2026-11-06",
+  "state": "visually_checked",
+  "evidence_sha256": "02c184ca1e6a758500dbe446c73508bf0e79b40459dafcad117f80c935486b91",
+  "artifacts": {
+    "summary.json": "dc2ee3547a4135bb99c6871fd333b41a30ab2b060d3220a7c41982195dd6c576",
+    "REPORT.md": "4207e115148ccb706be7519fea2d6268bd074ba6457910be25b6d81ec388d00f",
+    "explainer.json": "3a63bddadbf7c8bd87c74747a1efca6d5c337a9de39c71b0c6f9205e78bc9c89",
+    "explainer.html": "19ff7faabe43322626aad0e0b8ff2b74ff894a9e10a1a8104659ad76a4bf2c81",
+    "generate_report.py": "40efd880d291d4d74f30a0163634bf3688f988aa8ab1faf0357622c4d0fa8d32"
+  },
+  "story_sha256": "3854ca14fc8d6eea7b60b610268c1cd1571b442285ab82aafbb0597821c280f0",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1793965523.7560916
+    },
+    {
+      "state": "visually_checked",
+      "time": 1793965794.9441383
+    }
+  ],
+  "visual_check": {
+    "artifact_sha256": "19ff7faabe43322626aad0e0b8ff2b74ff894a9e10a1a8104659ad76a4bf2c81",
+    "method": "Direct Playwright/Chromium headless render and screenshot inspection of desktop (1280px) and mobile (390px) viewports across light and dark themes; DOM overflow, disclosure and theme-toggle checks verified.",
+    "views": [
+      {
+        "width": 1280,
+        "theme": "light",
+        "screenshot": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/visual-qa/desktop-light.png",
+        "sha256": "f6769aef9abb3dd9b770e4cc278d82f6313fc813a29554a7186b43c85365089d",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "screenshot": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/visual-qa/desktop-dark.png",
+        "sha256": "542c3c457bef8f3cdc70b5b51b61d84f3f922a852b0fb79e3eb27f5e4dbf3803",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/visual-qa/mobile-light.png",
+        "sha256": "dcdacbe7c59c9eaf9237ac79ba818ef68e15567fec3d3812140f1b3b469cf214",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/exp4-mthp-zswapin-batch-2026-11-06/runs/visual-qa/mobile-dark.png",
+        "sha256": "3c38090bb12e6dfb6a7f78888d0ee46f2d97f9ed0d99c4ad6c3e09e344848ffa",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "3106cb5ec7ec4853a9601f3ac5f37169-3-swapin-disk-b",
+  "campaign": "exp4-mthp-zswapin-batch-2026-11-06",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793964738.8895528,
+  "identity": {
+    "build": "std-df05fa2d39cf",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "f25cb1d8982ab741fcebbf1dcf8a2fe6da948b586ccd01a4b398c06e618d37a1",
+  "started_unix": 1793964738.9341297
+}

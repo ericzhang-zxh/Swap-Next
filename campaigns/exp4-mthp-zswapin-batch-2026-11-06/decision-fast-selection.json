@@ -1,0 +1,8 @@
+{
+  "kind": "fast_selection",
+  "disposition": "screen",
+  "reason": "Candidate passes all 17 correctness gates, passes probe with zero warnings, and verified zswap mTHP batching.",
+  "candidate_commit": "df05fa2d39cfcdbb83326227cba278a96be2fddc",
+  "source_tree": "d4bf80a59d7a4be0e87fece3f8c81bfac767b396",
+  "probe_id": "c4ef584656a547ba8d68afe1871308fd"
+}
