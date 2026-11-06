@@ -1,0 +1,8 @@
+{
+  "kind": "fast_selection",
+  "disposition": "screen",
+  "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+  "source_tree": "5166db84b70253fe38230fd3b78cd7a67ea5ff95",
+  "probe_id": "b5081dabcab34c438126c79de5ad8e33",
+  "reason": "Candidate xswap-fast-in-v1 passed probe evaluation cleanly (PROBE_PASS) within calibrated metadata and vmstat bands with 0 errors; admit to fast screening benchmark to quantify unified swapin latency reduction."
+}

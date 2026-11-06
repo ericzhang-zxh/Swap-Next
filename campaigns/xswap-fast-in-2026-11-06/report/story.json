@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-fast-in-2026-11-06",
+  "evidence_sha256": "cc6c53e37a0d13b4fc34ecdc43a7a02a78521c9cf1a48066a704b5df79b639e3",
+  "title": "Unified High-Efficiency Swapin Engine (xswap-fast-in-v1)",
+  "headline": "Milestone 1 evaluation: unified engine combining allocator-first sync swapin, single-lock allocation, streak-gating, and async zswap prefetch achieves FAST_PASS with +3.47% combined score.",
+  "date": "2026-11-06",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Unifying orthogonal swapin optimizations into a coherent engine",
+      "lead": "Standard Linux swap fault handling suffers from redundant lookups, two-phase lock bouncing, readahead thrashing, and decompression bursts. Milestone 1 unifies four orthogonal innovations into xswap-fast-in-v1 to address all four bottlenecks.",
+      "evidence": [
+        "campaigns/xswap-fast-in-2026-11-06/research.json",
+        "campaigns/xswap-fast-in-2026-11-06/patches/xswap-fast-in-v1.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Milestone 1 combines allocator-first sync swapin, single-lock allocation, streak-gating, and decoupled async zswap prefetch with all 4 Explorer 2 defect fixes under Protocol Revision 7 across 4 comparison pairs."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Unified swap fault path and asynchronous prefetch architecture",
+      "lead": "Synchronous fast devices enter allocator-first sync swapin directly without redundant swapcache lookup, while speculative neighbors are evaluated via a 2-streak contiguous state machine and dispatched to an asynchronous workqueue.",
+      "evidence": [
+        "campaigns/xswap-fast-in-2026-11-06/research.json",
+        "campaigns/xswap-fast-in-2026-11-06/protocol.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Faulting thread returns immediately after synchronous order-0 allocation and load",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "do_swap_page",
+              "tone": "default"
+            },
+            {
+              "id": "sync",
+              "label": "Sync Swapin",
+              "col": 1,
+              "row": 0,
+              "sub": "allocator-first",
+              "tone": "good"
+            },
+            {
+              "id": "ra",
+              "label": "Readahead Gate",
+              "col": 1,
+              "row": 1,
+              "sub": "streak-gated",
+              "tone": "focus"
+            },
+            {
+              "id": "async",
+              "label": "Async Prefetch",
+              "col": 2,
+              "row": 1,
+              "sub": "zswap_prefetch_wq",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "sync",
+              "label": "demanded slot"
+            },
+            {
+              "from": "fault",
+              "to": "ra",
+              "label": "streak check"
+            },
+            {
+              "from": "ra",
+              "to": "async",
+              "label": "stride confirmed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Core mechanism and defect resolution in mm/memory.c and mm/swap_state.c",
+      "lead": "Allocator-first sync swapin enters swapin_sync directly. __swap_cache_alloc acquires swap_address_lock once. swap_vma_ra_win requires 2+ contiguous hits before expanding window. Decoupled zswap prefetch incorporates all 4 defect fixes: safe PTE tracking, locked deletion, device pointer validation, and deferred LRU addition.",
+      "evidence": [
+        "campaigns/xswap-fast-in-2026-11-06/patches/xswap-fast-in-v1.patch",
+        "campaigns/xswap-fast-in-2026-11-06/reviews/xswap-fast-in-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Single-lock allocation and safe decoupled prefetch eliminate race conditions and memory leaks",
+          "nodes": [
+            {
+              "id": "alloc",
+              "label": "__swap_cache_alloc",
+              "col": 0,
+              "row": 0,
+              "sub": "single-lock order-0",
+              "tone": "good"
+            },
+            {
+              "id": "load",
+              "label": "zswap_load",
+              "col": 1,
+              "row": 0,
+              "sub": "sync decompression",
+              "tone": "focus"
+            },
+            {
+              "id": "cleanup",
+              "label": "Locked Del & Safe PTE",
+              "col": 1,
+              "row": 1,
+              "sub": "Explorer 2 fixes",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "alloc",
+              "to": "load",
+              "label": "allocated folio"
+            },
+            {
+              "from": "load",
+              "to": "cleanup",
+              "label": "on error or finish"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Implementation changes across memory management subsystem",
+      "lead": "Applied unified kernel patch touching mm/memory.c and mm/swap_state.c. Verified compilation inside unprivileged namespace, passed controller check with 0 checkpatch errors, and passed all 17 integration gates in QEMU TCG.",
+      "evidence": [
+        "campaigns/xswap-fast-in-2026-11-06/patches/xswap-fast-in-v1.patch",
+        "campaigns/xswap-fast-in-2026-11-06/candidates/xswap-fast-in-v1/value.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Multi-stage verification guarantees exact-commit correctness and scope compliance",
+          "nodes": [
+            {
+              "id": "patch",
+              "label": "Unified Patch",
+              "col": 0,
+              "row": 0,
+              "sub": "mm/memory.c + swap_state.c",
+              "tone": "default"
+            },
+            {
+              "id": "correctness",
+              "label": "Correctness Gate",
+              "col": 1,
+              "row": 0,
+              "sub": "17/17 gates passed",
+              "tone": "good"
+            },
+            {
+              "id": "screen",
+              "label": "Fast Screening",
+              "col": 2,
+              "row": 0,
+              "sub": "FAST_PASS (+3.47% score)",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "patch",
+              "to": "correctness",
+              "label": "build std-5cde9eaa28a2"
+            },
+            {
+              "from": "correctness",
+              "to": "screen",
+              "label": "admit to benchmark"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural verdict: Milestone 1 unified engine delivered",
+      "lead": "Candidate xswap-fast-in-v1 passed all 17 integration gates, probe calibration (PROBE_PASS), and fast screening benchmark (FAST_PASS) across 4 comparison pairs with +3.47% combined score.",
+      "evidence": [
+        "campaigns/xswap-fast-in-2026-11-06/ledger/ledger.json",
+        "campaigns/xswap-fast-in-2026-11-06/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The unified high-efficiency swapin engine successfully unifies allocator-first sync swapin, single-lock allocation, streak-gating, and async zswap prefetch into a production-grade kernel subsystem, completing Milestone 1."
+        }
+      ]
+    }
+  ]
+}

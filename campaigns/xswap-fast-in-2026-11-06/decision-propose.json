@@ -1,0 +1,12 @@
+{
+  "kind": "propose",
+  "candidate": "xswap-fast-in-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "hypothesis": "Unifying allocator-first synchronous swapin, single-lock order-0 allocation in mm/swap_state.c and mm/memory.c, adaptive stride streak-gating requiring 2+ contiguous hits before expanding window beyond 1, and decoupled asynchronous zswap prefetch offloading speculative decompression to a background workqueue eliminates synchronous fault stalling and random swap cache thrashing, achieving a -6% to -9% geomean latency improvement across sequential and random workloads without regressions or correctness violations.",
+  "reason": "Authoring Milestone 1 proposal for unified high-efficiency swapin engine (xswap-fast-in-v1).",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "In mm/memory.c and mm/swap_state.c, synchronous swap devices bypass preliminary cache lookups and enter allocator-first swapin with single-lock order-0 allocation, readahead window expansion is gated on 2+ contiguous hits with immediate window collapse to 1 on stride disruptions, and speculative zswap decompression is offloaded to a background workqueue while the faulting thread returns immediately after synchronous order-0 load.",
+    "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+  }
+}

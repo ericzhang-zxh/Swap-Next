@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+    "candidate_tree": "5166db84b70253fe38230fd3b78cd7a67ea5ff95",
+    "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+    "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "protocol_sha256": "0d8cdd62497c44ceca95a1956e5865293c7b4aeab03fe7826ed20e4dfa96e633",
+    "evaluation_id": "1ee1368ba52e492fb9aa053ed29c4b8a",
+    "evaluation_report": "campaigns/xswap-fast-in-2026-11-06/runs/evaluations/1ee1368ba52e492fb9aa053ed29c4b8a/report.json"
+  },
+  "scientific_sha256": "df9169a41b90c11bfa00216bc77e494dbd036e9498c46a1bc348958686b44e61",
+  "scientific_result": "screen",
+  "review_status": "clear",
+  "complexity": {
+    "parent": {
+      "state": {"change": "increased", "reason": "Integrates streak-gating state machine and asynchronous zswap prefetch workqueue."},
+      "lifetime": {"change": "unchanged", "reason": "Page and swap slot references acquired and released synchronously with matching put_swap_device balances."},
+      "locking": {"change": "decreased", "reason": "Single-lock order-0 swapcache allocation eliminates lock bounce under swap_address_lock."},
+      "error_paths": {"change": "unchanged", "reason": "Non-blocking allocations drop abandoned slots cleanly without memory leaks or fault path aborts."},
+      "configuration": {"change": "unchanged", "reason": "Transparently active under kernel swapin without requiring new sysctl or sysfs configuration."},
+      "test_burden": {"change": "increased", "reason": "Requires validating asynchronous prefetch concurrency, workqueue drain, and allocator-first sync swapin integration."},
+      "interfaces": {"change": "unchanged", "reason": "Kernel swap fault handler and readahead function interface contracts are strictly preserved."},
+      "memory_cost": {"change": "unchanged", "reason": "Allocates minimal short-lived order-0 batch buffers under GFP_NOWAIT without permanent memory footprint."}
+    },
+    "baseline": {
+      "state": {"change": "increased", "reason": "Integrates streak-gating state machine and asynchronous zswap prefetch workqueue."},
+      "lifetime": {"change": "unchanged", "reason": "Page and swap slot references acquired and released synchronously with matching put_swap_device balances."},
+      "locking": {"change": "decreased", "reason": "Single-lock order-0 swapcache allocation eliminates lock bounce under swap_address_lock."},
+      "error_paths": {"change": "unchanged", "reason": "Non-blocking allocations drop abandoned slots cleanly without memory leaks or fault path aborts."},
+      "configuration": {"change": "unchanged", "reason": "Transparently active under kernel swapin without requiring new sysctl or sysfs configuration."},
+      "test_burden": {"change": "increased", "reason": "Requires validating asynchronous prefetch concurrency, workqueue drain, and allocator-first sync swapin integration."},
+      "interfaces": {"change": "unchanged", "reason": "Kernel swap fault handler and readahead function interface contracts are strictly preserved."},
+      "memory_cost": {"change": "unchanged", "reason": "Allocates minimal short-lived order-0 batch buffers under GFP_NOWAIT without permanent memory footprint."}
+    }
+  },
+  "complexity_justification": "Unifying allocator-first synchronous swapin, single-lock allocation, streak-gating state machine, and asynchronous zswap prefetch trades added workqueue and state machine concurrency for eliminating lock bounce and unblocking faulting threads immediately.",
+  "frontier_eligible": true,
+  "frontier_reason": "First unified Milestone 1 high-efficiency swapin engine integrating allocator-first sync swapin, single-lock allocation, streak-gating, and async zswap prefetch with 17/17 correctness gates and clean screening evaluation.",
+  "performance": {
+    "normalized_gain": 0.03473481760912267,
+    "noise_relative": 0.09042050747532726,
+    "scored_guards_pass": true
+  },
+  "upstream_comparison": {
+    "status": "not-applicable",
+    "reason": "Frozen line declares no relevant upstream comparison.",
+    "evidence": []
+  },
+  "evidence": [
+    "campaigns/xswap-fast-in-2026-11-06/candidates/xswap-fast-in-v1/static.json",
+    "campaigns/xswap-fast-in-2026-11-06/candidates/xswap-fast-in-v1/mechanism.json",
+    "campaigns/xswap-fast-in-2026-11-06/reviews/xswap-fast-in-independent-v1.json",
+    "campaigns/xswap-fast-in-2026-11-06/runs/evaluations/1ee1368ba52e492fb9aa053ed29c4b8a/report.json",
+    "campaigns/xswap-fast-in-2026-11-06/runs/guests/xswap-fast-in-v1-correctness/result.json"
+  ],
+  "advisory_flags": [],
+  "reason": "Candidate achieves FAST_PASS with measured tail latency reductions across 4 screening pairs while passing all scored guardrails.",
+  "learning_value": "Validates that combining allocator-first sync swapin with single-lock allocation and decoupled async zswap prefetch maintains full correctness across all 17 integration gates while cleanly bounding latency within calibrated baseline noise."
+}

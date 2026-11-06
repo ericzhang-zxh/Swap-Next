@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "kind": "reviewed_structure",
+  "claim": "In mm/memory.c and mm/swap_state.c, synchronous swap devices bypass preliminary cache lookups and enter allocator-first swapin with single-lock order-0 allocation, readahead window expansion is gated on 2+ contiguous hits with immediate window collapse to 1 on stride disruptions, and speculative zswap decompression is offloaded to a background workqueue while the faulting thread returns immediately after synchronous order-0 load.",
+  "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution.",
+  "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+  "source_tree": "5166db84b70253fe38230fd3b78cd7a67ea5ff95",
+  "protocol_sha256": "0d8cdd62497c44ceca95a1956e5865293c7b4aeab03fe7826ed20e4dfa96e633",
+  "review_id": "xswap-fast-in-independent-v1",
+  "review_record_sha256": "42cb929fcaf8a80c5eede67af65fd66333f311acfc1ea961bf2656008179f0f4"
+}

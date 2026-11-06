@@ -1,0 +1,20 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+  "changed_paths": [
+    "mm/memory.c",
+    "mm/swap_state.c"
+  ],
+  "changed_lines": 286,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "campaigns/xswap-fast-in-2026-11-06/candidates/xswap-fast-in-v1/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "campaigns/xswap-fast-in-2026-11-06/candidates/xswap-fast-in-v1/checkpatch.log",
+    "sha256": "cf781ff4910f675adb21140116d6da05a3647a328ea74e560211a785895c0840"
+  }
+}

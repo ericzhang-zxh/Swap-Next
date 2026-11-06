@@ -1,0 +1,15 @@
+{
+  "id": "1ee1368ba52e492fb9aa053ed29c4b8a-1-swapin-disk-a",
+  "campaign": "xswap-fast-in-2026-11-06",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793992636.5481656,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "0d8cdd62497c44ceca95a1956e5865293c7b4aeab03fe7826ed20e4dfa96e633",
+  "started_unix": 1793992636.5954776
+}

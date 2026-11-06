@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-fast-in-2026-11-06",
+  "state": "visually_checked",
+  "evidence_sha256": "cc6c53e37a0d13b4fc34ecdc43a7a02a78521c9cf1a48066a704b5df79b639e3",
+  "artifacts": {
+    "summary.json": "9d98de7dc576d7efeb6616ebe07e69046ad59de19a04a06930d05151331b7f7b",
+    "REPORT.md": "e0ebc53344f1403a819ddfedd863733db99338275b1e895cedfe0863de22be62",
+    "explainer.json": "73d8767eca81cc648c2e26156ac283063d024b5399e0c0297232f83dd3e56366",
+    "explainer.html": "0818cac3a195bf48da098a708f69dae3849962cc5906a0fad5ff4d440abd6a57",
+    "generate_report.py": "40efd880d291d4d74f30a0163634bf3688f988aa8ab1faf0357622c4d0fa8d32"
+  },
+  "story_sha256": "24dc97a3e7d76b115ac54e80a590d183ea8f9142f7d28809ac8cc5d7116d1b18",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1793993695.2454774
+    },
+    {
+      "state": "visually_checked",
+      "time": 1793993992.9668064
+    },
+    {
+      "state": "generated",
+      "time": 1793994023.6886497
+    },
+    {
+      "state": "visually_checked",
+      "time": 1793994046.8506534
+    }
+  ],
+  "visual_check": {
+    "artifact_sha256": "0818cac3a195bf48da098a708f69dae3849962cc5906a0fad5ff4d440abd6a57",
+    "method": "Direct Playwright Chromium headless render and screenshot inspection of desktop (1280px) and mobile (390px) viewports across light and dark themes; DOM overflow, disclosure and theme-toggle checks verified.",
+    "views": [
+      {
+        "width": 1280,
+        "theme": "light",
+        "screenshot": "campaigns/xswap-fast-in-2026-11-06/runs/visual-qa/desktop-light.png",
+        "sha256": "8e9f1c21dbb0ab5085ea8254393e3b9b78cd0f6e45e3112e8bb4792ff324975d",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "screenshot": "campaigns/xswap-fast-in-2026-11-06/runs/visual-qa/desktop-dark.png",
+        "sha256": "d9d4928649e479c1a82b90fdd91daff28ee2e4b3db0a9742b914e9e4b27e070f",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/xswap-fast-in-2026-11-06/runs/visual-qa/mobile-light.png",
+        "sha256": "b78475978acdba694aa3d01076b54f3bca520b27a9a7fb6e9e18616ccd7643f5",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/xswap-fast-in-2026-11-06/runs/visual-qa/mobile-dark.png",
+        "sha256": "487c8867456ce65149725e1987dcc7b61d8761302ad00eab47ead1dd0ea38dd5",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      }
+    ]
+  }
+}

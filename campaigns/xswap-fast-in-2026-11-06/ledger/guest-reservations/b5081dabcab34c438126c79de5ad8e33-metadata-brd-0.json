@@ -1,0 +1,15 @@
+{
+  "id": "b5081dabcab34c438126c79de5ad8e33-metadata-brd-0",
+  "campaign": "xswap-fast-in-2026-11-06",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1793989404.0170863,
+  "identity": {
+    "build": "std-5cde9eaa28a2",
+    "backend": "brd",
+    "mode": "plain",
+    "workload": "metadata"
+  },
+  "protocol_sha256": "0d8cdd62497c44ceca95a1956e5865293c7b4aeab03fe7826ed20e4dfa96e633",
+  "started_unix": 1793989404.0671883
+}

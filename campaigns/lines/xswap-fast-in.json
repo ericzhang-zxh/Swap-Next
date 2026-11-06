@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "line": "xswap-fast-in",
+  "contributor": "teamwork-xswap-exp1",
+  "question": "Can unifying allocator-first synchronous swapin, adaptive stride streak-gating, and decoupled asynchronous zswap prefetch achieve a -6% to -9% geomean latency improvement across sequential and random swap workloads without regressions or correctness violations?",
+  "status": "active",
+  "profile": "swap-core",
+  "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "value_policy": {
+    "min_useful_effect": 0.05,
+    "equivalence_margin": 0.02,
+    "requires_upstream_comparison": false,
+    "rationale": "The integrated baseline 5e84ca928dee is the control. Target a -6% to -9% geomean swapin latency reduction beyond calibrated noise with all 17 correctness gates passing."
+  },
+  "resource_ceiling": {
+    "guest_attempts": 120,
+    "build_attempts": 10
+  },
+  "upstream_refs": [],
+  "no_upstream_reason": "The relevant upstream implementation is already in the frozen baseline 5e84ca928dee.",
+  "ideas": [
+    {
+      "id": "unified-fast-in",
+      "status": "proposed",
+      "priority": 100,
+      "change_type": "optimize",
+      "bottleneck": "Synchronous swapin incurs redundant cache lookups and order-0 double-locking, speculative readahead inflates random tail latency, and synchronous decompression bursts stall demand faulting threads.",
+      "mechanism": "Unify allocator-first sync swapin with single-lock order-0 allocation in mm/swap_state.c, adaptive stride streak-gating requiring 2+ contiguous hits before expanding window beyond 1, and asynchronous decoupled zswap prefetch offloading speculative decompression to a background workqueue.",
+      "mechanism_evidence_type": "reviewed_structure",
+      "affected_paths": [
+        "mm/swap_state.c",
+        "mm/memory.c"
+      ],
+      "expected_benefit": "6% to 9% geomean latency reduction across sequential and random swap workloads, eliminating random p99 spikes while preserving high sequential readahead throughput.",
+      "simpler_alternative": "Keep the existing lookup-first loop and synchronous speculative readahead.",
+      "falsifier": "Reject on race condition, lifetime violation, failed correctness gate, or latency regression beyond calibrated noise.",
+      "required_evidence": [
+        "Exact-tree independent source review including caller contracts",
+        "Counted exact-commit xswap correctness",
+        "Structural mechanism proof",
+        "Fresh probe calibration under Protocol Revision 7",
+        "Paired baseline/candidate latency screen"
+      ],
+      "upstream_refs": [],
+      "no_upstream_reason": "The relevant upstream implementation is already in the frozen baseline.",
+      "estimated_cost": {
+        "guest_attempts": 70,
+        "build_attempts": 2
+      },
+      "selection_reason": "Combines demand-path single-lock allocation, streak-gated readahead suppression, and background prefetch for maximum cross-workload latency reduction.",
+      "complexity": {
+        "parent": {
+          "state": {
+            "change": "unchanged",
+            "reason": "No new persistent state on disk or in struct page/folio."
+          },
+          "lifetime": {
+            "change": "unchanged",
+            "reason": "Post-allocation cluster lock and slot validation remain authoritative."
+          },
+          "locking": {
+            "change": "decreased",
+            "reason": "Omit preliminary cluster lock for order-0 demand faults."
+          },
+          "error_paths": {
+            "change": "mixed",
+            "reason": "All error paths preserved; -EEXIST triggers cache fallback."
+          },
+          "configuration": {
+            "change": "unchanged",
+            "reason": "No new sysctl or Kconfig parameters required."
+          },
+          "test_burden": {
+            "change": "increased",
+            "reason": "Verify concurrency, workqueue drain, and fallback paths."
+          },
+          "interfaces": {
+            "change": "unchanged",
+            "reason": "Helper signatures unchanged."
+          },
+          "memory_cost": {
+            "change": "unchanged",
+            "reason": "Only small transient struct zswap_prefetch_batch dynamically allocated."
+          }
+        },
+        "baseline": {
+          "state": {
+            "change": "unchanged",
+            "reason": "No new persistent state."
+          },
+          "lifetime": {
+            "change": "unchanged",
+            "reason": "Post-allocation cluster lock remains authoritative."
+          },
+          "locking": {
+            "change": "decreased",
+            "reason": "Omit preliminary cluster lock for order-0 demand faults."
+          },
+          "error_paths": {
+            "change": "mixed",
+            "reason": "All error paths preserved."
+          },
+          "configuration": {
+            "change": "unchanged",
+            "reason": "No new configuration parameters."
+          },
+          "test_burden": {
+            "change": "increased",
+            "reason": "Concurrency and workqueue lifetime checks."
+          },
+          "interfaces": {
+            "change": "unchanged",
+            "reason": "Helper signatures unchanged."
+          },
+          "memory_cost": {
+            "change": "unchanged",
+            "reason": "Transient allocation only."
+          }
+        }
+      },
+      "provenance": [
+        {
+          "kind": "source",
+          "path": "linux:mm/swap_state.c",
+          "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "lines": "65-75; 457-500; 709-730; 775-800; 836-860; 890-950; 959-1010; 1017-1110; 1114-1130"
+        },
+        {
+          "kind": "source",
+          "path": "linux:mm/memory.c",
+          "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "lines": "4994-5035"
+        }
+      ]
+    }
+  ]
+}

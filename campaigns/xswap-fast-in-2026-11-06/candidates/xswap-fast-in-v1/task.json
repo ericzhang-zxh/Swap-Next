@@ -1,0 +1,45 @@
+{
+  "id": "xswap-fast-in-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-bf66201a9449",
+  "worktree": "worktrees/xswap-fast-in-2026-11-06/xswap-fast-in-v1",
+  "status": "active",
+  "hypothesis": "Unifying allocator-first synchronous swapin, single-lock order-0 allocation in mm/swap_state.c and mm/memory.c, adaptive stride streak-gating requiring 2+ contiguous hits before expanding window beyond 1, and decoupled asynchronous zswap prefetch offloading speculative decompression to a background workqueue eliminates synchronous fault stalling and random swap cache thrashing, achieving a -6% to -9% geomean latency improvement across sequential and random workloads without regressions or correctness violations.",
+  "created_unix": 1793987028.4741068,
+  "protocol_sha256": "fffd57b58efe72b661e314b9d0f79ff68aba97d626878f3a5b8c4e04f4e39825",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "In mm/memory.c and mm/swap_state.c, synchronous swap devices bypass preliminary cache lookups and enter allocator-first swapin with single-lock order-0 allocation, readahead window expansion is gated on 2+ contiguous hits with immediate window collapse to 1 on stride disruptions, and speculative zswap decompression is offloaded to a background workqueue while the faulting thread returns immediately after synchronous order-0 load.",
+    "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+  },
+  "allowed_modify": [
+    "mm/swap_state.c",
+    "mm/memory.c"
+  ],
+  "allowed_add": [],
+  "budget": {
+    "max_candidates": 1,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 4,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 900,
+    "max_total_campaign_seconds": 64800,
+    "max_build_attempts": 10
+  },
+  "primary_metric": "swapin_seq.mean_ns",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

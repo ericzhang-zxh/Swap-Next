@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "xswap-fast-in-independent-v1",
+  "campaign": "xswap-fast-in-2026-11-06",
+  "candidate": "xswap-fast-in-v1",
+  "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+  "source_tree": "5166db84b70253fe38230fd3b78cd7a67ea5ff95",
+  "reviewer": "Independent candidate_review agent (teamwork-xswap-exp1)",
+  "disposition": "pass",
+  "summary": "No actionable correctness blocker found in xswap-fast-in unified swapin engine. Allocator-first sync swapin in mm/memory.c and mm/swap_state.c eliminates redundant cache lookups, single-lock allocation halves cluster spinlock acquisitions for order-0 demand faults, adaptive stride streak-gating collapses readahead window on non-contiguous access, and decoupled async zswap prefetch unblocks the faulting thread while decompressing speculative slots in the background. All 4 prior defects resolved; checkpatch clean with 0 errors and 0 warnings.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/xswap-fast-in-2026-11-06/report/independent-review.md",
+      "sha256": "0f4e316912e9aeb4d99857311f2a9677aba8a786ff58ccc987c8f1c9beebaa9c"
+    },
+    {
+      "path": "campaigns/xswap-fast-in-2026-11-06/patches/xswap-fast-in-v1.patch",
+      "sha256": "9313bd2304330ff95981d219b3f7eca4b9b6e7497eb0ea35e40f1e7d3470b9b1"
+    },
+    {
+      "path": "campaigns/xswap-fast-in-2026-11-06/candidates/xswap-fast-in-v1/static.json",
+      "sha256": "1b39f62879ab1f5e410bb6150519ef0056c0a4a5f89bf1f46a78ebdc421755df"
+    }
+  ]
+}
