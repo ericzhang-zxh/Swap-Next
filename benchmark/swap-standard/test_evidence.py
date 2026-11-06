@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 import unittest
-from evidence import parse, PHYSICAL
+from evidence import (ATTRIBUTABLE_FIELDS, parse, PHYSICAL, bytes_per_capacity_slot,
+                      rescore_metadata_metrics)
 
 
 def block(kind, tag, body):
@@ -128,6 +129,113 @@ class EvidenceTests(unittest.TestCase):
     def test_serial_crlf(self):
         r = parse((fixture() + usemem()).replace("\n", "\r\n"), "abc", "disk", "plain", "usemem")
         self.assertTrue(all(r["gates"].values()))
+
+
+CAPACITY_KIB = (1 << 30) - 4
+# Eval 469ee19c metadata-brd deltas. MemAvailable followed MemFree; VmallocUsed did not.
+OBSERVED_METADATA = (
+    {"MemTotal": 0, "MemFree": -30692, "MemAvailable": -29848, "SwapTotal": CAPACITY_KIB, "SwapFree": CAPACITY_KIB,
+     "Zswap": 0, "Zswapped": 0, "Slab": 340, "SUnreclaim": 340, "PageTables": 0, "VmallocUsed": 28728, "Percpu": 0,
+     "used_kib": 29848},
+    {"MemTotal": 0, "MemFree": -31392, "MemAvailable": -30548, "SwapTotal": CAPACITY_KIB, "SwapFree": CAPACITY_KIB,
+     "Zswap": 0, "Zswapped": 0, "Slab": 344, "SUnreclaim": 344, "PageTables": 0, "VmallocUsed": 28728, "Percpu": 0,
+     "used_kib": 30548},
+    {"MemTotal": 0, "MemFree": -29600, "MemAvailable": -28756, "SwapTotal": CAPACITY_KIB, "SwapFree": CAPACITY_KIB,
+     "Zswap": 0, "Zswapped": 0, "Slab": 340, "SUnreclaim": 340, "PageTables": 0, "VmallocUsed": 28728, "Percpu": 0,
+     "used_kib": 28756},
+)
+
+
+def meminfo_text(before, after):
+    def body(values):
+        return "".join(f"{key}: {value} kB\n" for key, value in values.items())
+    log = fixture("metadata", "brd") + "SWAPS_BEGIN\n/dev/ram0 partition 1073741820 0 0\nSWAPS_END\n"
+    return log + block("MEMINFO", "metadata_before", body(before)) + block("MEMINFO", "metadata_after", body(after))
+
+
+def counter_snapshots(delta, slab=None, memavailable=None):
+    before = {"MemTotal": 4000000, "MemFree": 3000000, "MemAvailable": 3100000, "SwapTotal": 0, "SwapFree": 0,
+              "Zswap": 0, "Zswapped": 0, "Slab": 10000, "SUnreclaim": 8000, "PageTables": 100,
+              "VmallocUsed": 20000, "Percpu": 50}
+    after = dict(before)
+    after["SwapTotal"] = after["SwapFree"] = CAPACITY_KIB
+    for name in ATTRIBUTABLE_FIELDS:
+        after[name] = before[name] + delta.get(name, 0)
+    after["Slab"] = before["Slab"] + (slab if slab is not None else delta.get("SUnreclaim", 0))
+    after["MemFree"] = before["MemFree"] + delta.get("MemFree", -30000)
+    after["MemAvailable"] = before["MemAvailable"] + (memavailable if memavailable is not None else delta.get("MemFree", -30000))
+    return before, after
+
+
+class AttributableMetadataTests(unittest.TestCase):
+    def test_revision7_ignores_memavailable_and_slab_swing(self):
+        ratios = []
+        for memavailable, slab in ((-29848, 340), (-30548, 9000), (-28756, 100)):
+            before, after = counter_snapshots(
+                {"SUnreclaim": 340, "VmallocUsed": 28728, "PageTables": 0, "Percpu": 0},
+                slab=slab, memavailable=memavailable)
+            parsed = parse(meminfo_text(before, after), "abc", "brd", "plain", "metadata", 7)
+            self.assertTrue(parsed["gates"]["metadata_attributable"], parsed)
+            self.assertTrue(all(parsed["gates"].values()), parsed)
+            ratios.append(parsed["metrics"]["metadata_delta_bytes_per_capacity_slot"])
+            delta = parsed["metrics"]["metadata_delta_kib"]
+            self.assertEqual(delta["used_kib"], 340 + 28728)
+            self.assertEqual(delta["memavailable_kib"], -memavailable)
+        self.assertEqual(ratios[0], ratios[1])
+        self.assertEqual(ratios[0], ratios[2])
+        self.assertEqual(ratios[0], bytes_per_capacity_slot(29068, CAPACITY_KIB))
+
+    def test_revision6_keeps_the_memavailable_numerator(self):
+        before, after = counter_snapshots(
+            {"SUnreclaim": 340, "VmallocUsed": 28728, "PageTables": 0, "Percpu": 0}, memavailable=-29848)
+        parsed = parse(meminfo_text(before, after), "abc", "brd", "plain", "metadata", 6)
+        self.assertNotIn("metadata_attributable", parsed["gates"])
+        self.assertEqual(parsed["metrics"]["metadata_delta_kib"]["used_kib"], 29848)
+        self.assertAlmostEqual(parsed["metrics"]["metadata_delta_bytes_per_capacity_slot"],
+                               bytes_per_capacity_slot(29848, CAPACITY_KIB))
+        self.assertTrue(all(parsed["gates"].values()), parsed)
+
+    def test_missing_or_backwards_vmalloc_fails_closed(self):
+        before, after = counter_snapshots({"SUnreclaim": 340, "VmallocUsed": 28728, "PageTables": 0, "Percpu": 0})
+        del after["Percpu"]
+        missing = parse(meminfo_text(before, after), "abc", "brd", "plain", "metadata", 7)
+        self.assertFalse(missing["gates"]["metadata_attributable"])
+        self.assertNotIn("metadata_delta_bytes_per_capacity_slot", missing["metrics"])
+        before, after = counter_snapshots({"SUnreclaim": 340, "VmallocUsed": -8, "PageTables": 0, "Percpu": 0})
+        backwards = parse(meminfo_text(before, after), "abc", "brd", "plain", "metadata", 7)
+        self.assertFalse(backwards["gates"]["metadata_attributable"])
+        self.assertNotIn("metadata_delta_bytes_per_capacity_slot", backwards["metrics"])
+        before, after = counter_snapshots({"SUnreclaim": -40000, "VmallocUsed": 100, "PageTables": 0, "Percpu": 0})
+        negative = parse(meminfo_text(before, after), "abc", "brd", "plain", "metadata", 7)
+        self.assertFalse(negative["gates"]["metadata_attributable"])
+
+    def test_small_signed_counter_stays_in_the_sum(self):
+        before, after = counter_snapshots({"SUnreclaim": -4, "VmallocUsed": 28728, "PageTables": 0, "Percpu": 0})
+        parsed = parse(meminfo_text(before, after), "abc", "brd", "plain", "metadata", 7)
+        self.assertTrue(parsed["gates"]["metadata_attributable"])
+        self.assertEqual(parsed["metrics"]["metadata_delta_kib"]["used_kib"], 28724)
+
+    def test_stored_eval_deltas_rescore_without_a_guest(self):
+        ratios = []
+        for delta, old in zip(OBSERVED_METADATA, (0.11386108440854059, 0.11653137250442569, 0.10969543497895984)):
+            stored = {"metadata_delta_kib": dict(delta), "metadata_delta_bytes_per_capacity_slot": old}
+            kept = rescore_metadata_metrics(stored, 6)
+            self.assertEqual(kept["metadata_delta_bytes_per_capacity_slot"], old)
+            rescored = rescore_metadata_metrics(stored, 7)
+            ratios.append(rescored["metadata_delta_bytes_per_capacity_slot"])
+            self.assertEqual(rescored["metadata_delta_kib"]["memavailable_kib"], -delta["MemAvailable"])
+        self.assertEqual(ratios, [bytes_per_capacity_slot(29068, CAPACITY_KIB),
+                                  bytes_per_capacity_slot(29072, CAPACITY_KIB),
+                                  bytes_per_capacity_slot(29068, CAPACITY_KIB)])
+        again = rescore_metadata_metrics(
+            {"metadata_delta_kib": rescore_metadata_metrics(
+                {"metadata_delta_kib": dict(OBSERVED_METADATA[0]), "metadata_delta_bytes_per_capacity_slot": 0.1}, 7)["metadata_delta_kib"],
+             "metadata_delta_bytes_per_capacity_slot": ratios[0]}, 7)
+        self.assertEqual(again["metadata_delta_bytes_per_capacity_slot"], ratios[0])
+        with self.assertRaises(ValueError):
+            rescore_metadata_metrics({"metadata_delta_kib": {"VmallocUsed": -1, "SUnreclaim": 1, "PageTables": 0, "Percpu": 0, "SwapTotal": CAPACITY_KIB}}, 7)
+        with self.assertRaises(ValueError):
+            parse("BENCH_BOOT\n", "abc", "brd", "plain", "metadata", True)
 
 
 if __name__ == "__main__":

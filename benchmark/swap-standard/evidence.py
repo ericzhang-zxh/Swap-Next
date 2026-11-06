@@ -35,6 +35,65 @@ def delta(after, before, keys=None):
     return {k: after.get(k, 0) - before.get(k, 0) for k in keys}
 
 
+# Swapon metadata that stays put on /proc/meminfo. MemFree and MemAvailable move
+# with unrelated free pages. Slab includes SReclaimable and would double-count
+# SUnreclaim. VmallocUsed is the swapon table; a decrease there is not a sample.
+ATTRIBUTABLE_FIELDS = ("SUnreclaim", "VmallocUsed", "PageTables", "Percpu")
+EXCLUDED_METADATA_FIELDS = ("MemFree", "MemAvailable", "Slab")
+SIGNED_METADATA_FIELDS = ("SUnreclaim", "PageTables", "Percpu")
+
+
+def _protocol_revision(protocol_revision):
+    if isinstance(protocol_revision, bool) or not isinstance(protocol_revision, int) or protocol_revision < 1:
+        raise ValueError("protocol_revision")
+    return protocol_revision
+
+
+def attributable_kib(delta):
+    """Sum the attributable counters. Missing data, a VmallocUsed decrease, or a
+    negative sum cannot be scored. The other counters stay signed."""
+    if not isinstance(delta, dict):
+        raise ValueError("metadata delta missing")
+    missing = [name for name in ATTRIBUTABLE_FIELDS if type(delta.get(name)) is not int]
+    if missing:
+        raise ValueError("metadata attributable counters missing: " + ",".join(missing))
+    if delta["VmallocUsed"] < 0:
+        raise ValueError("metadata VmallocUsed decreased")
+    total = sum(delta[name] for name in ATTRIBUTABLE_FIELDS)
+    if total < 0:
+        raise ValueError("metadata attributable sum is negative")
+    return total
+
+
+def bytes_per_capacity_slot(used_kib, capacity_kib):
+    if type(used_kib) is not int or type(capacity_kib) is not int or capacity_kib <= 0:
+        raise ValueError("metadata capacity missing")
+    return used_kib * 4096 / capacity_kib
+
+
+def rescore_metadata_metrics(metrics, protocol_revision):
+    """Recompute the scored ratio from a stored meminfo delta. No guest is read.
+    Revisions before 7 keep the stored MemAvailable ratio."""
+    revision = _protocol_revision(protocol_revision)
+    if not isinstance(metrics, dict):
+        raise ValueError("metadata metrics missing")
+    if revision < 7:
+        if "metadata_delta_bytes_per_capacity_slot" not in metrics:
+            raise ValueError("missing metadata ratio")
+        return metrics
+    delta = metrics.get("metadata_delta_kib")
+    used = attributable_kib(delta)
+    ratio = bytes_per_capacity_slot(used, delta.get("SwapTotal"))
+    rescored = dict(metrics)
+    new_delta = dict(delta)
+    new_delta["used_kib"] = used
+    if type(delta.get("MemAvailable")) is int:
+        new_delta["memavailable_kib"] = -delta["MemAvailable"]
+    rescored["metadata_delta_kib"] = new_delta
+    rescored["metadata_delta_bytes_per_capacity_slot"] = ratio
+    return rescored
+
+
 def stats(line):
     return {k: float(v) for k, v in re.findall(r'(\w+)=([\d.]+)', line)}
 
@@ -124,7 +183,7 @@ def correctness_evidence(text, backend, mode):
                    'physical_swapoff_used_kib': int(physical[0][1]) if len(physical) == 1 else None}
 
 
-def parse(text, image_sha, backend, mode, workload):
+def parse(text, image_sha, backend, mode, workload, protocol_revision=1):
     text = text.replace('\r', '')
     log = block(text, 'KERNEL_LOG_BEGIN', 'KERNEL_LOG_END') or ''
     cmdline = block(text, 'CMDLINE_BEGIN', 'CMDLINE_END') or ''
@@ -151,11 +210,29 @@ def parse(text, image_sha, backend, mode, workload):
         gates['meminfo_present'] = all(v is not None and {'MemAvailable', 'MemFree', 'SwapTotal'} <= v.keys() for v in (before, after))
         gates['swap_capacity'] = bool(after and before and after.get('SwapTotal', 0) - before.get('SwapTotal', 0) == (1 << 30) - 4)
         gates['swap_device'] = '/dev/ram0' in (block(text, 'SWAPS_BEGIN', 'SWAPS_END') or '')
+        revision = _protocol_revision(protocol_revision)
         if gates['meminfo_present']:
-            d['used_kib'] = -d.get('MemAvailable', 0)
-            metrics['metadata_delta_kib'] = d
             capacity_kib = after['SwapTotal'] - before['SwapTotal']
-            metrics['metadata_delta_bytes_per_capacity_slot'] = d['used_kib'] * 4096 / capacity_kib if capacity_kib > 0 else None
+            if revision >= 7:
+                present = all(type(side.get(name)) is int for side in (before, after) for name in ATTRIBUTABLE_FIELDS)
+                try:
+                    if not present:
+                        raise ValueError("metadata attributable counters missing")
+                    used = attributable_kib(d)
+                    ratio = bytes_per_capacity_slot(used, capacity_kib)
+                except ValueError:
+                    gates['metadata_attributable'] = False
+                else:
+                    gates['metadata_attributable'] = True
+                    d['used_kib'] = used
+                    d['memavailable_kib'] = -d['MemAvailable']
+                    metrics['metadata_delta_bytes_per_capacity_slot'] = ratio
+            else:
+                d['used_kib'] = -d.get('MemAvailable', 0)
+                metrics['metadata_delta_bytes_per_capacity_slot'] = d['used_kib'] * 4096 / capacity_kib if capacity_kib > 0 else None
+            metrics['metadata_delta_kib'] = d
+        elif revision >= 7:
+            gates['metadata_attributable'] = False
         metrics['swap_total_kib'] = (after or {}).get('SwapTotal')
         return dict(metrics=metrics, gates=gates)
 

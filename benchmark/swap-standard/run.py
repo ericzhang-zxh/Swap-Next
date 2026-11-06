@@ -423,7 +423,7 @@ def main():
         # also rejects wall times above 1.5x the running median.
         result["run_valid"] = not reasons
         try:
-            result.update(parse(serial, image_sha, args.backend, args.mode, args.workload))
+            result.update(parse(serial, image_sha, args.backend, args.mode, args.workload, args.protocol_revision))
         except (ValueError, KeyError, TypeError) as exc:
             result.update(gates={"parse_complete": False}, parse_error=str(exc))
         result["gates"]["qemu_exit"] = proc.returncode == 0 and reason is None
