@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "exp5-percpu-slot-batch-2026-11-06",
-  "state": "visually_checked",
+  "state": "live_verified",
   "evidence_sha256": "964a0b56f38a9b5125c980003b8b4898fb6e0c90a1ed5f9dfdfc9e086ab250cc",
   "artifacts": {
     "summary.json": "243fb88a47a73e4444ab594930013834fb5d1bff322d042af4a9d98200995dbd",
@@ -19,6 +19,10 @@
     {
       "state": "visually_checked",
       "time": 1793974966.5367036
+    },
+    {
+      "state": "live_verified",
+      "time": 1793975706.7192883
     }
   ],
   "visual_check": {
@@ -74,5 +78,13 @@
         "disclosure_works": true
       }
     ]
+  },
+  "publication": {
+    "commit": "8fec0fa7913b68a6da4ce0842c3822e144c6eae4",
+    "run_id": "42234076390",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/exp5-percpu-slot-batch-2026-11-06/",
+    "html_sha256": "678bbaaa15173c3d29b1e7368776a8fefdb57afc08bdc9fb10aa4030d6d15822",
+    "index_sha256": "1bef3f04234cea57bcb113c8f124b989df46679be0d1562ba78e99ccc79dbeec",
+    "verified_unix": 1793975706.719285
   }
 }
