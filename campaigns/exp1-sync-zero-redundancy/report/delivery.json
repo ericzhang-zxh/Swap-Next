@@ -27,6 +27,10 @@
     {
       "state": "live_verified",
       "time": 1793949432.4123945
+    },
+    {
+      "state": "live_verified",
+      "time": 1793951546.6645255
     }
   ],
   "visual_check": {
@@ -84,11 +88,10 @@
     ]
   },
   "publication": {
-    "commit": "14fc8bf9ba198e4cd2c363e12343afe08d843a0d",
-    "run_id": "42179754665",
-    "url": "https://ericzhang-zxh.github.io/Swap-Next/exp1-sync-zero-redundancy/",
+    "commit": "ab772416e449fe77106dbd4aac15808eab38a279",
+    "run_id": "42183647647",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/exp1-sync-zero-redundancy-2026-11-06/",
     "html_sha256": "7fba967ef111642eec54c3eb2ee358f26e47602747eca5e14e5e7ec0b8aad9b0",
-    "index_sha256": "e8ad647a512972a5843e03965e0e1dfb9cee3a7e787ec648c48d82be23f0d51c",
-    "verified_unix": 1793949432.4123917
+    "verified_unix": 1793951546.6645248
   }
 }
