@@ -330,6 +330,10 @@ def build_site(campaigns, site):
         if camp_dir and camp_dir.name != name:
             (site / camp_dir.name).mkdir(parents=True, exist_ok=True)
             shutil.copyfile(page, site / camp_dir.name / "index.html")
+        undated_alias = re.sub(r"-\d{4}-\d{2}-\d{2}$", "", name)
+        if undated_alias != name and not (site / undated_alias / "index.html").exists():
+            (site / undated_alias).mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(page, site / undated_alias / "index.html")
 
         verdict = spec.get("verdict", {})
         var, icon, label = STATUS.get(verdict.get("status"), ("--muted", "·", "Report"))

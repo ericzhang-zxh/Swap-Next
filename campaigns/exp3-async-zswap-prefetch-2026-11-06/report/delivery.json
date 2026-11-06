@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "exp3-async-zswap-prefetch-2026-11-06",
-  "state": "visually_checked",
+  "state": "live_verified",
   "evidence_sha256": "a7372119bd01a2f85870f5683e03d339ffd558ae5df62825fe691ee5a57febf6",
   "artifacts": {
     "summary.json": "c7ef511f11bc1fd927ad0dbb0e8695236e51389ce0dcc8aa68dd8511e980e75d",
@@ -19,6 +19,10 @@
     {
       "state": "visually_checked",
       "time": 1793960580.1418931
+    },
+    {
+      "state": "live_verified",
+      "time": 1793960832.8429556
     }
   ],
   "visual_check": {
@@ -74,5 +78,13 @@
         "disclosure_works": true
       }
     ]
+  },
+  "publication": {
+    "commit": "cf4ad0b5144638f8171ac9d786bea1314efb8c23",
+    "run_id": "42202722536",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/exp3-async-zswap-prefetch-2026-11-06/",
+    "html_sha256": "b6c4a9aef8bb0c12544571fa5a4a0e9fc21ecfa1cdcbb2e4038c196d9a3195a5",
+    "index_sha256": "701670526c1968d573a38b4c3372be995263e38779f43aec275b84dcfcb43ed5",
+    "verified_unix": 1793960832.8429534
   }
 }

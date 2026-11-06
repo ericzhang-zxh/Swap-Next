@@ -146,6 +146,12 @@ class BuildSiteTests(unittest.TestCase):
         self.assertIn("grok-bot / claudecode (opus5.5) · line: xswap · base 5e84ca92 · 0 candidates · 94 guests / 0 builds", index_html)
         self.assertIn("claudecode (opus5.5) · line: xswap · base 37de636c · 0 candidates · 0 guests / 0 builds", index_html)
 
+    def test_dated_campaign_folder_creates_undated_alias(self):
+        self._create_campaign("exp3-async-zswap-prefetch-2026-11-06")
+        build_site(self.campaigns, self.site)
+        self.assertTrue((self.site / "exp3-async-zswap-prefetch-2026-11-06" / "index.html").exists())
+        self.assertTrue((self.site / "exp3-async-zswap-prefetch" / "index.html").exists())
+
     def test_campaign_deduplication_by_folder(self):
         # Create campaign with both root report/explainer.html and nested dated explainer.html
         camp_dir = self.campaigns / "exp1-sync-zero-redundancy"
