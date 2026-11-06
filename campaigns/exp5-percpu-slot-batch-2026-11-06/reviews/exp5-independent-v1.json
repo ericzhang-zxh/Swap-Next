@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "exp5-independent-v1",
+  "campaign": "exp5-percpu-slot-batch-2026-11-06",
+  "candidate": "exp5-percpu-slot-batch-v1",
+  "candidate_commit": "3506adc808ac12b3e7c00d1ccf4ead0a70b6298a",
+  "source_tree": "4b96acf292d3a6d621e76e649a0b275584d89331",
+  "reviewer": "Independent candidate_review agent (teamwork-exp5)",
+  "disposition": "pass",
+  "summary": "No actionable correctness blocker found in batched per-CPU swap slot allocation and refill. Reserving a batch of contiguous slots under ci->lock reduces lock acquisitions and atomic operations by up to 32x during swapout while ensuring zero slot leakage on flush or swapoff.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/exp5-percpu-slot-batch-2026-11-06/report/independent-review.md",
+      "sha256": "c074f90ad5dd5d7a3ba9179dae209ae9c6db4f841cff26cf245724f4d7a24d28"
+    },
+    {
+      "path": "campaigns/exp5-percpu-slot-batch-2026-11-06/patches/exp5-percpu-slot-batch-v1.patch",
+      "sha256": "263f829928463138e443e17ad3ebf7db2ccaed611d2c488cd2d12ac99068162d"
+    },
+    {
+      "path": "campaigns/exp5-percpu-slot-batch-2026-11-06/candidates/exp5-percpu-slot-batch-v1/static.json",
+      "sha256": "646e5640bf77623bdcca2a5fd2334bafdd15002d0cc490a0ee3c8921024ee772"
+    }
+  ],
+  "recorded_unix": 1793972083.1950495,
+  "record_sha256": "3b0695e4d901de86aa8d798f823439732b93871d5fde9c96ebb784875df416cc"
+}

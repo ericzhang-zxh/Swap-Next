@@ -1,0 +1,15 @@
+{
+  "id": "7b7755e6dd1d45ee89dbe0e8c4d4bef9-3-swapin-zram-64k-a",
+  "campaign": "exp5-percpu-slot-batch-2026-11-06",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793974236.9454074,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "zram-64k",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "b180f948dba49c247a56a5350c88c250a6d0a90d4d82fab488158fa76142d6a8",
+  "started_unix": 1793974236.9919834
+}

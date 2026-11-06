@@ -1,0 +1,10 @@
+{
+  "status": "EXPORTED",
+  "candidate": "exp5-percpu-slot-batch-v1",
+  "candidate_commit": "3506adc808ac12b3e7c00d1ccf4ead0a70b6298a",
+  "source_tree": "4b96acf292d3a6d621e76e649a0b275584d89331",
+  "patch": "campaigns/exp5-percpu-slot-batch-2026-11-06/patches/exp5-percpu-slot-batch-v1.patch",
+  "sha256": "263f829928463138e443e17ad3ebf7db2ccaed611d2c488cd2d12ac99068162d",
+  "uncommitted_patch_retained": false,
+  "untracked_files_retained_in_worktree": []
+}

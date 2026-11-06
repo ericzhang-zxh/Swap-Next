@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "line": "exp5-percpu-slot-batch",
+  "contributor": "teamwork-exp5",
+  "question": "Can reserving a batch of per-CPU swap slots and amortizing refill in mm/swapfile.c reduce lock acquisitions and contention during swapout without wasting unallocated slots or risking memory leaks",
+  "status": "active",
+  "profile": "swap-core",
+  "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "value_policy": {
+    "min_useful_effect": 0.05,
+    "equivalence_margin": 0.03,
+    "requires_upstream_comparison": false,
+    "rationale": "The unchanged upstream per-slot allocation in mm/swapfile.c is the control. Require at least 5% useful gain beyond calibrated noise with passing guards."
+  },
+  "resource_ceiling": {
+    "guest_attempts": 120,
+    "build_attempts": 10
+  },
+  "upstream_refs": [],
+  "no_upstream_reason": "The exact baseline contains the upstream per-slot swap allocation. The directly relevant control is this unchanged algorithm.",
+  "ideas": [
+    {
+      "id": "percpu-slot-batch",
+      "status": "proposed",
+      "priority": 100,
+      "change_type": "optimize",
+      "bottleneck": "In mm/swapfile.c, cluster_alloc_swap_entry() and swap_alloc_fast() acquire spinlocks (ci->lock and si->lock) for every single page allocation, creating high lock contention and latency spikes under concurrent writeout.",
+      "mechanism": "In mm/swapfile.c, reserve a batch of contiguous swap slots (e.g. 16 to 64 entries) per-CPU in percpu_swap_cluster, amortizing lock acquisition, atomic accounting, and cluster scanning over the batch while safely releasing any unallocated slots on flush/swapoff.",
+      "mechanism_evidence_type": "reviewed_structure",
+      "affected_paths": [
+        "mm/swapfile.c"
+      ],
+      "expected_benefit": "Amortize cluster lock acquisitions and atomic operations by 16x-64x during swap allocation, reducing swapout latency and contention.",
+      "simpler_alternative": "Single-slot allocation per folio with per-slot cluster locking as upstream currently does.",
+      "falsifier": "Reject if candidate leaks swap slots, corrupts swap cache, fails correctness gates, or fails calibrated screening.",
+      "required_evidence": [
+        "Exact-tree independent source review including caller contracts",
+        "Counted exact-commit xswap correctness",
+        "Structural mechanism proof",
+        "Fresh probe calibration under Protocol Revision 7",
+        "Paired baseline/candidate latency screen"
+      ],
+      "upstream_refs": [],
+      "no_upstream_reason": "The relevant upstream implementation is already in the frozen baseline.",
+      "estimated_cost": {
+        "guest_attempts": 70,
+        "build_attempts": 2
+      },
+      "selection_reason": "Directly eliminates per-page spinlock acquisition and atomic operations by batching per-CPU swap slot reservation in mm/swapfile.c.",
+      "complexity": {
+        "parent": {
+          "state": {
+            "change": "unchanged",
+            "reason": "Per-CPU batch tracking uses existing percpu_swap_cluster context without persistent stored disk state."
+          },
+          "lifetime": {
+            "change": "unchanged",
+            "reason": "Swap slot and folio lifetime contracts preserved; unallocated entries returned on flush."
+          },
+          "locking": {
+            "change": "decreased",
+            "reason": "Amortizes spinlock acquisition and atomic accounting across batched slot reservations."
+          },
+          "error_paths": {
+            "change": "unchanged",
+            "reason": "Standard fallback to slow-path cluster allocation when batch or cluster cannot be refilled."
+          },
+          "configuration": {
+            "change": "unchanged",
+            "reason": "No new user-visible configuration or sysfs knobs introduced."
+          },
+          "test_burden": {
+            "change": "increased",
+            "reason": "Requires verifying slot reservation, batched refill, and flush on swapoff."
+          },
+          "interfaces": {
+            "change": "unchanged",
+            "reason": "Kernel internal folio_alloc_swap signatures maintained."
+          },
+          "memory_cost": {
+            "change": "unchanged",
+            "reason": "Batch state fits within existing per-CPU allocation structures."
+          }
+        },
+        "baseline": {
+          "state": {
+            "change": "unchanged",
+            "reason": "Per-CPU batch tracking uses existing percpu_swap_cluster context without persistent stored disk state."
+          },
+          "lifetime": {
+            "change": "unchanged",
+            "reason": "Swap slot and folio lifetime contracts preserved; unallocated entries returned on flush."
+          },
+          "locking": {
+            "change": "decreased",
+            "reason": "Amortizes spinlock acquisition and atomic accounting across batched slot reservations."
+          },
+          "error_paths": {
+            "change": "unchanged",
+            "reason": "Standard fallback to slow-path cluster allocation when batch or cluster cannot be refilled."
+          },
+          "configuration": {
+            "change": "unchanged",
+            "reason": "No new user-visible configuration or sysfs knobs introduced."
+          },
+          "test_burden": {
+            "change": "increased",
+            "reason": "Requires verifying slot reservation, batched refill, and flush on swapoff."
+          },
+          "interfaces": {
+            "change": "unchanged",
+            "reason": "Kernel internal folio_alloc_swap signatures maintained."
+          },
+          "memory_cost": {
+            "change": "unchanged",
+            "reason": "Batch state fits within existing per-CPU allocation structures."
+          }
+        }
+      },
+      "provenance": [
+        {
+          "kind": "source",
+          "path": "linux:mm/swapfile.c",
+          "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "lines": "1200-1265"
+        }
+      ]
+    }
+  ]
+}

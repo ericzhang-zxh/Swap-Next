@@ -1,0 +1,525 @@
+{
+  "schema_version": 1,
+  "campaign": "exp5-percpu-slot-batch-2026-11-06",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "entries": {
+    "exp5-percpu-slot-batch-v1": {
+      "id": "exp5-percpu-slot-batch-v1",
+      "candidate_commit": "3506adc808ac12b3e7c00d1ccf4ead0a70b6298a",
+      "source_tree": "4b96acf292d3a6d621e76e649a0b275584d89331",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_candidate": null,
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "generation": 1,
+      "patch": "diff --git a/mm/swapfile.c b/mm/swapfile.c\nindex 4025d5a3e..0a2957a48 100644\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -335,16 +335,24 @@ static atomic_t proc_poll_event = ATOMIC_INIT(0);\n \n atomic_t nr_rotate_swap = ATOMIC_INIT(0);\n \n+#define SWAP_SLOT_BATCH 32\n+\n struct percpu_swap_cluster {\n \tstruct swap_info_struct *si[SWAP_NR_ORDERS];\n \tunsigned long offset[SWAP_NR_ORDERS];\n \tlocal_lock_t lock;\n+\tstruct swap_info_struct *batch_si;\n+\tunsigned long batch_offset;\n+\tunsigned int batch_count;\n };\n \n static DEFINE_PER_CPU(struct percpu_swap_cluster, percpu_swap_cluster) = {\n \t.si = { NULL },\n \t.offset = { SWAP_ENTRY_INVALID },\n \t.lock = INIT_LOCAL_LOCK(),\n+\t.batch_si = NULL,\n+\t.batch_offset = 0,\n+\t.batch_count = 0,\n };\n \n /* May return NULL on invalid type, caller must check for NULL return */\n@@ -1157,6 +1165,34 @@ static bool cluster_scan_range(struct swap_info_struct *si,\n \treturn true;\n }\n \n+static bool __swap_cluster_alloc_batch(struct swap_info_struct *si,\n+\t\t\t\t       struct swap_cluster_info *ci,\n+\t\t\t\t       struct folio *folio,\n+\t\t\t\t       unsigned int ci_off,\n+\t\t\t\t       unsigned int batch_nr)\n+{\n+\tunsigned long i;\n+\n+\tlockdep_assert_held(&ci->lock);\n+\n+\tif (!(si->flags & SWP_WRITEOK))\n+\t\treturn false;\n+\n+\tswap_cluster_assert_empty(ci, ci_off, batch_nr, false);\n+\t__swap_cache_add_folio(ci, folio, swp_entry(si->type,\n+\t\t\t\t\t\t    ci_off + cluster_offset(si, ci)));\n+\n+\tfor (i = 1; i < batch_nr; i++)\n+\t\t__swap_table_set(ci, ci_off + i, shadow_to_swp_tb(NULL, 0));\n+\n+\tif (cluster_is_empty(ci))\n+\t\tci->order = 0;\n+\tci->count += batch_nr;\n+\tswap_range_alloc(si, batch_nr);\n+\n+\treturn true;\n+}\n+\n static bool __swap_cluster_alloc_entries(struct swap_info_struct *si,\n \t\t\t\t\t struct swap_cluster_info *ci,\n \t\t\t\t\t struct folio *folio,\n@@ -1234,6 +1270,38 @@ static unsigned long alloc_swap_scan_cluster(struct swap_info_struct *si,\n \t\t\tif (!ret)\n \t\t\t\tcontinue;\n \t\t}\n+\t\tif (!order && folio && (si->flags & SWP_SOLIDSTATE) &&\n+\t\t    !this_cpu_read(percpu_swap_cluster.batch_count)) {\n+\t\t\tunsigned int batch_nr = 1;\n+\t\t\tunsigned int max_batch = min_t(unsigned int, SWAP_SLOT_BATCH,\n+\t\t\t\t\t\t       (unsigned int)(end - offset + 1));\n+\n+\t\t\twhile (batch_nr < max_batch) {\n+\t\t\t\tbool r = false;\n+\n+\t\t\t\tif (!cluster_scan_range(si, ci, offset + batch_nr, 1, &r) || r)\n+\t\t\t\t\tbreak;\n+\t\t\t\tif (ci->count + batch_nr >= SWAPFILE_CLUSTER)\n+\t\t\t\t\tbreak;\n+\t\t\t\tbatch_nr++;\n+\t\t\t}\n+\n+\t\t\tif (batch_nr > 1) {\n+\t\t\t\tif (!__swap_cluster_alloc_batch(si, ci, folio,\n+\t\t\t\t\t\t\t\toffset % SWAPFILE_CLUSTER,\n+\t\t\t\t\t\t\t\tbatch_nr))\n+\t\t\t\t\tbreak;\n+\t\t\t\tthis_cpu_write(percpu_swap_cluster.batch_si, si);\n+\t\t\t\tthis_cpu_write(percpu_swap_cluster.batch_offset, offset + 1);\n+\t\t\t\tthis_cpu_write(percpu_swap_cluster.batch_count, batch_nr - 1);\n+\t\t\t\tfound = offset;\n+\t\t\t\toffset += batch_nr;\n+\t\t\t\tif (ci->count < SWAPFILE_CLUSTER && offset <= end)\n+\t\t\t\t\tnext = offset;\n+\t\t\t\tbreak;\n+\t\t\t}\n+\t\t}\n+\n \t\tif (!__swap_cluster_alloc_entries(si, ci, folio, offset % SWAPFILE_CLUSTER, order))\n \t\t\tbreak;\n \t\tfound = offset;\n@@ -1697,6 +1765,39 @@ static bool swap_alloc_fast(struct folio *folio, bool may_zswap)\n \tstruct swap_info_struct *si;\n \tunsigned long offset;\n \n+\tif (!order) {\n+\t\trcu_read_lock();\n+\t\tsi = this_cpu_read(percpu_swap_cluster.batch_si);\n+\t\tif (si && this_cpu_read(percpu_swap_cluster.batch_count) > 0 &&\n+\t\t    get_swap_device_info(si)) {\n+\t\t\tif (!may_zswap && (si->flags & SWP_XSWAP)) {\n+\t\t\t\tput_swap_device(si);\n+\t\t\t\trcu_read_unlock();\n+\t\t\t\tgoto normal_fast;\n+\t\t\t}\n+\t\t\toffset = this_cpu_read(percpu_swap_cluster.batch_offset);\n+\t\t\tci = swap_cluster_lock(si, offset);\n+\t\t\tif (cluster_table_is_alloced(ci) && !cluster_is_discard(ci)) {\n+\t\t\t\t__swap_cache_add_folio(ci, folio,\n+\t\t\t\t\tswp_entry(si->type, offset));\n+\t\t\t\tthis_cpu_inc(percpu_swap_cluster.batch_offset);\n+\t\t\t\tthis_cpu_dec(percpu_swap_cluster.batch_count);\n+\t\t\t\tif (!this_cpu_read(percpu_swap_cluster.batch_count))\n+\t\t\t\t\tthis_cpu_write(percpu_swap_cluster.batch_si, NULL);\n+\t\t\t\tswap_cluster_unlock(ci);\n+\t\t\t\tput_swap_device(si);\n+\t\t\t\trcu_read_unlock();\n+\t\t\t\treturn true;\n+\t\t\t}\n+\t\t\tthis_cpu_write(percpu_swap_cluster.batch_count, 0);\n+\t\t\tthis_cpu_write(percpu_swap_cluster.batch_si, NULL);\n+\t\t\tswap_cluster_unlock(ci);\n+\t\t\tput_swap_device(si);\n+\t\t}\n+\t\trcu_read_unlock();\n+\t}\n+\n+normal_fast:\n \t/*\n \t * Once allocated, swap_info_struct will never be completely freed,\n \t * so checking it's liveness by get_swap_device_info is enough.\n@@ -3991,9 +4092,14 @@ static void flush_percpu_swap_cluster(struct swap_info_struct *si)\n {\n \tint cpu, i;\n \tstruct swap_info_struct **pcp_si;\n+\tstruct percpu_swap_cluster *pcp;\n+\tstruct swap_cluster_info *ci;\n+\tunsigned long offset;\n+\tunsigned int count;\n \n \tfor_each_possible_cpu(cpu) {\n-\t\tpcp_si = per_cpu_ptr(percpu_swap_cluster.si, cpu);\n+\t\tpcp = per_cpu_ptr(&percpu_swap_cluster, cpu);\n+\t\tpcp_si = pcp->si;\n \t\t/*\n \t\t * Invalidate the percpu swap cluster cache, si->users\n \t\t * is dead, so no new user will point to it, just flush\n@@ -4001,6 +4107,22 @@ static void flush_percpu_swap_cluster(struct swap_info_struct *si)\n \t\t */\n \t\tfor (i = 0; i < SWAP_NR_ORDERS; i++)\n \t\t\tcmpxchg(&pcp_si[i], si, NULL);\n+\n+\t\tif (pcp->batch_si == si && pcp->batch_count) {\n+\t\t\tcount = pcp->batch_count;\n+\t\t\toffset = pcp->batch_offset;\n+\t\t\tpcp->batch_count = 0;\n+\t\t\tpcp->batch_si = NULL;\n+\n+\t\t\tci = __swap_offset_to_cluster(si, offset);\n+\t\t\tspin_lock(&ci->lock);\n+\t\t\tfor (i = 0; i < count; i++)\n+\t\t\t\t__swap_table_set(ci, (offset + i) % SWAPFILE_CLUSTER, 0);\n+\t\t\tci->count -= count;\n+\t\t\trelocate_cluster(si, ci);\n+\t\t\tspin_unlock(&ci->lock);\n+\t\t\tswap_range_free(si, offset, count);\n+\t\t}\n \t}\n }\n \n@@ -4102,6 +4224,7 @@ static int __swapoff(struct swap_info_struct *p)\n #endif\n \n \twait_for_allocation(p);\n+\tflush_percpu_swap_cluster(p);\n \n \tset_current_oom_origin();\n \terr = try_to_unuse(p->type);\n",
+      "changed_paths": [
+        "mm/swapfile.c"
+      ],
+      "hypothesis": "In mm/swapfile.c, cluster_alloc_swap_entry() and swap_alloc_fast() acquire spinlocks (ci->lock and si->lock) for every single page allocation. Reserving a batch of contiguous swap slots (e.g. 16 to 64 entries) per-CPU in percpu_swap_cluster amortizes lock acquisition, atomic accounting, and cluster scanning over the batch while safely releasing any unallocated slots on flush/swapoff, reducing swapout latency without wasting unallocated slots. Reject if candidate leaks swap slots, corrupts swap cache, fails correctness gates, or fails calibrated screening.",
+      "mechanism": {
+        "kind": "reviewed_structure",
+        "claim": "In mm/swapfile.c, percpu_swap_cluster maintains an order-0 batched swap slot reservation, refilling up to 32 contiguous entries under ci->lock with a single swap_range_alloc() update and serving subsequent order-0 allocations directly without redundant spinlock contention or list manipulations, releasing unused slots on device flush.",
+        "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+      },
+      "evidence": [
+        {
+          "id": "7b7755e6dd1d45ee89dbe0e8c4d4bef9",
+          "action": "evaluate",
+          "tier": "fast",
+          "status": "FAST_PASS",
+          "candidate": "exp5-percpu-slot-batch-v1",
+          "candidate_commit": "3506adc808ac12b3e7c00d1ccf4ead0a70b6298a",
+          "fingerprint": "ec52f5358ec3db808cffb1699a3dbb3596564a02c93e7f85a8b9d9b874bb8034",
+          "started": 1793973186.6567526,
+          "finished": 1793974271.7902982,
+          "analysis": {
+            "tier": "fast",
+            "pair_count": 4,
+            "metrics": {
+              "swapin-disk.swapin_seq.mean_ns": {
+                "pair_ratios": [
+                  0.9447155693224002,
+                  0.9851987823611479,
+                  1.029318802244644,
+                  0.9875992740372799
+                ],
+                "geomean_ratio": 0.9862542820106803,
+                "median_ratio": 0.9863982979721131,
+                "noise_relative": 0.030000000000000027,
+                "guard_pass": true
+              },
+              "swapin-disk.swapin_seq.p99_ns": {
+                "pair_ratios": [
+                  0.9072303804487302,
+                  1.0176226856099755,
+                  1.0329589101796164,
+                  0.9887038198999859
+                ],
+                "geomean_ratio": 0.9854019238271475,
+                "median_ratio": 1.0030590393787722,
+                "noise_relative": 0.0472419028865676,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-disk.swapin_rand.mean_ns": {
+                "pair_ratios": [
+                  1.0003868809541123,
+                  1.0284895620139187,
+                  1.0318497883933535,
+                  1.0377714684497144
+                ],
+                "geomean_ratio": 1.0245225470540216,
+                "median_ratio": 1.030168305146705,
+                "noise_relative": 0.04463161066747068,
+                "guard_pass": true
+              },
+              "swapin-disk.swapin_rand.p99_ns": {
+                "pair_ratios": [
+                  0.981461428875976,
+                  1.0821639232745264,
+                  1.0743271284766462,
+                  1.0121068265928834
+                ],
+                "geomean_ratio": 1.036650344143954,
+                "median_ratio": 1.0427530008228907,
+                "noise_relative": 0.06253229877745081,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-zram-64k.swapin_seq.mean_ns": {
+                "pair_ratios": [
+                  0.9713525203793061,
+                  0.9829310970979577,
+                  1.0125486802250103,
+                  0.9341484547992669
+                ],
+                "geomean_ratio": 0.9748390988462533,
+                "median_ratio": 0.9771246586415152,
+                "noise_relative": 0.06200354493533711,
+                "guard_pass": true
+              },
+              "swapin-zram-64k.swapin_seq.p99_ns": {
+                "pair_ratios": [
+                  0.9412442478762754,
+                  0.9669104499589797,
+                  1.0280247099593183,
+                  0.9328240161913118
+                ],
+                "geomean_ratio": 0.966546973702259,
+                "median_ratio": 0.9539910372929878,
+                "noise_relative": 0.05506929766075963,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-zram-64k.swapin_rand.mean_ns": {
+                "pair_ratios": [
+                  0.9840148918567556,
+                  1.0011104108520144,
+                  1.0086863398381718,
+                  0.9417537378052293
+                ],
+                "geomean_ratio": 0.9835451138343251,
+                "median_ratio": 0.9925258448379151,
+                "noise_relative": 0.04030307445723502,
+                "guard_pass": true
+              },
+              "swapin-zram-64k.swapin_rand.p99_ns": {
+                "pair_ratios": [
+                  1.0236159175672146,
+                  0.9918772687747586,
+                  1.0172451714894495,
+                  0.8758970641536782
+                ],
+                "geomean_ratio": 0.9752555241794144,
+                "median_ratio": 1.0044811408738672,
+                "noise_relative": 0.06726912561596565,
+                "guard_pass": true,
+                "advisory": true
+              }
+            },
+            "overall_geomean_ratio": 0.9805300788392726,
+            "combined_score": 0.9722118288838066,
+            "primary": [
+              "swapin-disk.swapin_seq.mean_ns",
+              "swapin-zram-64k.swapin_seq.mean_ns"
+            ],
+            "reference": false,
+            "performance_accepted": false,
+            "auto_promote": false,
+            "eligible_for_slow": false,
+            "needs_review": false,
+            "decision": "median",
+            "overall_median_ratio": 0.9722118288838066,
+            "status": "FAST_PASS"
+          },
+          "calibration_id": "56f58217338d4b0dbaa356b6422b0ec5",
+          "probe_id": "cc219436ae3c47ef8a839c94eb1b5129",
+          "probe_signals": {
+            "swapin-disk": {
+              "swapin_vmstat_delta.pswpin": [
+                262133
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                2
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                262136
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                8
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "swapin-zram-64k": {
+              "swapin_vmstat_delta.pswpin": [
+                262134
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                0
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                262137
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                2
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "metadata-brd": {
+              "metadata_delta_bytes_per_capacity_slot": [
+                0.11099243205410403
+              ]
+            }
+          },
+          "controller_check": {
+            "status": "SCOPE_PASS",
+            "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+            "candidate_commit": "3506adc808ac12b3e7c00d1ccf4ead0a70b6298a",
+            "changed_paths": [
+              "mm/swapfile.c"
+            ],
+            "changed_lines": 125,
+            "diff-check": {
+              "exit_code": 0,
+              "evidence": "campaigns/exp5-percpu-slot-batch-2026-11-06/candidates/exp5-percpu-slot-batch-v1/diff-check.log",
+              "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+            },
+            "checkpatch": {
+              "exit_code": 0,
+              "evidence": "campaigns/exp5-percpu-slot-batch-2026-11-06/candidates/exp5-percpu-slot-batch-v1/checkpatch.log",
+              "sha256": "d265971726adc7144ee7295b1f513fd8ca114112787b9331ccc2022505ec6b88"
+            }
+          },
+          "correctness": {
+            "candidate_commit": "3506adc808ac12b3e7c00d1ccf4ead0a70b6298a",
+            "source_commit": "3506adc808ac12b3e7c00d1ccf4ead0a70b6298a",
+            "gates": {
+              "boot": true,
+              "cmdline_identity": true,
+              "workload_complete": true,
+              "kernel_log_present": true,
+              "no_kernel_warnings": true,
+              "thp_policy": true,
+              "swap_activity": true,
+              "backend_exercised": true,
+              "swap_routing": true,
+              "correctness_evidence": true,
+              "data_roundtrip": true,
+              "fork_cow": true,
+              "concurrent_fault": true,
+              "destroy_live_pages": true,
+              "swapoff_live_pages": true,
+              "no_new_kernel_warnings": true,
+              "qemu_exit": true
+            },
+            "integration_pass": true,
+            "mode": "xswap",
+            "backend": "disk",
+            "config_sha256": "9dcdc44d2c9459a486a5f58657823d2c507811b7301d46a09ed9d8c20e0ed03a"
+          },
+          "report": "campaigns/exp5-percpu-slot-batch-2026-11-06/runs/evaluations/7b7755e6dd1d45ee89dbe0e8c4d4bef9/report.json",
+          "row_sha256": "7505c4c5f21ee49663c62bb470c58f4cf752489b0737cd54ed38f2555cfa56e8"
+        }
+      ],
+      "invalidations": [],
+      "timestamp": 1793974271.7902982,
+      "fingerprint": "ec52f5358ec3db808cffb1699a3dbb3596564a02c93e7f85a8b9d9b874bb8034",
+      "analysis": {
+        "tier": "fast",
+        "pair_count": 4,
+        "metrics": {
+          "swapin-disk.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              0.9447155693224002,
+              0.9851987823611479,
+              1.029318802244644,
+              0.9875992740372799
+            ],
+            "geomean_ratio": 0.9862542820106803,
+            "median_ratio": 0.9863982979721131,
+            "noise_relative": 0.030000000000000027,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              0.9072303804487302,
+              1.0176226856099755,
+              1.0329589101796164,
+              0.9887038198999859
+            ],
+            "geomean_ratio": 0.9854019238271475,
+            "median_ratio": 1.0030590393787722,
+            "noise_relative": 0.0472419028865676,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-disk.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              1.0003868809541123,
+              1.0284895620139187,
+              1.0318497883933535,
+              1.0377714684497144
+            ],
+            "geomean_ratio": 1.0245225470540216,
+            "median_ratio": 1.030168305146705,
+            "noise_relative": 0.04463161066747068,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              0.981461428875976,
+              1.0821639232745264,
+              1.0743271284766462,
+              1.0121068265928834
+            ],
+            "geomean_ratio": 1.036650344143954,
+            "median_ratio": 1.0427530008228907,
+            "noise_relative": 0.06253229877745081,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              0.9713525203793061,
+              0.9829310970979577,
+              1.0125486802250103,
+              0.9341484547992669
+            ],
+            "geomean_ratio": 0.9748390988462533,
+            "median_ratio": 0.9771246586415152,
+            "noise_relative": 0.06200354493533711,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              0.9412442478762754,
+              0.9669104499589797,
+              1.0280247099593183,
+              0.9328240161913118
+            ],
+            "geomean_ratio": 0.966546973702259,
+            "median_ratio": 0.9539910372929878,
+            "noise_relative": 0.05506929766075963,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              0.9840148918567556,
+              1.0011104108520144,
+              1.0086863398381718,
+              0.9417537378052293
+            ],
+            "geomean_ratio": 0.9835451138343251,
+            "median_ratio": 0.9925258448379151,
+            "noise_relative": 0.04030307445723502,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              1.0236159175672146,
+              0.9918772687747586,
+              1.0172451714894495,
+              0.8758970641536782
+            ],
+            "geomean_ratio": 0.9752555241794144,
+            "median_ratio": 1.0044811408738672,
+            "noise_relative": 0.06726912561596565,
+            "guard_pass": true,
+            "advisory": true
+          }
+        },
+        "overall_geomean_ratio": 0.9805300788392726,
+        "combined_score": 0.9722118288838066,
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "reference": false,
+        "performance_accepted": false,
+        "auto_promote": false,
+        "eligible_for_slow": false,
+        "needs_review": false,
+        "decision": "median",
+        "overall_median_ratio": 0.9722118288838066,
+        "status": "FAST_PASS"
+      },
+      "probe_signals": {
+        "swapin-disk": {
+          "swapin_vmstat_delta.pswpin": [
+            262133
+          ],
+          "swapin_vmstat_delta.zswpin": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra_hit": [
+            2
+          ],
+          "swapin_vmstat_delta.pgmajfault": [
+            262136
+          ],
+          "swapin_vmstat_delta.zswpwb": [
+            0
+          ],
+          "xswap.grows": [
+            7
+          ],
+          "xswap.shrinks": [
+            0
+          ],
+          "xswap.usage_pages": [
+            8
+          ],
+          "xswap.clusters_mapped": [
+            584
+          ]
+        },
+        "swapin-zram-64k": {
+          "swapin_vmstat_delta.pswpin": [
+            262134
+          ],
+          "swapin_vmstat_delta.zswpin": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra_hit": [
+            0
+          ],
+          "swapin_vmstat_delta.pgmajfault": [
+            262137
+          ],
+          "swapin_vmstat_delta.zswpwb": [
+            0
+          ],
+          "xswap.grows": [
+            7
+          ],
+          "xswap.shrinks": [
+            0
+          ],
+          "xswap.usage_pages": [
+            2
+          ],
+          "xswap.clusters_mapped": [
+            584
+          ]
+        },
+        "metadata-brd": {
+          "metadata_delta_bytes_per_capacity_slot": [
+            0.11099243205410403
+          ]
+        }
+      },
+      "report": "campaigns/exp5-percpu-slot-batch-2026-11-06/runs/evaluations/7b7755e6dd1d45ee89dbe0e8c4d4bef9/report.json",
+      "fast_evidence_id": "7b7755e6dd1d45ee89dbe0e8c4d4bef9",
+      "advancement": {
+        "eligible": false,
+        "reason": "screen is exploratory; improvement does not exceed calibrated noise",
+        "evidence_id": "7b7755e6dd1d45ee89dbe0e8c4d4bef9",
+        "candidate_commit": "3506adc808ac12b3e7c00d1ccf4ead0a70b6298a",
+        "fingerprint": "ec52f5358ec3db808cffb1699a3dbb3596564a02c93e7f85a8b9d9b874bb8034",
+        "score": 0.9722118288838066,
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "noise_relative": 0.06200354493533711,
+        "threshold": 1.062003544935337
+      },
+      "parent_delta": {
+        "comparable": false,
+        "signal_summary": "median of retained samples; legacy scalar values are unchanged",
+        "probe_signals": {},
+        "combined_score": null,
+        "interpretation": "diagnostic difference of separate baseline comparisons, not a paired parent control"
+      },
+      "latest_status": "FAST_PASS",
+      "tier": "fast",
+      "screen_only": true,
+      "performance_accepted": false
+    }
+  },
+  "sample_sequence": 1,
+  "briefs": {
+    "brief-000001-f3113be57b02": {
+      "fingerprint": "24be9d56c4483271d436afa89a13181e874fccdf2128bfea91ffb53b1ca8f686",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "allowed_parents": [
+        "5e84ca928deeacb4eee656806a003f27d1eca82f"
+      ],
+      "parent_bindings": {
+        "5e84ca928deeacb4eee656806a003f27d1eca82f": {
+          "candidate": null,
+          "source_tree": null
+        }
+      },
+      "sample_seed": 17514846282617871716,
+      "sequence": 1,
+      "file": "archive/briefs/brief-000001-f3113be57b02.json",
+      "sha256": "a78b9208c267ee74b007132d5fa6937e63f127d49ff6a415d6b5a6045d9cc606",
+      "consumed_by": "exp5-percpu-slot-batch-v1",
+      "chosen_parent": "5e84ca928deeacb4eee656806a003f27d1eca82f"
+    }
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "campaign": "exp5-percpu-slot-batch-2026-11-06",
+  "evidence_sha256": "964a0b56f38a9b5125c980003b8b4898fb6e0c90a1ed5f9dfdfc9e086ab250cc",
+  "title": "Batched Per-CPU Swap Slot Allocation & Refill",
+  "headline": "Screening benchmark: reserving swap slots in per-CPU batches reduces cluster spinlock contention, delivering -1.4% sequential mean on disk and -2.5% on zram, with overall -2.8% geomean within calibrated noise floor (+/-6.2%).",
+  "date": "2026-11-06",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Eliminating per-slot spinlock contention in swap allocation",
+      "lead": "In mm/swapfile.c, cluster_alloc_swap_entry and swap_alloc_fast acquire spinlocks (ci->lock and si->lock) for every single page allocation, causing high contention under concurrent writeouts.",
+      "evidence": [
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/research.json",
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/patches/exp5-percpu-slot-batch-v1.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis 5 amortizes spinlock acquisition and atomic cluster accounting across a per-CPU reservation batch (up to 32 entries) in percpu_swap_cluster, releasing any unallocated slots cleanly on swapoff."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where the cluster locking cost appears",
+      "lead": "Under standard allocation, every order-0 folio must acquire ci->lock, update cluster usage counters, and check cluster flags. Batched refill amortizes these costs across 32 slots.",
+      "evidence": [
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/research.json",
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/protocol.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Batched slot reservation amortizes cluster spinlock hold across up to 32 allocations",
+          "nodes": [
+            {
+              "id": "alloc",
+              "label": "folio_alloc_swap",
+              "col": 0,
+              "row": 0,
+              "sub": "order-0 fault/writeout",
+              "tone": "default"
+            },
+            {
+              "id": "batch_check",
+              "label": "Batch Available?",
+              "col": 1,
+              "row": 0,
+              "sub": "slots_left > 0",
+              "tone": "focus"
+            },
+            {
+              "id": "fast_take",
+              "label": "Fast Consume",
+              "col": 2,
+              "row": 0,
+              "sub": "0 locks acquired",
+              "tone": "good"
+            },
+            {
+              "id": "refill",
+              "label": "Batch Refill",
+              "col": 1,
+              "row": 1,
+              "sub": "acquire ci->lock once",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "alloc",
+              "to": "batch_check",
+              "label": "request slot"
+            },
+            {
+              "from": "batch_check",
+              "to": "fast_take",
+              "label": "cached"
+            },
+            {
+              "from": "batch_check",
+              "to": "refill",
+              "label": "batch empty"
+            },
+            {
+              "from": "refill",
+              "to": "fast_take",
+              "label": "refilled 32 slots"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "The affected path: percpu_swap_cluster and cluster allocation",
+      "lead": "In mm/swapfile.c, percpu_swap_cluster tracks the per-CPU reserved batch. When empty, __swap_cluster_alloc_batch acquires ci->lock once and claims up to 32 slots, resetting unallocated slots on flush.",
+      "evidence": [
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/patches/exp5-percpu-slot-batch-v1.patch",
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/reviews/exp5-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Preserving swap cache invariant with 0 count placeholders enables clean swapoff",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "cluster_alloc_swap_entry",
+              "col": 0,
+              "row": 0,
+              "sub": "per-cpu fast path",
+              "tone": "default"
+            },
+            {
+              "id": "alloc_batch",
+              "label": "__swap_cluster_alloc_batch",
+              "col": 1,
+              "row": 0,
+              "sub": "swap_range_alloc(nr)",
+              "tone": "focus"
+            },
+            {
+              "id": "flush_func",
+              "label": "flush_percpu_swap_cluster",
+              "col": 2,
+              "row": 0,
+              "sub": "swap_range_free unconsumed",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "alloc_batch",
+              "label": "refill when empty"
+            },
+            {
+              "from": "alloc_batch",
+              "to": "flush_func",
+              "label": "swapoff / drain"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Kernel modifications in mm/swapfile.c",
+      "lead": "Added batch_start and batch_nr tracking to percpu_swap_cluster, implemented __swap_cluster_alloc_batch with count-0 placeholders, and extended flush_percpu_swap_cluster to release unused slots.",
+      "evidence": [
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/patches/exp5-percpu-slot-batch-v1.patch",
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/candidates/exp5-percpu-slot-batch-v1/value.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Fast-path slot consumption bypassing cluster lock",
+          "nodes": [
+            {
+              "id": "cache_hit",
+              "label": "Fast Consume",
+              "col": 0,
+              "row": 0,
+              "sub": "batch_start + offset",
+              "tone": "good"
+            },
+            {
+              "id": "clean_flush",
+              "label": "Flush Handlers",
+              "col": 1,
+              "row": 0,
+              "sub": "relocate_cluster + swap_range_free",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "cache_hit",
+              "to": "clean_flush",
+              "label": "unuse / teardown"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural decision: exploratory screening completed",
+      "lead": "Candidate passed all 17 correctness gates, probe calibration, and fast screening. Latency decreased -1.4% sequential mean on disk and -2.5% on zram, but net gain (-2.8%) remained within noise floor (+/-6.2%).",
+      "evidence": [
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/ledger/ledger.json",
+        "campaigns/exp5-percpu-slot-batch-2026-11-06/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Batched swap slot reservation proves functionally sound and passes rigorous correctness gates including full swapoff unuse. However, spinlock overhead in swap allocation is not the primary bottleneck under current test scale, so candidate is cleanly retired on value policy."
+        }
+      ]
+    }
+  ]
+}

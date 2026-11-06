@@ -2,7 +2,7 @@
 
 Generated from campaign identities, protocols and candidate outcomes.
 
-Lines: [codex-r01-demand-cost](lines/codex-r01-demand-cost.md) · [codex-r02-swapin-cost](lines/codex-r02-swapin-cost.md) · [exp1-sync-zero-redundancy](lines/exp1-sync-zero-redundancy.md) · [exp2-stride-gated-ra](lines/exp2-stride-gated-ra.md) · [exp3-async-zswap-prefetch](lines/exp3-async-zswap-prefetch.md) · [exp4-mthp-zswapin-batch](lines/exp4-mthp-zswapin-batch.md) · [plain](lines/plain.md) · [xswap](lines/xswap.md)
+Lines: [codex-r01-demand-cost](lines/codex-r01-demand-cost.md) · [codex-r02-swapin-cost](lines/codex-r02-swapin-cost.md) · [exp1-sync-zero-redundancy](lines/exp1-sync-zero-redundancy.md) · [exp2-stride-gated-ra](lines/exp2-stride-gated-ra.md) · [exp3-async-zswap-prefetch](lines/exp3-async-zswap-prefetch.md) · [exp4-mthp-zswapin-batch](lines/exp4-mthp-zswapin-batch.md) · [exp5-percpu-slot-batch](lines/exp5-percpu-slot-batch.md) · [plain](lines/plain.md) · [xswap](lines/xswap.md)
 
 | Campaign | Status | Line | Machine | Opened | Closed | Baseline |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -26,4 +26,5 @@ Lines: [codex-r01-demand-cost](lines/codex-r01-demand-cost.md) · [codex-r02-swa
 | [exp1-sync-zero-redundancy](exp1-sync-zero-redundancy/report/REPORT.md) | closed | [exp1-sync-zero-redundancy](lines/exp1-sync-zero-redundancy.md) | hurricpc | 2026-11-06 | 2026-11-06 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
 | [exp2-stride-gated-ra](exp2-stride-gated-ra/report/REPORT.md) | closed | [exp2-stride-gated-ra](lines/exp2-stride-gated-ra.md) | hurricpc | 2026-11-06 | 2026-11-06 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
 | [exp3-async-zswap-prefetch-2026-11-06](exp3-async-zswap-prefetch-2026-11-06/report/REPORT.md) | closed | [exp3-async-zswap-prefetch](lines/exp3-async-zswap-prefetch.md) | hurricpc | 2026-11-06 | 2026-11-06 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
-| [exp4-mthp-zswapin-batch-2026-11-06](exp4-mthp-zswapin-batch-2026-11-06/campaign.json) | closed | [exp4-mthp-zswapin-batch](lines/exp4-mthp-zswapin-batch.md) | hurricpc | 2026-11-06 | 2026-11-06 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
+| [exp4-mthp-zswapin-batch-2026-11-06](exp4-mthp-zswapin-batch-2026-11-06/report/REPORT.md) | closed | [exp4-mthp-zswapin-batch](lines/exp4-mthp-zswapin-batch.md) | hurricpc | 2026-11-06 | 2026-11-06 | 5e84ca928deeacb4eee656806a003f27d1eca82f |
+| [exp5-percpu-slot-batch-2026-11-06](exp5-percpu-slot-batch-2026-11-06/report/REPORT.md) | closed | [exp5-percpu-slot-batch](lines/exp5-percpu-slot-batch.md) | hurricpc | 2026-11-06 | 2026-11-06 | 5e84ca928deeacb4eee656806a003f27d1eca82f |

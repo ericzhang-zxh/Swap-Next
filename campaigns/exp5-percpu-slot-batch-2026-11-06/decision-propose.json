@@ -1,0 +1,12 @@
+{
+  "kind": "propose",
+  "candidate": "exp5-percpu-slot-batch-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "hypothesis": "In mm/swapfile.c, cluster_alloc_swap_entry() and swap_alloc_fast() acquire spinlocks (ci->lock and si->lock) for every single page allocation. Reserving a batch of contiguous swap slots (e.g. 16 to 64 entries) per-CPU in percpu_swap_cluster amortizes lock acquisition, atomic accounting, and cluster scanning over the batch while safely releasing any unallocated slots on flush/swapoff, reducing swapout latency without wasting unallocated slots. Reject if candidate leaks swap slots, corrupts swap cache, fails correctness gates, or fails calibrated screening.",
+  "reason": "Authoring Hypothesis 5 proposal for batched per-CPU swap slot allocation and refill.",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "In mm/swapfile.c, percpu_swap_cluster maintains an order-0 batched swap slot reservation, refilling up to 32 contiguous entries under ci->lock with a single swap_range_alloc() update and serving subsequent order-0 allocations directly without redundant spinlock contention or list manipulations, releasing unused slots on device flush.",
+    "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+  }
+}

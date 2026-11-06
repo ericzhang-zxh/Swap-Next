@@ -12,6 +12,8 @@ Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
 
 Baseline origin: upstream or imported reference.
 
+[Campaign report](../exp4-mthp-zswapin-batch-2026-11-06/report/REPORT.md)
+
 | Candidate | Status | Reason |
 | --- | --- | --- |
 | [exp4-mthp-zswapin-batch-v1](../exp4-mthp-zswapin-batch-2026-11-06/candidates/exp4-mthp-zswapin-batch-v1.json) | closed | Research disposition: rejected |

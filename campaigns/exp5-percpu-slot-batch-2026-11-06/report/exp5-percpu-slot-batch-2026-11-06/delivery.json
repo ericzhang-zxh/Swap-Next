@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "campaign": "exp5-percpu-slot-batch-2026-11-06",
+  "state": "visually_checked",
+  "evidence_sha256": "964a0b56f38a9b5125c980003b8b4898fb6e0c90a1ed5f9dfdfc9e086ab250cc",
+  "artifacts": {
+    "summary.json": "243fb88a47a73e4444ab594930013834fb5d1bff322d042af4a9d98200995dbd",
+    "REPORT.md": "542942abd7773e31a2efbb8af54c175fbebfde8b65c9fe4f9c8bd534068fe466",
+    "explainer.json": "177c182a8b0c741e3e7a50701eac61ec7351b6a06511f51daea8ec6aa676da8e",
+    "explainer.html": "678bbaaa15173c3d29b1e7368776a8fefdb57afc08bdc9fb10aa4030d6d15822",
+    "generate_report.py": "40efd880d291d4d74f30a0163634bf3688f988aa8ab1faf0357622c4d0fa8d32"
+  },
+  "story_sha256": "aac70c85f4ad223b0aefd8c7e60c8409621006dd373adb2ce4f70ffe71b15ad6",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1793974616.8615701
+    },
+    {
+      "state": "visually_checked",
+      "time": 1793974966.5367036
+    }
+  ],
+  "visual_check": {
+    "artifact_sha256": "678bbaaa15173c3d29b1e7368776a8fefdb57afc08bdc9fb10aa4030d6d15822",
+    "method": "Direct Playwright/Chromium headless render and screenshot inspection of desktop (1280px) and mobile (390px) viewports across light and dark themes; DOM overflow, disclosure and theme-toggle checks verified.",
+    "views": [
+      {
+        "width": 1280,
+        "theme": "light",
+        "screenshot": "campaigns/exp5-percpu-slot-batch-2026-11-06/runs/visual-qa/desktop-light.png",
+        "sha256": "6cc81318b0112261c34925c41912ea2760d6628bf996464f4e893e61c9f8493b",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "screenshot": "campaigns/exp5-percpu-slot-batch-2026-11-06/runs/visual-qa/desktop-dark.png",
+        "sha256": "803420c647f8ab0b896a198bd27f06ae16468039057eaf582ef5c2ce187b48b7",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/exp5-percpu-slot-batch-2026-11-06/runs/visual-qa/mobile-light.png",
+        "sha256": "04bef4d142a86366ebb47a4a6e76e638390d7cb1a055b6a2e5960c192e0ad29e",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/exp5-percpu-slot-batch-2026-11-06/runs/visual-qa/mobile-dark.png",
+        "sha256": "ef165fec9ebf4da8665a60183134345dd275e673b1a56f9179301a74aaa919ce",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      }
+    ]
+  }
+}

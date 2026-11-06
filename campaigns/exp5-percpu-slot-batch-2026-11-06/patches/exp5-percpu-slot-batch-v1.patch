@@ -1,0 +1,190 @@
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 4025d5a3e..0a2957a48 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -335,16 +335,24 @@ static atomic_t proc_poll_event = ATOMIC_INIT(0);
+ 
+ atomic_t nr_rotate_swap = ATOMIC_INIT(0);
+ 
++#define SWAP_SLOT_BATCH 32
++
+ struct percpu_swap_cluster {
+ 	struct swap_info_struct *si[SWAP_NR_ORDERS];
+ 	unsigned long offset[SWAP_NR_ORDERS];
+ 	local_lock_t lock;
++	struct swap_info_struct *batch_si;
++	unsigned long batch_offset;
++	unsigned int batch_count;
+ };
+ 
+ static DEFINE_PER_CPU(struct percpu_swap_cluster, percpu_swap_cluster) = {
+ 	.si = { NULL },
+ 	.offset = { SWAP_ENTRY_INVALID },
+ 	.lock = INIT_LOCAL_LOCK(),
++	.batch_si = NULL,
++	.batch_offset = 0,
++	.batch_count = 0,
+ };
+ 
+ /* May return NULL on invalid type, caller must check for NULL return */
+@@ -1157,6 +1165,34 @@ static bool cluster_scan_range(struct swap_info_struct *si,
+ 	return true;
+ }
+ 
++static bool __swap_cluster_alloc_batch(struct swap_info_struct *si,
++				       struct swap_cluster_info *ci,
++				       struct folio *folio,
++				       unsigned int ci_off,
++				       unsigned int batch_nr)
++{
++	unsigned long i;
++
++	lockdep_assert_held(&ci->lock);
++
++	if (!(si->flags & SWP_WRITEOK))
++		return false;
++
++	swap_cluster_assert_empty(ci, ci_off, batch_nr, false);
++	__swap_cache_add_folio(ci, folio, swp_entry(si->type,
++						    ci_off + cluster_offset(si, ci)));
++
++	for (i = 1; i < batch_nr; i++)
++		__swap_table_set(ci, ci_off + i, shadow_to_swp_tb(NULL, 0));
++
++	if (cluster_is_empty(ci))
++		ci->order = 0;
++	ci->count += batch_nr;
++	swap_range_alloc(si, batch_nr);
++
++	return true;
++}
++
+ static bool __swap_cluster_alloc_entries(struct swap_info_struct *si,
+ 					 struct swap_cluster_info *ci,
+ 					 struct folio *folio,
+@@ -1234,6 +1270,38 @@ static unsigned long alloc_swap_scan_cluster(struct swap_info_struct *si,
+ 			if (!ret)
+ 				continue;
+ 		}
++		if (!order && folio && (si->flags & SWP_SOLIDSTATE) &&
++		    !this_cpu_read(percpu_swap_cluster.batch_count)) {
++			unsigned int batch_nr = 1;
++			unsigned int max_batch = min_t(unsigned int, SWAP_SLOT_BATCH,
++						       (unsigned int)(end - offset + 1));
++
++			while (batch_nr < max_batch) {
++				bool r = false;
++
++				if (!cluster_scan_range(si, ci, offset + batch_nr, 1, &r) || r)
++					break;
++				if (ci->count + batch_nr >= SWAPFILE_CLUSTER)
++					break;
++				batch_nr++;
++			}
++
++			if (batch_nr > 1) {
++				if (!__swap_cluster_alloc_batch(si, ci, folio,
++								offset % SWAPFILE_CLUSTER,
++								batch_nr))
++					break;
++				this_cpu_write(percpu_swap_cluster.batch_si, si);
++				this_cpu_write(percpu_swap_cluster.batch_offset, offset + 1);
++				this_cpu_write(percpu_swap_cluster.batch_count, batch_nr - 1);
++				found = offset;
++				offset += batch_nr;
++				if (ci->count < SWAPFILE_CLUSTER && offset <= end)
++					next = offset;
++				break;
++			}
++		}
++
+ 		if (!__swap_cluster_alloc_entries(si, ci, folio, offset % SWAPFILE_CLUSTER, order))
+ 			break;
+ 		found = offset;
+@@ -1697,6 +1765,39 @@ static bool swap_alloc_fast(struct folio *folio, bool may_zswap)
+ 	struct swap_info_struct *si;
+ 	unsigned long offset;
+ 
++	if (!order) {
++		rcu_read_lock();
++		si = this_cpu_read(percpu_swap_cluster.batch_si);
++		if (si && this_cpu_read(percpu_swap_cluster.batch_count) > 0 &&
++		    get_swap_device_info(si)) {
++			if (!may_zswap && (si->flags & SWP_XSWAP)) {
++				put_swap_device(si);
++				rcu_read_unlock();
++				goto normal_fast;
++			}
++			offset = this_cpu_read(percpu_swap_cluster.batch_offset);
++			ci = swap_cluster_lock(si, offset);
++			if (cluster_table_is_alloced(ci) && !cluster_is_discard(ci)) {
++				__swap_cache_add_folio(ci, folio,
++					swp_entry(si->type, offset));
++				this_cpu_inc(percpu_swap_cluster.batch_offset);
++				this_cpu_dec(percpu_swap_cluster.batch_count);
++				if (!this_cpu_read(percpu_swap_cluster.batch_count))
++					this_cpu_write(percpu_swap_cluster.batch_si, NULL);
++				swap_cluster_unlock(ci);
++				put_swap_device(si);
++				rcu_read_unlock();
++				return true;
++			}
++			this_cpu_write(percpu_swap_cluster.batch_count, 0);
++			this_cpu_write(percpu_swap_cluster.batch_si, NULL);
++			swap_cluster_unlock(ci);
++			put_swap_device(si);
++		}
++		rcu_read_unlock();
++	}
++
++normal_fast:
+ 	/*
+ 	 * Once allocated, swap_info_struct will never be completely freed,
+ 	 * so checking it's liveness by get_swap_device_info is enough.
+@@ -3991,9 +4092,14 @@ static void flush_percpu_swap_cluster(struct swap_info_struct *si)
+ {
+ 	int cpu, i;
+ 	struct swap_info_struct **pcp_si;
++	struct percpu_swap_cluster *pcp;
++	struct swap_cluster_info *ci;
++	unsigned long offset;
++	unsigned int count;
+ 
+ 	for_each_possible_cpu(cpu) {
+-		pcp_si = per_cpu_ptr(percpu_swap_cluster.si, cpu);
++		pcp = per_cpu_ptr(&percpu_swap_cluster, cpu);
++		pcp_si = pcp->si;
+ 		/*
+ 		 * Invalidate the percpu swap cluster cache, si->users
+ 		 * is dead, so no new user will point to it, just flush
+@@ -4001,6 +4107,22 @@ static void flush_percpu_swap_cluster(struct swap_info_struct *si)
+ 		 */
+ 		for (i = 0; i < SWAP_NR_ORDERS; i++)
+ 			cmpxchg(&pcp_si[i], si, NULL);
++
++		if (pcp->batch_si == si && pcp->batch_count) {
++			count = pcp->batch_count;
++			offset = pcp->batch_offset;
++			pcp->batch_count = 0;
++			pcp->batch_si = NULL;
++
++			ci = __swap_offset_to_cluster(si, offset);
++			spin_lock(&ci->lock);
++			for (i = 0; i < count; i++)
++				__swap_table_set(ci, (offset + i) % SWAPFILE_CLUSTER, 0);
++			ci->count -= count;
++			relocate_cluster(si, ci);
++			spin_unlock(&ci->lock);
++			swap_range_free(si, offset, count);
++		}
+ 	}
+ }
+ 
+@@ -4102,6 +4224,7 @@ static int __swapoff(struct swap_info_struct *p)
+ #endif
+ 
+ 	wait_for_allocation(p);
++	flush_percpu_swap_cluster(p);
+ 
+ 	set_current_oom_origin();
+ 	err = try_to_unuse(p->type);

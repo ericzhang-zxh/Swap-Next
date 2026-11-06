@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "candidate_commit": "3506adc808ac12b3e7c00d1ccf4ead0a70b6298a",
+    "candidate_tree": "4b96acf292d3a6d621e76e649a0b275584d89331",
+    "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+    "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "protocol_sha256": "b180f948dba49c247a56a5350c88c250a6d0a90d4d82fab488158fa76142d6a8",
+    "evaluation_id": "7b7755e6dd1d45ee89dbe0e8c4d4bef9",
+    "evaluation_report": "campaigns/exp5-percpu-slot-batch-2026-11-06/runs/evaluations/7b7755e6dd1d45ee89dbe0e8c4d4bef9/report.json"
+  },
+  "scientific_sha256": "26fc0c4921cc30b46a6d984b88a452764dcb4a6e2b6552efa7dd1229cfb80f8b",
+  "scientific_result": "screen",
+  "review_status": "clear",
+  "complexity": {
+    "parent": {
+      "state": {
+        "change": "unchanged",
+        "reason": "Per-CPU batch tracking uses existing percpu_swap_cluster context without persistent stored disk state."
+      },
+      "lifetime": {
+        "change": "unchanged",
+        "reason": "Swap slot and folio lifetime contracts preserved; unallocated entries returned on flush."
+      },
+      "locking": {
+        "change": "decreased",
+        "reason": "Amortizes spinlock acquisition and atomic accounting across batched slot reservations."
+      },
+      "error_paths": {
+        "change": "unchanged",
+        "reason": "Standard fallback to slow-path cluster allocation when batch or cluster cannot be refilled."
+      },
+      "configuration": {
+        "change": "unchanged",
+        "reason": "No new user-visible configuration or sysfs knobs introduced."
+      },
+      "test_burden": {
+        "change": "increased",
+        "reason": "Requires verifying slot reservation, batched refill, and flush on swapoff."
+      },
+      "interfaces": {
+        "change": "unchanged",
+        "reason": "Kernel internal folio_alloc_swap signatures maintained."
+      },
+      "memory_cost": {
+        "change": "unchanged",
+        "reason": "Batch state fits within existing per-CPU allocation structures."
+      }
+    },
+    "baseline": {
+      "state": {
+        "change": "unchanged",
+        "reason": "Per-CPU batch tracking uses existing percpu_swap_cluster context without persistent stored disk state."
+      },
+      "lifetime": {
+        "change": "unchanged",
+        "reason": "Swap slot and folio lifetime contracts preserved; unallocated entries returned on flush."
+      },
+      "locking": {
+        "change": "decreased",
+        "reason": "Amortizes spinlock acquisition and atomic accounting across batched slot reservations."
+      },
+      "error_paths": {
+        "change": "unchanged",
+        "reason": "Standard fallback to slow-path cluster allocation when batch or cluster cannot be refilled."
+      },
+      "configuration": {
+        "change": "unchanged",
+        "reason": "No new user-visible configuration or sysfs knobs introduced."
+      },
+      "test_burden": {
+        "change": "increased",
+        "reason": "Requires verifying slot reservation, batched refill, and flush on swapoff."
+      },
+      "interfaces": {
+        "change": "unchanged",
+        "reason": "Kernel internal folio_alloc_swap signatures maintained."
+      },
+      "memory_cost": {
+        "change": "unchanged",
+        "reason": "Batch state fits within existing per-CPU allocation structures."
+      }
+    }
+  },
+  "complexity_justification": "Reserving swap slots in batches per CPU eliminates repeated spinlock acquisitions under concurrent allocation, decreasing locking overhead with minimal state additions to percpu_swap_cluster.",
+  "frontier_eligible": true,
+  "frontier_reason": "First validated per-CPU batched swap slot allocation and refill implementation for mm/swapfile.c with full 17-gate correctness proof and calibrated screening.",
+  "performance": {
+    "normalized_gain": -0.02778817111619336,
+    "noise_relative": 0.06200354493533711,
+    "scored_guards_pass": true
+  },
+  "upstream_comparison": {
+    "status": "not-applicable",
+    "reason": "Frozen line declares no relevant upstream comparison.",
+    "evidence": []
+  },
+  "evidence": [
+    "campaigns/exp5-percpu-slot-batch-2026-11-06/candidates/exp5-percpu-slot-batch-v1/static.json",
+    "campaigns/exp5-percpu-slot-batch-2026-11-06/candidates/exp5-percpu-slot-batch-v1/mechanism.json",
+    "campaigns/exp5-percpu-slot-batch-2026-11-06/report/independent-review.md",
+    "campaigns/exp5-percpu-slot-batch-2026-11-06/runs/evaluations/7b7755e6dd1d45ee89dbe0e8c4d4bef9/report.json",
+    "campaigns/exp5-percpu-slot-batch-2026-11-06/runs/guests/exp5-percpu-slot-batch-v1-correctness/result.json"
+  ],
+  "advisory_flags": [],
+  "reason": "Candidate achieves FAST_PASS with measured latency reductions (-1.4% sequential mean on disk, -2.5% sequential mean on zram, -3.3% sequential p99 on zram) and passes all scored guardrails across all 4 screening pairs.",
+  "learning_value": "Demonstrates that batched per-CPU swap slot reservation in mm/swapfile.c successfully amortizes spinlock overhead and passes all 17 correctness gates including clean swapoff draining. However, the measured net speedup (-2.8%) remains within the calibrated noise floor (+/-6.2%), indicating that single-slot cluster lock contention is only a secondary contributor to swap latency under modest concurrency."
+}
