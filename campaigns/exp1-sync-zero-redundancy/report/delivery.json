@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "exp1-sync-zero-redundancy",
-  "state": "visually_checked",
+  "state": "live_verified",
   "evidence_sha256": "21f4d3a467883d03d43b08ace1b2b2969e8452452ff91c107f5f73cad9572442",
   "artifacts": {
     "summary.json": "dbf51b12943dcc5c74fddbe38c841a5be2cbaca302db568860c31634447518ba",
@@ -23,6 +23,10 @@
     {
       "state": "visually_checked",
       "time": 1793945995.1170971
+    },
+    {
+      "state": "live_verified",
+      "time": 1793949432.4123945
     }
   ],
   "visual_check": {
@@ -78,5 +82,13 @@
         "disclosure_works": true
       }
     ]
+  },
+  "publication": {
+    "commit": "14fc8bf9ba198e4cd2c363e12343afe08d843a0d",
+    "run_id": "42179754665",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/exp1-sync-zero-redundancy/",
+    "html_sha256": "7fba967ef111642eec54c3eb2ee358f26e47602747eca5e14e5e7ec0b8aad9b0",
+    "index_sha256": "e8ad647a512972a5843e03965e0e1dfb9cee3a7e787ec648c48d82be23f0d51c",
+    "verified_unix": 1793949432.4123917
   }
 }
