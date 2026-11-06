@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "campaign": "exp3-async-zswap-prefetch-2026-11-06",
+  "evidence_sha256": "a7372119bd01a2f85870f5683e03d339ffd558ae5df62825fe691ee5a57febf6",
+  "title": "Asynchronous Decoupled Zswap Speculative Prefetch",
+  "headline": "Screening benchmark: asynchronous background zswap prefetch unblocks the faulting thread with -5.0% random p99 latency reduction and +1.48% geomean gain.",
+  "date": "2026-11-06",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Eliminating synchronous decompression latency bursts in speculative swapin",
+      "lead": "Standard swap readahead speculatively decompresses multiple neighboring slots synchronously during page faults, stalling the faulting thread. Candidate exp3-async-zswap-prefetch-v1 decouples speculative zswap readahead into a background workqueue, unblocking the faulting thread immediately.",
+      "evidence": [
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/research.json",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/patches/exp3-async-zswap-prefetch-v1.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis 3 synchronously loads only the demanded order-0 folio via swap_cache_read_folio_sync, while speculative neighboring swap slots are batched and dispatched to a dedicated background workqueue (zswap_prefetch_wq). Evaluated under Protocol Revision 7 with attributable metadata accounting."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Zswap readahead path and background prefetch queue",
+      "lead": "Page fault handlers trigger swap readahead. Decoupled prefetch separates the synchronous critical demand path from speculative background decompression.",
+      "evidence": [
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/research.json",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/protocol.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Faulting thread returns immediately after synchronous load of demanded folio",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "swapin_readahead",
+              "tone": "default"
+            },
+            {
+              "id": "sync",
+              "label": "Sync Demand Load",
+              "col": 1,
+              "row": 0,
+              "sub": "order-0 folio",
+              "tone": "good"
+            },
+            {
+              "id": "async",
+              "label": "Async Queue",
+              "col": 1,
+              "row": 1,
+              "sub": "zswap_prefetch_wq",
+              "tone": "focus"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "sync",
+              "label": "demanded slot"
+            },
+            {
+              "from": "fault",
+              "to": "async",
+              "label": "neighbor batch"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Decoupled dispatch in swap_vma_readahead and swap_cluster_readahead",
+      "lead": "Demanded slot synchronously loaded via swap_cache_read_folio_sync; speculative slots batched into struct zswap_prefetch_batch and queued to zswap_prefetch_wq.",
+      "evidence": [
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/patches/exp3-async-zswap-prefetch-v1.patch",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/reviews/exp3-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Speculative entries are batched and scheduled to background work function",
+          "nodes": [
+            {
+              "id": "ra_entry",
+              "label": "readahead entry",
+              "col": 0,
+              "row": 0,
+              "sub": "vma / cluster",
+              "tone": "default"
+            },
+            {
+              "id": "batch",
+              "label": "Batch Collect",
+              "col": 1,
+              "row": 0,
+              "sub": "slots 1..N",
+              "tone": "focus"
+            },
+            {
+              "id": "worker",
+              "label": "Prefetch Worker",
+              "col": 1,
+              "row": 1,
+              "sub": "zswap_load async",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "ra_entry",
+              "to": "batch",
+              "label": "collect speculative"
+            },
+            {
+              "from": "batch",
+              "to": "worker",
+              "label": "queue_work"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Modifications in mm/swap_state.c",
+      "lead": "Added zswap_prefetch_batch, zswap_prefetch_work_fn, zswap_prefetch_wq; modified swap_vma_readahead and swap_cluster_readahead to synchronously return the demanded folio and asynchronously prefetch speculative slots.",
+      "evidence": [
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/patches/exp3-async-zswap-prefetch-v1.patch",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/value.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Background worker warms swap cache without delaying faulting thread",
+          "nodes": [
+            {
+              "id": "work_fn",
+              "label": "zswap_prefetch_work_fn",
+              "col": 0,
+              "row": 0,
+              "sub": "workqueue thread",
+              "tone": "default"
+            },
+            {
+              "id": "alloc",
+              "label": "filemap_alloc_folio",
+              "col": 1,
+              "row": 0,
+              "sub": "GFP_NOWAIT",
+              "tone": "focus"
+            },
+            {
+              "id": "load",
+              "label": "zswap_load",
+              "col": 1,
+              "row": 1,
+              "sub": "decompress to cache",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "work_fn",
+              "to": "alloc",
+              "label": "alloc folio"
+            },
+            {
+              "from": "alloc",
+              "to": "load",
+              "label": "load into cache"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural decision: exploratory screening completed",
+      "lead": "Candidate passed all 17 correctness gates, probe calibration, and fast screening benchmark (+1.48% gain, -5.0% random p99 latency). Benign complexity vs benefit ratio designated research disposition as rejected while preserving candidate as frontier-eligible.",
+      "evidence": [
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/ledger.json",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Asynchronous prefetch proves the decoupled loading concept, reducing random swapin tail latency. Future work could pair this mechanism with adaptive stride gating to avoid queueing unused speculative slots."
+        }
+      ]
+    }
+  ]
+}

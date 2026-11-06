@@ -1,0 +1,15 @@
+{
+  "id": "66164a8732e447bdb80d8475465b7397-9-swapin-zram-64k-a",
+  "campaign": "exp3-async-zswap-prefetch-2026-11-06",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793958232.3020122,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "zram-64k",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b",
+  "started_unix": 1793958232.3504038
+}

@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "line_contract": {
+    "schema_version": 1,
+    "line": "exp3-async-zswap-prefetch",
+    "profile": "swap-core",
+    "profile_version": 1,
+    "profile_sha256": "b0fbed8ceebf514c96611bfd8293489b0439b63a8bf3b6c0b5a123d218141fb8",
+    "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "value_policy": {
+      "min_useful_effect": 0.05,
+      "equivalence_margin": 0.03,
+      "requires_upstream_comparison": false,
+      "rationale": "The unchanged integrated upstream heuristic in swap_vma_readahead is the control. Require at least 5% useful gain beyond calibrated noise with passing guards."
+    },
+    "contributor": "teamwork-exp3",
+    "scientific_sha256": "9f171aac41475a5713167e8b5d53b60a80ca2f607782d28e69cf00ffcfbf6391"
+  },
+  "selected_idea": {
+    "id": "async-zswap-prefetch",
+    "status": "proposed",
+    "priority": 100,
+    "change_type": "optimize",
+    "bottleneck": "Synchronous speculative readahead during swapin causes severe +280% latency bursts when decompressing neighboring zswap slots synchronously in the fault path.",
+    "mechanism": "Decouple speculative readahead for zswap: synchronously load only the demanded order-0 folio, and dispatch speculative neighboring swap slots to a background workqueue / asynchronous prefetch helper so the faulting thread is unblocked immediately.",
+    "mechanism_evidence_type": "reviewed_structure",
+    "affected_paths": [
+      "mm/swap_state.c"
+    ],
+    "expected_benefit": "Eliminate synchronous zswap decompression latency bursts in the fault path while retaining speculative prefetch speedups.",
+    "simpler_alternative": "Disable swap readahead completely when zswap or xswap is active, sacrificing readahead hit rates.",
+    "falsifier": "Reject if candidate causes memory corruption, race conditions in swap cache, fails correctness gates, or fails calibrated screening.",
+    "required_evidence": [
+      "Exact-tree independent source review including caller contracts",
+      "Counted exact-commit xswap correctness",
+      "Structural mechanism proof",
+      "Fresh probe calibration under Protocol Revision 7",
+      "Paired baseline/candidate latency screen"
+    ],
+    "upstream_refs": [],
+    "no_upstream_reason": "The relevant upstream implementation is already in the frozen baseline.",
+    "estimated_cost": {
+      "guest_attempts": 70,
+      "build_attempts": 2
+    },
+    "selection_reason": "Directly addresses the root cause of synchronous decompression latency bursts in swap readahead.",
+    "complexity": {
+      "parent": {
+        "state": {
+          "change": "unchanged",
+          "reason": "No persistent stored kernel state; prefetch work items are transient."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "Swap device and folio lifetime contracts preserved via get_swap_device and folio_put."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Swap cluster locks and swapcache atomics unchanged."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Safe non-blocking allocation and swapcache cleanup on decompression failure."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "No new sysctl or configuration needed."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying asynchronous prefetch concurrency, swapcache hits, and memory reclaim."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Internal swap helper signatures unchanged."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Small transient work items allocated with GFP_NOWAIT."
+        }
+      },
+      "baseline": {
+        "state": {
+          "change": "unchanged",
+          "reason": "No persistent stored kernel state; prefetch work items are transient."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "Swap device and folio lifetime contracts preserved via get_swap_device and folio_put."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Swap cluster locks and swapcache atomics unchanged."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Safe non-blocking allocation and swapcache cleanup on decompression failure."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "No new sysctl or configuration needed."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying asynchronous prefetch concurrency, swapcache hits, and memory reclaim."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Internal swap helper signatures unchanged."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Small transient work items allocated with GFP_NOWAIT."
+        }
+      }
+    },
+    "provenance": [
+      {
+        "kind": "source",
+        "path": "linux:mm/swap_state.c",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "lines": "910-1080"
+      }
+    ]
+  },
+  "upstream_refs": [],
+  "protocol_sha256": "70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b",
+  "policy_sha256": "aaeb9d984b4d0c1109c39e790eea6c715ab0834cabcc586877a1d7fadee50f9a",
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ]
+}

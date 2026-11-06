@@ -1,0 +1,5 @@
+{
+  "kind": "reviewed_structure",
+  "claim": "In mm/swap_state.c, when zswap or xswap is active, swap_vma_readahead and swap_cluster_readahead synchronously load only the demanded order-0 folio via swap_cache_read_folio_sync, and collect speculative neighboring slots into a batch dispatched to a dedicated background workqueue (zswap_prefetch_wq). The background worker asynchronously allocates folios and calls zswap_load, warming the swap cache without stalling the faulting thread.",
+  "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+}

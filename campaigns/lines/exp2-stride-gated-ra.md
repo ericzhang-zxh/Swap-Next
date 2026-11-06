@@ -12,6 +12,8 @@ Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
 
 Baseline origin: upstream or imported reference.
 
+[Campaign report](../exp2-stride-gated-ra/report/REPORT.md)
+
 | Candidate | Status | Reason |
 | --- | --- | --- |
 | [exp2-stride-gated-ra-v1](../exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1.json) | closed | Research disposition: rejected |

@@ -1,0 +1,193 @@
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 7ac1808ae..dd62d4525 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -24,6 +24,8 @@
+ #include <linux/shmem_fs.h>
+ #include <linux/sysctl.h>
+ #include <linux/swap_ops.h>
++#include <linux/workqueue.h>
++#include <linux/zswap.h>
+ #include "internal.h"
+ #include "swap_table.h"
+ #include "swap.h"
+@@ -889,6 +891,65 @@ static unsigned long swapin_nr_pages(unsigned long offset)
+ 	return pages;
+ }
+ 
++#define ZSWAP_PREFETCH_BATCH 32
++
++struct zswap_prefetch_batch {
++	struct work_struct work;
++	unsigned int nr;
++	swp_entry_t entries[ZSWAP_PREFETCH_BATCH];
++};
++
++static struct workqueue_struct *zswap_prefetch_wq;
++
++static void zswap_prefetch_work_fn(struct work_struct *work)
++{
++	struct zswap_prefetch_batch *batch =
++		container_of(work, struct zswap_prefetch_batch, work);
++	unsigned int i;
++
++	for (i = 0; i < batch->nr; i++) {
++		swp_entry_t entry = batch->entries[i];
++		struct swap_info_struct *si;
++		struct folio *folio;
++		int ret;
++
++		si = get_swap_device(entry);
++		if (!si)
++			continue;
++
++		folio = swap_cache_get_folio(entry);
++		if (folio) {
++			folio_put(folio);
++			put_swap_device(si);
++			continue;
++		}
++
++		folio = __swap_cache_alloc_folio(entry,
++						 GFP_NOWAIT | __GFP_NOWARN | __GFP_NORETRY,
++						 BIT(0), NULL, NULL, 0);
++		if (IS_ERR_OR_NULL(folio)) {
++			put_swap_device(si);
++			continue;
++		}
++
++		folio_add_lru(folio);
++		ret = zswap_load(folio);
++		if (ret == 0) {
++			folio_set_readahead(folio);
++			count_vm_event(SWAP_RA);
++		} else {
++			if (folio_test_locked(folio))
++				folio_unlock(folio);
++			swap_cache_del_folio(folio);
++		}
++
++		folio_put(folio);
++		put_swap_device(si);
++	}
++
++	kfree(batch);
++}
++
+ /**
+  * swap_cluster_readahead - swap in pages in hope we need them soon
+  * @entry: swap entry of this memory
+@@ -919,10 +980,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,
+ 	struct swap_io_ctx ctx = {};
+ 	struct blk_plug plug;
+ 	swp_entry_t ra_entry;
++	bool zswap_active;
+ 
+-	/* xswap entries live only in zswap; readahead does not help. */
+-	if (si->flags & SWP_XSWAP)
+-		goto skip;
++	zswap_active = zswap_is_enabled() || (si->flags & SWP_XSWAP);
+ 
+ 	mask = swapin_nr_pages(offset) - 1;
+ 	if (!mask)
+@@ -936,6 +996,28 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,
+ 	if (end_offset >= si->max)
+ 		end_offset = si->max - 1;
+ 
++	if (zswap_active) {
++		struct zswap_prefetch_batch *batch;
++
++		batch = kmalloc_obj(*batch, GFP_NOWAIT | __GFP_NOWARN);
++		if (batch) {
++			INIT_WORK(&batch->work, zswap_prefetch_work_fn);
++			batch->nr = 0;
++			for (offset = start_offset; offset <= end_offset; offset++) {
++				if (offset == entry_offset)
++					continue;
++				ra_entry = swp_entry(swp_type(entry), offset);
++				if (batch->nr < ZSWAP_PREFETCH_BATCH)
++					batch->entries[batch->nr++] = ra_entry;
++			}
++			if (batch->nr > 0 && zswap_prefetch_wq)
++				queue_work(zswap_prefetch_wq, &batch->work);
++			else
++				kfree(batch);
++		}
++		return swap_cache_read_folio_sync(entry, gfp_mask, mpol, ilx);
++	}
++
+ 	blk_start_plug(&plug);
+ 	for (offset = start_offset; offset <= end_offset ; offset++) {
+ 		/* Ok, do the async read-ahead now */
+@@ -1017,15 +1099,58 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,
+ 	int win;
+ 	unsigned long start, end, addr;
+ 	pgoff_t ilx = targ_ilx;
++	bool zswap_active;
+ 
+-	/* xswap entries live only in zswap; readahead does not help. */
+-	if (si->flags & SWP_XSWAP)
+-		goto skip;
++	zswap_active = zswap_is_enabled() || (si->flags & SWP_XSWAP);
+ 
+ 	win = swap_vma_ra_win(vmf, &start, &end);
+ 	if (win == 1)
+ 		goto skip;
+ 
++	if (zswap_active) {
++		struct zswap_prefetch_batch *batch;
++
++		batch = kmalloc_obj(*batch, GFP_NOWAIT | __GFP_NOWARN);
++		if (batch) {
++			INIT_WORK(&batch->work, zswap_prefetch_work_fn);
++			batch->nr = 0;
++		}
++
++		for (addr = start; addr < end; addr += PAGE_SIZE) {
++			softleaf_t entry;
++
++			if (addr == vmf->address)
++				continue;
++
++			if (!pte++) {
++				pte = pte_offset_map(vmf->pmd, addr);
++				if (!pte)
++					break;
++			}
++			pentry = ptep_get_lockless(pte);
++			entry = softleaf_from_pte(pentry);
++
++			if (!softleaf_is_swap(entry))
++				continue;
++			pte_unmap(pte);
++			pte = NULL;
++
++			if (batch && batch->nr < ZSWAP_PREFETCH_BATCH)
++				batch->entries[batch->nr++] = entry;
++		}
++		if (pte)
++			pte_unmap(pte);
++
++		if (batch) {
++			if (batch->nr > 0 && zswap_prefetch_wq)
++				queue_work(zswap_prefetch_wq, &batch->work);
++			else
++				kfree(batch);
++		}
++
++		return swap_cache_read_folio_sync(targ_entry, gfp_mask, mpol, targ_ilx);
++	}
++
+ 	ilx = targ_ilx - PFN_DOWN(vmf->address - start);
+ 
+ 	blk_start_plug(&plug);
+@@ -1115,6 +1240,9 @@ static void __init swap_readahead_setup(void)
+ {
+ 	unsigned long megs = PAGES_TO_MB(totalram_pages());
+ 
++	zswap_prefetch_wq = alloc_workqueue("zswap-prefetch",
++					    WQ_UNBOUND | WQ_MEM_RECLAIM, 0);
++
+ 	/* Use a smaller cluster for small-memory machines */
+ 	if (megs < 16)
+ 		page_cluster = 2;

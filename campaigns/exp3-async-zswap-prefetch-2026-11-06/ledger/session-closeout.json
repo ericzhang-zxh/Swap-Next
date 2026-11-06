@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "campaign": "exp3-async-zswap-prefetch-2026-11-06",
+  "mode": "research",
+  "reason": "Recovered closed campaign; original candidate reasons and measurements are retained.",
+  "frozen_inputs": {
+    "owner.json": "2c9601b98c33b3fbebdd3cd0a327bd3e7071214b2f5d17d0a9e865ec387f8e1f",
+    "policy.json": "aaeb9d984b4d0c1109c39e790eea6c715ab0834cabcc586877a1d7fadee50f9a",
+    "protocol.json": "70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b",
+    "research.json": "fcfaf05058caed0e0914bb598c48fcd8806ffa89f10cd3b925019fd9ae1d1332"
+  },
+  "decisions": [
+    {
+      "id": "decision-abdaa27c99b899acb4bb9708",
+      "action_id": "action-74aff5e52af7c122cf601099",
+      "kind": "propose",
+      "identity": {
+        "brief_id": "brief-000001-8fca2cc459ba",
+        "brief_sha256": "8e6f8febd722587840da49eda60de18f94285c04a2828ad7c1552cee9d867497",
+        "allowed_parents": [
+          "5e84ca928deeacb4eee656806a003f27d1eca82f"
+        ],
+        "idea": "async-zswap-prefetch"
+      },
+      "input_hashes": {
+        "evolve/session.py": "af5662a988a72ca8eaad63496fee0bfc257903e443a927ea789d105afdaba9bb",
+        "evolve/control/controller.py": "1770ef0ccf49b718cd1a892422881bcfb9114738bd2274eb03e93eb7742bd130",
+        "evolve/standard_workflow.py": "56616b65756244b5e6aa58191d0036bc426b963a400c9f49925664ed4bd5e712",
+        "evolve/research.py": "2cd6f725ea6ddc2cead27055cf5c8a20d0ff602591b5ea5161c5d7bc0571a027",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "cada337eb0bb6c3e1feef4954748137dea2eae289847ebc966529106a46cbbbf",
+        "evolve/calibration_cache.py": "7ee8e8b22aca5736d07ab37c1f5455d1799861d1929881856ee7493700373afc",
+        "evolve/reference_cache.py": "f623013ba1b2de86be29e906704a7437eeaff5d9f7c58b1fddd8eca3e6560c01",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/campaign.json": "fb5eeb5de44a1dfbec5b215ebba4cc87176ba302e91d9f88851f3dc01b96aa48",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/protocol.json": "70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/policy.json": "aaeb9d984b4d0c1109c39e790eea6c715ab0834cabcc586877a1d7fadee50f9a",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/research.json": "fcfaf05058caed0e0914bb598c48fcd8806ffa89f10cd3b925019fd9ae1d1332",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/ledger.json": null,
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/budget.json": null,
+        "benchmark/kernel/builds/codex-r01-base/result.json": "9cc33bb57b77759a9ca881eb46861a5d3fbbcb78c592c82adff425501b9bd759",
+        "benchmark/swap-standard/image.json": "77a2905e98bd798b6ec338dd25bd0e9df4249bb5f23964369e2e83cfee1f5a6b",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/calibration-probe.json": null,
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/calibration-fast.json": null,
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/archive/population.json": "5f9a922092ba242abc99e911b96bef67b8ad2f7af6986a3931be9b367efd1ea9",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/archive/briefs/brief-000001-8fca2cc459ba.json": "8e6f8febd722587840da49eda60de18f94285c04a2828ad7c1552cee9d867497"
+      },
+      "payload": {
+        "kind": "propose",
+        "candidate": "exp3-async-zswap-prefetch-v1",
+        "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "hypothesis": "In swap_vma_readahead and swap_cluster_readahead, decoupling speculative zswap readahead by synchronously reading only the demanded order-0 folio and dispatching speculative neighboring swap slots to an asynchronous background prefetch worker unblocks the faulting thread immediately, eliminating the synchronous decompression latency burst while preserving readahead cache warming. Reject if prefetch causes race conditions, cache corruption, or fails correctness/calibrated noise guards.",
+        "reason": "Authoring Hypothesis 3 proposal for decoupled asynchronous speculative zswap readahead.",
+        "mechanism": {
+          "kind": "reviewed_structure",
+          "claim": "In mm/swap_state.c, when zswap or xswap is active, swap_vma_readahead and swap_cluster_readahead synchronously load only the demanded order-0 folio via swap_cache_read_folio_sync, and collect speculative neighboring slots into a batch dispatched to a dedicated background workqueue (zswap_prefetch_wq). The background worker asynchronously allocates folios and calls zswap_load, warming the swap cache without stalling the faulting thread.",
+          "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+        }
+      }
+    },
+    {
+      "id": "decision-411547d173509c17a9f7a30b",
+      "action_id": "action-61359a4d5a847419c9ac56be",
+      "kind": "fast_selection",
+      "identity": {
+        "candidate": "exp3-async-zswap-prefetch-v1",
+        "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+        "source_tree": "6f4955711bf996b32bfc09e4f49ba0c99e01c84d",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "probe_id": "ffcfccb9ebfa4de087cb7c081e765985",
+        "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88"
+      },
+      "input_hashes": {
+        "evolve/session.py": "af5662a988a72ca8eaad63496fee0bfc257903e443a927ea789d105afdaba9bb",
+        "evolve/control/controller.py": "1770ef0ccf49b718cd1a892422881bcfb9114738bd2274eb03e93eb7742bd130",
+        "evolve/standard_workflow.py": "56616b65756244b5e6aa58191d0036bc426b963a400c9f49925664ed4bd5e712",
+        "evolve/research.py": "2cd6f725ea6ddc2cead27055cf5c8a20d0ff602591b5ea5161c5d7bc0571a027",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "c60ae95ce0759c95056853fc9662f2274ec0da550fc8f8538242672f15f47e48",
+        "evolve/calibration_cache.py": "7ee8e8b22aca5736d07ab37c1f5455d1799861d1929881856ee7493700373afc",
+        "evolve/reference_cache.py": "f623013ba1b2de86be29e906704a7437eeaff5d9f7c58b1fddd8eca3e6560c01",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/campaign.json": "fb5eeb5de44a1dfbec5b215ebba4cc87176ba302e91d9f88851f3dc01b96aa48",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/protocol.json": "70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/policy.json": "aaeb9d984b4d0c1109c39e790eea6c715ab0834cabcc586877a1d7fadee50f9a",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/research.json": "fcfaf05058caed0e0914bb598c48fcd8806ffa89f10cd3b925019fd9ae1d1332",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/ledger.json": "62b54854ffc54836cb221d39d23ec166d7f1f64405741142b12deac0cb12c0c7",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/evaluations/ed772865e8a54c329732012874b42bce/report.json": "02ec1337b5dacbfc2f2ab40a85aa2580cb02c4c4d85ee7438a0d8085b32afcbe",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/evaluations/ffcfccb9ebfa4de087cb7c081e765985/report.json": "fa077340487efde8624f0105107e1601b213098836fa69ab6d2d828e4fac6b07",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/budget.json": "489a5a6c14cd62c72c052d8dade5853f7f531c7e9f3f547d3c4ac9857971ba84",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-zram-64k-1.json": "3f1bdb2e99b81e79d3c2a8537a9262a694a67a8407a568687f05e2b00262c808",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-metadata-brd-0.json": "eae8132886ef88263e43a7f2654e16dbd406337bff995e424c29cfc450968463",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ffcfccb9ebfa4de087cb7c081e765985-metadata-brd-0.json": "55778670e0ec5e8e36f4f43c74686c439a316d67aa172bcebc54e42077e24afa",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-disk-0.json": "cc1f1da0ca8f43965bb5015c9b9baf1db4a0f918c1b61cd3d99b9be459f73142",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/exp3-async-zswap-prefetch-v1-correctness.json": "bfbab982b1ba4644c7c6a187a554518cb8a153fdf281bdae4033a7e5fedb0eab",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ffcfccb9ebfa4de087cb7c081e765985-swapin-disk-0.json": "b49685d307075454480df9f05ad05805fb6a1c37f055b3e02d1334279033292c",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-zram-64k-2.json": "d8cba2e89c8575ef1cc1a29be52d05ea85c40eb1496979bc9c0c197f96989cb9",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-disk-1.json": "2df6b3308283b72658a5d4ca97377f20ea2f86e692c06ff93e5bad3aa4740276",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-metadata-brd-2.json": "6659942ecb714b5690e3ade63f320a55ea2235f9d663915fea681e3244762205",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-disk-2.json": "ea1bf12ebf40fa9df7a3388101c72b9f28d32b94d6db8b0db73a868a12202eac",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-metadata-brd-1.json": "2f86d19b85c33806b864ac431c0b680cbd92cefa262374a3b66855ce9ae7e26a",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ffcfccb9ebfa4de087cb7c081e765985-swapin-zram-64k-0.json": "acf53df58821314e8c4fde7a06366ac455b32fd5f14870f6b2856e9a9a9d8c72",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-zram-64k-0.json": "08fe2231f282331cf012c54f59e6d18ef068c2d9b1172f5ecc6d1dd7475bdc2b",
+        "benchmark/kernel/builds/codex-r01-base/result.json": "9cc33bb57b77759a9ca881eb46861a5d3fbbcb78c592c82adff425501b9bd759",
+        "benchmark/swap-standard/image.json": "77a2905e98bd798b6ec338dd25bd0e9df4249bb5f23964369e2e83cfee1f5a6b",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/calibration-probe.json": "02ec1337b5dacbfc2f2ab40a85aa2580cb02c4c4d85ee7438a0d8085b32afcbe",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/calibration-fast.json": null,
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1.json": "60ce1d2bbfb0e235d8c30cb83e3203e2596ac3597311863783107d6a01663db8",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/static.json": "af5c677e05446b906a656c2ae42b17d082d17213beb1e8daad8b7374f80623f6",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/archive/population.json": "fb7b3c48ce6a37aad80f375da5db2447bad4c46f72de64fdd024668fa0c80b7f",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/mechanism.json": "be5b5741e76ad36e0fc8c1bf624e91669c3ad74a7ade473a9735ddfe714e3e93",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-metadata-brd-0/result.json": "fec41bfada07eac1e8457abf7fbb7f8cb35b01cdff805b3ab9aa741255f48be0",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-metadata-brd-1/result.json": "6154af69a4c81d2a0bc4f0424befd32577147e129cce70b13ca899c7cb0841c9",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-metadata-brd-2/result.json": "717ec53a7522efebff2b528dbdf77deea4f619a2af1527ed4c6d68c94fc7addc",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-disk-0/result.json": "c8d2a2b62c4cacf5a75b3e4e7565343fb847fdfb4f109aa26245f0582496b967",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-disk-1/result.json": "e279c5da4a0c8c637d4eec92d6c38b138b3d21efab091fe1976d6d978c021a68",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-disk-2/result.json": "261c338492509ed8f4be8f30d188f9d65a25459913a04d40726d00017347e44b",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-zram-64k-0/result.json": "e9775e249edc3854297ee3205a2778f4e151ad1c08681636c07e26c7de564cff",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-zram-64k-1/result.json": "fcac6dc342179302e925b1dc3bb607fe58480f98479fe997400d0b4ada724a4f",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-zram-64k-2/result.json": "8d499e25bb7c8bf27c6eda9174375a1341f0168004a9d7b151a013d110804ddf",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/exp3-async-zswap-prefetch-v1-correctness/result.json": "29f56eede7ae9d52a8efbf15a83ee3ea0bb380a38ab836d9b7068b272d155fd7",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ffcfccb9ebfa4de087cb7c081e765985-metadata-brd-0/result.json": "5ea3d645f289b2eca81a8ecd16fb452aee0cf6f8cf1503470db1a931a73c5d82",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ffcfccb9ebfa4de087cb7c081e765985-swapin-disk-0/result.json": "bd1c34ea07373a6c1a4e97247a48e9b1443473eca278ddf1d20f18b67b1c9ad5",
+        "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ffcfccb9ebfa4de087cb7c081e765985-swapin-zram-64k-0/result.json": "6752a5a9128b5e89afb1cba63cf0a93e8d377ed3816c6e91a2a55aee2f3fa355"
+      },
+      "payload": {
+        "kind": "fast_selection",
+        "disposition": "screen",
+        "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+        "source_tree": "6f4955711bf996b32bfc09e4f49ba0c99e01c84d",
+        "probe_id": "ffcfccb9ebfa4de087cb7c081e765985",
+        "reason": "Candidate exp3-async-zswap-prefetch-v1 passed probe evaluation cleanly within calibrated metadata and vmstat bands with 0 errors; admit to fast screening benchmark to quantify asynchronous decoupled zswap prefetch latency reduction."
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "action-8dc5607d762652fb24aa8505",
+      "command": "open",
+      "identity": {
+        "protocol_sha256": "70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b",
+        "policy_sha256": "aaeb9d984b4d0c1109c39e790eea6c715ab0834cabcc586877a1d7fadee50f9a"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/session/action-8dc5607d762652fb24aa8505-d73d595a.log"
+    },
+    {
+      "action_id": "action-bb17892f3954c766ed699ec7",
+      "command": "brief",
+      "identity": {
+        "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+        "idea": "async-zswap-prefetch"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/session/action-bb17892f3954c766ed699ec7-c9736880.log"
+    },
+    {
+      "action_id": "action-ba51e0b717d671b2142a6e07",
+      "command": "new",
+      "identity": {
+        "brief_id": "brief-000001-8fca2cc459ba",
+        "idea": "async-zswap-prefetch"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/session/action-ba51e0b717d671b2142a6e07-5456d28a.log"
+    },
+    {
+      "action_id": "action-6e937ea6861ac7c79ad4b0a9",
+      "command": "check",
+      "identity": {
+        "candidate": "exp3-async-zswap-prefetch-v1",
+        "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+        "source_tree": "6f4955711bf996b32bfc09e4f49ba0c99e01c84d",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/session/action-6e937ea6861ac7c79ad4b0a9-49dbeb73.log"
+    },
+    {
+      "action_id": "action-da43cb6c614557bfb75ea6b3",
+      "command": "calibrate",
+      "identity": {
+        "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+        "prior_calibration": null
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/session/action-da43cb6c614557bfb75ea6b3-bc0a4624.log"
+    },
+    {
+      "action_id": "action-b1e2c055c175242716236424",
+      "command": "evaluate",
+      "identity": {
+        "candidate": "exp3-async-zswap-prefetch-v1",
+        "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+        "source_tree": "6f4955711bf996b32bfc09e4f49ba0c99e01c84d",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+        "calibration_id": "ed772865e8a54c329732012874b42bce",
+        "probe_id": null
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/session/action-b1e2c055c175242716236424-fde14b65.log"
+    },
+    {
+      "action_id": "action-a4288705bbab2b85e64d8877",
+      "command": "calibrate",
+      "identity": {
+        "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+        "prior_calibration": null
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/session/action-a4288705bbab2b85e64d8877-739b2bd1.log"
+    },
+    {
+      "action_id": "action-1ec9226f7f99c62b5e83b05b",
+      "command": "evaluate",
+      "identity": {
+        "candidate": "exp3-async-zswap-prefetch-v1",
+        "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+        "source_tree": "6f4955711bf996b32bfc09e4f49ba0c99e01c84d",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+        "calibration_id": "66164a8732e447bdb80d8475465b7397",
+        "probe_id": "ffcfccb9ebfa4de087cb7c081e765985"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/session/action-1ec9226f7f99c62b5e83b05b-a8d9e507.log"
+    }
+  ],
+  "candidate_reasons": {
+    "exp3-async-zswap-prefetch-v1": "Research disposition: rejected"
+  },
+  "performance_accepted": false,
+  "auto_promote": false
+}

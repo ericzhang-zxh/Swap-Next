@@ -1,0 +1,44 @@
+{
+  "id": "exp3-async-zswap-prefetch-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-8fca2cc459ba",
+  "worktree": "worktrees/exp3-async-zswap-prefetch-2026-11-06/exp3-async-zswap-prefetch-v1",
+  "status": "active",
+  "hypothesis": "In swap_vma_readahead and swap_cluster_readahead, decoupling speculative zswap readahead by synchronously reading only the demanded order-0 folio and dispatching speculative neighboring swap slots to an asynchronous background prefetch worker unblocks the faulting thread immediately, eliminating the synchronous decompression latency burst while preserving readahead cache warming. Reject if prefetch causes race conditions, cache corruption, or fails correctness/calibrated noise guards.",
+  "created_unix": 1793953796.0139349,
+  "protocol_sha256": "03ba529b540637cc9bf3dd42d0c3f58afa2f1ed3641e636a8b24878aa89c6875",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "In mm/swap_state.c, when zswap or xswap is active, swap_vma_readahead and swap_cluster_readahead synchronously load only the demanded order-0 folio via swap_cache_read_folio_sync, and collect speculative neighboring slots into a batch dispatched to a dedicated background workqueue (zswap_prefetch_wq). The background worker asynchronously allocates folios and calls zswap_load, warming the swap cache without stalling the faulting thread.",
+    "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+  },
+  "allowed_modify": [
+    "mm/swap_state.c"
+  ],
+  "allowed_add": [],
+  "budget": {
+    "max_candidates": 1,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 4,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 900,
+    "max_total_campaign_seconds": 64800,
+    "max_build_attempts": 10
+  },
+  "primary_metric": "swapin_seq.mean_ns",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

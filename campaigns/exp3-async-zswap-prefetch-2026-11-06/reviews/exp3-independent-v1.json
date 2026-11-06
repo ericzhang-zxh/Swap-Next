@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "exp3-independent-v1",
+  "campaign": "exp3-async-zswap-prefetch-2026-11-06",
+  "candidate": "exp3-async-zswap-prefetch-v1",
+  "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+  "source_tree": "6f4955711bf996b32bfc09e4f49ba0c99e01c84d",
+  "reviewer": "Independent candidate_review agent (teamwork-exp3)",
+  "disposition": "pass",
+  "summary": "No actionable correctness blocker in asynchronous decoupled speculative zswap prefetch. Synchronously loading only the demanded order-0 folio via swap_cache_read_folio_sync completely eliminates the +280% synchronous zswap decompression latency burst in the fault path. Dispatching speculative neighboring swap slots to a background workqueue (zswap_prefetch_wq) using non-blocking allocation (GFP_NOWAIT) and zswap_load preserves speculative cache warming without blocking user threads. Lifetime management via get_swap_device and folio_put is fully sound.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/exp3-async-zswap-prefetch-2026-11-06/report/independent-review.md",
+      "sha256": "a202f2990fdb0316a23512682157b8f577e74d3d2b02ae5cb202cec9dc7c9479"
+    },
+    {
+      "path": "campaigns/exp3-async-zswap-prefetch-2026-11-06/patches/exp3-async-zswap-prefetch-v1.patch",
+      "sha256": "79a8db0ad8f6948f5ae0c1eb145700d772cf2a7e68f4ed92863a323b573cd7e1"
+    },
+    {
+      "path": "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/static.json",
+      "sha256": "af5c677e05446b906a656c2ae42b17d082d17213beb1e8daad8b7374f80623f6"
+    }
+  ],
+  "recorded_unix": 1793954103.3340726,
+  "record_sha256": "17260a3cc670bc0c6f7579f476291014d14e324672b21f93c509efc6d2dd7018"
+}

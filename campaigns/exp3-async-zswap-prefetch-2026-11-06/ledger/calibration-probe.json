@@ -1,0 +1,2339 @@
+{
+  "id": "ed772865e8a54c329732012874b42bce",
+  "action": "calibrate",
+  "tier": "probe",
+  "candidate": null,
+  "pool": "probe",
+  "status": "CALIBRATED",
+  "started": 1793954968.3384018,
+  "runs": [
+    {
+      "id": "ed772865e8a54c329732012874b42bce-swapin-disk-0",
+      "case": "swapin-disk",
+      "index": 0,
+      "attempt": 0,
+      "pool": "probe",
+      "reservation": "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-disk-0.json",
+      "status": "PASS",
+      "result": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-disk-0/result.json",
+      "result_sha256": "c8d2a2b62c4cacf5a75b3e4e7565343fb847fdfb4f109aa26245f0582496b967",
+      "wall_seconds": 95.55403858190402,
+      "pre_qemu_seconds": 0.01791291101835668,
+      "host_load": {
+        "before_launch": {
+          "loadavg_1m": 0.0,
+          "loadavg_5m": 0.33,
+          "loadavg_15m": 0.48,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.03,
+                "total": 1268497282.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.87,
+                "total": 2265085317.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.86,
+                "total": 2259114087.0
+              }
+            }
+          }
+        },
+        "after_exit": {
+          "loadavg_1m": 0.92,
+          "loadavg_5m": 0.56,
+          "loadavg_15m": 0.56,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.01,
+                "total": 1269064954.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.77,
+                "avg60": 1.31,
+                "avg300": 1.31,
+                "total": 2268045221.0
+              },
+              "full": {
+                "avg10": 0.77,
+                "avg60": 1.29,
+                "avg300": 1.28,
+                "total": 2262016863.0
+              }
+            }
+          }
+        }
+      },
+      "accelerator": "tcg",
+      "guest_mem_mib": 4096,
+      "guest_vcpus": 4,
+      "run_valid": true,
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262142,
+          "pswpout": 262198,
+          "pgmajfault": 262159,
+          "swap_ra": 0,
+          "swap_ra_hit": 2,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/vda": 1048772,
+          "xswap1": 1048772
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 289225.0,
+          "p50_ns": 274331.0,
+          "p90_ns": 361435.0,
+          "p99_ns": 505458.0,
+          "p999_ns": 932369.0,
+          "max_ns": 4668246.0,
+          "total_ms": 37909.271
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 332400.0,
+          "p50_ns": 318386.0,
+          "p90_ns": 401997.0,
+          "p99_ns": 564940.0,
+          "p999_ns": 963981.0,
+          "max_ns": 6685698.0,
+          "total_ms": 43568.322
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262140,
+          "pswpout": 262198,
+          "pgmajfault": 262143,
+          "swap_ra": 0,
+          "swap_ra_hit": 2,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "ed772865e8a54c329732012874b42bce-swapin-disk-1",
+      "case": "swapin-disk",
+      "index": 1,
+      "attempt": 0,
+      "pool": "probe",
+      "reservation": "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-disk-1.json",
+      "status": "PASS",
+      "result": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-disk-1/result.json",
+      "result_sha256": "e279c5da4a0c8c637d4eec92d6c38b138b3d21efab091fe1976d6d978c021a68",
+      "wall_seconds": 95.05778616294265,
+      "pre_qemu_seconds": 0.02531283302232623,
+      "host_load": {
+        "before_launch": {
+          "loadavg_1m": 0.92,
+          "loadavg_5m": 0.56,
+          "loadavg_15m": 0.56,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.01,
+                "total": 1269069234.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.63,
+                "avg60": 1.27,
+                "avg300": 1.3,
+                "total": 2268046052.0
+              },
+              "full": {
+                "avg10": 0.63,
+                "avg60": 1.25,
+                "avg300": 1.28,
+                "total": 2262017653.0
+              }
+            }
+          }
+        },
+        "after_exit": {
+          "loadavg_1m": 1.41,
+          "loadavg_5m": 0.81,
+          "loadavg_15m": 0.65,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.02,
+                "avg60": 0.12,
+                "avg300": 0.05,
+                "total": 1269801964.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 4.18,
+                "avg60": 3.68,
+                "avg300": 2.0,
+                "total": 2272014619.0
+              },
+              "full": {
+                "avg10": 4.18,
+                "avg60": 3.68,
+                "avg300": 1.99,
+                "total": 2265986124.0
+              }
+            }
+          }
+        }
+      },
+      "accelerator": "tcg",
+      "guest_mem_mib": 4096,
+      "guest_vcpus": 4,
+      "run_valid": true,
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262149,
+          "pswpout": 262198,
+          "pgmajfault": 262166,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/vda": 1048772,
+          "xswap1": 1048772
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 276386.0,
+          "p50_ns": 264391.0,
+          "p90_ns": 342516.0,
+          "p99_ns": 497759.0,
+          "p999_ns": 918110.0,
+          "max_ns": 3404535.0,
+          "total_ms": 36226.457
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 331877.0,
+          "p50_ns": 320061.0,
+          "p90_ns": 397019.0,
+          "p99_ns": 572382.0,
+          "p999_ns": 944326.0,
+          "max_ns": 4492422.0,
+          "total_ms": 43499.847
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262147,
+          "pswpout": 262198,
+          "pgmajfault": 262150,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "ed772865e8a54c329732012874b42bce-swapin-disk-2",
+      "case": "swapin-disk",
+      "index": 2,
+      "attempt": 0,
+      "pool": "probe",
+      "reservation": "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-disk-2.json",
+      "status": "PASS",
+      "result": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-disk-2/result.json",
+      "result_sha256": "261c338492509ed8f4be8f30d188f9d65a25459913a04d40726d00017347e44b",
+      "wall_seconds": 95.05754293687642,
+      "pre_qemu_seconds": 0.018366127973422408,
+      "host_load": {
+        "before_launch": {
+          "loadavg_1m": 1.41,
+          "loadavg_5m": 0.81,
+          "loadavg_15m": 0.65,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.01,
+                "avg60": 0.11,
+                "avg300": 0.05,
+                "total": 1269809869.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 3.42,
+                "avg60": 3.56,
+                "avg300": 1.99,
+                "total": 2272014831.0
+              },
+              "full": {
+                "avg10": 3.42,
+                "avg60": 3.56,
+                "avg300": 1.98,
+                "total": 2265986331.0
+              }
+            }
+          }
+        },
+        "after_exit": {
+          "loadavg_1m": 1.04,
+          "loadavg_5m": 0.86,
+          "loadavg_15m": 0.68,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.1,
+                "avg300": 0.06,
+                "total": 1270502600.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 4.09,
+                "avg60": 3.74,
+                "avg300": 2.37,
+                "total": 2275426678.0
+              },
+              "full": {
+                "avg10": 4.09,
+                "avg60": 3.74,
+                "avg300": 2.35,
+                "total": 2269398093.0
+              }
+            }
+          }
+        }
+      },
+      "accelerator": "tcg",
+      "guest_mem_mib": 4096,
+      "guest_vcpus": 4,
+      "run_valid": true,
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262142,
+          "pswpout": 262197,
+          "pgmajfault": 262159,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/vda": 1048768,
+          "xswap1": 1048768
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 279043.0,
+          "p50_ns": 265910.0,
+          "p90_ns": 343347.0,
+          "p99_ns": 513636.0,
+          "p999_ns": 923665.0,
+          "max_ns": 4591440.0,
+          "total_ms": 36574.787
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 335458.0,
+          "p50_ns": 324060.0,
+          "p90_ns": 396910.0,
+          "p99_ns": 564346.0,
+          "p999_ns": 917980.0,
+          "max_ns": 4599906.0,
+          "total_ms": 43969.201
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262140,
+          "pswpout": 262197,
+          "pgmajfault": 262143,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "ed772865e8a54c329732012874b42bce-swapin-zram-64k-0",
+      "case": "swapin-zram-64k",
+      "index": 0,
+      "attempt": 0,
+      "pool": "probe",
+      "reservation": "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-zram-64k-0.json",
+      "status": "PASS",
+      "result": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-zram-64k-0/result.json",
+      "result_sha256": "e9775e249edc3854297ee3205a2778f4e151ad1c08681636c07e26c7de564cff",
+      "wall_seconds": 32.523513559950516,
+      "pre_qemu_seconds": 0.02534024603664875,
+      "host_load": {
+        "before_launch": {
+          "loadavg_1m": 1.04,
+          "loadavg_5m": 0.86,
+          "loadavg_15m": 0.68,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.1,
+                "avg300": 0.06,
+                "total": 1270507582.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 3.35,
+                "avg60": 3.62,
+                "avg300": 2.35,
+                "total": 2275427864.0
+              },
+              "full": {
+                "avg10": 3.35,
+                "avg60": 3.61,
+                "avg300": 2.34,
+                "total": 2269399245.0
+              }
+            }
+          }
+        },
+        "after_exit": {
+          "loadavg_1m": 1.02,
+          "loadavg_5m": 0.88,
+          "loadavg_15m": 0.7,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.05,
+                "avg300": 0.05,
+                "total": 1270566814.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.11,
+                "avg60": 2.05,
+                "avg300": 2.09,
+                "total": 2275427879.0
+              },
+              "full": {
+                "avg10": 0.11,
+                "avg60": 2.05,
+                "avg300": 2.08,
+                "total": 2269399259.0
+              }
+            }
+          }
+        }
+      },
+      "accelerator": "tcg",
+      "guest_mem_mib": 4096,
+      "guest_vcpus": 4,
+      "run_valid": true,
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262135,
+          "pswpout": 262140,
+          "pgmajfault": 262152,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/zram0": 1048540,
+          "xswap1": 1048540
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 29789.0,
+          "p50_ns": 25347.0,
+          "p90_ns": 36173.0,
+          "p99_ns": 138813.0,
+          "p999_ns": 328774.0,
+          "max_ns": 976294.0,
+          "total_ms": 3904.439
+        },
+        "swapin_rand": {
+          "samples": 131011.0,
+          "mean_ns": 33324.0,
+          "p50_ns": 28258.0,
+          "p90_ns": 41289.0,
+          "p99_ns": 139503.0,
+          "p999_ns": 411256.0,
+          "max_ns": 899395.0,
+          "total_ms": 4365.816
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262083.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262133,
+          "pswpout": 262140,
+          "pgmajfault": 262136,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "ed772865e8a54c329732012874b42bce-swapin-zram-64k-1",
+      "case": "swapin-zram-64k",
+      "index": 1,
+      "attempt": 0,
+      "pool": "probe",
+      "reservation": "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-zram-64k-1.json",
+      "status": "PASS",
+      "result": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-zram-64k-1/result.json",
+      "result_sha256": "fcac6dc342179302e925b1dc3bb607fe58480f98479fe997400d0b4ada724a4f",
+      "wall_seconds": 32.02347394404933,
+      "pre_qemu_seconds": 0.01872866600751877,
+      "host_load": {
+        "before_launch": {
+          "loadavg_1m": 1.02,
+          "loadavg_5m": 0.88,
+          "loadavg_15m": 0.7,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.05,
+                "avg300": 0.05,
+                "total": 1270570796.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.09,
+                "avg60": 1.98,
+                "avg300": 2.07,
+                "total": 2275428212.0
+              },
+              "full": {
+                "avg10": 0.09,
+                "avg60": 1.98,
+                "avg300": 2.06,
+                "total": 2269399586.0
+              }
+            }
+          }
+        },
+        "after_exit": {
+          "loadavg_1m": 1.07,
+          "loadavg_5m": 0.91,
+          "loadavg_15m": 0.71,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.02,
+                "avg300": 0.04,
+                "total": 1270669279.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 1.16,
+                "avg300": 1.85,
+                "total": 2275428604.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 1.16,
+                "avg300": 1.84,
+                "total": 2269399967.0
+              }
+            }
+          }
+        }
+      },
+      "accelerator": "tcg",
+      "guest_mem_mib": 4096,
+      "guest_vcpus": 4,
+      "run_valid": true,
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262135,
+          "pswpout": 262140,
+          "pgmajfault": 262152,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/zram0": 1048540,
+          "xswap1": 1048540
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 29417.0,
+          "p50_ns": 25084.0,
+          "p90_ns": 35763.0,
+          "p99_ns": 128854.0,
+          "p999_ns": 336904.0,
+          "max_ns": 1811894.0,
+          "total_ms": 3855.798
+        },
+        "swapin_rand": {
+          "samples": 131011.0,
+          "mean_ns": 32314.0,
+          "p50_ns": 27493.0,
+          "p90_ns": 40076.0,
+          "p99_ns": 135722.0,
+          "p999_ns": 399177.0,
+          "max_ns": 1043989.0,
+          "total_ms": 4233.518
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262083.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262133,
+          "pswpout": 262140,
+          "pgmajfault": 262136,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "ed772865e8a54c329732012874b42bce-swapin-zram-64k-2",
+      "case": "swapin-zram-64k",
+      "index": 2,
+      "attempt": 0,
+      "pool": "probe",
+      "reservation": "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-swapin-zram-64k-2.json",
+      "status": "PASS",
+      "result": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-swapin-zram-64k-2/result.json",
+      "result_sha256": "8d499e25bb7c8bf27c6eda9174375a1341f0168004a9d7b151a013d110804ddf",
+      "wall_seconds": 32.02332381904125,
+      "pre_qemu_seconds": 0.016748306108638644,
+      "host_load": {
+        "before_launch": {
+          "loadavg_1m": 1.07,
+          "loadavg_5m": 0.91,
+          "loadavg_15m": 0.72,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.02,
+                "avg300": 0.04,
+                "total": 1270685282.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 1.12,
+                "avg300": 1.84,
+                "total": 2275428903.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 1.12,
+                "avg300": 1.83,
+                "total": 2269400263.0
+              }
+            }
+          }
+        },
+        "after_exit": {
+          "loadavg_1m": 1.09,
+          "loadavg_5m": 0.94,
+          "loadavg_15m": 0.73,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.01,
+                "avg300": 0.04,
+                "total": 1270744040.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.65,
+                "avg300": 1.64,
+                "total": 2275429055.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.65,
+                "avg300": 1.64,
+                "total": 2269400413.0
+              }
+            }
+          }
+        }
+      },
+      "accelerator": "tcg",
+      "guest_mem_mib": 4096,
+      "guest_vcpus": 4,
+      "run_valid": true,
+      "metrics": {
+        "vmstat_delta": {
+          "pswpin": 262137,
+          "pswpout": 262142,
+          "pgmajfault": 262154,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/zram0": 1048548,
+          "xswap1": 1048548
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 29321.0,
+          "p50_ns": 24930.0,
+          "p90_ns": 36618.0,
+          "p99_ns": 130677.0,
+          "p999_ns": 325461.0,
+          "max_ns": 1017368.0,
+          "total_ms": 3843.113
+        },
+        "swapin_rand": {
+          "samples": 131011.0,
+          "mean_ns": 32325.0,
+          "p50_ns": 27549.0,
+          "p90_ns": 40194.0,
+          "p99_ns": 128209.0,
+          "p999_ns": 384319.0,
+          "max_ns": 795906.0,
+          "total_ms": 4234.988
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262083.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262134,
+          "pswpout": 262142,
+          "pgmajfault": 262137,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 1,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "ed772865e8a54c329732012874b42bce-metadata-brd-0",
+      "case": "metadata-brd",
+      "index": 0,
+      "attempt": 0,
+      "pool": "probe",
+      "reservation": "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-metadata-brd-0.json",
+      "status": "PASS",
+      "result": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-metadata-brd-0/result.json",
+      "result_sha256": "fec41bfada07eac1e8457abf7fbb7f8cb35b01cdff805b3ab9aa741255f48be0",
+      "wall_seconds": 9.009504643036053,
+      "pre_qemu_seconds": 0.018161562969908118,
+      "host_load": {
+        "before_launch": {
+          "loadavg_1m": 1.09,
+          "loadavg_5m": 0.94,
+          "loadavg_15m": 0.73,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.01,
+                "avg300": 0.04,
+                "total": 1270751886.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.63,
+                "avg300": 1.63,
+                "total": 2275429213.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.63,
+                "avg300": 1.62,
+                "total": 2269400566.0
+              }
+            }
+          }
+        },
+        "after_exit": {
+          "loadavg_1m": 1.0,
+          "loadavg_5m": 0.92,
+          "loadavg_15m": 0.73,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.01,
+                "avg300": 0.03,
+                "total": 1270770839.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.55,
+                "avg300": 1.59,
+                "total": 2275430086.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.55,
+                "avg300": 1.58,
+                "total": 2269401421.0
+              }
+            }
+          }
+        }
+      },
+      "accelerator": "tcg",
+      "guest_mem_mib": 4096,
+      "guest_vcpus": 4,
+      "run_valid": true,
+      "metrics": {
+        "vmstat_delta": null,
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "metadata_delta_bytes_per_capacity_slot": 0.11093139689762666,
+        "metadata_delta_kib": {
+          "MemTotal": 0,
+          "MemFree": -31116,
+          "MemAvailable": -30656,
+          "SwapTotal": 1073741820,
+          "SwapFree": 1073741820,
+          "Zswap": 0,
+          "Zswapped": 0,
+          "Slab": 352,
+          "SUnreclaim": 352,
+          "PageTables": 0,
+          "VmallocUsed": 28728,
+          "Percpu": 0,
+          "used_kib": 29080,
+          "memavailable_kib": 30656
+        },
+        "swap_total_kib": 1073741820
+      }
+    },
+    {
+      "id": "ed772865e8a54c329732012874b42bce-metadata-brd-1",
+      "case": "metadata-brd",
+      "index": 1,
+      "attempt": 0,
+      "pool": "probe",
+      "reservation": "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-metadata-brd-1.json",
+      "status": "PASS",
+      "result": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-metadata-brd-1/result.json",
+      "result_sha256": "6154af69a4c81d2a0bc4f0424befd32577147e129cce70b13ca899c7cb0841c9",
+      "wall_seconds": 9.009860271820799,
+      "pre_qemu_seconds": 0.015929244924336672,
+      "host_load": {
+        "before_launch": {
+          "loadavg_1m": 1.0,
+          "loadavg_5m": 0.92,
+          "loadavg_15m": 0.73,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.03,
+                "total": 1270774795.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.51,
+                "avg300": 1.56,
+                "total": 2275430208.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.51,
+                "avg300": 1.56,
+                "total": 2269401538.0
+              }
+            }
+          }
+        },
+        "after_exit": {
+          "loadavg_1m": 0.92,
+          "loadavg_5m": 0.91,
+          "loadavg_15m": 0.73,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.03,
+                "total": 1270794825.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.45,
+                "avg300": 1.52,
+                "total": 2275430597.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.45,
+                "avg300": 1.51,
+                "total": 2269401923.0
+              }
+            }
+          }
+        }
+      },
+      "accelerator": "tcg",
+      "guest_mem_mib": 4096,
+      "guest_vcpus": 4,
+      "run_valid": true,
+      "metrics": {
+        "vmstat_delta": null,
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "metadata_delta_bytes_per_capacity_slot": 0.11088562053026862,
+        "metadata_delta_kib": {
+          "MemTotal": 0,
+          "MemFree": -30364,
+          "MemAvailable": -29904,
+          "SwapTotal": 1073741820,
+          "SwapFree": 1073741820,
+          "Zswap": 0,
+          "Zswapped": 0,
+          "Slab": 356,
+          "SUnreclaim": 356,
+          "PageTables": 0,
+          "VmallocUsed": 28712,
+          "Percpu": 0,
+          "used_kib": 29068,
+          "memavailable_kib": 29904
+        },
+        "swap_total_kib": 1073741820
+      }
+    },
+    {
+      "id": "ed772865e8a54c329732012874b42bce-metadata-brd-2",
+      "case": "metadata-brd",
+      "index": 2,
+      "attempt": 0,
+      "pool": "probe",
+      "reservation": "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/guest-reservations/ed772865e8a54c329732012874b42bce-metadata-brd-2.json",
+      "status": "PASS",
+      "result": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/ed772865e8a54c329732012874b42bce-metadata-brd-2/result.json",
+      "result_sha256": "717ec53a7522efebff2b528dbdf77deea4f619a2af1527ed4c6d68c94fc7addc",
+      "wall_seconds": 9.509578684810549,
+      "pre_qemu_seconds": 0.016495496965944767,
+      "host_load": {
+        "before_launch": {
+          "loadavg_1m": 0.92,
+          "loadavg_5m": 0.91,
+          "loadavg_15m": 0.73,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.03,
+                "total": 1270798791.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.43,
+                "avg300": 1.51,
+                "total": 2275430825.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.43,
+                "avg300": 1.5,
+                "total": 2269402142.0
+              }
+            }
+          }
+        },
+        "after_exit": {
+          "loadavg_1m": 0.78,
+          "loadavg_5m": 0.88,
+          "loadavg_15m": 0.72,
+          "psi": {
+            "cpu": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.03,
+                "total": 1270820949.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 0.0
+              }
+            },
+            "memory": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9491226.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.0,
+                "avg300": 0.0,
+                "total": 9372810.0
+              }
+            },
+            "io": {
+              "some": {
+                "avg10": 0.0,
+                "avg60": 0.37,
+                "avg300": 1.46,
+                "total": 2275430882.0
+              },
+              "full": {
+                "avg10": 0.0,
+                "avg60": 0.37,
+                "avg300": 1.45,
+                "total": 2269402198.0
+              }
+            }
+          }
+        }
+      },
+      "accelerator": "tcg",
+      "guest_mem_mib": 4096,
+      "guest_vcpus": 4,
+      "run_valid": true,
+      "metrics": {
+        "vmstat_delta": null,
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "metadata_delta_bytes_per_capacity_slot": 0.11102294963234272,
+        "metadata_delta_kib": {
+          "MemTotal": 0,
+          "MemFree": -31196,
+          "MemAvailable": -30736,
+          "SwapTotal": 1073741820,
+          "SwapFree": 1073741820,
+          "Zswap": 0,
+          "Zswapped": 0,
+          "Slab": 360,
+          "SUnreclaim": 360,
+          "PageTables": 0,
+          "VmallocUsed": 28744,
+          "Percpu": 0,
+          "used_kib": 29104,
+          "memavailable_kib": 30736
+        },
+        "swap_total_kib": 1073741820
+      }
+    }
+  ],
+  "performance_accepted": false,
+  "auto_promote": false,
+  "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+  "protocol_revision": 7,
+  "protocol": "campaigns/exp3-async-zswap-prefetch-2026-11-06/protocol.json",
+  "candidate_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "protocol_sha256": "70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b",
+  "execution_started": true,
+  "analysis": {
+    "status": "CALIBRATED",
+    "passed": true,
+    "bands": {
+      "swapin-disk": {
+        "swapin_vmstat_delta.pswpin": {
+          "low": 259518.6,
+          "high": 264768.4,
+          "median": 262140,
+          "minimum": 262140,
+          "maximum": 262147,
+          "padding": 2621.4,
+          "n": 3
+        },
+        "swapin_vmstat_delta.zswpin": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "swapin_vmstat_delta.swap_ra": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "swapin_vmstat_delta.swap_ra_hit": {
+          "low": -1,
+          "high": 3,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 2,
+          "padding": 1,
+          "n": 3
+        },
+        "swapin_vmstat_delta.pgmajfault": {
+          "low": 259521.57,
+          "high": 264771.43,
+          "median": 262143,
+          "minimum": 262143,
+          "maximum": 262150,
+          "padding": 2621.43,
+          "n": 3
+        },
+        "swapin_vmstat_delta.zswpwb": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "xswap.grows": {
+          "low": 6,
+          "high": 8,
+          "median": 7,
+          "minimum": 7,
+          "maximum": 7,
+          "padding": 1,
+          "n": 3
+        },
+        "xswap.shrinks": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "xswap.usage_pages": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "xswap.clusters_mapped": {
+          "low": 578.16,
+          "high": 589.84,
+          "median": 584,
+          "minimum": 584,
+          "maximum": 584,
+          "padding": 5.84,
+          "n": 3
+        }
+      },
+      "swapin-zram-64k": {
+        "swapin_vmstat_delta.pswpin": {
+          "low": 259511.67,
+          "high": 264755.33,
+          "median": 262133,
+          "minimum": 262133,
+          "maximum": 262134,
+          "padding": 2621.33,
+          "n": 3
+        },
+        "swapin_vmstat_delta.zswpin": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "swapin_vmstat_delta.swap_ra": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "swapin_vmstat_delta.swap_ra_hit": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "swapin_vmstat_delta.pgmajfault": {
+          "low": 259514.64,
+          "high": 264758.36,
+          "median": 262136,
+          "minimum": 262136,
+          "maximum": 262137,
+          "padding": 2621.36,
+          "n": 3
+        },
+        "swapin_vmstat_delta.zswpwb": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "xswap.grows": {
+          "low": 6,
+          "high": 8,
+          "median": 7,
+          "minimum": 7,
+          "maximum": 7,
+          "padding": 1,
+          "n": 3
+        },
+        "xswap.shrinks": {
+          "low": -1,
+          "high": 1,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 0,
+          "padding": 1,
+          "n": 3
+        },
+        "xswap.usage_pages": {
+          "low": -1,
+          "high": 2,
+          "median": 0,
+          "minimum": 0,
+          "maximum": 1,
+          "padding": 1,
+          "n": 3
+        },
+        "xswap.clusters_mapped": {
+          "low": 578.16,
+          "high": 589.84,
+          "median": 584,
+          "minimum": 584,
+          "maximum": 584,
+          "padding": 5.84,
+          "n": 3
+        }
+      },
+      "metadata-brd": {
+        "metadata_delta_bytes_per_capacity_slot": {
+          "low": 0.10977630656129236,
+          "high": 0.11213226360131898,
+          "median": 0.11093139689762666,
+          "minimum": 0.11088562053026862,
+          "maximum": 0.11102294963234272,
+          "padding": 0.0011093139689762666,
+          "n": 3
+        }
+      }
+    },
+    "reasons": [],
+    "performance_accepted": false,
+    "auto_promote": false
+  },
+  "finished": 1793955397.7129893,
+  "probe_signals": {
+    "swapin-disk": [
+      {
+        "vmstat_delta": {
+          "pswpin": 262142,
+          "pswpout": 262198,
+          "pgmajfault": 262159,
+          "swap_ra": 0,
+          "swap_ra_hit": 2,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/vda": 1048772,
+          "xswap1": 1048772
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 289225.0,
+          "p50_ns": 274331.0,
+          "p90_ns": 361435.0,
+          "p99_ns": 505458.0,
+          "p999_ns": 932369.0,
+          "max_ns": 4668246.0,
+          "total_ms": 37909.271
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 332400.0,
+          "p50_ns": 318386.0,
+          "p90_ns": 401997.0,
+          "p99_ns": 564940.0,
+          "p999_ns": 963981.0,
+          "max_ns": 6685698.0,
+          "total_ms": 43568.322
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262140,
+          "pswpout": 262198,
+          "pgmajfault": 262143,
+          "swap_ra": 0,
+          "swap_ra_hit": 2,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      },
+      {
+        "vmstat_delta": {
+          "pswpin": 262149,
+          "pswpout": 262198,
+          "pgmajfault": 262166,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/vda": 1048772,
+          "xswap1": 1048772
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 276386.0,
+          "p50_ns": 264391.0,
+          "p90_ns": 342516.0,
+          "p99_ns": 497759.0,
+          "p999_ns": 918110.0,
+          "max_ns": 3404535.0,
+          "total_ms": 36226.457
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 331877.0,
+          "p50_ns": 320061.0,
+          "p90_ns": 397019.0,
+          "p99_ns": 572382.0,
+          "p999_ns": 944326.0,
+          "max_ns": 4492422.0,
+          "total_ms": 43499.847
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262147,
+          "pswpout": 262198,
+          "pgmajfault": 262150,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      },
+      {
+        "vmstat_delta": {
+          "pswpin": 262142,
+          "pswpout": 262197,
+          "pgmajfault": 262159,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/vda": 1048768,
+          "xswap1": 1048768
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 279043.0,
+          "p50_ns": 265910.0,
+          "p90_ns": 343347.0,
+          "p99_ns": 513636.0,
+          "p999_ns": 923665.0,
+          "max_ns": 4591440.0,
+          "total_ms": 36574.787
+        },
+        "swapin_rand": {
+          "samples": 131072.0,
+          "mean_ns": 335458.0,
+          "p50_ns": 324060.0,
+          "p90_ns": 396910.0,
+          "p99_ns": 564346.0,
+          "p999_ns": 917980.0,
+          "max_ns": 4599906.0,
+          "total_ms": 43969.201
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262144.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262140,
+          "pswpout": 262197,
+          "pgmajfault": 262143,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      }
+    ],
+    "swapin-zram-64k": [
+      {
+        "vmstat_delta": {
+          "pswpin": 262135,
+          "pswpout": 262140,
+          "pgmajfault": 262152,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/zram0": 1048540,
+          "xswap1": 1048540
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 29789.0,
+          "p50_ns": 25347.0,
+          "p90_ns": 36173.0,
+          "p99_ns": 138813.0,
+          "p999_ns": 328774.0,
+          "max_ns": 976294.0,
+          "total_ms": 3904.439
+        },
+        "swapin_rand": {
+          "samples": 131011.0,
+          "mean_ns": 33324.0,
+          "p50_ns": 28258.0,
+          "p90_ns": 41289.0,
+          "p99_ns": 139503.0,
+          "p999_ns": 411256.0,
+          "max_ns": 899395.0,
+          "total_ms": 4365.816
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262083.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262133,
+          "pswpout": 262140,
+          "pgmajfault": 262136,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      },
+      {
+        "vmstat_delta": {
+          "pswpin": 262135,
+          "pswpout": 262140,
+          "pgmajfault": 262152,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/zram0": 1048540,
+          "xswap1": 1048540
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 29417.0,
+          "p50_ns": 25084.0,
+          "p90_ns": 35763.0,
+          "p99_ns": 128854.0,
+          "p999_ns": 336904.0,
+          "max_ns": 1811894.0,
+          "total_ms": 3855.798
+        },
+        "swapin_rand": {
+          "samples": 131011.0,
+          "mean_ns": 32314.0,
+          "p50_ns": 27493.0,
+          "p90_ns": 40076.0,
+          "p99_ns": 135722.0,
+          "p999_ns": 399177.0,
+          "max_ns": 1043989.0,
+          "total_ms": 4233.518
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262083.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262133,
+          "pswpout": 262140,
+          "pgmajfault": 262136,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 0,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      },
+      {
+        "vmstat_delta": {
+          "pswpin": 262137,
+          "pswpout": 262142,
+          "pgmajfault": 262154,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "swap_peak_kib": {
+          "/dev/zram0": 1048548,
+          "xswap1": 1048548
+        },
+        "swapin_seq": {
+          "samples": 131072.0,
+          "mean_ns": 29321.0,
+          "p50_ns": 24930.0,
+          "p90_ns": 36618.0,
+          "p99_ns": 130677.0,
+          "p999_ns": 325461.0,
+          "max_ns": 1017368.0,
+          "total_ms": 3843.113
+        },
+        "swapin_rand": {
+          "samples": 131011.0,
+          "mean_ns": 32325.0,
+          "p50_ns": 27549.0,
+          "p90_ns": 40194.0,
+          "p99_ns": 128209.0,
+          "p999_ns": 384319.0,
+          "max_ns": 795906.0,
+          "total_ms": 4234.988
+        },
+        "swapin_swapped": {
+          "pages": 262144.0,
+          "swapped": 262083.0,
+          "reclaim_rounds": 1.0
+        },
+        "swapin_vmstat_delta": {
+          "pswpin": 262134,
+          "pswpout": 262142,
+          "pgmajfault": 262137,
+          "swap_ra": 0,
+          "swap_ra_hit": 0,
+          "swpin_zero": 0,
+          "swpout_zero": 0,
+          "zswpin": 0,
+          "zswpout": 0,
+          "zswpwb": 0
+        },
+        "swapin_xswap_snapshots": {
+          "swapin_start": {
+            "clusters_max": 3951,
+            "clusters_mapped": 73,
+            "usage_pages": 0,
+            "tail_free": 72,
+            "grows": 0,
+            "shrinks": 0
+          },
+          "swapin_end": {
+            "clusters_max": 3951,
+            "clusters_mapped": 657,
+            "usage_pages": 1,
+            "tail_free": 656,
+            "grows": 7,
+            "shrinks": 0
+          }
+        }
+      }
+    ],
+    "metadata-brd": [
+      {
+        "vmstat_delta": null,
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "metadata_delta_bytes_per_capacity_slot": 0.11093139689762666,
+        "metadata_delta_kib": {
+          "MemTotal": 0,
+          "MemFree": -31116,
+          "MemAvailable": -30656,
+          "SwapTotal": 1073741820,
+          "SwapFree": 1073741820,
+          "Zswap": 0,
+          "Zswapped": 0,
+          "Slab": 352,
+          "SUnreclaim": 352,
+          "PageTables": 0,
+          "VmallocUsed": 28728,
+          "Percpu": 0,
+          "used_kib": 29080,
+          "memavailable_kib": 30656
+        },
+        "swap_total_kib": 1073741820
+      },
+      {
+        "vmstat_delta": null,
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "metadata_delta_bytes_per_capacity_slot": 0.11088562053026862,
+        "metadata_delta_kib": {
+          "MemTotal": 0,
+          "MemFree": -30364,
+          "MemAvailable": -29904,
+          "SwapTotal": 1073741820,
+          "SwapFree": 1073741820,
+          "Zswap": 0,
+          "Zswapped": 0,
+          "Slab": 356,
+          "SUnreclaim": 356,
+          "PageTables": 0,
+          "VmallocUsed": 28712,
+          "Percpu": 0,
+          "used_kib": 29068,
+          "memavailable_kib": 29904
+        },
+        "swap_total_kib": 1073741820
+      },
+      {
+        "vmstat_delta": null,
+        "kernel_diagnostics": [],
+        "swapin_latency_hist": null,
+        "metadata_delta_bytes_per_capacity_slot": 0.11102294963234272,
+        "metadata_delta_kib": {
+          "MemTotal": 0,
+          "MemFree": -31196,
+          "MemAvailable": -30736,
+          "SwapTotal": 1073741820,
+          "SwapFree": 1073741820,
+          "Zswap": 0,
+          "Zswapped": 0,
+          "Slab": 360,
+          "SUnreclaim": 360,
+          "PageTables": 0,
+          "VmallocUsed": 28744,
+          "Percpu": 0,
+          "used_kib": 29104,
+          "memavailable_kib": 30736
+        },
+        "swap_total_kib": 1073741820
+      }
+    ]
+  },
+  "budget_pools": {
+    "fast": {
+      "spent": 1,
+      "ceiling": 96,
+      "remaining": 95
+    },
+    "probe": {
+      "spent": 9,
+      "ceiling": 24,
+      "remaining": 15
+    },
+    "total": {
+      "spent": 10,
+      "ceiling": 120
+    }
+  }
+}

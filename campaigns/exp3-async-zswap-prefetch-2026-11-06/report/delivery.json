@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "campaign": "exp3-async-zswap-prefetch-2026-11-06",
+  "state": "visually_checked",
+  "evidence_sha256": "a7372119bd01a2f85870f5683e03d339ffd558ae5df62825fe691ee5a57febf6",
+  "artifacts": {
+    "summary.json": "c7ef511f11bc1fd927ad0dbb0e8695236e51389ce0dcc8aa68dd8511e980e75d",
+    "REPORT.md": "7fefaa96a5808c0867516ead61c13d51cbde2e395dd9f7b0953a980f8fdb1b86",
+    "explainer.json": "941adf3222ca4ad1163fe3af0975def6ff597b859caf06ed30f41c75ebc6a8ae",
+    "explainer.html": "b6c4a9aef8bb0c12544571fa5a4a0e9fc21ecfa1cdcbb2e4038c196d9a3195a5",
+    "generate_report.py": "40efd880d291d4d74f30a0163634bf3688f988aa8ab1faf0357622c4d0fa8d32"
+  },
+  "story_sha256": "7e96b05be40c02579549cab5bd9008d95d6772a400ea4621f225559058a07829",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1793959844.740527
+    },
+    {
+      "state": "visually_checked",
+      "time": 1793960580.1418931
+    }
+  ],
+  "visual_check": {
+    "artifact_sha256": "b6c4a9aef8bb0c12544571fa5a4a0e9fc21ecfa1cdcbb2e4038c196d9a3195a5",
+    "method": "Direct Playwright Chromium headless render and screenshot inspection of desktop (1280px) and mobile (390px) viewports across light and dark themes; DOM overflow, disclosure and theme-toggle checks verified.",
+    "views": [
+      {
+        "width": 1280,
+        "theme": "light",
+        "screenshot": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/visual-qa/desktop-light.png",
+        "sha256": "abb00dfcb16cafc2915ed5debb4d92dbb1c94ae8fc5a80df6b1b512c43d9df7a",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "screenshot": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/visual-qa/desktop-dark.png",
+        "sha256": "42d97b9a90fc693302d5a6d941efd01d659d995c314309c15873cd4eb5752c4f",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/visual-qa/mobile-light.png",
+        "sha256": "762f1f993a29f2ed8c771fd12a0f50312405eca4123232c7d60938576ab574de",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/visual-qa/mobile-dark.png",
+        "sha256": "097377852db4185567dd1fc33d683731abf12a115a9272a81b02af11ebf67e15",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true,
+        "theme_toggle_works": true,
+        "disclosure_works": true
+      }
+    ]
+  }
+}

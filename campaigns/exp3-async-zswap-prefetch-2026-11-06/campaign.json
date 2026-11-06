@@ -1,0 +1,17 @@
+{
+  "campaign": "exp3-async-zswap-prefetch-2026-11-06",
+  "status": "closed",
+  "line": "exp3-async-zswap-prefetch",
+  "baseline_from": null,
+  "machine": "hurricpc",
+  "opened": "2026-11-06",
+  "closed": "2026-11-06",
+  "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "budget": {
+    "guest_attempts": 96,
+    "wall_seconds": 64800,
+    "probe_guest_attempts": 24,
+    "approved_over_cap": null
+  },
+  "contributor": "teamwork-exp3"
+}

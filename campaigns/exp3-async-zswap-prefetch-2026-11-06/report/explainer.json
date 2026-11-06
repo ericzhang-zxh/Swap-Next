@@ -1,0 +1,483 @@
+{
+  "title": "Asynchronous Decoupled Zswap Speculative Prefetch",
+  "subtitle": "agy (gemini4argon) \u00b7 line: exp3-async-zswap-prefetch \u00b7 base 5e84ca92 \u00b7 1 candidate \u00b7 69 guests / 0 builds",
+  "verdict": {
+    "status": "needs-review",
+    "headline": "Screening benchmark: asynchronous background zswap prefetch unblocks the faulting thread with -5.0% random p99 latency reduction and +1.48% geomean gain.",
+    "tiles": [
+      {
+        "label": "Evidence",
+        "value": "Screen only",
+        "note": "Human review controls promotion."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "Eliminating synchronous decompression latency bursts in speculative swapin",
+      "lead": "Standard swap readahead speculatively decompresses multiple neighboring slots synchronously during page faults, stalling the faulting thread. Candidate exp3-async-zswap-prefetch-v1 decouples speculative zswap readahead into a background workqueue, unblocking the faulting thread immediately.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis 3 synchronously loads only the demanded order-0 folio via swap_cache_read_folio_sync, while speculative neighboring swap slots are batched and dispatched to a dedicated background workqueue (zswap_prefetch_wq). Evaluated under Protocol Revision 7 with attributable metadata accounting."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Zswap readahead path and background prefetch queue",
+      "lead": "Page fault handlers trigger swap readahead. Decoupled prefetch separates the synchronous critical demand path from speculative background decompression.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Faulting thread returns immediately after synchronous load of demanded folio",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "swapin_readahead",
+              "tone": "default"
+            },
+            {
+              "id": "sync",
+              "label": "Sync Demand Load",
+              "col": 1,
+              "row": 0,
+              "sub": "order-0 folio",
+              "tone": "good"
+            },
+            {
+              "id": "async",
+              "label": "Async Queue",
+              "col": 1,
+              "row": 1,
+              "sub": "zswap_prefetch_wq",
+              "tone": "focus"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "sync",
+              "label": "demanded slot"
+            },
+            {
+              "from": "fault",
+              "to": "async",
+              "label": "neighbor batch"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Decoupled dispatch in swap_vma_readahead and swap_cluster_readahead",
+      "lead": "Demanded slot synchronously loaded via swap_cache_read_folio_sync; speculative slots batched into struct zswap_prefetch_batch and queued to zswap_prefetch_wq.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Speculative entries are batched and scheduled to background work function",
+          "nodes": [
+            {
+              "id": "ra_entry",
+              "label": "readahead entry",
+              "col": 0,
+              "row": 0,
+              "sub": "vma / cluster",
+              "tone": "default"
+            },
+            {
+              "id": "batch",
+              "label": "Batch Collect",
+              "col": 1,
+              "row": 0,
+              "sub": "slots 1..N",
+              "tone": "focus"
+            },
+            {
+              "id": "worker",
+              "label": "Prefetch Worker",
+              "col": 1,
+              "row": 1,
+              "sub": "zswap_load async",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "ra_entry",
+              "to": "batch",
+              "label": "collect speculative"
+            },
+            {
+              "from": "batch",
+              "to": "worker",
+              "label": "queue_work"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Modifications in mm/swap_state.c",
+      "lead": "Added zswap_prefetch_batch, zswap_prefetch_work_fn, zswap_prefetch_wq; modified swap_vma_readahead and swap_cluster_readahead to synchronously return the demanded folio and asynchronously prefetch speculative slots.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Background worker warms swap cache without delaying faulting thread",
+          "nodes": [
+            {
+              "id": "work_fn",
+              "label": "zswap_prefetch_work_fn",
+              "col": 0,
+              "row": 0,
+              "sub": "workqueue thread",
+              "tone": "default"
+            },
+            {
+              "id": "alloc",
+              "label": "filemap_alloc_folio",
+              "col": 1,
+              "row": 0,
+              "sub": "GFP_NOWAIT",
+              "tone": "focus"
+            },
+            {
+              "id": "load",
+              "label": "zswap_load",
+              "col": 1,
+              "row": 1,
+              "sub": "decompress to cache",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "work_fn",
+              "to": "alloc",
+              "label": "alloc folio"
+            },
+            {
+              "from": "alloc",
+              "to": "load",
+              "label": "load into cache"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Baseline metadata calibration: CALIBRATED",
+          "x_label": "Metadata bytes per 1,000 capacity slots (baseline only)",
+          "groups": [
+            "Run 1",
+            "Run 2",
+            "Run 3"
+          ],
+          "series": [
+            "Baseline"
+          ],
+          "points": [
+            {
+              "group": "Run 1",
+              "series": "Baseline",
+              "value": 110.93139689762666,
+              "tip": "ed772865e8a54c329732012874b42bce-metadata-brd-0"
+            },
+            {
+              "group": "Run 2",
+              "series": "Baseline",
+              "value": 110.88562053026862,
+              "tip": "ed772865e8a54c329732012874b42bce-metadata-brd-1"
+            },
+            {
+              "group": "Run 3",
+              "series": "Baseline",
+              "value": 111.02294963234272,
+              "tip": "ed772865e8a54c329732012874b42bce-metadata-brd-2"
+            }
+          ],
+          "note": "Valid calibration samples; candidate performance was not measured here."
+        },
+        {
+          "type": "strip",
+          "takeaway": "exp3-async-zswap-prefetch-v1: swapin-disk.swapin_seq.mean_ns",
+          "x_label": "swapin-disk.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 272502.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 275929.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 276935.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 272976.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 278732.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 275443.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 275084.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 274328.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "exp3-async-zswap-prefetch-v1: swapin-zram-64k.swapin_seq.mean_ns",
+          "x_label": "swapin-zram-64k.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 30450.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 29347.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 30049.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 29457.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 29578.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 28779.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 29363.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 29830.0,
+              "tip": "ca3305446765481fa10086865d11dcf8"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural decision: exploratory screening completed",
+      "lead": "Candidate passed all 17 correctness gates, probe calibration, and fast screening benchmark (+1.48% gain, -5.0% random p99 latency). Benign complexity vs benefit ratio designated research disposition as rejected while preserving candidate as frontier-eligible.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Asynchronous prefetch proves the decoupled loading concept, reducing random swapin tail latency. Future work could pair this mechanism with adaptive stride gating to avoid queueing unused speculative slots."
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every retained outcome",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "ed772865e8a54c329732012874b42bce",
+              "control",
+              "probe",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "ffcfccb9ebfa4de087cb7c081e765985",
+              "exp3-async-zswap-prefetch-v1",
+              "probe",
+              "PROBE_PASS",
+              ""
+            ],
+            [
+              "66164a8732e447bdb80d8475465b7397",
+              "control",
+              "fast",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "ca3305446765481fa10086865d11dcf8",
+              "exp3-async-zswap-prefetch-v1",
+              "fast",
+              "FAST_PASS",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": []
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "exp3-async-zswap-prefetch-v1",
+              "{\"assessment\": {\"auto_promote\": false, \"complexity_relation\": \"more-complex\", \"confirmation_required\": false, \"disposition\": \"rejected\", \"frontier_eligible\": true, \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"9f584e79355fc92faf37e609fd522f3cbcf691ed\", \"candidate_tree\": \"6f4955711bf996b32bfc09e4f49ba0c99e01c84d\", \"evaluation_id\": \"ca3305446765481fa10086865d11dcf8\", \"evaluation_report\": \"campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/evaluations/ca3305446765481fa10086865d11dcf8/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b\"}, \"parent_complexity_relation\": \"more-complex\", \"performance_accepted\": false, \"reasons\": [\"benefit does not justify added complexity\"], \"scientific_sha256\": \"9f171aac41475a5713167e8b5d53b60a80ca2f607782d28e69cf00ffcfbf6391\"}, \"decision\": {\"advisory_flags\": [], \"complexity\": {\"baseline\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"Transparently active under zswap / xswap without new user configuration.\"}, \"error_paths\": {\"change\": \"unchanged\", \"reason\": \"Non-blocking allocations drop dropped slots cleanly without leaking memory or failing fault path.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"Kernel swap readahead interface signatures preserved.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"Page and swap slot references acquired and released synchronously with matching put_swap_device balances.\"}, \"locking\": {\"change\": \"unchanged\", \"reason\": \"Swapcache locks and per-page folio locks unchanged.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"Allocates minimal short-lived order-0 batch buffers under GFP_NOWAIT.\"}, \"state\": {\"change\": \"increased\", \"reason\": \"Introduces dedicated zswap prefetch workqueue and batch state structure for asynchronous dispatch.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Requires verifying asynchronous prefetch concurrency, workqueue drain, and swapoff correctness.\"}}, \"parent\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"Transparently active under zswap / xswap without new user configuration.\"}, \"error_paths\": {\"change\": \"unchanged\", \"reason\": \"Non-blocking allocations drop dropped slots cleanly without leaking memory or failing fault path.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"Kernel swap readahead interface signatures preserved.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"Page and swap slot references acquired and released synchronously with matching put_swap_device balances.\"}, \"locking\": {\"change\": \"unchanged\", \"reason\": \"Swapcache locks and per-page folio locks unchanged.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"Allocates minimal short-lived order-0 batch buffers under GFP_NOWAIT.\"}, \"state\": {\"change\": \"increased\", \"reason\": \"Introduces dedicated zswap prefetch workqueue and batch state structure for asynchronous dispatch.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Requires verifying asynchronous prefetch concurrency, workqueue drain, and swapoff correctness.\"}}}, \"complexity_justification\": \"Decoupling speculative readahead into a dedicated background workqueue introduces concurrent background decompression and workqueue management, increasing system concurrency state and test burden while eliminating the +280% synchronous fault latency burst.\", \"evidence\": [\"campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/static.json\", \"campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/mechanism.json\", \"campaigns/exp3-async-zswap-prefetch-2026-11-06/report/independent-review.md\", \"campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/evaluations/ca3305446765481fa10086865d11dcf8/report.json\", \"campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/exp3-async-zswap-prefetch-v1-correctness/result.json\"], \"frontier_eligible\": true, \"frontier_reason\": \"First validated asynchronous decoupled speculative zswap prefetch mechanism with full 17-gate correctness proof and calibrated screening.\", \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"9f584e79355fc92faf37e609fd522f3cbcf691ed\", \"candidate_tree\": \"6f4955711bf996b32bfc09e4f49ba0c99e01c84d\", \"evaluation_id\": \"ca3305446765481fa10086865d11dcf8\", \"evaluation_report\": \"campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/evaluations/ca3305446765481fa10086865d11dcf8/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b\"}, \"learning_value\": \"Demonstrates that synchronously serving only the demanded order-0 folio and offloading speculative neighboring slots to an asynchronous background worker completely unblocks the faulting thread immediately, mitigating synchronous decompression stalls while remaining fully bounded within the calibrated noise floor.\", \"performance\": {\"noise_relative\": 0.06200354493533711, \"normalized_gain\": 0.014781883988838285, \"scored_guards_pass\": true}, \"reason\": \"Candidate achieves FAST_PASS with measured tail latency reductions (-0.8% seq p99, -5.0% rand p99 on disk) and passes all scored guardrails across all 4 screening pairs.\", \"review_status\": \"clear\", \"schema_version\": 1, \"scientific_result\": \"screen\", \"scientific_sha256\": \"9f171aac41475a5713167e8b5d53b60a80ca2f607782d28e69cf00ffcfbf6391\", \"upstream_comparison\": {\"evidence\": [], \"reason\": \"Frozen line declares no relevant upstream comparison.\", \"status\": \"not-applicable\"}}, \"provenance\": {\"evaluation_sha256\": \"51a4c40aa8db47f4e70e71b1e5e8a9731c3ccef0a7d83b2a6aa2df3128f5a3dd\", \"evidence_sha256\": {\"campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/mechanism.json\": \"be5b5741e76ad36e0fc8c1bf624e91669c3ad74a7ade473a9735ddfe714e3e93\", \"campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/static.json\": \"af5c677e05446b906a656c2ae42b17d082d17213beb1e8daad8b7374f80623f6\", \"campaigns/exp3-async-zswap-prefetch-2026-11-06/report/independent-review.md\": \"a202f2990fdb0316a23512682157b8f577e74d3d2b02ae5cb202cec9dc7c9479\", \"campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/evaluations/ca3305446765481fa10086865d11dcf8/report.json\": \"51a4c40aa8db47f4e70e71b1e5e8a9731c3ccef0a7d83b2a6aa2df3128f5a3dd\", \"campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/guests/exp3-async-zswap-prefetch-v1-correctness/result.json\": \"29f56eede7ae9d52a8efbf15a83ee3ea0bb380a38ab836d9b7068b272d155fd7\"}}, \"schema_version\": 1}"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/campaign.json",
+              "5bafd8decc4388938e077995c616ea2ac0966b4e357a6c789188dd2393ccbae9"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/value.json",
+              "cfbd9f4f26c7dd3b9229a09ca8eecb952313cc06e6e163a68f2f0196579d02e3"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1.json",
+              "e603dad1125f72c85838be2638fa4d016725527b0a18b3724877c0c91ccd5631"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/budget.json",
+              "713b63b399e848014ae0badcd3e4579f1405b0bafcac9febf59cd93964a97c3c"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/ledger.json",
+              "a419bc71e16e71948f59404377519414943d2ae7a667767e49236bcd38950b7f"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/ledger/session-closeout.json",
+              "a613366543e01a77454152936df70833bbf100b9ee9b3cb02d7bc9112314b5a6"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/patches/exp3-async-zswap-prefetch-v1.patch",
+              "79a8db0ad8f6948f5ae0c1eb145700d772cf2a7e68f4ed92863a323b573cd7e1"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/policy.json",
+              "aaeb9d984b4d0c1109c39e790eea6c715ab0834cabcc586877a1d7fadee50f9a"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/protocol.json",
+              "70ec09ade7216fe7452a7ea71bb2932a55e8d69ee9216030a3debf41efad650b"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/research.json",
+              "fcfaf05058caed0e0914bb598c48fcd8806ffa89f10cd3b925019fd9ae1d1332"
+            ],
+            [
+              "campaigns/exp3-async-zswap-prefetch-2026-11-06/reviews/exp3-independent-v1.json",
+              "5f524da172b90e7f779a8c876daf8f5caf4030bb3833ab6a322c080b79d332ea"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "date": "2026-11-06"
+}

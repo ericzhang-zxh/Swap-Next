@@ -1,0 +1,19 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+  "changed_paths": [
+    "mm/swap_state.c"
+  ],
+  "changed_lines": 140,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/checkpatch.log",
+    "sha256": "91edcf04de88a46fe2de47da267e82af37904048c820c0142ad94fbd54e99895"
+  }
+}

@@ -1,0 +1,525 @@
+{
+  "schema_version": 1,
+  "campaign": "exp3-async-zswap-prefetch-2026-11-06",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "entries": {
+    "exp3-async-zswap-prefetch-v1": {
+      "id": "exp3-async-zswap-prefetch-v1",
+      "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+      "source_tree": "6f4955711bf996b32bfc09e4f49ba0c99e01c84d",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_candidate": null,
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "generation": 1,
+      "patch": "diff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..dd62d4525 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -24,6 +24,8 @@\n #include <linux/shmem_fs.h>\n #include <linux/sysctl.h>\n #include <linux/swap_ops.h>\n+#include <linux/workqueue.h>\n+#include <linux/zswap.h>\n #include \"internal.h\"\n #include \"swap_table.h\"\n #include \"swap.h\"\n@@ -889,6 +891,65 @@ static unsigned long swapin_nr_pages(unsigned long offset)\n \treturn pages;\n }\n \n+#define ZSWAP_PREFETCH_BATCH 32\n+\n+struct zswap_prefetch_batch {\n+\tstruct work_struct work;\n+\tunsigned int nr;\n+\tswp_entry_t entries[ZSWAP_PREFETCH_BATCH];\n+};\n+\n+static struct workqueue_struct *zswap_prefetch_wq;\n+\n+static void zswap_prefetch_work_fn(struct work_struct *work)\n+{\n+\tstruct zswap_prefetch_batch *batch =\n+\t\tcontainer_of(work, struct zswap_prefetch_batch, work);\n+\tunsigned int i;\n+\n+\tfor (i = 0; i < batch->nr; i++) {\n+\t\tswp_entry_t entry = batch->entries[i];\n+\t\tstruct swap_info_struct *si;\n+\t\tstruct folio *folio;\n+\t\tint ret;\n+\n+\t\tsi = get_swap_device(entry);\n+\t\tif (!si)\n+\t\t\tcontinue;\n+\n+\t\tfolio = swap_cache_get_folio(entry);\n+\t\tif (folio) {\n+\t\t\tfolio_put(folio);\n+\t\t\tput_swap_device(si);\n+\t\t\tcontinue;\n+\t\t}\n+\n+\t\tfolio = __swap_cache_alloc_folio(entry,\n+\t\t\t\t\t\t GFP_NOWAIT | __GFP_NOWARN | __GFP_NORETRY,\n+\t\t\t\t\t\t BIT(0), NULL, NULL, 0);\n+\t\tif (IS_ERR_OR_NULL(folio)) {\n+\t\t\tput_swap_device(si);\n+\t\t\tcontinue;\n+\t\t}\n+\n+\t\tfolio_add_lru(folio);\n+\t\tret = zswap_load(folio);\n+\t\tif (ret == 0) {\n+\t\t\tfolio_set_readahead(folio);\n+\t\t\tcount_vm_event(SWAP_RA);\n+\t\t} else {\n+\t\t\tif (folio_test_locked(folio))\n+\t\t\t\tfolio_unlock(folio);\n+\t\t\tswap_cache_del_folio(folio);\n+\t\t}\n+\n+\t\tfolio_put(folio);\n+\t\tput_swap_device(si);\n+\t}\n+\n+\tkfree(batch);\n+}\n+\n /**\n  * swap_cluster_readahead - swap in pages in hope we need them soon\n  * @entry: swap entry of this memory\n@@ -919,10 +980,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tstruct swap_io_ctx ctx = {};\n \tstruct blk_plug plug;\n \tswp_entry_t ra_entry;\n+\tbool zswap_active;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n+\tzswap_active = zswap_is_enabled() || (si->flags & SWP_XSWAP);\n \n \tmask = swapin_nr_pages(offset) - 1;\n \tif (!mask)\n@@ -936,6 +996,28 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tif (end_offset >= si->max)\n \t\tend_offset = si->max - 1;\n \n+\tif (zswap_active) {\n+\t\tstruct zswap_prefetch_batch *batch;\n+\n+\t\tbatch = kmalloc_obj(*batch, GFP_NOWAIT | __GFP_NOWARN);\n+\t\tif (batch) {\n+\t\t\tINIT_WORK(&batch->work, zswap_prefetch_work_fn);\n+\t\t\tbatch->nr = 0;\n+\t\t\tfor (offset = start_offset; offset <= end_offset; offset++) {\n+\t\t\t\tif (offset == entry_offset)\n+\t\t\t\t\tcontinue;\n+\t\t\t\tra_entry = swp_entry(swp_type(entry), offset);\n+\t\t\t\tif (batch->nr < ZSWAP_PREFETCH_BATCH)\n+\t\t\t\t\tbatch->entries[batch->nr++] = ra_entry;\n+\t\t\t}\n+\t\t\tif (batch->nr > 0 && zswap_prefetch_wq)\n+\t\t\t\tqueue_work(zswap_prefetch_wq, &batch->work);\n+\t\t\telse\n+\t\t\t\tkfree(batch);\n+\t\t}\n+\t\treturn swap_cache_read_folio_sync(entry, gfp_mask, mpol, ilx);\n+\t}\n+\n \tblk_start_plug(&plug);\n \tfor (offset = start_offset; offset <= end_offset ; offset++) {\n \t\t/* Ok, do the async read-ahead now */\n@@ -1017,15 +1099,58 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \tint win;\n \tunsigned long start, end, addr;\n \tpgoff_t ilx = targ_ilx;\n+\tbool zswap_active;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n+\tzswap_active = zswap_is_enabled() || (si->flags & SWP_XSWAP);\n \n \twin = swap_vma_ra_win(vmf, &start, &end);\n \tif (win == 1)\n \t\tgoto skip;\n \n+\tif (zswap_active) {\n+\t\tstruct zswap_prefetch_batch *batch;\n+\n+\t\tbatch = kmalloc_obj(*batch, GFP_NOWAIT | __GFP_NOWARN);\n+\t\tif (batch) {\n+\t\t\tINIT_WORK(&batch->work, zswap_prefetch_work_fn);\n+\t\t\tbatch->nr = 0;\n+\t\t}\n+\n+\t\tfor (addr = start; addr < end; addr += PAGE_SIZE) {\n+\t\t\tsoftleaf_t entry;\n+\n+\t\t\tif (addr == vmf->address)\n+\t\t\t\tcontinue;\n+\n+\t\t\tif (!pte++) {\n+\t\t\t\tpte = pte_offset_map(vmf->pmd, addr);\n+\t\t\t\tif (!pte)\n+\t\t\t\t\tbreak;\n+\t\t\t}\n+\t\t\tpentry = ptep_get_lockless(pte);\n+\t\t\tentry = softleaf_from_pte(pentry);\n+\n+\t\t\tif (!softleaf_is_swap(entry))\n+\t\t\t\tcontinue;\n+\t\t\tpte_unmap(pte);\n+\t\t\tpte = NULL;\n+\n+\t\t\tif (batch && batch->nr < ZSWAP_PREFETCH_BATCH)\n+\t\t\t\tbatch->entries[batch->nr++] = entry;\n+\t\t}\n+\t\tif (pte)\n+\t\t\tpte_unmap(pte);\n+\n+\t\tif (batch) {\n+\t\t\tif (batch->nr > 0 && zswap_prefetch_wq)\n+\t\t\t\tqueue_work(zswap_prefetch_wq, &batch->work);\n+\t\t\telse\n+\t\t\t\tkfree(batch);\n+\t\t}\n+\n+\t\treturn swap_cache_read_folio_sync(targ_entry, gfp_mask, mpol, targ_ilx);\n+\t}\n+\n \tilx = targ_ilx - PFN_DOWN(vmf->address - start);\n \n \tblk_start_plug(&plug);\n@@ -1115,6 +1240,9 @@ static void __init swap_readahead_setup(void)\n {\n \tunsigned long megs = PAGES_TO_MB(totalram_pages());\n \n+\tzswap_prefetch_wq = alloc_workqueue(\"zswap-prefetch\",\n+\t\t\t\t\t    WQ_UNBOUND | WQ_MEM_RECLAIM, 0);\n+\n \t/* Use a smaller cluster for small-memory machines */\n \tif (megs < 16)\n \t\tpage_cluster = 2;\n",
+      "changed_paths": [
+        "mm/swap_state.c"
+      ],
+      "hypothesis": "In swap_vma_readahead and swap_cluster_readahead, decoupling speculative zswap readahead by synchronously reading only the demanded order-0 folio and dispatching speculative neighboring swap slots to an asynchronous background prefetch worker unblocks the faulting thread immediately, eliminating the synchronous decompression latency burst while preserving readahead cache warming. Reject if prefetch causes race conditions, cache corruption, or fails correctness/calibrated noise guards.",
+      "mechanism": {
+        "kind": "reviewed_structure",
+        "claim": "In mm/swap_state.c, when zswap or xswap is active, swap_vma_readahead and swap_cluster_readahead synchronously load only the demanded order-0 folio via swap_cache_read_folio_sync, and collect speculative neighboring slots into a batch dispatched to a dedicated background workqueue (zswap_prefetch_wq). The background worker asynchronously allocates folios and calls zswap_load, warming the swap cache without stalling the faulting thread.",
+        "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+      },
+      "evidence": [
+        {
+          "id": "ca3305446765481fa10086865d11dcf8",
+          "action": "evaluate",
+          "tier": "fast",
+          "status": "FAST_PASS",
+          "candidate": "exp3-async-zswap-prefetch-v1",
+          "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+          "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+          "started": 1793958300.5256815,
+          "finished": 1793959349.1035683,
+          "analysis": {
+            "tier": "fast",
+            "pair_count": 4,
+            "metrics": {
+              "swapin-disk.swapin_seq.mean_ns": {
+                "pair_ratios": [
+                  0.9875801383689289,
+                  1.0145031065002048,
+                  1.0119407645138923,
+                  1.0027558251436226
+                ],
+                "geomean_ratio": 1.0041393888360906,
+                "median_ratio": 1.0073378263108144,
+                "noise_relative": 0.030000000000000027,
+                "guard_pass": true
+              },
+              "swapin-disk.swapin_seq.p99_ns": {
+                "pair_ratios": [
+                  1.0168498942479594,
+                  0.9873973036563661,
+                  0.9558860875714498,
+                  1.0107124054533676
+                ],
+                "geomean_ratio": 0.9924202799414557,
+                "median_ratio": 0.9989868387104481,
+                "noise_relative": 0.0472419028865676,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-disk.swapin_rand.mean_ns": {
+                "pair_ratios": [
+                  1.0122396069799262,
+                  0.9622740936800136,
+                  1.0163110572779568,
+                  1.027138450032718
+                ],
+                "geomean_ratio": 1.0041750798259752,
+                "median_ratio": 1.014273289201876,
+                "noise_relative": 0.04463161066747068,
+                "guard_pass": true
+              },
+              "swapin-disk.swapin_rand.p99_ns": {
+                "pair_ratios": [
+                  0.9977538908794638,
+                  0.94207603783435,
+                  0.8310002969918966,
+                  1.044499513528757
+                ],
+                "geomean_ratio": 0.950396223955867,
+                "median_ratio": 0.9695153594727273,
+                "noise_relative": 0.06253229877745081,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-zram-64k.swapin_seq.mean_ns": {
+                "pair_ratios": [
+                  1.0375847616451432,
+                  1.0200970906745435,
+                  1.0277632996282016,
+                  0.9843446195105597
+                ],
+                "geomean_ratio": 1.017246824388756,
+                "median_ratio": 1.0239230204721435,
+                "noise_relative": 0.06200354493533711,
+                "guard_pass": true
+              },
+              "swapin-zram-64k.swapin_seq.p99_ns": {
+                "pair_ratios": [
+                  1.0083557419139206,
+                  1.0135668552247157,
+                  1.0335787008269215,
+                  0.9625584677568326
+                ],
+                "geomean_ratio": 1.0041745526442571,
+                "median_ratio": 1.0109579409052967,
+                "noise_relative": 0.05506929766075963,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-zram-64k.swapin_rand.mean_ns": {
+                "pair_ratios": [
+                  1.0558921303631914,
+                  1.0220111285314648,
+                  1.0297117925397892,
+                  0.9707315614816582
+                ],
+                "geomean_ratio": 1.0191133802205044,
+                "median_ratio": 1.025854234848084,
+                "noise_relative": 0.04030307445723502,
+                "guard_pass": true
+              },
+              "swapin-zram-64k.swapin_rand.p99_ns": {
+                "pair_ratios": [
+                  1.0450538456084508,
+                  0.9841644909627587,
+                  1.0821171650442258,
+                  1.0463703180862651
+                ],
+                "geomean_ratio": 1.038822898841193,
+                "median_ratio": 1.0457118746799183,
+                "noise_relative": 0.06726912561596565,
+                "guard_pass": true,
+                "advisory": true
+              }
+            },
+            "overall_geomean_ratio": 1.0106718579920881,
+            "combined_score": 1.0147818839888383,
+            "primary": [
+              "swapin-disk.swapin_seq.mean_ns",
+              "swapin-zram-64k.swapin_seq.mean_ns"
+            ],
+            "reference": false,
+            "performance_accepted": false,
+            "auto_promote": false,
+            "eligible_for_slow": false,
+            "needs_review": false,
+            "decision": "median",
+            "overall_median_ratio": 1.0147818839888383,
+            "status": "FAST_PASS"
+          },
+          "calibration_id": "66164a8732e447bdb80d8475465b7397",
+          "probe_id": "ffcfccb9ebfa4de087cb7c081e765985",
+          "probe_signals": {
+            "swapin-disk": {
+              "swapin_vmstat_delta.pswpin": [
+                262147
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                0
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                262150
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                0
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "swapin-zram-64k": {
+              "swapin_vmstat_delta.pswpin": [
+                262133
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                0
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                262135
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                0
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "metadata-brd": {
+              "metadata_delta_bytes_per_capacity_slot": [
+                0.11093139689762666
+              ]
+            }
+          },
+          "controller_check": {
+            "status": "SCOPE_PASS",
+            "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+            "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+            "changed_paths": [
+              "mm/swap_state.c"
+            ],
+            "changed_lines": 140,
+            "diff-check": {
+              "exit_code": 0,
+              "evidence": "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/diff-check.log",
+              "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+            },
+            "checkpatch": {
+              "exit_code": 0,
+              "evidence": "campaigns/exp3-async-zswap-prefetch-2026-11-06/candidates/exp3-async-zswap-prefetch-v1/checkpatch.log",
+              "sha256": "91edcf04de88a46fe2de47da267e82af37904048c820c0142ad94fbd54e99895"
+            }
+          },
+          "correctness": {
+            "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+            "source_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+            "gates": {
+              "boot": true,
+              "cmdline_identity": true,
+              "workload_complete": true,
+              "kernel_log_present": true,
+              "no_kernel_warnings": true,
+              "thp_policy": true,
+              "swap_activity": true,
+              "backend_exercised": true,
+              "swap_routing": true,
+              "correctness_evidence": true,
+              "data_roundtrip": true,
+              "fork_cow": true,
+              "concurrent_fault": true,
+              "destroy_live_pages": true,
+              "swapoff_live_pages": true,
+              "no_new_kernel_warnings": true,
+              "qemu_exit": true
+            },
+            "integration_pass": true,
+            "mode": "xswap",
+            "backend": "disk",
+            "config_sha256": "9dcdc44d2c9459a486a5f58657823d2c507811b7301d46a09ed9d8c20e0ed03a"
+          },
+          "report": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/evaluations/ca3305446765481fa10086865d11dcf8/report.json",
+          "row_sha256": "ff5b488d24e7f90f9a1b5a681d665a06846c41b0b3d49230efe84109493ae24f"
+        }
+      ],
+      "invalidations": [],
+      "timestamp": 1793959349.1035683,
+      "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+      "analysis": {
+        "tier": "fast",
+        "pair_count": 4,
+        "metrics": {
+          "swapin-disk.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              0.9875801383689289,
+              1.0145031065002048,
+              1.0119407645138923,
+              1.0027558251436226
+            ],
+            "geomean_ratio": 1.0041393888360906,
+            "median_ratio": 1.0073378263108144,
+            "noise_relative": 0.030000000000000027,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              1.0168498942479594,
+              0.9873973036563661,
+              0.9558860875714498,
+              1.0107124054533676
+            ],
+            "geomean_ratio": 0.9924202799414557,
+            "median_ratio": 0.9989868387104481,
+            "noise_relative": 0.0472419028865676,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-disk.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              1.0122396069799262,
+              0.9622740936800136,
+              1.0163110572779568,
+              1.027138450032718
+            ],
+            "geomean_ratio": 1.0041750798259752,
+            "median_ratio": 1.014273289201876,
+            "noise_relative": 0.04463161066747068,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              0.9977538908794638,
+              0.94207603783435,
+              0.8310002969918966,
+              1.044499513528757
+            ],
+            "geomean_ratio": 0.950396223955867,
+            "median_ratio": 0.9695153594727273,
+            "noise_relative": 0.06253229877745081,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              1.0375847616451432,
+              1.0200970906745435,
+              1.0277632996282016,
+              0.9843446195105597
+            ],
+            "geomean_ratio": 1.017246824388756,
+            "median_ratio": 1.0239230204721435,
+            "noise_relative": 0.06200354493533711,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              1.0083557419139206,
+              1.0135668552247157,
+              1.0335787008269215,
+              0.9625584677568326
+            ],
+            "geomean_ratio": 1.0041745526442571,
+            "median_ratio": 1.0109579409052967,
+            "noise_relative": 0.05506929766075963,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              1.0558921303631914,
+              1.0220111285314648,
+              1.0297117925397892,
+              0.9707315614816582
+            ],
+            "geomean_ratio": 1.0191133802205044,
+            "median_ratio": 1.025854234848084,
+            "noise_relative": 0.04030307445723502,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              1.0450538456084508,
+              0.9841644909627587,
+              1.0821171650442258,
+              1.0463703180862651
+            ],
+            "geomean_ratio": 1.038822898841193,
+            "median_ratio": 1.0457118746799183,
+            "noise_relative": 0.06726912561596565,
+            "guard_pass": true,
+            "advisory": true
+          }
+        },
+        "overall_geomean_ratio": 1.0106718579920881,
+        "combined_score": 1.0147818839888383,
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "reference": false,
+        "performance_accepted": false,
+        "auto_promote": false,
+        "eligible_for_slow": false,
+        "needs_review": false,
+        "decision": "median",
+        "overall_median_ratio": 1.0147818839888383,
+        "status": "FAST_PASS"
+      },
+      "probe_signals": {
+        "swapin-disk": {
+          "swapin_vmstat_delta.pswpin": [
+            262147
+          ],
+          "swapin_vmstat_delta.zswpin": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra_hit": [
+            0
+          ],
+          "swapin_vmstat_delta.pgmajfault": [
+            262150
+          ],
+          "swapin_vmstat_delta.zswpwb": [
+            0
+          ],
+          "xswap.grows": [
+            7
+          ],
+          "xswap.shrinks": [
+            0
+          ],
+          "xswap.usage_pages": [
+            0
+          ],
+          "xswap.clusters_mapped": [
+            584
+          ]
+        },
+        "swapin-zram-64k": {
+          "swapin_vmstat_delta.pswpin": [
+            262133
+          ],
+          "swapin_vmstat_delta.zswpin": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra_hit": [
+            0
+          ],
+          "swapin_vmstat_delta.pgmajfault": [
+            262135
+          ],
+          "swapin_vmstat_delta.zswpwb": [
+            0
+          ],
+          "xswap.grows": [
+            7
+          ],
+          "xswap.shrinks": [
+            0
+          ],
+          "xswap.usage_pages": [
+            0
+          ],
+          "xswap.clusters_mapped": [
+            584
+          ]
+        },
+        "metadata-brd": {
+          "metadata_delta_bytes_per_capacity_slot": [
+            0.11093139689762666
+          ]
+        }
+      },
+      "report": "campaigns/exp3-async-zswap-prefetch-2026-11-06/runs/evaluations/ca3305446765481fa10086865d11dcf8/report.json",
+      "fast_evidence_id": "ca3305446765481fa10086865d11dcf8",
+      "advancement": {
+        "eligible": false,
+        "reason": "screen is exploratory; improvement does not exceed calibrated noise",
+        "evidence_id": "ca3305446765481fa10086865d11dcf8",
+        "candidate_commit": "9f584e79355fc92faf37e609fd522f3cbcf691ed",
+        "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+        "score": 1.0147818839888383,
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "noise_relative": 0.06200354493533711,
+        "threshold": 1.062003544935337
+      },
+      "parent_delta": {
+        "comparable": false,
+        "signal_summary": "median of retained samples; legacy scalar values are unchanged",
+        "probe_signals": {},
+        "combined_score": null,
+        "interpretation": "diagnostic difference of separate baseline comparisons, not a paired parent control"
+      },
+      "latest_status": "FAST_PASS",
+      "tier": "fast",
+      "screen_only": true,
+      "performance_accepted": false
+    }
+  },
+  "sample_sequence": 1,
+  "briefs": {
+    "brief-000001-8fca2cc459ba": {
+      "fingerprint": "54ec9f243a87312dbc638fb6c5643d2d7af5439a97a75d516dc608cecc0aab88",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "allowed_parents": [
+        "5e84ca928deeacb4eee656806a003f27d1eca82f"
+      ],
+      "parent_bindings": {
+        "5e84ca928deeacb4eee656806a003f27d1eca82f": {
+          "candidate": null,
+          "source_tree": null
+        }
+      },
+      "sample_seed": 10361143114549861007,
+      "sequence": 1,
+      "file": "archive/briefs/brief-000001-8fca2cc459ba.json",
+      "sha256": "8e6f8febd722587840da49eda60de18f94285c04a2828ad7c1552cee9d867497",
+      "consumed_by": "exp3-async-zswap-prefetch-v1",
+      "chosen_parent": "5e84ca928deeacb4eee656806a003f27d1eca82f"
+    }
+  }
+}
