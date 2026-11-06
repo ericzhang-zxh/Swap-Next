@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "xswap-fast-in-2026-11-06",
-  "state": "visually_checked",
+  "state": "live_verified",
   "evidence_sha256": "cc6c53e37a0d13b4fc34ecdc43a7a02a78521c9cf1a48066a704b5df79b639e3",
   "artifacts": {
     "summary.json": "9d98de7dc576d7efeb6616ebe07e69046ad59de19a04a06930d05151331b7f7b",
@@ -27,6 +27,10 @@
     {
       "state": "visually_checked",
       "time": 1793994046.8506534
+    },
+    {
+      "state": "live_verified",
+      "time": 1793994425.0080087
     }
   ],
   "visual_check": {
@@ -82,5 +86,13 @@
         "disclosure_works": true
       }
     ]
+  },
+  "publication": {
+    "commit": "41d92dabb108840b7ed402d98370c40c954d708f",
+    "run_id": "42282409036",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/xswap-fast-in-2026-11-06/",
+    "html_sha256": "0818cac3a195bf48da098a708f69dae3849962cc5906a0fad5ff4d440abd6a57",
+    "index_sha256": "181428c5ffb35ff8cac4f7d0eb73f3b271d29a76e33764fdab44d974ce47ae29",
+    "verified_unix": 1793994425.0080063
   }
 }
