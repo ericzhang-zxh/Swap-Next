@@ -1,0 +1,54 @@
+{
+  "artifact_sha256": "68e447fea59366007d1580dd31ca894758acf7cb4c76cda10b6e7c60fb048b1f",
+  "method": "Direct Playwright Chromium headless render and screenshot inspection of desktop (1280px) and mobile (390px) viewports across light and dark themes; DOM overflow, disclosure and theme-toggle checks verified.",
+  "views": [
+    {
+      "width": 1280,
+      "theme": "light",
+      "screenshot": "campaigns/exp2-stride-gated-ra/runs/visual-qa/desktop-light.png",
+      "sha256": "6b8c57397b732c1fa53c69e9bef73909215af658b0da007d59d6302a9c23ae89",
+      "readable": true,
+      "no_overflow": true,
+      "collapsed_evidence": true,
+      "charts_visible": true,
+      "theme_toggle_works": true,
+      "disclosure_works": true
+    },
+    {
+      "width": 1280,
+      "theme": "dark",
+      "screenshot": "campaigns/exp2-stride-gated-ra/runs/visual-qa/desktop-dark.png",
+      "sha256": "509701cb932266dc79a942d46cb388a37aa90cb1f9b2636ea79d2efee21fd573",
+      "readable": true,
+      "no_overflow": true,
+      "collapsed_evidence": true,
+      "charts_visible": true,
+      "theme_toggle_works": true,
+      "disclosure_works": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "screenshot": "campaigns/exp2-stride-gated-ra/runs/visual-qa/mobile-light.png",
+      "sha256": "47dd65e5c63a77ea6b9717529422866e05ed7eff97437a30540c1e7966609cd5",
+      "readable": true,
+      "no_overflow": true,
+      "collapsed_evidence": true,
+      "charts_visible": true,
+      "theme_toggle_works": true,
+      "disclosure_works": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "screenshot": "campaigns/exp2-stride-gated-ra/runs/visual-qa/mobile-dark.png",
+      "sha256": "837d5f28284fbe7f3a910ca59f86b9a1fe50c0a069d5a0c5ff6efc89c99b06a0",
+      "readable": true,
+      "no_overflow": true,
+      "collapsed_evidence": true,
+      "charts_visible": true,
+      "theme_toggle_works": true,
+      "disclosure_works": true
+    }
+  ]
+}

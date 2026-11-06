@@ -1,0 +1,15 @@
+{
+  "id": "ff74475894ee4796b2a46ab5d9b8d808-5-swapin-zram-64k-a",
+  "campaign": "exp2-stride-gated-ra",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793949969.7373104,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "zram-64k",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98",
+  "started_unix": 1793949969.7829688
+}

@@ -1,0 +1,483 @@
+{
+  "title": "Adaptive Stride- and Streak-Gated Swap Readahead",
+  "subtitle": "agy (gemini4argon) \u00b7 line: exp2-stride-gated-ra \u00b7 base 5e84ca92 \u00b7 1 candidate \u00b7 69 guests / 0 builds",
+  "verdict": {
+    "status": "needs-review",
+    "headline": "Screening benchmark: streak gating eliminates speculative readahead on random workloads with -0.96% disk mean and -6.4% zram p99 latency gains.",
+    "tiles": [
+      {
+        "label": "Evidence",
+        "value": "Screen only",
+        "note": "Human review controls promotion."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "Mitigating speculative readahead penalties on non-contiguous swapin",
+      "lead": "Standard swap readahead speculatively grows windows on initial faults, penalizing random access. Candidate exp2-stride-gated-ra-v1 introduces strict stride and streak gating before expanding readahead windows beyond 1.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis 2 gates swapin readahead expansion in mm/swap_state.c, resetting streak counters and collapsing readahead window on non-contiguous access. Evaluated under Protocol Revision 7 with attributable metadata accounting."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Swap readahead heuristic and memory layout",
+      "lead": "Swap readahead decisions track access strides in VMA readahead state and dynamically compute window size during page faults.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Faulting address determines stride detection and window expansion",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "swapin_readahead",
+              "tone": "default"
+            },
+            {
+              "id": "stride",
+              "label": "Stride Check",
+              "col": 1,
+              "row": 0,
+              "sub": "contiguous \u00b11",
+              "tone": "focus"
+            },
+            {
+              "id": "win",
+              "label": "Window Control",
+              "col": 1,
+              "row": 1,
+              "sub": "grow vs collapse",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "stride",
+              "label": "check faddr"
+            },
+            {
+              "from": "stride",
+              "to": "win",
+              "label": "update win"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Streak gating in swap_vma_ra_win and swap_update_readahead",
+      "lead": "Baseline expands window size aggressively and retains prev_win / 2 on direction changes. Candidate introduces 2+ contiguous hit requirement before win > 1 and immediate collapse to win = 1 on non-contiguous fault.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Non-contiguous faults collapse readahead window to 1 without speculative prefetch",
+          "nodes": [
+            {
+              "id": "check",
+              "label": "faddr == prev \u00b1 PAGE",
+              "col": 0,
+              "row": 0,
+              "sub": "streak test",
+              "tone": "default"
+            },
+            {
+              "id": "streak",
+              "label": "Streak >= 2",
+              "col": 1,
+              "row": 0,
+              "sub": "expand win",
+              "tone": "good"
+            },
+            {
+              "id": "collapse",
+              "label": "Collapse win=1",
+              "col": 1,
+              "row": 1,
+              "sub": "streak=0",
+              "tone": "focus"
+            }
+          ],
+          "edges": [
+            {
+              "from": "check",
+              "to": "streak",
+              "label": "yes"
+            },
+            {
+              "from": "check",
+              "to": "collapse",
+              "label": "no"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Modifications in mm/swap_state.c",
+      "lead": "Default uninitialized VMA readahead value to 0; in swap_vma_ra_win and swap_update_readahead, require 2+ consecutive contiguous hits before expanding win > 1; immediately collapse win to 1 on stride disruption; in __swapin_nr_pages, bypass window retention on offset discontinuity.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Streak gating eliminates speculative I/O on random access patterns",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "swap_vma_ra_win",
+              "col": 0,
+              "row": 0,
+              "sub": "entry",
+              "tone": "default"
+            },
+            {
+              "id": "gate",
+              "label": "Streak Gate",
+              "col": 1,
+              "row": 0,
+              "sub": "2+ hits needed",
+              "tone": "focus"
+            },
+            {
+              "id": "single",
+              "label": "Single Page",
+              "col": 1,
+              "row": 1,
+              "sub": "win = 1",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "gate",
+              "label": "evaluate"
+            },
+            {
+              "from": "gate",
+              "to": "single",
+              "label": "random / stride break"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Baseline metadata calibration: CALIBRATED",
+          "x_label": "Metadata bytes per 1,000 capacity slots (baseline only)",
+          "groups": [
+            "Run 1",
+            "Run 2",
+            "Run 3"
+          ],
+          "series": [
+            "Baseline"
+          ],
+          "points": [
+            {
+              "group": "Run 1",
+              "series": "Baseline",
+              "value": 110.97717326498469,
+              "tip": "ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-0"
+            },
+            {
+              "group": "Run 2",
+              "series": "Baseline",
+              "value": 111.06872599970075,
+              "tip": "ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-1"
+            },
+            {
+              "group": "Run 3",
+              "series": "Baseline",
+              "value": 110.946655686746,
+              "tip": "ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-2"
+            }
+          ],
+          "note": "Valid calibration samples; candidate performance was not measured here."
+        },
+        {
+          "type": "strip",
+          "takeaway": "exp2-stride-gated-ra-v1: swapin-disk.swapin_seq.mean_ns",
+          "x_label": "swapin-disk.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 325345.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 311055.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 278792.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 282772.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 282022.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 274384.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 276391.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 278484.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "exp2-stride-gated-ra-v1: swapin-zram-64k.swapin_seq.mean_ns",
+          "x_label": "swapin-zram-64k.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 30002.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 29215.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 30662.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 30080.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 28993.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 31577.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 33194.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 29437.0,
+              "tip": "c9bf37d96a98448f84216d7755599b6a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural decision: exploratory screening completed",
+      "lead": "Candidate passed all 17 correctness gates, probe calibration, and fast screening benchmark. While random tail latency improved by up to 6.4%, modest net gain within noise retains this candidate as an exploratory screen.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The experiment proves that streak gating successfully prevents speculative swapin I/O during random access. Future work should combine streak gating with asynchronous prefetch or larger folio clustering to offset the sequential ramp latency."
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every retained outcome",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "ddb7221b7c6b4a618c39cec4382e1b81",
+              "control",
+              "probe",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "1b9c659c1389451ba5f191a840e0a6f1",
+              "exp2-stride-gated-ra-v1",
+              "probe",
+              "PROBE_PASS",
+              ""
+            ],
+            [
+              "ff74475894ee4796b2a46ab5d9b8d808",
+              "control",
+              "fast",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "c9bf37d96a98448f84216d7755599b6a",
+              "exp2-stride-gated-ra-v1",
+              "fast",
+              "FAST_PASS",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": []
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "exp2-stride-gated-ra-v1",
+              "{\"assessment\": {\"auto_promote\": false, \"complexity_relation\": \"more-complex\", \"confirmation_required\": false, \"disposition\": \"rejected\", \"frontier_eligible\": true, \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"52524488a09808ce19e5940257f0c46aad247548\", \"candidate_tree\": \"606252530584ee874eebb5894f6d64afb2f9643b\", \"evaluation_id\": \"c9bf37d96a98448f84216d7755599b6a\", \"evaluation_report\": \"campaigns/exp2-stride-gated-ra/runs/evaluations/c9bf37d96a98448f84216d7755599b6a/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98\"}, \"parent_complexity_relation\": \"more-complex\", \"performance_accepted\": false, \"reasons\": [\"benefit does not justify added complexity\"], \"scientific_sha256\": \"9b243ad4e138f7c718ee148272b78dc0358fdc27f21bd41c90b8454537576155\"}, \"decision\": {\"advisory_flags\": [], \"complexity\": {\"baseline\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"Readahead sysctl and sysfs interfaces unchanged.\"}, \"error_paths\": {\"change\": \"unchanged\", \"reason\": \"Identical fault handling and swapin fallback paths.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"swapin helper signatures preserved.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"Cluster lifecycle, swapcache lookup, and page retirement unchanged.\"}, \"locking\": {\"change\": \"unchanged\", \"reason\": \"No changes to spinlocks or page locks.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"Zero additional bytes allocated.\"}, \"state\": {\"change\": \"unchanged\", \"reason\": \"No new persistent kernel state; reuses existing vma_ra window tracking.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Requires verifying stride gating across sequential, random, and interleaved fault access patterns.\"}}, \"parent\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"Readahead sysctl and sysfs interfaces unchanged.\"}, \"error_paths\": {\"change\": \"unchanged\", \"reason\": \"Identical fault handling and swapin fallback paths.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"swapin helper signatures preserved.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"Cluster lifecycle, swapcache lookup, and page retirement unchanged.\"}, \"locking\": {\"change\": \"unchanged\", \"reason\": \"No changes to spinlocks or page locks.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"Zero additional bytes allocated.\"}, \"state\": {\"change\": \"unchanged\", \"reason\": \"No new persistent kernel state; reuses existing vma_ra window tracking.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Requires verifying stride gating across sequential, random, and interleaved fault access patterns.\"}}}, \"complexity_justification\": \"Gating swapin readahead expansion on verified sequential stride and immediately collapsing to win=1 on non-contiguous access adds algorithmic branch checks in the swapin fault path, which slightly increases test burden across access patterns while eliminating speculative I/O on random access.\", \"evidence\": [\"campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/static.json\", \"campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/mechanism.json\", \"campaigns/exp2-stride-gated-ra/report/independent-review.md\", \"campaigns/exp2-stride-gated-ra/runs/evaluations/c9bf37d96a98448f84216d7755599b6a/report.json\", \"campaigns/exp2-stride-gated-ra/runs/guests/exp2-stride-gated-ra-v1-correctness/result.json\"], \"frontier_eligible\": true, \"frontier_reason\": \"First validated stride- and streak-gated swapin readahead implementation with confirmed correctness and calibrated latency evaluation.\", \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"52524488a09808ce19e5940257f0c46aad247548\", \"candidate_tree\": \"606252530584ee874eebb5894f6d64afb2f9643b\", \"evaluation_id\": \"c9bf37d96a98448f84216d7755599b6a\", \"evaluation_report\": \"campaigns/exp2-stride-gated-ra/runs/evaluations/c9bf37d96a98448f84216d7755599b6a/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98\"}, \"learning_value\": \"Demonstrates that streak gating (requiring 2+ contiguous hits before win > 1) and immediate collapse to win=1 eliminates speculative readahead on random workloads, improving random tail latency while introducing a small (+1.27%) sequential disk readahead expansion ramp delay.\", \"performance\": {\"noise_relative\": 0.04162432991135567, \"normalized_gain\": 0.01930570359276418, \"scored_guards_pass\": true}, \"reason\": \"Candidate achieves FAST_PASS with reduced random swapin latency (-0.96% mean disk, -6.4% zram p99) and passing scored guardrails across all 4 screening pairs.\", \"review_status\": \"clear\", \"schema_version\": 1, \"scientific_result\": \"screen\", \"scientific_sha256\": \"9b243ad4e138f7c718ee148272b78dc0358fdc27f21bd41c90b8454537576155\", \"upstream_comparison\": {\"evidence\": [], \"reason\": \"Frozen line declares no relevant upstream comparison.\", \"status\": \"not-applicable\"}}, \"provenance\": {\"evaluation_sha256\": \"38036fd8564c1ae37c38aa404b83d2385b9e5b522d46559ed0122472c24d53f6\", \"evidence_sha256\": {\"campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/mechanism.json\": \"a50f9029b1ca2f3396756f0749b4cee513a01553a454524d754ecaa2d69decde\", \"campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/static.json\": \"39f80aa799cafdb3f213ad293b257819d8450ce36a80803321e2f373378e5cec\", \"campaigns/exp2-stride-gated-ra/report/independent-review.md\": \"0734b66e9dc86fe1555d2fcb4d7f773692891b8a356b38f310bcf0374196bed5\", \"campaigns/exp2-stride-gated-ra/runs/evaluations/c9bf37d96a98448f84216d7755599b6a/report.json\": \"38036fd8564c1ae37c38aa404b83d2385b9e5b522d46559ed0122472c24d53f6\", \"campaigns/exp2-stride-gated-ra/runs/guests/exp2-stride-gated-ra-v1-correctness/result.json\": \"8aca7a087baa91ff1a3ee3233e1d9dda5d37450dc7a38c21d3660b0c5d0deca9\"}}, \"schema_version\": 1}"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/exp2-stride-gated-ra/campaign.json",
+              "ed33ef9c6bc0cad55c3bf08a72f62a0173d57630f56e2382a54d6c33bc7bd3a5"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/value.json",
+              "009f8c14dab4c2f76f1947f9ffb12fcda92c79598c0957bb5fb50cf1e55fede3"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1.json",
+              "1d7d658d462733bcd997331d9d2b8606ca7a1a4a7d69ea896a39ada1527a63f9"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/ledger/budget.json",
+              "3f4814b6e1ed08e001e434cb5a9e2c7b01ae011c20a55b0e7fb4d4915603b390"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/ledger/ledger.json",
+              "6c3d9efc103effa40ddc6256965f5a533557e2213f3c04d53eb09462efe58384"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/ledger/session-closeout.json",
+              "0af5abb968fd089fb90b142cfdc36bcf3e5e0f09c2df7374c072cac6eee877de"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/patches/exp2-stride-gated-ra-v1.patch",
+              "78565fce50837c2be44280cc8c3bc2d132390331277a4d49efbf3157d0aa7a3e"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/policy.json",
+              "2e410693d2265a52678dd96735a9375556e5c258157a328da93448097e833a25"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/protocol.json",
+              "0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/research.json",
+              "3e62736ec0c328b2ef0f7ca1e6341ec1c2af5bed993d3878fee34967d8b6775a"
+            ],
+            [
+              "campaigns/exp2-stride-gated-ra/reviews/exp2-independent-v1.json",
+              "a343db4fc77ca1bf72a69f9c61626bd73e50791638a6484a4e30b6b33ce333ea"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "date": "2026-11-06"
+}

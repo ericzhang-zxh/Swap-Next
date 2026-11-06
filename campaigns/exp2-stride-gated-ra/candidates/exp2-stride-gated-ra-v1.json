@@ -1,0 +1,20 @@
+{
+  "id": "exp2-stride-gated-ra-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-d7f7e2d2c751",
+  "worktree": "worktrees/exp2-stride-gated-ra/exp2-stride-gated-ra-v1",
+  "status": "closed",
+  "hypothesis": "In swap_vma_ra_win and swap_update_readahead, requiring 2+ contiguous hits before expanding win > 1 and immediately collapsing win = 1 on non-contiguous access eliminates speculative swap readahead on random workloads while retaining sequential readahead throughput. Reject if sequential throughput degrades significantly, or if random p99 tail latency fails the calibrated noise guard.",
+  "created_unix": 1793947040.4067464,
+  "protocol_sha256": "1bd00b8ee66cee247ef131c9fb90f0243523861461f1b9e216f4119be4bf9fed",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "In mm/swap_state.c, readahead window expansion win > 1 is gated on 2+ consecutive contiguous page faults (faddr == prev_faddr \u00b1 PAGE_SIZE); any stride disruption or random access immediately collapses win = 1 and resets streak to 0, preventing speculative I/O from inflating random tail latency.",
+    "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+  },
+  "reason": "Research disposition: rejected"
+}

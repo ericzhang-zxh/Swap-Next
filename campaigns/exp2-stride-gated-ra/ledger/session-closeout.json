@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "campaign": "exp2-stride-gated-ra",
+  "mode": "research",
+  "reason": "Recovered closed campaign; original candidate reasons and measurements are retained.",
+  "frozen_inputs": {
+    "owner.json": "d366eabee52b303d97a1a4a6173488d2aba4f773056a757bbe21cabdcd37a156",
+    "policy.json": "2e410693d2265a52678dd96735a9375556e5c258157a328da93448097e833a25",
+    "protocol.json": "0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98",
+    "research.json": "3e62736ec0c328b2ef0f7ca1e6341ec1c2af5bed993d3878fee34967d8b6775a"
+  },
+  "decisions": [
+    {
+      "id": "decision-6c47a381b1ef520895ae59a3",
+      "action_id": "action-85f025269d3137ea4cc1c04c",
+      "kind": "propose",
+      "identity": {
+        "brief_id": "brief-000001-d7f7e2d2c751",
+        "brief_sha256": "ade0a65d655afe6590d52ce3dc769b0e058c4f2878abc1567d22d3ed5e11befb",
+        "allowed_parents": [
+          "5e84ca928deeacb4eee656806a003f27d1eca82f"
+        ],
+        "idea": "stride-gated-readahead"
+      },
+      "input_hashes": {
+        "evolve/session.py": "af5662a988a72ca8eaad63496fee0bfc257903e443a927ea789d105afdaba9bb",
+        "evolve/control/controller.py": "1770ef0ccf49b718cd1a892422881bcfb9114738bd2274eb03e93eb7742bd130",
+        "evolve/standard_workflow.py": "56616b65756244b5e6aa58191d0036bc426b963a400c9f49925664ed4bd5e712",
+        "evolve/research.py": "2cd6f725ea6ddc2cead27055cf5c8a20d0ff602591b5ea5161c5d7bc0571a027",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "cada337eb0bb6c3e1feef4954748137dea2eae289847ebc966529106a46cbbbf",
+        "evolve/calibration_cache.py": "7ee8e8b22aca5736d07ab37c1f5455d1799861d1929881856ee7493700373afc",
+        "evolve/reference_cache.py": "f623013ba1b2de86be29e906704a7437eeaff5d9f7c58b1fddd8eca3e6560c01",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "campaigns/exp2-stride-gated-ra/campaign.json": "15b0c7185275a054175fcffd549773aed0fe2398602249a2b35d5505bca75068",
+        "campaigns/exp2-stride-gated-ra/protocol.json": "0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98",
+        "campaigns/exp2-stride-gated-ra/policy.json": "2e410693d2265a52678dd96735a9375556e5c258157a328da93448097e833a25",
+        "campaigns/exp2-stride-gated-ra/research.json": "3e62736ec0c328b2ef0f7ca1e6341ec1c2af5bed993d3878fee34967d8b6775a",
+        "campaigns/exp2-stride-gated-ra/ledger/ledger.json": null,
+        "campaigns/exp2-stride-gated-ra/ledger/budget.json": null,
+        "benchmark/kernel/builds/codex-r01-base/result.json": "9cc33bb57b77759a9ca881eb46861a5d3fbbcb78c592c82adff425501b9bd759",
+        "benchmark/swap-standard/image.json": "77a2905e98bd798b6ec338dd25bd0e9df4249bb5f23964369e2e83cfee1f5a6b",
+        "campaigns/exp2-stride-gated-ra/ledger/calibration-probe.json": null,
+        "campaigns/exp2-stride-gated-ra/ledger/calibration-fast.json": null,
+        "campaigns/exp2-stride-gated-ra/archive/population.json": "c00dc2a51e1ce3e2f831a4c565f4737f301524ead1f955a79a2cd459a9c03c1c",
+        "campaigns/exp2-stride-gated-ra/archive/briefs/brief-000001-d7f7e2d2c751.json": "ade0a65d655afe6590d52ce3dc769b0e058c4f2878abc1567d22d3ed5e11befb"
+      },
+      "payload": {
+        "kind": "propose",
+        "reason": "Execute Experiment 2 candidate: Adaptive Stride- and Streak-Gated Swap Readahead",
+        "candidate": "exp2-stride-gated-ra-v1",
+        "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "hypothesis": "In swap_vma_ra_win and swap_update_readahead, requiring 2+ contiguous hits before expanding win > 1 and immediately collapsing win = 1 on non-contiguous access eliminates speculative swap readahead on random workloads while retaining sequential readahead throughput. Reject if sequential throughput degrades significantly, or if random p99 tail latency fails the calibrated noise guard.",
+        "mechanism": {
+          "kind": "reviewed_structure",
+          "claim": "In mm/swap_state.c, readahead window expansion win > 1 is gated on 2+ consecutive contiguous page faults (faddr == prev_faddr \u00b1 PAGE_SIZE); any stride disruption or random access immediately collapses win = 1 and resets streak to 0, preventing speculative I/O from inflating random tail latency.",
+          "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+        }
+      }
+    },
+    {
+      "id": "decision-a7c110167a27b6b99d85826f",
+      "action_id": "action-ac55ea41e140b39d88f37304",
+      "kind": "fast_selection",
+      "identity": {
+        "candidate": "exp2-stride-gated-ra-v1",
+        "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+        "source_tree": "606252530584ee874eebb5894f6d64afb2f9643b",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "probe_id": "1b9c659c1389451ba5f191a840e0a6f1",
+        "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f"
+      },
+      "input_hashes": {
+        "evolve/session.py": "af5662a988a72ca8eaad63496fee0bfc257903e443a927ea789d105afdaba9bb",
+        "evolve/control/controller.py": "1770ef0ccf49b718cd1a892422881bcfb9114738bd2274eb03e93eb7742bd130",
+        "evolve/standard_workflow.py": "56616b65756244b5e6aa58191d0036bc426b963a400c9f49925664ed4bd5e712",
+        "evolve/research.py": "2cd6f725ea6ddc2cead27055cf5c8a20d0ff602591b5ea5161c5d7bc0571a027",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "cada337eb0bb6c3e1feef4954748137dea2eae289847ebc966529106a46cbbbf",
+        "evolve/calibration_cache.py": "7ee8e8b22aca5736d07ab37c1f5455d1799861d1929881856ee7493700373afc",
+        "evolve/reference_cache.py": "f623013ba1b2de86be29e906704a7437eeaff5d9f7c58b1fddd8eca3e6560c01",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "campaigns/exp2-stride-gated-ra/campaign.json": "15b0c7185275a054175fcffd549773aed0fe2398602249a2b35d5505bca75068",
+        "campaigns/exp2-stride-gated-ra/protocol.json": "0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98",
+        "campaigns/exp2-stride-gated-ra/policy.json": "2e410693d2265a52678dd96735a9375556e5c258157a328da93448097e833a25",
+        "campaigns/exp2-stride-gated-ra/research.json": "3e62736ec0c328b2ef0f7ca1e6341ec1c2af5bed993d3878fee34967d8b6775a",
+        "campaigns/exp2-stride-gated-ra/ledger/ledger.json": "c56d9ffe022e3e745353f3d16e7b998504ef624df265b167f1a8416e9ff734a5",
+        "campaigns/exp2-stride-gated-ra/runs/evaluations/ddb7221b7c6b4a618c39cec4382e1b81/report.json": "1e961af96f3ae222d1ff186ef9194008c87fade9bcc3c8c529301a90e06f6605",
+        "campaigns/exp2-stride-gated-ra/runs/evaluations/1b9c659c1389451ba5f191a840e0a6f1/report.json": "d5367809ac378306aced8029b95c94560b76ffc3888f93fe67c2f5ae4c5372de",
+        "campaigns/exp2-stride-gated-ra/ledger/budget.json": "67dfe9caa9ad1a2e6a478aa90c6391d766fdbd69c594fa26b603fda31a9a5786",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/1b9c659c1389451ba5f191a840e0a6f1-metadata-brd-0.json": "f41eb65d521beef4346f0e6ee6922525fc5761a2d06d75a6037ce6057a83e981",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/ddb7221b7c6b4a618c39cec4382e1b81-swapin-zram-64k-1.json": "2a58baaf0c206940e3e52761bcea1171e2379401bfc34fb1b0c3b580eac0e86d",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/exp2-stride-gated-ra-v1-correctness.json": "48abcc7284fe360ea1594bad0412ce8ad52ce8e60a45a1fbb72e8cec2175d718",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-2.json": "d28d292732d82642b2bc86acd4f6d25bfa7cedc32ff8882aedc94d733ada2d1f",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-1.json": "b3fb09c74580d219ef4d7d9fc6daab69cb156c999124eabccb5200122e923934",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/ddb7221b7c6b4a618c39cec4382e1b81-swapin-zram-64k-0.json": "2a8eda3bb62ec02cb631b014c1713444ef7df2b8ef0d8456cbe2993e69ba0580",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/1b9c659c1389451ba5f191a840e0a6f1-swapin-zram-64k-0.json": "d9d512d47f81d3785b94b014af8dd5597ee0eddc8a1e90edab36d96603368757",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-0.json": "dcecb20c473f7da5667ae0f9fc1014f92ab1a1b2e372b8c7f29b83a3adae6454",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/ddb7221b7c6b4a618c39cec4382e1b81-swapin-disk-2.json": "1b6d26e1e10ae37240d7a2516a213532be36e7b9a217506b53c580d0c8e14437",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/ddb7221b7c6b4a618c39cec4382e1b81-swapin-disk-0.json": "faec7878eb38904d1a5bfe1e9ccb5ecaaa2f52cbbba09ab928940c8beb22fdc5",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/ddb7221b7c6b4a618c39cec4382e1b81-swapin-zram-64k-2.json": "9a00e962076f9b62aa3586d6b7497782c2219eb0a541491f10756a8497f01a8b",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/ddb7221b7c6b4a618c39cec4382e1b81-swapin-disk-1.json": "e474cc1ad82d678de69e1017b097d7b9e34babb4419c2276ca882ff598128e5c",
+        "campaigns/exp2-stride-gated-ra/ledger/guest-reservations/1b9c659c1389451ba5f191a840e0a6f1-swapin-disk-0.json": "179b4daa582ee36e2652aab095231e97ab8ba1a12285101e1121afadf4b35f98",
+        "benchmark/kernel/builds/codex-r01-base/result.json": "9cc33bb57b77759a9ca881eb46861a5d3fbbcb78c592c82adff425501b9bd759",
+        "benchmark/swap-standard/image.json": "77a2905e98bd798b6ec338dd25bd0e9df4249bb5f23964369e2e83cfee1f5a6b",
+        "campaigns/exp2-stride-gated-ra/ledger/calibration-probe.json": "1e961af96f3ae222d1ff186ef9194008c87fade9bcc3c8c529301a90e06f6605",
+        "campaigns/exp2-stride-gated-ra/ledger/calibration-fast.json": null,
+        "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1.json": "280709e280804b27bcecd600a5fde6006bd2cdf1c18227b50612966c26e12d2c",
+        "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/static.json": "39f80aa799cafdb3f213ad293b257819d8450ce36a80803321e2f373378e5cec",
+        "campaigns/exp2-stride-gated-ra/archive/population.json": "4762661e3c4c8b6667eb7f3dd7f4306a9c842f09a71071212fff9144734268c6",
+        "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/mechanism.json": "a50f9029b1ca2f3396756f0749b4cee513a01553a454524d754ecaa2d69decde",
+        "campaigns/exp2-stride-gated-ra/runs/guests/1b9c659c1389451ba5f191a840e0a6f1-metadata-brd-0/result.json": "55948115b85eb25c7e573401ceb4853e99d7b8e396925fe6e962bd3341375eb4",
+        "campaigns/exp2-stride-gated-ra/runs/guests/1b9c659c1389451ba5f191a840e0a6f1-swapin-disk-0/result.json": "4d42e9deb0e53ebda41f87f14a8fbbace6001f7745c5ea22c5d48dddd82408be",
+        "campaigns/exp2-stride-gated-ra/runs/guests/1b9c659c1389451ba5f191a840e0a6f1-swapin-zram-64k-0/result.json": "541de66e9d35d802a31d4b264d8dffa19619d06084d145721d7a5459313c974a",
+        "campaigns/exp2-stride-gated-ra/runs/guests/ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-0/result.json": "385e4ed91c6dddd26ee185a0930564f14e3b0fc18e1ba6a538e43706a904ee48",
+        "campaigns/exp2-stride-gated-ra/runs/guests/ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-1/result.json": "d9f62586af2961087b86e203844a3bdf6b35745af5ea4aedd3108742bc5bf68d",
+        "campaigns/exp2-stride-gated-ra/runs/guests/ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-2/result.json": "3df81ca7959460f90ccc13b62321b7d31f9e0eb4dd110613c999ceaa1d30c9ed",
+        "campaigns/exp2-stride-gated-ra/runs/guests/ddb7221b7c6b4a618c39cec4382e1b81-swapin-disk-0/result.json": "ad9a40436af6b99f588a499ff9ba4169473933a7fc3df00553fc54fd6c12de81",
+        "campaigns/exp2-stride-gated-ra/runs/guests/ddb7221b7c6b4a618c39cec4382e1b81-swapin-disk-1/result.json": "d3b5a71df7ef3b594a3640e3c2dbb4870a28e8e2fe4edd4ea03cb48c5173744d",
+        "campaigns/exp2-stride-gated-ra/runs/guests/ddb7221b7c6b4a618c39cec4382e1b81-swapin-disk-2/result.json": "e9f4821e805b21e729c293a521f6b84c145d84d526dd065a044077608d3405ff",
+        "campaigns/exp2-stride-gated-ra/runs/guests/ddb7221b7c6b4a618c39cec4382e1b81-swapin-zram-64k-0/result.json": "fa7823f20db8f19f975006c38816f8ec6c382135d3ba175fd458342159d8ffda",
+        "campaigns/exp2-stride-gated-ra/runs/guests/ddb7221b7c6b4a618c39cec4382e1b81-swapin-zram-64k-1/result.json": "a287bef1084a8f67f140f70de67ed4473d145f9cce2d246b9d98e5f619cbb98f",
+        "campaigns/exp2-stride-gated-ra/runs/guests/ddb7221b7c6b4a618c39cec4382e1b81-swapin-zram-64k-2/result.json": "e874e528c256289d9fed6f2a1d3b0a5b80520275027b1590a02010a6c8cce49c",
+        "campaigns/exp2-stride-gated-ra/runs/guests/exp2-stride-gated-ra-v1-correctness/result.json": "8aca7a087baa91ff1a3ee3233e1d9dda5d37450dc7a38c21d3660b0c5d0deca9"
+      },
+      "payload": {
+        "kind": "fast_selection",
+        "disposition": "screen",
+        "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+        "source_tree": "606252530584ee874eebb5894f6d64afb2f9643b",
+        "probe_id": "1b9c659c1389451ba5f191a840e0a6f1",
+        "reason": "Candidate exp2-stride-gated-ra-v1 passed probe evaluation cleanly within calibrated metadata and vmstat bands; admit to fast screening benchmark to quantify sequential vs random latency tradeoffs."
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "action-487428a6a55821b36eb685b8",
+      "command": "open",
+      "identity": {
+        "protocol_sha256": "0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98",
+        "policy_sha256": "2e410693d2265a52678dd96735a9375556e5c258157a328da93448097e833a25"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp2-stride-gated-ra/runs/session/action-487428a6a55821b36eb685b8-80998fd6.log"
+    },
+    {
+      "action_id": "action-d30e6c741d4e9e45f015af65",
+      "command": "brief",
+      "identity": {
+        "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f",
+        "idea": "stride-gated-readahead"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp2-stride-gated-ra/runs/session/action-d30e6c741d4e9e45f015af65-0d3eaa29.log"
+    },
+    {
+      "action_id": "action-3504ed8b2d2e3609ee3cbf6f",
+      "command": "new",
+      "identity": {
+        "brief_id": "brief-000001-d7f7e2d2c751",
+        "idea": "stride-gated-readahead"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp2-stride-gated-ra/runs/session/action-3504ed8b2d2e3609ee3cbf6f-a6fc7569.log"
+    },
+    {
+      "action_id": "action-8e8f1b27b84836c21b8634db",
+      "command": "check",
+      "identity": {
+        "candidate": "exp2-stride-gated-ra-v1",
+        "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+        "source_tree": "606252530584ee874eebb5894f6d64afb2f9643b",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp2-stride-gated-ra/runs/session/action-8e8f1b27b84836c21b8634db-aa1f581b.log"
+    },
+    {
+      "action_id": "action-962f5db8f2f8fe6334118a0c",
+      "command": "calibrate",
+      "identity": {
+        "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f",
+        "prior_calibration": null
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp2-stride-gated-ra/runs/session/action-962f5db8f2f8fe6334118a0c-fa3a1cec.log"
+    },
+    {
+      "action_id": "action-b007d51edffb89922f0b045f",
+      "command": "evaluate",
+      "identity": {
+        "candidate": "exp2-stride-gated-ra-v1",
+        "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+        "source_tree": "606252530584ee874eebb5894f6d64afb2f9643b",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f",
+        "calibration_id": "ddb7221b7c6b4a618c39cec4382e1b81",
+        "probe_id": null
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp2-stride-gated-ra/runs/session/action-b007d51edffb89922f0b045f-557bf2b5.log"
+    },
+    {
+      "action_id": "action-b027279d6201f2dbd1f2f053",
+      "command": "calibrate",
+      "identity": {
+        "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f",
+        "prior_calibration": null
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp2-stride-gated-ra/runs/session/action-b027279d6201f2dbd1f2f053-9409cae8.log"
+    },
+    {
+      "action_id": "action-0953335e21ee6281cb697bda",
+      "command": "evaluate",
+      "identity": {
+        "candidate": "exp2-stride-gated-ra-v1",
+        "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+        "source_tree": "606252530584ee874eebb5894f6d64afb2f9643b",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f",
+        "calibration_id": "ff74475894ee4796b2a46ab5d9b8d808",
+        "probe_id": "1b9c659c1389451ba5f191a840e0a6f1"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp2-stride-gated-ra/runs/session/action-0953335e21ee6281cb697bda-f9d28aff.log"
+    },
+    {
+      "action_id": "action-713f94fc19b4661a4f563a66",
+      "command": "close-candidate",
+      "identity": {
+        "candidate": "exp2-stride-gated-ra-v1",
+        "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+        "source_tree": "606252530584ee874eebb5894f6d64afb2f9643b",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/exp2-stride-gated-ra/runs/session/action-713f94fc19b4661a4f563a66-1f9ac3ca.log"
+    }
+  ],
+  "candidate_reasons": {
+    "exp2-stride-gated-ra-v1": "Research disposition: rejected"
+  },
+  "performance_accepted": false,
+  "auto_promote": false
+}

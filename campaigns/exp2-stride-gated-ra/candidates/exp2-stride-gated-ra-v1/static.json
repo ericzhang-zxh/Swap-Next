@@ -1,0 +1,19 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+  "changed_paths": [
+    "mm/swap_state.c"
+  ],
+  "changed_lines": 61,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/checkpatch.log",
+    "sha256": "63597df856c65beeb12a3ad70d2b4e95535e727ea05018b118f21e362deca582"
+  }
+}

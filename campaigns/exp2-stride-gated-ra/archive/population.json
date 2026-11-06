@@ -1,0 +1,525 @@
+{
+  "schema_version": 1,
+  "campaign": "exp2-stride-gated-ra",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "entries": {
+    "exp2-stride-gated-ra-v1": {
+      "id": "exp2-stride-gated-ra-v1",
+      "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+      "source_tree": "606252530584ee874eebb5894f6d64afb2f9643b",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_candidate": null,
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "generation": 1,
+      "patch": "diff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..4036dfb1a 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -65,9 +65,9 @@ static bool enable_vma_readahead __read_mostly = true;\n \t (((win) << SWAP_RA_WIN_SHIFT) & SWAP_RA_WIN_MASK) |\t\\\n \t ((hits) & SWAP_RA_HITS_MASK))\n \n-/* Initial readahead hits is 4 to start up with a small window */\n+/* Do not seed initial hits; require contiguous access to grow window */\n #define GET_SWAP_RA_VAL(vma)\t\t\t\t\t\\\n-\t(atomic_long_read(&(vma)->swap_readahead_info) ? : 4)\n+\tatomic_long_read(&(vma)->swap_readahead_info)\n \n static atomic_t swapin_readahead_hits = ATOMIC_INIT(4);\n \n@@ -709,13 +709,26 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\n \treadahead = folio_test_clear_readahead(folio);\n \tif (vma && vma_ra) {\n \t\tunsigned long ra_val;\n+\t\tunsigned long prev_addr;\n \t\tint win, hits;\n+\t\tbool is_contiguous;\n \n \t\tra_val = GET_SWAP_RA_VAL(vma);\n+\t\tprev_addr = SWAP_RA_ADDR(ra_val);\n \t\twin = SWAP_RA_WIN(ra_val);\n \t\thits = SWAP_RA_HITS(ra_val);\n-\t\tif (readahead)\n+\n+\t\tis_contiguous = prev_addr &&\n+\t\t\t(addr == prev_addr + PAGE_SIZE ||\n+\t\t\t prev_addr == addr + PAGE_SIZE);\n+\n+\t\tif (!is_contiguous) {\n+\t\t\thits = 0;\n+\t\t\twin = 1;\n+\t\t} else if (readahead) {\n \t\t\thits = min_t(int, hits + 1, SWAP_RA_HITS_MAX);\n+\t\t}\n+\n \t\tatomic_long_set(&vma->swap_readahead_info,\n \t\t\t\tSWAP_RA_VAL(addr, win, hits));\n \t}\n@@ -836,6 +849,13 @@ static unsigned int __swapin_nr_pages(unsigned long prev_offset,\n {\n \tunsigned int pages, last_ra;\n \n+\t/*\n+\t * Immediate collapse on stride disruption or non-contiguous access:\n+\t * do not retain prior window across non-adjacent offsets.\n+\t */\n+\tif (prev_offset && offset != prev_offset + 1 && offset != prev_offset - 1)\n+\t\treturn 1;\n+\n \t/*\n \t * This heuristic has been found to work well on both sequential and\n \t * random loads, swapping to hard disk or to SSD: please don't ask\n@@ -959,6 +979,7 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n \tunsigned long ra_val;\n \tunsigned long faddr, prev_faddr, left, right;\n \tunsigned int max_win, hits, prev_win, win;\n+\tbool is_contiguous;\n \n \tmax_win = 1 << min(READ_ONCE(page_cluster), SWAP_RA_ORDER_CEILING);\n \tif (max_win == 1)\n@@ -969,9 +990,41 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n \tprev_faddr = SWAP_RA_ADDR(ra_val);\n \tprev_win = SWAP_RA_WIN(ra_val);\n \thits = SWAP_RA_HITS(ra_val);\n+\n+\t/*\n+\t * Stride gating: check if access is contiguous with previous fault.\n+\t */\n+\tis_contiguous = prev_faddr &&\n+\t\t(faddr == prev_faddr + PAGE_SIZE || prev_faddr == faddr + PAGE_SIZE);\n+\n+\tif (!is_contiguous) {\n+\t\t/*\n+\t\t * Immediate collapse on stride disruption or random access:\n+\t\t * Reset streak to 0 and clamp window to 1.\n+\t\t */\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(faddr, 1, 0));\n+\t\treturn 1;\n+\t}\n+\n+\t/* Contiguous hit: advance streak */\n+\thits = min_t(unsigned int, hits + 1, SWAP_RA_HITS_MAX);\n+\n+\t/*\n+\t * Require 2+ contiguous hits before expanding window beyond 1.\n+\t */\n+\tif (hits < 2) {\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(faddr, 1, hits));\n+\t\treturn 1;\n+\t}\n+\n \twin = __swapin_nr_pages(PFN_DOWN(prev_faddr), PFN_DOWN(faddr), hits,\n \t\t\t\tmax_win, prev_win);\n-\tatomic_long_set(&vma->swap_readahead_info, SWAP_RA_VAL(faddr, win, 0));\n+\tif (win < 2)\n+\t\twin = 2;\n+\n+\tatomic_long_set(&vma->swap_readahead_info, SWAP_RA_VAL(faddr, win, hits));\n \tif (win == 1)\n \t\treturn 1;\n \n",
+      "changed_paths": [
+        "mm/swap_state.c"
+      ],
+      "hypothesis": "In swap_vma_ra_win and swap_update_readahead, requiring 2+ contiguous hits before expanding win > 1 and immediately collapsing win = 1 on non-contiguous access eliminates speculative swap readahead on random workloads while retaining sequential readahead throughput. Reject if sequential throughput degrades significantly, or if random p99 tail latency fails the calibrated noise guard.",
+      "mechanism": {
+        "kind": "reviewed_structure",
+        "claim": "In mm/swap_state.c, readahead window expansion win > 1 is gated on 2+ consecutive contiguous page faults (faddr == prev_faddr ± PAGE_SIZE); any stride disruption or random access immediately collapses win = 1 and resets streak to 0, preventing speculative I/O from inflating random tail latency.",
+        "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+      },
+      "evidence": [
+        {
+          "id": "c9bf37d96a98448f84216d7755599b6a",
+          "action": "evaluate",
+          "tier": "fast",
+          "status": "FAST_PASS",
+          "candidate": "exp2-stride-gated-ra-v1",
+          "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+          "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f",
+          "started": 1793951078.0699575,
+          "finished": 1793952152.621949,
+          "analysis": {
+            "tier": "fast",
+            "pair_count": 4,
+            "metrics": {
+              "swapin-disk.swapin_seq.mean_ns": {
+                "pair_ratios": [
+                  1.0459404285415759,
+                  0.9859250562290462,
+                  1.027836900110793,
+                  0.9924843078956072
+                ],
+                "geomean_ratio": 1.0127439955554922,
+                "median_ratio": 1.0100059378221629,
+                "noise_relative": 0.03960569534596736,
+                "guard_pass": true
+              },
+              "swapin-disk.swapin_seq.p99_ns": {
+                "pair_ratios": [
+                  1.110842436335351,
+                  0.9645928310506691,
+                  1.0078693773668157,
+                  0.9986841627278996
+                ],
+                "geomean_ratio": 1.0190775310930322,
+                "median_ratio": 1.003266258415316,
+                "noise_relative": 0.05474941321270399,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-disk.swapin_rand.mean_ns": {
+                "pair_ratios": [
+                  1.024698168100572,
+                  0.999466677915645,
+                  1.0099233737630287,
+                  0.9301074188762215
+                ],
+                "geomean_ratio": 0.990367665951737,
+                "median_ratio": 1.0046814218070794,
+                "noise_relative": 0.06125956053673698,
+                "guard_pass": true
+              },
+              "swapin-disk.swapin_rand.p99_ns": {
+                "pair_ratios": [
+                  1.033796123206119,
+                  0.9807338319401671,
+                  1.0072237980891312,
+                  0.9861053947745441
+                ],
+                "geomean_ratio": 1.0017488266404877,
+                "median_ratio": 0.9966086599267531,
+                "noise_relative": 0.0660298189360704,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-zram-64k.swapin_seq.mean_ns": {
+                "pair_ratios": [
+                  1.0269382166695193,
+                  1.019348404255319,
+                  0.9181682870443675,
+                  1.127628494751505
+                ],
+                "geomean_ratio": 1.0203256943783574,
+                "median_ratio": 1.0231362726591593,
+                "noise_relative": 0.04162432991135567,
+                "guard_pass": true
+              },
+              "swapin-zram-64k.swapin_seq.p99_ns": {
+                "pair_ratios": [
+                  1.0248466373113534,
+                  1.000653374211104,
+                  0.914494738410666,
+                  1.1386138613861385
+                ],
+                "geomean_ratio": 1.016541364922888,
+                "median_ratio": 1.0126777600374708,
+                "noise_relative": 0.05473457220777611,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-zram-64k.swapin_rand.mean_ns": {
+                "pair_ratios": [
+                  1.060965617697933,
+                  1.0354305735947096,
+                  0.9164025128234674,
+                  1.1439225838264289
+                ],
+                "geomean_ratio": 1.035920195947804,
+                "median_ratio": 1.048120335694922,
+                "noise_relative": 0.0312303236368221,
+                "guard_pass": true
+              },
+              "swapin-zram-64k.swapin_rand.p99_ns": {
+                "pair_ratios": [
+                  1.0263135332866558,
+                  1.0806861407125643,
+                  0.8504466436348112,
+                  1.3567762138429762
+                ],
+                "geomean_ratio": 1.0636132344110467,
+                "median_ratio": 1.0531489977437343,
+                "noise_relative": 0.08428975213208756,
+                "guard_pass": true,
+                "advisory": true
+              }
+            },
+            "overall_geomean_ratio": 1.0165277765475325,
+            "combined_score": 1.0193057035927642,
+            "primary": [
+              "swapin-disk.swapin_seq.mean_ns",
+              "swapin-zram-64k.swapin_seq.mean_ns"
+            ],
+            "reference": false,
+            "performance_accepted": false,
+            "auto_promote": false,
+            "eligible_for_slow": false,
+            "needs_review": false,
+            "decision": "median",
+            "overall_median_ratio": 1.0193057035927642,
+            "status": "FAST_PASS"
+          },
+          "calibration_id": "ff74475894ee4796b2a46ab5d9b8d808",
+          "probe_id": "1b9c659c1389451ba5f191a840e0a6f1",
+          "probe_signals": {
+            "swapin-disk": {
+              "swapin_vmstat_delta.pswpin": [
+                262138
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                0
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                262141
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                0
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "swapin-zram-64k": {
+              "swapin_vmstat_delta.pswpin": [
+                262134
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                0
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                262137
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                0
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "metadata-brd": {
+              "metadata_delta_bytes_per_capacity_slot": [
+                0.11102294963234272
+              ]
+            }
+          },
+          "controller_check": {
+            "status": "SCOPE_PASS",
+            "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+            "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+            "changed_paths": [
+              "mm/swap_state.c"
+            ],
+            "changed_lines": 61,
+            "diff-check": {
+              "exit_code": 0,
+              "evidence": "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/diff-check.log",
+              "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+            },
+            "checkpatch": {
+              "exit_code": 0,
+              "evidence": "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/checkpatch.log",
+              "sha256": "63597df856c65beeb12a3ad70d2b4e95535e727ea05018b118f21e362deca582"
+            }
+          },
+          "correctness": {
+            "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+            "source_commit": "52524488a09808ce19e5940257f0c46aad247548",
+            "gates": {
+              "boot": true,
+              "cmdline_identity": true,
+              "workload_complete": true,
+              "kernel_log_present": true,
+              "no_kernel_warnings": true,
+              "thp_policy": true,
+              "swap_activity": true,
+              "backend_exercised": true,
+              "swap_routing": true,
+              "correctness_evidence": true,
+              "data_roundtrip": true,
+              "fork_cow": true,
+              "concurrent_fault": true,
+              "destroy_live_pages": true,
+              "swapoff_live_pages": true,
+              "no_new_kernel_warnings": true,
+              "qemu_exit": true
+            },
+            "integration_pass": true,
+            "mode": "xswap",
+            "backend": "disk",
+            "config_sha256": "9dcdc44d2c9459a486a5f58657823d2c507811b7301d46a09ed9d8c20e0ed03a"
+          },
+          "report": "campaigns/exp2-stride-gated-ra/runs/evaluations/c9bf37d96a98448f84216d7755599b6a/report.json",
+          "row_sha256": "7d717f4a8c50406cf0c36569efb76db22a7a2091b12903c822e6b84d6978b6a2"
+        }
+      ],
+      "invalidations": [],
+      "timestamp": 1793952152.621949,
+      "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f",
+      "analysis": {
+        "tier": "fast",
+        "pair_count": 4,
+        "metrics": {
+          "swapin-disk.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              1.0459404285415759,
+              0.9859250562290462,
+              1.027836900110793,
+              0.9924843078956072
+            ],
+            "geomean_ratio": 1.0127439955554922,
+            "median_ratio": 1.0100059378221629,
+            "noise_relative": 0.03960569534596736,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              1.110842436335351,
+              0.9645928310506691,
+              1.0078693773668157,
+              0.9986841627278996
+            ],
+            "geomean_ratio": 1.0190775310930322,
+            "median_ratio": 1.003266258415316,
+            "noise_relative": 0.05474941321270399,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-disk.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              1.024698168100572,
+              0.999466677915645,
+              1.0099233737630287,
+              0.9301074188762215
+            ],
+            "geomean_ratio": 0.990367665951737,
+            "median_ratio": 1.0046814218070794,
+            "noise_relative": 0.06125956053673698,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              1.033796123206119,
+              0.9807338319401671,
+              1.0072237980891312,
+              0.9861053947745441
+            ],
+            "geomean_ratio": 1.0017488266404877,
+            "median_ratio": 0.9966086599267531,
+            "noise_relative": 0.0660298189360704,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              1.0269382166695193,
+              1.019348404255319,
+              0.9181682870443675,
+              1.127628494751505
+            ],
+            "geomean_ratio": 1.0203256943783574,
+            "median_ratio": 1.0231362726591593,
+            "noise_relative": 0.04162432991135567,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              1.0248466373113534,
+              1.000653374211104,
+              0.914494738410666,
+              1.1386138613861385
+            ],
+            "geomean_ratio": 1.016541364922888,
+            "median_ratio": 1.0126777600374708,
+            "noise_relative": 0.05473457220777611,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              1.060965617697933,
+              1.0354305735947096,
+              0.9164025128234674,
+              1.1439225838264289
+            ],
+            "geomean_ratio": 1.035920195947804,
+            "median_ratio": 1.048120335694922,
+            "noise_relative": 0.0312303236368221,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              1.0263135332866558,
+              1.0806861407125643,
+              0.8504466436348112,
+              1.3567762138429762
+            ],
+            "geomean_ratio": 1.0636132344110467,
+            "median_ratio": 1.0531489977437343,
+            "noise_relative": 0.08428975213208756,
+            "guard_pass": true,
+            "advisory": true
+          }
+        },
+        "overall_geomean_ratio": 1.0165277765475325,
+        "combined_score": 1.0193057035927642,
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "reference": false,
+        "performance_accepted": false,
+        "auto_promote": false,
+        "eligible_for_slow": false,
+        "needs_review": false,
+        "decision": "median",
+        "overall_median_ratio": 1.0193057035927642,
+        "status": "FAST_PASS"
+      },
+      "probe_signals": {
+        "swapin-disk": {
+          "swapin_vmstat_delta.pswpin": [
+            262138
+          ],
+          "swapin_vmstat_delta.zswpin": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra_hit": [
+            0
+          ],
+          "swapin_vmstat_delta.pgmajfault": [
+            262141
+          ],
+          "swapin_vmstat_delta.zswpwb": [
+            0
+          ],
+          "xswap.grows": [
+            7
+          ],
+          "xswap.shrinks": [
+            0
+          ],
+          "xswap.usage_pages": [
+            0
+          ],
+          "xswap.clusters_mapped": [
+            584
+          ]
+        },
+        "swapin-zram-64k": {
+          "swapin_vmstat_delta.pswpin": [
+            262134
+          ],
+          "swapin_vmstat_delta.zswpin": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra_hit": [
+            0
+          ],
+          "swapin_vmstat_delta.pgmajfault": [
+            262137
+          ],
+          "swapin_vmstat_delta.zswpwb": [
+            0
+          ],
+          "xswap.grows": [
+            7
+          ],
+          "xswap.shrinks": [
+            0
+          ],
+          "xswap.usage_pages": [
+            0
+          ],
+          "xswap.clusters_mapped": [
+            584
+          ]
+        },
+        "metadata-brd": {
+          "metadata_delta_bytes_per_capacity_slot": [
+            0.11102294963234272
+          ]
+        }
+      },
+      "report": "campaigns/exp2-stride-gated-ra/runs/evaluations/c9bf37d96a98448f84216d7755599b6a/report.json",
+      "fast_evidence_id": "c9bf37d96a98448f84216d7755599b6a",
+      "advancement": {
+        "eligible": false,
+        "reason": "screen is exploratory; improvement does not exceed calibrated noise",
+        "evidence_id": "c9bf37d96a98448f84216d7755599b6a",
+        "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+        "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f",
+        "score": 1.0193057035927642,
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "noise_relative": 0.04162432991135567,
+        "threshold": 1.0416243299113557
+      },
+      "parent_delta": {
+        "comparable": false,
+        "signal_summary": "median of retained samples; legacy scalar values are unchanged",
+        "probe_signals": {},
+        "combined_score": null,
+        "interpretation": "diagnostic difference of separate baseline comparisons, not a paired parent control"
+      },
+      "latest_status": "FAST_PASS",
+      "tier": "fast",
+      "screen_only": true,
+      "performance_accepted": false
+    }
+  },
+  "sample_sequence": 1,
+  "briefs": {
+    "brief-000001-d7f7e2d2c751": {
+      "fingerprint": "43a383c5880ad20e404cf29739ab73e9607014408ae4b63d6e78e016d7a6dd9f",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "allowed_parents": [
+        "5e84ca928deeacb4eee656806a003f27d1eca82f"
+      ],
+      "parent_bindings": {
+        "5e84ca928deeacb4eee656806a003f27d1eca82f": {
+          "candidate": null,
+          "source_tree": null
+        }
+      },
+      "sample_seed": 15562156432317086409,
+      "sequence": 1,
+      "file": "archive/briefs/brief-000001-d7f7e2d2c751.json",
+      "sha256": "ade0a65d655afe6590d52ce3dc769b0e058c4f2878abc1567d22d3ed5e11befb",
+      "consumed_by": "exp2-stride-gated-ra-v1",
+      "chosen_parent": "5e84ca928deeacb4eee656806a003f27d1eca82f"
+    }
+  }
+}

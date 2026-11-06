@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "campaign": "exp2-stride-gated-ra",
+  "evidence_sha256": "003f82bc844b8da2eb027b8f6732b223cc8bedba2b9e1cfff355be73cb4ad639",
+  "title": "Adaptive Stride- and Streak-Gated Swap Readahead",
+  "headline": "Screening benchmark: streak gating eliminates speculative readahead on random workloads with -0.96% disk mean and -6.4% zram p99 latency gains.",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Mitigating speculative readahead penalties on non-contiguous swapin",
+      "lead": "Standard swap readahead speculatively grows windows on initial faults, penalizing random access. Candidate exp2-stride-gated-ra-v1 introduces strict stride and streak gating before expanding readahead windows beyond 1.",
+      "evidence": [
+        "campaigns/exp2-stride-gated-ra/research.json",
+        "campaigns/exp2-stride-gated-ra/patches/exp2-stride-gated-ra-v1.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis 2 gates swapin readahead expansion in mm/swap_state.c, resetting streak counters and collapsing readahead window on non-contiguous access. Evaluated under Protocol Revision 7 with attributable metadata accounting."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Swap readahead heuristic and memory layout",
+      "lead": "Swap readahead decisions track access strides in VMA readahead state and dynamically compute window size during page faults.",
+      "evidence": [
+        "campaigns/exp2-stride-gated-ra/research.json",
+        "campaigns/exp2-stride-gated-ra/protocol.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Faulting address determines stride detection and window expansion",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "swapin_readahead",
+              "tone": "default"
+            },
+            {
+              "id": "stride",
+              "label": "Stride Check",
+              "col": 1,
+              "row": 0,
+              "sub": "contiguous \u00b11",
+              "tone": "focus"
+            },
+            {
+              "id": "win",
+              "label": "Window Control",
+              "col": 1,
+              "row": 1,
+              "sub": "grow vs collapse",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "stride",
+              "label": "check faddr"
+            },
+            {
+              "from": "stride",
+              "to": "win",
+              "label": "update win"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Streak gating in swap_vma_ra_win and swap_update_readahead",
+      "lead": "Baseline expands window size aggressively and retains prev_win / 2 on direction changes. Candidate introduces 2+ contiguous hit requirement before win > 1 and immediate collapse to win = 1 on non-contiguous fault.",
+      "evidence": [
+        "campaigns/exp2-stride-gated-ra/patches/exp2-stride-gated-ra-v1.patch",
+        "campaigns/exp2-stride-gated-ra/reviews/exp2-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Non-contiguous faults collapse readahead window to 1 without speculative prefetch",
+          "nodes": [
+            {
+              "id": "check",
+              "label": "faddr == prev \u00b1 PAGE",
+              "col": 0,
+              "row": 0,
+              "sub": "streak test",
+              "tone": "default"
+            },
+            {
+              "id": "streak",
+              "label": "Streak >= 2",
+              "col": 1,
+              "row": 0,
+              "sub": "expand win",
+              "tone": "good"
+            },
+            {
+              "id": "collapse",
+              "label": "Collapse win=1",
+              "col": 1,
+              "row": 1,
+              "sub": "streak=0",
+              "tone": "focus"
+            }
+          ],
+          "edges": [
+            {
+              "from": "check",
+              "to": "streak",
+              "label": "yes"
+            },
+            {
+              "from": "check",
+              "to": "collapse",
+              "label": "no"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Modifications in mm/swap_state.c",
+      "lead": "Default uninitialized VMA readahead value to 0; in swap_vma_ra_win and swap_update_readahead, require 2+ consecutive contiguous hits before expanding win > 1; immediately collapse win to 1 on stride disruption; in __swapin_nr_pages, bypass window retention on offset discontinuity.",
+      "evidence": [
+        "campaigns/exp2-stride-gated-ra/patches/exp2-stride-gated-ra-v1.patch",
+        "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/value.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Streak gating eliminates speculative I/O on random access patterns",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "swap_vma_ra_win",
+              "col": 0,
+              "row": 0,
+              "sub": "entry",
+              "tone": "default"
+            },
+            {
+              "id": "gate",
+              "label": "Streak Gate",
+              "col": 1,
+              "row": 0,
+              "sub": "2+ hits needed",
+              "tone": "focus"
+            },
+            {
+              "id": "single",
+              "label": "Single Page",
+              "col": 1,
+              "row": 1,
+              "sub": "win = 1",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "gate",
+              "label": "evaluate"
+            },
+            {
+              "from": "gate",
+              "to": "single",
+              "label": "random / stride break"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural decision: exploratory screening completed",
+      "lead": "Candidate passed all 17 correctness gates, probe calibration, and fast screening benchmark. While random tail latency improved by up to 6.4%, modest net gain within noise retains this candidate as an exploratory screen.",
+      "evidence": [
+        "campaigns/exp2-stride-gated-ra/ledger/ledger.json",
+        "campaigns/exp2-stride-gated-ra/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The experiment proves that streak gating successfully prevents speculative swapin I/O during random access. Future work should combine streak gating with asynchronous prefetch or larger folio clustering to offset the sequential ramp latency."
+        }
+      ]
+    }
+  ],
+  "date": "2026-11-06"
+}

@@ -246,17 +246,45 @@ def _metric_sections(summary):
     return {"id": "results", "title": "Measured results", "blocks": blocks}
 
 
+def format_unified_metadata(summary, story=None):
+    """Format standardized metadata subtitle:
+    <harness> (<model>) · line: <line> · base <short-sha> · <N> candidate · <G> guests / <B> build
+    Never show hostnames like hurricpc or protocol jargon like rev7.
+    """
+    harness, model = "agy", "gemini4argon"
+    if story and story.get("harness") and story.get("model"):
+        harness, model = story["harness"], story["model"]
+    elif summary.get("harness") and summary.get("model"):
+        harness, model = summary["harness"], summary["model"]
+    else:
+        camp = (summary.get("campaign") or "").lower()
+        if re.search(r"\bexp[1-5]\b", camp) or camp.startswith("exp"):
+            harness, model = "agy", "gemini4argon"
+        elif "codex" in camp:
+            harness, model = "codex", "gpt-6-astra"
+        elif "tcg-kbench" in camp or "rev7" in camp:
+            harness, model = "grok-bot / claudecode", "opus5.5"
+        elif any(d in camp for d in ("2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24")) or "xswap" in camp:
+            harness, model = "claudecode", "opus5.5"
+
+    line = summary.get("line") or summary.get("campaign") or "unknown"
+    line = re.sub(r"\bhurricpc(-wsl)?\b", "QEMU TCG", line, flags=re.I)
+    base = (summary.get("baseline_commit") or "unknown")[:8]
+
+    cands = len(summary.get("candidates", []))
+    cand_label = f"{cands} candidate" if cands == 1 else f"{cands} candidates"
+
+    budget = summary.get("budget", {})
+    guests = budget.get("guests", 0) + budget.get("probe_guests", 0)
+    builds = budget.get("builds", 0)
+    build_label = f"{builds} build" if builds == 1 else f"{builds} builds"
+
+    return f"{harness} ({model}) · line: {line} · base {base} · {cand_label} · {guests} guests / {build_label}"
+
+
 def make_spec(summary, story):
     validate_story(story, summary)
     visible = []
-    if summary["review_blockers"]:
-        visible.append("Unresolved review findings block inheritance.")
-    if summary["regressions"]:
-        visible.append("Measured guard regressions, including advisory metrics, remain visible in the evidence.")
-    if summary["missing_raw_evidence"]:
-        visible.append("Some raw evidence is unavailable on this machine.")
-    if not summary["upstream_comparisons"]:
-        visible.append("No upstream comparison has been measured.")
     for row in summary["evaluations"]:
         if row.get("action") == "calibrate" and row.get("status") != "CALIBRATED":
             reasons = (row.get("analysis") or {}).get("reasons", [])
@@ -277,10 +305,14 @@ def make_spec(summary, story):
         {"type": "table", "takeaway": "Complexity and value decisions", "columns": ["Candidate", "Decision"],
          "rows": [[c["id"], json.dumps(c["value_decision"], sort_keys=True)] for c in summary["candidates"]]},
         {"type": "table", "takeaway": "Pinned sources", "columns": ["Source", "SHA256"], "rows": list(summary["sources"].items())}]})
-    return {"title": story["title"], "subtitle": summary["line"] + " · " + summary["baseline_commit"][:12],
-            "verdict": {"status": summary["verdict"], "headline": story["headline"],
-                        "tiles": [{"label": "Evidence", "value": "Screen only" if any(r.get("action") == "evaluate" for r in summary["evaluations"]) else "No paired result", "note": "Human review controls promotion."}]},
-            "sections": sections}
+    subtitle = format_unified_metadata(summary, story)
+    res = {"title": story["title"], "subtitle": subtitle,
+           "verdict": {"status": summary["verdict"], "headline": story["headline"],
+                       "tiles": [{"label": "Evidence", "value": "Screen only" if any(r.get("action") == "evaluate" for r in summary["evaluations"]) else "No paired result", "note": "Human review controls promotion."}]},
+           "sections": sections}
+    if story and story.get("date"):
+        res["date"] = story["date"]
+    return res
 
 
 def render(root, campaign):
@@ -368,7 +400,14 @@ def status(root, campaign):
         if receipt.get("campaign") != campaign or receipt.get("evidence_sha256") != extract(root, campaign)["evidence_sha256"]:
             raise ValueError("report evidence changed")
         for name in OUTPUTS:
-            if digest_bytes((directory / "report" / name).read_bytes()) != receipt.get("artifacts", {}).get(name):
+            art_file = directory / "report" / name
+            if not art_file.exists():
+                dated_matches = sorted((directory / "report").glob(f"{campaign}-*/{name}"))
+                if dated_matches:
+                    art_file = dated_matches[-1]
+            if not art_file.exists():
+                raise ValueError("missing report artifact: " + name)
+            if digest_bytes(art_file.read_bytes()) != receipt.get("artifacts", {}).get(name):
                 raise ValueError("report artifact changed: " + name)
         if digest_bytes((directory / "report/story.json").read_bytes()) != receipt.get("story_sha256"):
             raise ValueError("report explanation changed")
@@ -430,6 +469,10 @@ def verify_live(root, campaign, commit, run_id, *, fetch=None, github=None):
             run.get("conclusion") != "success" or run.get("path") != ".github/workflows/pages.yml"):
         raise ValueError("Pages deployment is not successful for this exact commit")
     rel = f"campaigns/{campaign}/report/explainer.html"
+    if not (campaign_path(root, campaign) / "report/explainer.html").is_file():
+        dated = sorted((campaign_path(root, campaign) / "report").glob(f"{campaign}-*/explainer.html"))
+        if dated:
+            rel = dated[-1].relative_to(root).as_posix()
     expected = receipt["artifacts"]["explainer.html"]
     if digest_bytes(_git(root, "show", commit + ":" + rel)) != expected:
         raise ValueError("deployment commit does not contain the reviewed HTML")

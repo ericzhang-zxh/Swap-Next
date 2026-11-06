@@ -181,6 +181,20 @@ Prefer diagrams and charts; exact data and full evidence stay closed by default,
 including on mobile. Keep failed gates and material limits visible in the overview.
 The reporting skill owns the detailed layout and visual acceptance checks.
 
+Stage 4 Delivery adheres to the unified metadata standard across all campaign
+explainer artifacts and homepage cards:
+- Top-Right Badge: `YYYY-MM-DD` date resolved via multi-tier fallback.
+- Standardized Card Bottom Metadata Bar:
+  `<harness> (<model>) · line: <line> · base <short-sha> · <N> candidate · <G> guests / <B> build`
+  (e.g., `agy (gemini4argon)` for current experiments, `codex (gpt-6-astra)` for codex runs,
+  `grok-bot / claudecode (opus5.5)` for rev7 kbench, and `claudecode (opus5.5)` for historical runs).
+- Machine & Protocol Cleanliness: NEVER show internal hostnames like `hurricpc`
+  or internal protocol jargon like `rev7`/`rev6` on public homepage cards. Translate host machine
+  references to clean execution environments (`QEMU TCG` or `KVM`); protocol details remain in the
+  report evidence section.
+- Campaign Deduplication: `build_site.py` deduplicates by campaign folder, ensuring each campaign
+  has exactly one review card on the index page, served from both dated and canonical endpoints.
+
 ## Handoff
 
 Return the hypothesis and exact revision, work actually performed, passed/failed/

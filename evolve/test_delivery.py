@@ -227,6 +227,19 @@ class DeliveryTests(unittest.TestCase):
         self.assertNotIn("/home/alice", json.dumps(summary))
         self.assertIn("[local path]", summary["evaluations"][0]["reason"])
 
+    def test_unified_metadata_subtitle(self):
+        story = explain(self.root)
+        spec = d.make_spec(d.extract(self.root, "test-line"), story)
+        self.assertIn("subtitle", spec)
+        sub = spec["subtitle"]
+        self.assertIn("line: xswap", sub)
+        self.assertIn("base aaaaaaaa", sub)
+        self.assertIn("1 candidate", sub)
+        self.assertIn("10 guests / 0 builds", sub)
+        self.assertNotIn("hurricpc", sub)
+        self.assertNotIn("rev7", sub)
+
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "exp2-independent-v1",
+  "campaign": "exp2-stride-gated-ra",
+  "candidate": "exp2-stride-gated-ra-v1",
+  "candidate_commit": "52524488a09808ce19e5940257f0c46aad247548",
+  "source_tree": "606252530584ee874eebb5894f6d64afb2f9643b",
+  "reviewer": "Independent candidate_review agent (teamwork-exp2)",
+  "disposition": "pass",
+  "summary": "No actionable correctness blocker in adaptive stride-gated readahead. Gating window expansion on 2+ contiguous hits and immediately collapsing to 1 on non-contiguous access completely eliminates speculative readahead overhead on random workloads while maintaining sequential saturation. Atomic state handling and boundary checks in mm/swap_state.c are safe.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/exp2-stride-gated-ra/report/independent-review.md",
+      "sha256": "0734b66e9dc86fe1555d2fcb4d7f773692891b8a356b38f310bcf0374196bed5"
+    },
+    {
+      "path": "campaigns/exp2-stride-gated-ra/patches/exp2-stride-gated-ra-v1.patch",
+      "sha256": "78565fce50837c2be44280cc8c3bc2d132390331277a4d49efbf3157d0aa7a3e"
+    },
+    {
+      "path": "campaigns/exp2-stride-gated-ra/candidates/exp2-stride-gated-ra-v1/static.json",
+      "sha256": "39f80aa799cafdb3f213ad293b257819d8450ce36a80803321e2f373378e5cec"
+    }
+  ],
+  "recorded_unix": 1793947454.1175432,
+  "record_sha256": "23043d5d1ee11444c2f6880a87f7cdbf358a4825e83814441a5543156ef27d63"
+}

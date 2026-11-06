@@ -1,0 +1,15 @@
+{
+  "id": "ddb7221b7c6b4a618c39cec4382e1b81-metadata-brd-2",
+  "campaign": "exp2-stride-gated-ra",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1793948158.6724036,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "brd",
+    "mode": "plain",
+    "workload": "metadata"
+  },
+  "protocol_sha256": "0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98",
+  "started_unix": 1793948158.7153423
+}

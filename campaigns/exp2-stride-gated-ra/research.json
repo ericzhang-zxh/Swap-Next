@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "line_contract": {
+    "schema_version": 1,
+    "line": "exp2-stride-gated-ra",
+    "profile": "swap-core",
+    "profile_version": 1,
+    "profile_sha256": "b0fbed8ceebf514c96611bfd8293489b0439b63a8bf3b6c0b5a123d218141fb8",
+    "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "value_policy": {
+      "min_useful_effect": 0.05,
+      "equivalence_margin": 0.03,
+      "requires_upstream_comparison": false,
+      "rationale": "The unchanged integrated upstream heuristic in swap_vma_readahead is the control. Require at least 5% useful gain beyond calibrated noise with passing guards."
+    },
+    "contributor": "teamwork-exp2",
+    "scientific_sha256": "9b243ad4e138f7c718ee148272b78dc0358fdc27f21bd41c90b8454537576155"
+  },
+  "selected_idea": {
+    "id": "stride-gated-readahead",
+    "status": "proposed",
+    "priority": 100,
+    "change_type": "optimize",
+    "bottleneck": "Spatial proximity readahead in swap_vma_ra_win expands window prematurely on random access, causing high tail latency.",
+    "mechanism": "Enforce strict stride gating requiring 2+ contiguous hits before expanding win > 1, and immediately collapse win = 1 on non-contiguous access.",
+    "mechanism_evidence_type": "reviewed_structure",
+    "affected_paths": [
+      "mm/swap_state.c"
+    ],
+    "expected_benefit": "Eliminate speculative swap readahead I/O on random access, protecting random tail latency while retaining sequential readahead speedups.",
+    "simpler_alternative": "Disable VMA readahead completely or retain existing spatial proximity heuristic.",
+    "falsifier": "Reject if sequential throughput degrades significantly, or if random p99 tail latency fails the calibrated noise guard.",
+    "required_evidence": [
+      "Exact-tree independent source review including caller contracts",
+      "Counted exact-commit xswap correctness",
+      "Structural mechanism proof",
+      "Fresh probe calibration under Protocol Revision 7",
+      "Paired baseline/candidate latency screen"
+    ],
+    "upstream_refs": [],
+    "no_upstream_reason": "The relevant upstream implementation is already in the frozen baseline.",
+    "estimated_cost": {
+      "guest_attempts": 70,
+      "build_attempts": 2
+    },
+    "selection_reason": "Directly addresses the root cause of random p99 latency regressions in prior physical readahead experiments.",
+    "complexity": {
+      "parent": {
+        "state": {
+          "change": "unchanged",
+          "reason": "Uses existing swap_readahead_info atomic in vm_area_struct."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "VMA lifetime and atomic access contracts remain unchanged."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Lockless atomic reads and writes preserved."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Readahead fallback and sync path unchanged."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "No new sysctl or configuration."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying sequential, random, and boundary access patterns."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Helper signatures unchanged."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "No new memory allocated."
+        }
+      },
+      "baseline": {
+        "state": {
+          "change": "unchanged",
+          "reason": "Uses existing swap_readahead_info atomic in vm_area_struct."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "VMA lifetime and atomic access contracts remain unchanged."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Lockless atomic reads and writes preserved."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Readahead fallback and sync path unchanged."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "No new sysctl or configuration."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying sequential, random, and boundary access patterns."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Helper signatures unchanged."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "No new memory allocated."
+        }
+      }
+    },
+    "provenance": [
+      {
+        "kind": "source",
+        "path": "linux:mm/swap_state.c",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "lines": "620-635; 860-890"
+      }
+    ]
+  },
+  "upstream_refs": [],
+  "protocol_sha256": "0bfa0449f88e22826d7e570f0879a34d1856bb4ea6cadc4f42687b567f9dbe98",
+  "policy_sha256": "2e410693d2265a52678dd96735a9375556e5c258157a328da93448097e833a25",
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ]
+}

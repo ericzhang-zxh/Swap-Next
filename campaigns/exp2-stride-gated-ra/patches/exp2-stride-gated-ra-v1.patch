@@ -1,0 +1,109 @@
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 7ac1808ae..4036dfb1a 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -65,9 +65,9 @@ static bool enable_vma_readahead __read_mostly = true;
+ 	 (((win) << SWAP_RA_WIN_SHIFT) & SWAP_RA_WIN_MASK) |	\
+ 	 ((hits) & SWAP_RA_HITS_MASK))
+ 
+-/* Initial readahead hits is 4 to start up with a small window */
++/* Do not seed initial hits; require contiguous access to grow window */
+ #define GET_SWAP_RA_VAL(vma)					\
+-	(atomic_long_read(&(vma)->swap_readahead_info) ? : 4)
++	atomic_long_read(&(vma)->swap_readahead_info)
+ 
+ static atomic_t swapin_readahead_hits = ATOMIC_INIT(4);
+ 
+@@ -709,13 +709,26 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,
+ 	readahead = folio_test_clear_readahead(folio);
+ 	if (vma && vma_ra) {
+ 		unsigned long ra_val;
++		unsigned long prev_addr;
+ 		int win, hits;
++		bool is_contiguous;
+ 
+ 		ra_val = GET_SWAP_RA_VAL(vma);
++		prev_addr = SWAP_RA_ADDR(ra_val);
+ 		win = SWAP_RA_WIN(ra_val);
+ 		hits = SWAP_RA_HITS(ra_val);
+-		if (readahead)
++
++		is_contiguous = prev_addr &&
++			(addr == prev_addr + PAGE_SIZE ||
++			 prev_addr == addr + PAGE_SIZE);
++
++		if (!is_contiguous) {
++			hits = 0;
++			win = 1;
++		} else if (readahead) {
+ 			hits = min_t(int, hits + 1, SWAP_RA_HITS_MAX);
++		}
++
+ 		atomic_long_set(&vma->swap_readahead_info,
+ 				SWAP_RA_VAL(addr, win, hits));
+ 	}
+@@ -836,6 +849,13 @@ static unsigned int __swapin_nr_pages(unsigned long prev_offset,
+ {
+ 	unsigned int pages, last_ra;
+ 
++	/*
++	 * Immediate collapse on stride disruption or non-contiguous access:
++	 * do not retain prior window across non-adjacent offsets.
++	 */
++	if (prev_offset && offset != prev_offset + 1 && offset != prev_offset - 1)
++		return 1;
++
+ 	/*
+ 	 * This heuristic has been found to work well on both sequential and
+ 	 * random loads, swapping to hard disk or to SSD: please don't ask
+@@ -959,6 +979,7 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,
+ 	unsigned long ra_val;
+ 	unsigned long faddr, prev_faddr, left, right;
+ 	unsigned int max_win, hits, prev_win, win;
++	bool is_contiguous;
+ 
+ 	max_win = 1 << min(READ_ONCE(page_cluster), SWAP_RA_ORDER_CEILING);
+ 	if (max_win == 1)
+@@ -969,9 +990,41 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,
+ 	prev_faddr = SWAP_RA_ADDR(ra_val);
+ 	prev_win = SWAP_RA_WIN(ra_val);
+ 	hits = SWAP_RA_HITS(ra_val);
++
++	/*
++	 * Stride gating: check if access is contiguous with previous fault.
++	 */
++	is_contiguous = prev_faddr &&
++		(faddr == prev_faddr + PAGE_SIZE || prev_faddr == faddr + PAGE_SIZE);
++
++	if (!is_contiguous) {
++		/*
++		 * Immediate collapse on stride disruption or random access:
++		 * Reset streak to 0 and clamp window to 1.
++		 */
++		atomic_long_set(&vma->swap_readahead_info,
++				SWAP_RA_VAL(faddr, 1, 0));
++		return 1;
++	}
++
++	/* Contiguous hit: advance streak */
++	hits = min_t(unsigned int, hits + 1, SWAP_RA_HITS_MAX);
++
++	/*
++	 * Require 2+ contiguous hits before expanding window beyond 1.
++	 */
++	if (hits < 2) {
++		atomic_long_set(&vma->swap_readahead_info,
++				SWAP_RA_VAL(faddr, 1, hits));
++		return 1;
++	}
++
+ 	win = __swapin_nr_pages(PFN_DOWN(prev_faddr), PFN_DOWN(faddr), hits,
+ 				max_win, prev_win);
+-	atomic_long_set(&vma->swap_readahead_info, SWAP_RA_VAL(faddr, win, 0));
++	if (win < 2)
++		win = 2;
++
++	atomic_long_set(&vma->swap_readahead_info, SWAP_RA_VAL(faddr, win, hits));
+ 	if (win == 1)
+ 		return 1;
+ 

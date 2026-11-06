@@ -1,0 +1,5 @@
+{
+  "kind": "reviewed_structure",
+  "claim": "In mm/swap_state.c, readahead window expansion win > 1 is gated on 2+ consecutive contiguous page faults (faddr == prev_faddr \u00b1 PAGE_SIZE); any stride disruption or random access immediately collapses win = 1 and resets streak to 0, preventing speculative I/O from inflating random tail latency.",
+  "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+}

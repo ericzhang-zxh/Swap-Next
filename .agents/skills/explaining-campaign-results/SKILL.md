@@ -108,11 +108,16 @@ separate evidence. On phones, reflow scenes rather than shrinking the whole pict
    (e.g. `campaigns/<c>/report/<c>-YYYY-MM-DD/explainer.html` and `explainer.json`)
    and remove any undated root duplicate so `build_site.py` outputs a clean, single
    entry.
-7. **Build Site with Visible Dates**: Run `scripts/build_site.py campaigns/ _site/`.
-   `build_site.py` resolves dates using a robust multi-tier fallback (explicit `date`
-   in `explainer.json`, `YYYY-MM-DD` in published name, timestamps/dates in `campaign.json`,
-   and `delivery.json`/subtitle), displays the resolved date visibly on each card, and
-   sorts campaigns newest-first.
+7. **Standardized Card Metadata & Layout**: Run `scripts/build_site.py campaigns/ _site/`.
+   - Card Top-Right Badge: Display resolved `YYYY-MM-DD` date (via multi-tier fallback: explicit `date` in `explainer.json`, `YYYY-MM-DD` in directory name, timestamps in `campaign.json`, `delivery.json`, or subtitle).
+   - Card Bottom Metadata Bar: Unified, self-explanatory format across all homepage cards:
+     `<harness> (<model>) · line: <line> · base <short-sha> · <N> candidate · <G> guests / <B> build`
+     * Harness/model mapping: `agy (gemini4argon)` for exp1 through exp5, `codex (gpt-6-astra)` for codex-r01/r02, `grok-bot / claudecode (opus5.5)` for rev7 kbench, and `claudecode (opus5.5)` for historical 2026-10-21..2026-10-24.
+     * `line: <line>`: from campaign line record (e.g. `line: demand`, `line: exp2-stride-gated-ra`).
+     * `base <short-sha>`: 8-char short commit (e.g. `base 5e84ca92`).
+     * `<N> candidate · <G> guests / <B> build`: execution scale and budget from candidate records and ledger budget.
+   - Forbid Hostnames & Jargon: NEVER show hostnames (e.g. `hurricpc`) or internal protocol revision jargon (`rev7`/`rev6`) on the homepage cards. Translate host machine references to clean environments (`QEMU TCG` or `KVM`); protocol details remain inside the report page's expandable evidence section.
+   - Campaign Deduplication: Deduplicate by campaign folder so each campaign produces at most one card on the homepage, prioritizing dated explainers and serving both dated and canonical URLs with HTTP 200.
 8. **Live Verification**: Commit report artifacts to `main`, push to `origin/main`,
    and verify both `<site>/<campaign>/` (200 OK and expected content) and `<site>/`
    (ensuring the newest campaign is ordered at the very top of the index) before
@@ -121,7 +126,7 @@ separate evidence. On phones, reflow scenes rather than shrinking the whole pict
 ## Spec reference
 
 ```json
-{"title": "...", "subtitle": "baseline · date · boots",
+{"title": "...", "subtitle": "<harness> (<model>) · line: <line> · base <short-sha> · <N> candidate · <G> guests / <B> build",
  "verdict": {"status": "rejected", "headline": "...", "tiles": [{"label": "", "value": "", "note": ""}]},
  "sections": [{"id": "data", "title": "What the data shows", "lead": "one sentence",
    "blocks": [{"type": "strip", "takeaway": "...", "x_label": "", "groups": [], "series": [],
