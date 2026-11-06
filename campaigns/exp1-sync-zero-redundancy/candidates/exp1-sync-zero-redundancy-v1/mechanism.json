@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "kind": "reviewed_structure",
+  "claim": "Cold synchronous swap-in paths avoid preliminary swap_cache_get_folio in swapin_sync and preliminary swap_cluster_lock_unpinned in __swap_cache_alloc for order-0 faults; locked post-allocation validation and -EEXIST cache lookup fallback remain authoritative.",
+  "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution.",
+  "candidate_commit": "c1fc8e36b3b89805968f9790a35f1c2da272570a",
+  "source_tree": "49d426bccf0372f05bd4470cad1e0bf731924dc0",
+  "protocol_sha256": "9d2ff4852ae1d9cf3500329ad4e958139f7a30f2a1c72ec303bb4840e4c989bd",
+  "review_id": "exp1-independent-v1",
+  "review_record_sha256": "37f39bf27ed0ef16a45850b8e7cc0f21fffcbd30fec199a7d74d8aa5fb9e366d"
+}

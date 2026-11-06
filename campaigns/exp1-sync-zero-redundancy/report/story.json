@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "campaign": "exp1-sync-zero-redundancy",
+  "evidence_sha256": "21f4d3a467883d03d43b08ace1b2b2969e8452452ff91c107f5f73cad9572442",
+  "title": "Zero-Redundancy Synchronous Swap-in Path",
+  "headline": "Exploratory screen: allocator-first loop and single-lock allocation pass all 17 correctness gates with 1.44% disk latency gain, within noise.",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Eliminating redundant operations on synchronous cold swap-in",
+      "lead": "Synchronous swapin repeats a cache lookup after callers miss, and __swap_cache_alloc acquires ci->lock twice for order-0 faults. Candidate exp1-sync-zero-redundancy-v1 removes both redundant operations.",
+      "evidence": [
+        "campaigns/exp1-sync-zero-redundancy/research.json",
+        "campaigns/exp1-sync-zero-redundancy/patches/exp1-sync-zero-redundancy-v1.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis 1 combines allocator-first reordering in swapin_sync() with single-lock order-0 allocation in __swap_cache_alloc(). Evaluated under Protocol Revision 7 with attributable metadata accounting."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "System architecture of synchronous swap-in",
+      "lead": "Faulting tasks traverse swap cache lookup, folio allocation, swap cache entry publication, and backing storage read.",
+      "evidence": [
+        "campaigns/exp1-sync-zero-redundancy/research.json",
+        "campaigns/exp1-sync-zero-redundancy/protocol.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Synchronous fault path flows from page fault to backing store completion",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "do_swap_page",
+              "tone": "default"
+            },
+            {
+              "id": "sync",
+              "label": "Swapin Sync",
+              "col": 1,
+              "row": 0,
+              "sub": "allocator-first",
+              "tone": "focus"
+            },
+            {
+              "id": "store",
+              "label": "Swap Storage",
+              "col": 1,
+              "row": 1,
+              "sub": "disk or zram",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "sync",
+              "label": "miss"
+            },
+            {
+              "from": "sync",
+              "to": "store",
+              "label": "read folio"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Swap cache allocation and publication path",
+      "lead": "Baseline performs unpinned lock and lookup, memory allocation, and authoritative locked validation. Candidate removes preliminary locking for order-0 demand faults.",
+      "evidence": [
+        "campaigns/exp1-sync-zero-redundancy/patches/exp1-sync-zero-redundancy-v1.patch",
+        "campaigns/exp1-sync-zero-redundancy/reviews/exp1-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Single lock acquisition protects publication while preserving slot validation",
+          "nodes": [
+            {
+              "id": "alloc",
+              "label": "Folio Alloc",
+              "col": 0,
+              "row": 0,
+              "sub": "filemap_alloc_folio",
+              "tone": "default"
+            },
+            {
+              "id": "lock",
+              "label": "Single Lock",
+              "col": 1,
+              "row": 0,
+              "sub": "swap_cluster_lock",
+              "tone": "focus"
+            },
+            {
+              "id": "pub",
+              "label": "Add to Cache",
+              "col": 1,
+              "row": 1,
+              "sub": "__swap_cache_add",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "alloc",
+              "to": "lock",
+              "label": "allocated"
+            },
+            {
+              "from": "lock",
+              "to": "pub",
+              "label": "verified"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Allocator-first reordering and single-lock order-0 allocation",
+      "lead": "Reordered swapin_sync calls __swap_cache_alloc_folio first, handling -EEXIST via cache lookup fallback. Preliminary cluster lock check omitted for order-0 demand faults.",
+      "evidence": [
+        "campaigns/exp1-sync-zero-redundancy/patches/exp1-sync-zero-redundancy-v1.patch",
+        "campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/value.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Order-0 cold path avoids duplicate lookup and preliminary lock acquisition",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "swapin_sync",
+              "col": 0,
+              "row": 0,
+              "sub": "entry",
+              "tone": "default"
+            },
+            {
+              "id": "allocfirst",
+              "label": "__swap_cache_alloc",
+              "col": 1,
+              "row": 0,
+              "sub": "allocator-first",
+              "tone": "focus"
+            },
+            {
+              "id": "eexist",
+              "label": "swap_cache_get",
+              "col": 1,
+              "row": 1,
+              "sub": "only on -EEXIST",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "allocfirst",
+              "label": "call first"
+            },
+            {
+              "from": "allocfirst",
+              "to": "eexist",
+              "label": "-EEXIST fallback"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Next steps: profile-bound architectural decision",
+      "lead": "Fast screening benchmark demonstrated full correctness across all 17 gates and a modest 1.44% sequential disk swapin latency gain. Because gain is below the 5% min_useful_effect policy threshold and within noise, candidate is retained as an exploratory screen.",
+      "evidence": [
+        "campaigns/exp1-sync-zero-redundancy/ledger/ledger.json",
+        "campaigns/exp1-sync-zero-redundancy/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The candidate proves that single-lock allocation and allocator-first loops are functionally correct and lockdep-safe. Exploration may focus on batched or asynchronous prefetch mechanisms."
+        }
+      ]
+    }
+  ]
+}

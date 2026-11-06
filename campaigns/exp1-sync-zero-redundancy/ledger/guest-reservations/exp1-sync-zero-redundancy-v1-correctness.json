@@ -1,0 +1,15 @@
+{
+  "id": "exp1-sync-zero-redundancy-v1-correctness",
+  "campaign": "exp1-sync-zero-redundancy",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793941317.719508,
+  "identity": {
+    "build": "std-c1fc8e36b3b8",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "correctness"
+  },
+  "protocol_sha256": "9d2ff4852ae1d9cf3500329ad4e958139f7a30f2a1c72ec303bb4840e4c989bd",
+  "started_unix": 1793941366.9200127
+}

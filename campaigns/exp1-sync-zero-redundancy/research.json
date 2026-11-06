@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "line_contract": {
+    "schema_version": 1,
+    "line": "exp1-sync-zero-redundancy",
+    "profile": "swap-core",
+    "profile_version": 1,
+    "profile_sha256": "b0fbed8ceebf514c96611bfd8293489b0439b63a8bf3b6c0b5a123d218141fb8",
+    "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "value_policy": {
+      "min_useful_effect": 0.05,
+      "equivalence_margin": 0.03,
+      "requires_upstream_comparison": false,
+      "rationale": "The unchanged integrated upstream lookup-first and double-lock algorithm is the control. Require at least 5% useful gain beyond calibrated noise with passing guards."
+    },
+    "contributor": "teamwork-exp1",
+    "scientific_sha256": "7ccb4ec62139741e962aff030387af91faec0cb34bd3282474b57fa236bf3e36"
+  },
+  "selected_idea": {
+    "id": "zero-redundancy-sync",
+    "status": "proposed",
+    "priority": 100,
+    "change_type": "optimize",
+    "bottleneck": "Synchronous swapin repeats a cache lookup after callers missed, and __swap_cache_alloc takes ci->lock twice for order-0 faults.",
+    "mechanism": "Adopt allocator-first loop in swapin_sync and single-lock order-0 allocation in __swap_cache_alloc, preserving post-allocation validation and error handling.",
+    "mechanism_evidence_type": "reviewed_structure",
+    "affected_paths": [
+      "mm/swap_state.c"
+    ],
+    "expected_benefit": "Remove one RCU lookup and one spinlock round-trip per order-0 cold synchronous swapin, reducing CPU instruction path.",
+    "simpler_alternative": "Keep the existing lookup-first and double-lock order-0 path.",
+    "falsifier": "Reject on race condition, lifetime violation, failed correctness gate, or latency regression.",
+    "required_evidence": [
+      "Exact-tree independent source review including caller contracts",
+      "Counted exact-commit xswap correctness",
+      "Structural mechanism proof",
+      "Fresh probe calibration under Protocol Revision 7",
+      "Paired baseline/candidate latency screen"
+    ],
+    "upstream_refs": [],
+    "no_upstream_reason": "The relevant upstream implementation is already in the frozen baseline.",
+    "estimated_cost": {
+      "guest_attempts": 70,
+      "build_attempts": 2
+    },
+    "selection_reason": "Combines allocator-first reordering and single-lock order-0 allocation for maximum synergy on synchronous cold faults.",
+    "complexity": {
+      "parent": {
+        "state": {
+          "change": "unchanged",
+          "reason": "No new stored state or flags."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "Post-allocation cluster lock and slot validation remain authoritative."
+        },
+        "locking": {
+          "change": "decreased",
+          "reason": "Omit preliminary cluster lock for order-0 demand faults."
+        },
+        "error_paths": {
+          "change": "mixed",
+          "reason": "All error paths preserved; -EEXIST triggers cache fallback."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "No configuration changes."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Need to verify concurrency and fallback paths."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Helper signature unchanged."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "No persistent metadata cost."
+        }
+      },
+      "baseline": {
+        "state": {
+          "change": "unchanged",
+          "reason": "No new stored state or flags."
+        },
+        "lifetime": {
+          "change": "unchanged",
+          "reason": "Post-allocation cluster lock and slot validation remain authoritative."
+        },
+        "locking": {
+          "change": "decreased",
+          "reason": "Omit preliminary cluster lock for order-0 demand faults."
+        },
+        "error_paths": {
+          "change": "mixed",
+          "reason": "All error paths preserved; -EEXIST triggers cache fallback."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "No configuration changes."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Need to verify concurrency and fallback paths."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Helper signature unchanged."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "No persistent metadata cost."
+        }
+      }
+    },
+    "provenance": [
+      {
+        "kind": "source",
+        "path": "linux:mm/swap_state.c",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "lines": "443-537; 772-791"
+      }
+    ]
+  },
+  "upstream_refs": [],
+  "protocol_sha256": "9d2ff4852ae1d9cf3500329ad4e958139f7a30f2a1c72ec303bb4840e4c989bd",
+  "policy_sha256": "f227634b82497599b71a673eb03f791a93cb5e9ac11b7aed6237d070ccc030e1",
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ]
+}

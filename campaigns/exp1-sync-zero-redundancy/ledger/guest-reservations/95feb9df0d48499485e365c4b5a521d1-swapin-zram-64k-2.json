@@ -1,0 +1,15 @@
+{
+  "id": "95feb9df0d48499485e365c4b5a521d1-swapin-zram-64k-2",
+  "campaign": "exp1-sync-zero-redundancy",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1793940962.9034472,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "zram-64k",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "9d2ff4852ae1d9cf3500329ad4e958139f7a30f2a1c72ec303bb4840e4c989bd",
+  "started_unix": 1793940962.9472787
+}

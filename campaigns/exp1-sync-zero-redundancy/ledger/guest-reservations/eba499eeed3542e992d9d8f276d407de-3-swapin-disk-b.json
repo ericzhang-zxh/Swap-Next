@@ -1,0 +1,15 @@
+{
+  "id": "eba499eeed3542e992d9d8f276d407de-3-swapin-disk-b",
+  "campaign": "exp1-sync-zero-redundancy",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1793942528.9340088,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "9d2ff4852ae1d9cf3500329ad4e958139f7a30f2a1c72ec303bb4840e4c989bd",
+  "started_unix": 1793942528.978182
+}

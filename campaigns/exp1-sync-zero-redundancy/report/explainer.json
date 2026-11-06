@@ -1,0 +1,492 @@
+{
+  "title": "Zero-Redundancy Synchronous Swap-in Path",
+  "subtitle": "exp1-sync-zero-redundancy \u00b7 5e84ca928dee",
+  "verdict": {
+    "status": "needs-review",
+    "headline": "Exploratory screen: allocator-first loop and single-lock allocation pass all 17 correctness gates with 1.44% disk latency gain, within noise.",
+    "tiles": [
+      {
+        "label": "Evidence",
+        "value": "Screen only",
+        "note": "Human review controls promotion."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "limits",
+      "title": "Material limits",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "No upstream comparison has been measured."
+        }
+      ]
+    },
+    {
+      "id": "context",
+      "title": "Eliminating redundant operations on synchronous cold swap-in",
+      "lead": "Synchronous swapin repeats a cache lookup after callers miss, and __swap_cache_alloc acquires ci->lock twice for order-0 faults. Candidate exp1-sync-zero-redundancy-v1 removes both redundant operations.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Hypothesis 1 combines allocator-first reordering in swapin_sync() with single-lock order-0 allocation in __swap_cache_alloc(). Evaluated under Protocol Revision 7 with attributable metadata accounting."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "System architecture of synchronous swap-in",
+      "lead": "Faulting tasks traverse swap cache lookup, folio allocation, swap cache entry publication, and backing storage read.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Synchronous fault path flows from page fault to backing store completion",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "Page Fault",
+              "col": 0,
+              "row": 0,
+              "sub": "do_swap_page",
+              "tone": "default"
+            },
+            {
+              "id": "sync",
+              "label": "Swapin Sync",
+              "col": 1,
+              "row": 0,
+              "sub": "allocator-first",
+              "tone": "focus"
+            },
+            {
+              "id": "store",
+              "label": "Swap Storage",
+              "col": 1,
+              "row": 1,
+              "sub": "disk or zram",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "sync",
+              "label": "miss"
+            },
+            {
+              "from": "sync",
+              "to": "store",
+              "label": "read folio"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Swap cache allocation and publication path",
+      "lead": "Baseline performs unpinned lock and lookup, memory allocation, and authoritative locked validation. Candidate removes preliminary locking for order-0 demand faults.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Single lock acquisition protects publication while preserving slot validation",
+          "nodes": [
+            {
+              "id": "alloc",
+              "label": "Folio Alloc",
+              "col": 0,
+              "row": 0,
+              "sub": "filemap_alloc_folio",
+              "tone": "default"
+            },
+            {
+              "id": "lock",
+              "label": "Single Lock",
+              "col": 1,
+              "row": 0,
+              "sub": "swap_cluster_lock",
+              "tone": "focus"
+            },
+            {
+              "id": "pub",
+              "label": "Add to Cache",
+              "col": 1,
+              "row": 1,
+              "sub": "__swap_cache_add",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "alloc",
+              "to": "lock",
+              "label": "allocated"
+            },
+            {
+              "from": "lock",
+              "to": "pub",
+              "label": "verified"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Allocator-first reordering and single-lock order-0 allocation",
+      "lead": "Reordered swapin_sync calls __swap_cache_alloc_folio first, handling -EEXIST via cache lookup fallback. Preliminary cluster lock check omitted for order-0 demand faults.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Order-0 cold path avoids duplicate lookup and preliminary lock acquisition",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "swapin_sync",
+              "col": 0,
+              "row": 0,
+              "sub": "entry",
+              "tone": "default"
+            },
+            {
+              "id": "allocfirst",
+              "label": "__swap_cache_alloc",
+              "col": 1,
+              "row": 0,
+              "sub": "allocator-first",
+              "tone": "focus"
+            },
+            {
+              "id": "eexist",
+              "label": "swap_cache_get",
+              "col": 1,
+              "row": 1,
+              "sub": "only on -EEXIST",
+              "tone": "default"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "allocfirst",
+              "label": "call first"
+            },
+            {
+              "from": "allocfirst",
+              "to": "eexist",
+              "label": "-EEXIST fallback"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "strip",
+          "takeaway": "Baseline metadata calibration: CALIBRATED",
+          "x_label": "Metadata bytes per 1,000 capacity slots (baseline only)",
+          "groups": [
+            "Run 1",
+            "Run 2",
+            "Run 3"
+          ],
+          "series": [
+            "Baseline"
+          ],
+          "points": [
+            {
+              "group": "Run 1",
+              "series": "Baseline",
+              "value": 110.91613810850731,
+              "tip": "95feb9df0d48499485e365c4b5a521d1-metadata-brd-0"
+            },
+            {
+              "group": "Run 2",
+              "series": "Baseline",
+              "value": 110.93139689762666,
+              "tip": "95feb9df0d48499485e365c4b5a521d1-metadata-brd-1"
+            },
+            {
+              "group": "Run 3",
+              "series": "Baseline",
+              "value": 110.946655686746,
+              "tip": "95feb9df0d48499485e365c4b5a521d1-metadata-brd-2"
+            }
+          ],
+          "note": "Valid calibration samples; candidate performance was not measured here."
+        },
+        {
+          "type": "strip",
+          "takeaway": "exp1-sync-zero-redundancy-v1: swapin-disk.swapin_seq.mean_ns",
+          "x_label": "swapin-disk.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 276369.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 278563.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 277189.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 283112.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 288303.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 282358.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 272154.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 279813.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            }
+          ]
+        },
+        {
+          "type": "strip",
+          "takeaway": "exp1-sync-zero-redundancy-v1: swapin-zram-64k.swapin_seq.mean_ns",
+          "x_label": "swapin-zram-64k.swapin_seq.mean_ns (new measurement)",
+          "groups": [
+            "Pair 1",
+            "Pair 2",
+            "Pair 3",
+            "Pair 4"
+          ],
+          "series": [
+            "Control",
+            "Treatment"
+          ],
+          "points": [
+            {
+              "group": "Pair 1",
+              "series": "Control",
+              "value": 30924.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 1",
+              "series": "Treatment",
+              "value": 29560.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Control",
+              "value": 29466.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 2",
+              "series": "Treatment",
+              "value": 28503.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Control",
+              "value": 30719.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 3",
+              "series": "Treatment",
+              "value": 29710.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Control",
+              "value": 30420.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            },
+            {
+              "group": "Pair 4",
+              "series": "Treatment",
+              "value": 28772.0,
+              "tip": "5f58033b1bba401ca43655fc5fd516ec"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Next steps: profile-bound architectural decision",
+      "lead": "Fast screening benchmark demonstrated full correctness across all 17 gates and a modest 1.44% sequential disk swapin latency gain. Because gain is below the 5% min_useful_effect policy threshold and within noise, candidate is retained as an exploratory screen.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The candidate proves that single-lock allocation and allocator-first loops are functionally correct and lockdep-safe. Exploration may focus on batched or asynchronous prefetch mechanisms."
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every retained outcome",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "95feb9df0d48499485e365c4b5a521d1",
+              "control",
+              "probe",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "14a8d2d9099a47e2b506c581eaa12502",
+              "exp1-sync-zero-redundancy-v1",
+              "probe",
+              "PROBE_PASS",
+              ""
+            ],
+            [
+              "eba499eeed3542e992d9d8f276d407de",
+              "control",
+              "fast",
+              "CALIBRATED",
+              ""
+            ],
+            [
+              "5f58033b1bba401ca43655fc5fd516ec",
+              "exp1-sync-zero-redundancy-v1",
+              "fast",
+              "FAST_PASS",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": []
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "exp1-sync-zero-redundancy-v1",
+              "{\"assessment\": {\"auto_promote\": false, \"complexity_relation\": \"tradeoff\", \"confirmation_required\": false, \"disposition\": \"rejected\", \"frontier_eligible\": true, \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"c1fc8e36b3b89805968f9790a35f1c2da272570a\", \"candidate_tree\": \"49d426bccf0372f05bd4470cad1e0bf731924dc0\", \"evaluation_id\": \"5f58033b1bba401ca43655fc5fd516ec\", \"evaluation_report\": \"campaigns/exp1-sync-zero-redundancy/runs/evaluations/5f58033b1bba401ca43655fc5fd516ec/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"9d2ff4852ae1d9cf3500329ad4e958139f7a30f2a1c72ec303bb4840e4c989bd\"}, \"parent_complexity_relation\": \"tradeoff\", \"performance_accepted\": false, \"reasons\": [\"benefit does not justify added complexity\"], \"scientific_sha256\": \"7ccb4ec62139741e962aff030387af91faec0cb34bd3282474b57fa236bf3e36\"}, \"decision\": {\"advisory_flags\": [], \"complexity\": {\"baseline\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"No configuration changes.\"}, \"error_paths\": {\"change\": \"mixed\", \"reason\": \"All error paths preserved; -EEXIST triggers cache fallback.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"Helper signature unchanged.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"Post-allocation cluster lock and slot validation remain authoritative.\"}, \"locking\": {\"change\": \"decreased\", \"reason\": \"Omit preliminary cluster lock for order-0 demand faults.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"No persistent metadata cost.\"}, \"state\": {\"change\": \"unchanged\", \"reason\": \"No new stored state or flags.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Need to verify concurrency and fallback paths.\"}}, \"parent\": {\"configuration\": {\"change\": \"unchanged\", \"reason\": \"No configuration changes.\"}, \"error_paths\": {\"change\": \"mixed\", \"reason\": \"All error paths preserved; -EEXIST triggers cache fallback.\"}, \"interfaces\": {\"change\": \"unchanged\", \"reason\": \"Helper signature unchanged.\"}, \"lifetime\": {\"change\": \"unchanged\", \"reason\": \"Post-allocation cluster lock and slot validation remain authoritative.\"}, \"locking\": {\"change\": \"decreased\", \"reason\": \"Omit preliminary cluster lock for order-0 demand faults.\"}, \"memory_cost\": {\"change\": \"unchanged\", \"reason\": \"No persistent metadata cost.\"}, \"state\": {\"change\": \"unchanged\", \"reason\": \"No new stored state or flags.\"}, \"test_burden\": {\"change\": \"increased\", \"reason\": \"Need to verify concurrency and fallback paths.\"}}}, \"complexity_justification\": \"Locking is decreased by removing the preliminary cluster lock for order-0 demand faults, while error handling is preserved with -EEXIST fallback. This represents a worthwhile architectural tradeoff for low latency.\", \"evidence\": [\"campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/static.json\", \"campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/mechanism.json\", \"campaigns/exp1-sync-zero-redundancy/report/independent-review.md\", \"campaigns/exp1-sync-zero-redundancy/runs/evaluations/5f58033b1bba401ca43655fc5fd516ec/report.json\", \"campaigns/exp1-sync-zero-redundancy/runs/guests/exp1-sync-zero-redundancy-v1-correctness/result.json\"], \"frontier_eligible\": true, \"frontier_reason\": \"Candidate achieves zero-redundancy synchronous swapin path without state regressions.\", \"identity\": {\"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"c1fc8e36b3b89805968f9790a35f1c2da272570a\", \"candidate_tree\": \"49d426bccf0372f05bd4470cad1e0bf731924dc0\", \"evaluation_id\": \"5f58033b1bba401ca43655fc5fd516ec\", \"evaluation_report\": \"campaigns/exp1-sync-zero-redundancy/runs/evaluations/5f58033b1bba401ca43655fc5fd516ec/report.json\", \"parent_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"parent_tree\": \"657cffbcbb1bff41ba1de6c232377cead2c2a837\", \"protocol_sha256\": \"9d2ff4852ae1d9cf3500329ad4e958139f7a30f2a1c72ec303bb4840e4c989bd\"}, \"learning_value\": \"Demonstrates that allocator-first loop and single-lock order-0 allocation in mm/swap_state.c are safe, functionally verified across all 17 gates, and provide a modest latency improvement on disk swapin within calibrated noise limits.\", \"performance\": {\"noise_relative\": 0.06285714285714294, \"normalized_gain\": 0.0164201842937457, \"scored_guards_pass\": true}, \"reason\": \"Candidate achieves FAST_PASS with 1.44% median sequential disk swapin latency reduction and passing guardrails across all metrics.\", \"review_status\": \"clear\", \"schema_version\": 1, \"scientific_result\": \"screen\", \"scientific_sha256\": \"7ccb4ec62139741e962aff030387af91faec0cb34bd3282474b57fa236bf3e36\", \"upstream_comparison\": {\"evidence\": [], \"reason\": \"Frozen line declares no relevant upstream comparison.\", \"status\": \"not-applicable\"}}, \"provenance\": {\"evaluation_sha256\": \"8894a2e7a926ffc9152b87a816e66541166409572aa7d7cfbc656dad22411f40\", \"evidence_sha256\": {\"campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/mechanism.json\": \"0fe8a6fa9294852e978c3e4a945d9a859ec6f95f5b8d93737b75bfbb650bd367\", \"campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/static.json\": \"1ff240b3a73bd7dd77cc13649c2ad0177628be44e7b857178c462e7dbf97b976\", \"campaigns/exp1-sync-zero-redundancy/report/independent-review.md\": \"31d581d5180a324cc4846a00ac56c7d571b9b2fb197f7d4fe4bbc18be900b953\", \"campaigns/exp1-sync-zero-redundancy/runs/evaluations/5f58033b1bba401ca43655fc5fd516ec/report.json\": \"8894a2e7a926ffc9152b87a816e66541166409572aa7d7cfbc656dad22411f40\", \"campaigns/exp1-sync-zero-redundancy/runs/guests/exp1-sync-zero-redundancy-v1-correctness/result.json\": \"704571489eb45aaa1face868063dd7b244b5f12aed206258609ee0398fe517d8\"}}, \"schema_version\": 1}"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/exp1-sync-zero-redundancy/campaign.json",
+              "9ca642c2e343b9cbd049bb3024031ee2a2fdcda1b1317f4b090295afdcff47bf"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/value.json",
+              "bb826275e60c06f345d053e5c5d85b0e66ab74cf6452a29d85d63f9f31752966"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1.json",
+              "66d9477b9bd599d25f00ec35483d3dd6523f68765aa4241018d1d0608f7b50a0"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/ledger/budget.json",
+              "60182a6ddc06e6814073e2559cd69194295a90ea2c9aa9ff6977440bdceb428a"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/ledger/ledger.json",
+              "50e2036c1c57310c925fe2c1be4be85b198545e62ddbc3534ac6d318ff20a576"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/ledger/session-closeout.json",
+              "a2df4d4a31ac51afe6b331132997535cb812b826bd7a4375f324b86ebb7af3e9"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/patches/exp1-sync-zero-redundancy-v1.patch",
+              "6da8ea6c1e73bbaea2be527c5a215942fb4e52bf37f7af1a8932baa3b897976a"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/policy.json",
+              "f227634b82497599b71a673eb03f791a93cb5e9ac11b7aed6237d070ccc030e1"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/protocol.json",
+              "9d2ff4852ae1d9cf3500329ad4e958139f7a30f2a1c72ec303bb4840e4c989bd"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/research.json",
+              "41495bdf277458b1afd095dbc600e4334509dbb86d74f9a93f55e1e523856183"
+            ],
+            [
+              "campaigns/exp1-sync-zero-redundancy/reviews/exp1-independent-v1.json",
+              "0b58da8d46ddddc50ac663398a1b6d6c09aced2131070352e8a3970fc51ea3c3"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

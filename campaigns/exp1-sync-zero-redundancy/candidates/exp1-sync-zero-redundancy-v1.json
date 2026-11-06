@@ -1,0 +1,20 @@
+{
+  "id": "exp1-sync-zero-redundancy-v1",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-e8af10295bb8",
+  "worktree": "worktrees/exp1-sync-zero-redundancy/exp1-sync-zero-redundancy-v1",
+  "status": "closed",
+  "hypothesis": "In synchronous swap-in, reordering swapin_sync to call __swap_cache_alloc_folio first and omitting preliminary order-0 cluster lock in __swap_cache_alloc eliminates duplicate RCU lookup and halves cluster lock acquisitions on order-0 cold faults without reducing runtime safety. Reject if races fail validation, correctness fails, or latency does not improve beyond noise.",
+  "created_unix": 1793940395.1066298,
+  "protocol_sha256": "da2b095e3f64bc6298663d7bf6cffcd923deaba61e88b009804fe94a720610c1",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "Cold synchronous swap-in paths avoid preliminary swap_cache_get_folio in swapin_sync and preliminary swap_cluster_lock_unpinned in __swap_cache_alloc for order-0 faults; locked post-allocation validation and -EEXIST cache lookup fallback remain authoritative.",
+    "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+  },
+  "reason": "Research disposition: rejected"
+}

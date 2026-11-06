@@ -1,0 +1,19 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "c1fc8e36b3b89805968f9790a35f1c2da272570a",
+  "changed_paths": [
+    "mm/swap_state.c"
+  ],
+  "changed_lines": 37,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/checkpatch.log",
+    "sha256": "68ec3165a0b2f28159c0c33ff1c58221d73417a345fb9fd82e55840b195ad303"
+  }
+}

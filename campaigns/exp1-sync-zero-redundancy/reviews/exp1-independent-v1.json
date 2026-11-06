@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "exp1-independent-v1",
+  "campaign": "exp1-sync-zero-redundancy",
+  "candidate": "exp1-sync-zero-redundancy-v1",
+  "candidate_commit": "c1fc8e36b3b89805968f9790a35f1c2da272570a",
+  "source_tree": "49d426bccf0372f05bd4470cad1e0bf731924dc0",
+  "reviewer": "Independent candidate_review agent (teamwork-exp1)",
+  "disposition": "pass",
+  "summary": "No actionable correctness blocker in the zero-redundancy synchronous swap-in path. Calling __swap_cache_alloc_folio first avoids redundant RCU lookup on cold faults; -EEXIST properly falls back to referenced cached folio. Omitting order-0 precheck in __swap_cache_alloc safely relies on the post-allocation authoritative cluster lock and locked validation before publication. Concurrency races, memcg charge rollback, and error paths remain intact.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/exp1-sync-zero-redundancy/report/independent-review.md",
+      "sha256": "31d581d5180a324cc4846a00ac56c7d571b9b2fb197f7d4fe4bbc18be900b953"
+    },
+    {
+      "path": "campaigns/exp1-sync-zero-redundancy/patches/exp1-sync-zero-redundancy-v1.patch",
+      "sha256": "6da8ea6c1e73bbaea2be527c5a215942fb4e52bf37f7af1a8932baa3b897976a"
+    },
+    {
+      "path": "campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/static.json",
+      "sha256": "1ff240b3a73bd7dd77cc13649c2ad0177628be44e7b857178c462e7dbf97b976"
+    }
+  ],
+  "recorded_unix": 1793940531.6401987,
+  "record_sha256": "37f39bf27ed0ef16a45850b8e7cc0f21fffcbd30fec199a7d74d8aa5fb9e366d"
+}

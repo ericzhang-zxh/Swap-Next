@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "candidate_commit": "c1fc8e36b3b89805968f9790a35f1c2da272570a",
+    "candidate_tree": "49d426bccf0372f05bd4470cad1e0bf731924dc0",
+    "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+    "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "protocol_sha256": "9d2ff4852ae1d9cf3500329ad4e958139f7a30f2a1c72ec303bb4840e4c989bd",
+    "evaluation_id": "5f58033b1bba401ca43655fc5fd516ec",
+    "evaluation_report": "campaigns/exp1-sync-zero-redundancy/runs/evaluations/5f58033b1bba401ca43655fc5fd516ec/report.json"
+  },
+  "scientific_sha256": "7ccb4ec62139741e962aff030387af91faec0cb34bd3282474b57fa236bf3e36",
+  "scientific_result": "screen",
+  "review_status": "clear",
+  "complexity": {
+    "parent": {
+      "state": {
+        "change": "unchanged",
+        "reason": "No new stored state or flags."
+      },
+      "lifetime": {
+        "change": "unchanged",
+        "reason": "Post-allocation cluster lock and slot validation remain authoritative."
+      },
+      "locking": {
+        "change": "decreased",
+        "reason": "Omit preliminary cluster lock for order-0 demand faults."
+      },
+      "error_paths": {
+        "change": "mixed",
+        "reason": "All error paths preserved; -EEXIST triggers cache fallback."
+      },
+      "configuration": {
+        "change": "unchanged",
+        "reason": "No configuration changes."
+      },
+      "test_burden": {
+        "change": "increased",
+        "reason": "Need to verify concurrency and fallback paths."
+      },
+      "interfaces": {
+        "change": "unchanged",
+        "reason": "Helper signature unchanged."
+      },
+      "memory_cost": {
+        "change": "unchanged",
+        "reason": "No persistent metadata cost."
+      }
+    },
+    "baseline": {
+      "state": {
+        "change": "unchanged",
+        "reason": "No new stored state or flags."
+      },
+      "lifetime": {
+        "change": "unchanged",
+        "reason": "Post-allocation cluster lock and slot validation remain authoritative."
+      },
+      "locking": {
+        "change": "decreased",
+        "reason": "Omit preliminary cluster lock for order-0 demand faults."
+      },
+      "error_paths": {
+        "change": "mixed",
+        "reason": "All error paths preserved; -EEXIST triggers cache fallback."
+      },
+      "configuration": {
+        "change": "unchanged",
+        "reason": "No configuration changes."
+      },
+      "test_burden": {
+        "change": "increased",
+        "reason": "Need to verify concurrency and fallback paths."
+      },
+      "interfaces": {
+        "change": "unchanged",
+        "reason": "Helper signature unchanged."
+      },
+      "memory_cost": {
+        "change": "unchanged",
+        "reason": "No persistent metadata cost."
+      }
+    }
+  },
+  "complexity_justification": "Locking is decreased by removing the preliminary cluster lock for order-0 demand faults, while error handling is preserved with -EEXIST fallback. This represents a worthwhile architectural tradeoff for low latency.",
+  "frontier_eligible": true,
+  "frontier_reason": "Candidate achieves zero-redundancy synchronous swapin path without state regressions.",
+  "performance": {
+    "normalized_gain": 0.0164201842937457,
+    "noise_relative": 0.06285714285714294,
+    "scored_guards_pass": true
+  },
+  "upstream_comparison": {
+    "status": "not-applicable",
+    "reason": "Frozen line declares no relevant upstream comparison.",
+    "evidence": []
+  },
+  "evidence": [
+    "campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/static.json",
+    "campaigns/exp1-sync-zero-redundancy/candidates/exp1-sync-zero-redundancy-v1/mechanism.json",
+    "campaigns/exp1-sync-zero-redundancy/report/independent-review.md",
+    "campaigns/exp1-sync-zero-redundancy/runs/evaluations/5f58033b1bba401ca43655fc5fd516ec/report.json",
+    "campaigns/exp1-sync-zero-redundancy/runs/guests/exp1-sync-zero-redundancy-v1-correctness/result.json"
+  ],
+  "advisory_flags": [],
+  "reason": "Candidate achieves FAST_PASS with 1.44% median sequential disk swapin latency reduction and passing guardrails across all metrics.",
+  "learning_value": "Demonstrates that allocator-first loop and single-lock order-0 allocation in mm/swap_state.c are safe, functionally verified across all 17 gates, and provide a modest latency improvement on disk swapin within calibrated noise limits."
+}
