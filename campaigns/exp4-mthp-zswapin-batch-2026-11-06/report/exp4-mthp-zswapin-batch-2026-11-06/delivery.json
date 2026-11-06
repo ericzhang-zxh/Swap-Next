@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "exp4-mthp-zswapin-batch-2026-11-06",
-  "state": "visually_checked",
+  "state": "live_verified",
   "evidence_sha256": "02c184ca1e6a758500dbe446c73508bf0e79b40459dafcad117f80c935486b91",
   "artifacts": {
     "summary.json": "dc2ee3547a4135bb99c6871fd333b41a30ab2b060d3220a7c41982195dd6c576",
@@ -19,6 +19,10 @@
     {
       "state": "visually_checked",
       "time": 1793965794.9441383
+    },
+    {
+      "state": "live_verified",
+      "time": 1793966556.504356
     }
   ],
   "visual_check": {
@@ -74,5 +78,13 @@
         "disclosure_works": true
       }
     ]
+  },
+  "publication": {
+    "commit": "abe097a78f01d3cb435f58c8b7e686db32580e29",
+    "run_id": "42213402650",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/exp4-mthp-zswapin-batch-2026-11-06/",
+    "html_sha256": "19ff7faabe43322626aad0e0b8ff2b74ff894a9e10a1a8104659ad76a4bf2c81",
+    "index_sha256": "67442bc1c5760a8e0b34dfc1f0790bd4eb8ec54fad50709006dfdd5b235cd0b6",
+    "verified_unix": 1793966556.5043533
   }
 }

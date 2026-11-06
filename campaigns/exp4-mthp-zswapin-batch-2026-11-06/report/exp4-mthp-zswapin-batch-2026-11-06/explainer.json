@@ -1,6 +1,6 @@
 {
   "title": "Batched High-Order mTHP Swap-in for Zswap",
-  "subtitle": "agy (gemini4argon) \u00b7 line: exp4-mthp-zswapin-batch \u00b7 base 5e84ca92 \u00b7 1 candidate \u00b7 20 guests / 0 builds",
+  "subtitle": "agy (gemini4argon) \u00b7 line: exp4-mthp-zswapin-batch \u00b7 base 5e84ca92 \u00b7 1 candidate \u00b7 19 guests / 1 build",
   "verdict": {
     "status": "needs-review",
     "headline": "Screening benchmark: assembling contiguous compressed zswap slots into high-order folios yields -4.7% sequential and -5.8% p99 latency reduction on zswap, but geomean effect (-2.3%) remains within the calibrated noise floor.",
@@ -495,5 +495,7 @@
       ]
     }
   ],
-  "date": "2026-11-06"
+  "date": "2026-11-06",
+  "guests": 19,
+  "builds": 1
 }

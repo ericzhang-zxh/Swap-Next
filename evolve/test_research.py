@@ -91,7 +91,7 @@ class ResearchTest(unittest.TestCase):
     def test_profiles_are_trusted_and_policy_cannot_widen(self):
         policy = {"allowed_modify": ["mm/swap_state.c"], "allowed_add": []}
         self.assertEqual(r.validate_policy_scope(policy, self.profile), [])
-        policy["allowed_modify"].append("mm/memory.c")
+        policy["allowed_modify"].append("kernel/sched/core.c")
         self.assertIn("widens", r.validate_policy_scope(policy, self.profile)[0])
         policy["allowed_modify"].pop()
         policy["allowed_add"] = ["tools/testing/selftests/mm/*.c"]
