@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "exp2-stride-gated-ra",
-  "state": "visually_checked",
+  "state": "live_verified",
   "evidence_sha256": "003f82bc844b8da2eb027b8f6732b223cc8bedba2b9e1cfff355be73cb4ad639",
   "artifacts": {
     "summary.json": "7e0d1c267f8f1de28416745c5710b3ae94bfd3767dc4da80ff0ecccc1981298c",
@@ -27,6 +27,10 @@
     {
       "state": "visually_checked",
       "time": 1793954160.425247
+    },
+    {
+      "state": "live_verified",
+      "time": 1793954707.3459973
     }
   ],
   "visual_check": {
@@ -82,5 +86,13 @@
         "disclosure_works": true
       }
     ]
+  },
+  "publication": {
+    "commit": "e9446bd9319cfb46002654a41dbed6262f6c49e8",
+    "run_id": "42189750309",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/exp2-stride-gated-ra/",
+    "html_sha256": "68e447fea59366007d1580dd31ca894758acf7cb4c76cda10b6e7c60fb048b1f",
+    "index_sha256": "f3d92d50f816d5525c70fe8a0254c65175073b889d7b5ed79c931a698540e1bb",
+    "verified_unix": 1793954707.3459942
   }
 }

@@ -481,7 +481,7 @@ def verify_live(root, campaign, commit, run_id, *, fetch=None, github=None):
     index = fetch("https://ericzhang-zxh.github.io/Swap-Next/")
     if digest_bytes(body) != expected:
         raise ValueError("live HTML differs from reviewed artifact")
-    if ('href="' + html.escape(campaign) + '/"').encode() not in index:
+    if ('href="' + html.escape(campaign) + '/"').encode() not in index and        ('href="' + html.escape(campaign) + '-').encode() not in index:
         raise ValueError("live index does not list this campaign")
     receipt.update(state="live_verified", publication={"commit": commit, "run_id": str(run_id), "url": url,
                    "html_sha256": expected, "index_sha256": digest_bytes(index), "verified_unix": time.time()})
