@@ -88,6 +88,7 @@ separate evidence. On phones, reflow scenes rather than shrinking the whole pict
 
 1. Read the campaign report, machine-readable summary, protocol and patches.
 2. Write an extraction script that derives `explainer.json` from that evidence.
+   Include an explicit `date` field (`YYYY-MM-DD`).
    Use the page order above and separate overview sections from audit material.
 3. Build with `python3 scripts/build_page.py explainer.json explainer.html`.
    Chart tables are already collapsed. Where the renderer lacks audit-section
@@ -97,12 +98,25 @@ separate evidence. On phones, reflow scenes rather than shrinking the whole pict
 4. Render light and dark themes and a narrow mobile viewport. Check readable
    labels, no overlap or whole-page overflow, visible charts, no visible numeric
    tables on initial load, and working evidence expand/collapse controls.
-5. Save the source spec, generator and HTML next to the report. Follow AGENTS.md
-   for report-only publication independently of candidate promotion. Build the
-   Pages index with `scripts/build_site.py`, verify the deployment for that
-   commit and the live page and index before claiming publication complete.
-   Pages collects `campaigns/<campaign>/report/explainer.html` from main and serves it at
-   `https://ericzhang-zxh.github.io/Swap-Next/<campaign>/`.
+   Capture fresh, unique per-campaign Visual QA screenshots (desktop light/dark,
+   mobile light/dark); never copy screenshot files or hashes from prior campaigns.
+5. **Async Publication Decoupling**: Once a campaign is closed with `close-campaign`,
+   decouple report rendering, Visual QA, and publication so a dedicated report
+   worker runs publication asynchronously on main while subsequent machine
+   executions start immediately without blocking.
+6. **Dated Entry & Layout**: Place published explainer pages under a dated directory
+   (e.g. `campaigns/<c>/report/<c>-YYYY-MM-DD/explainer.html` and `explainer.json`)
+   and remove any undated root duplicate so `build_site.py` outputs a clean, single
+   entry.
+7. **Build Site with Visible Dates**: Run `scripts/build_site.py campaigns/ _site/`.
+   `build_site.py` resolves dates using a robust multi-tier fallback (explicit `date`
+   in `explainer.json`, `YYYY-MM-DD` in published name, timestamps/dates in `campaign.json`,
+   and `delivery.json`/subtitle), displays the resolved date visibly on each card, and
+   sorts campaigns newest-first.
+8. **Live Verification**: Commit report artifacts to `main`, push to `origin/main`,
+   and verify both `<site>/<campaign>/` (200 OK and expected content) and `<site>/`
+   (ensuring the newest campaign is ordered at the very top of the index) before
+   declaring publication complete.
 
 ## Spec reference
 

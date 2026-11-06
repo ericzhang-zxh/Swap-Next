@@ -1,6 +1,6 @@
 {
   "title": "Zero-Redundancy Synchronous Swap-in Path",
-  "subtitle": "exp1-sync-zero-redundancy \u00b7 5e84ca928dee",
+  "subtitle": "exp1-sync-zero-redundancy \u00b7 2026-11-06 \u00b7 5e84ca928dee",
   "verdict": {
     "status": "needs-review",
     "headline": "Exploratory screen: allocator-first loop and single-lock allocation pass all 17 correctness gates with 1.44% disk latency gain, within noise.",
@@ -488,5 +488,6 @@
         }
       ]
     }
-  ]
+  ],
+  "date": "2026-11-06"
 }
