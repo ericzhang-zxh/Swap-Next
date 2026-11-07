@@ -1,0 +1,15 @@
+{
+  "id": "e0f075ffbf2a4614a3a2be191781f5d6-metadata-brd-0",
+  "campaign": "xswap-radix-hole-reclaim-2026-11-06",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794010995.1416504,
+  "identity": {
+    "build": "std-2c1ddb537fd9",
+    "backend": "brd",
+    "mode": "plain",
+    "workload": "metadata"
+  },
+  "protocol_sha256": "e7c82da5cc9f8c7120202bf6f0f11aba38822fafe3bc967e14c50e5b5e1383f6",
+  "started_unix": 1794010995.1923923
+}

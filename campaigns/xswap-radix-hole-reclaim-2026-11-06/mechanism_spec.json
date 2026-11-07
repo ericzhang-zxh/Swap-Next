@@ -1,0 +1,5 @@
+{
+  "kind": "reviewed_structure",
+  "claim": "In mm/swapfile.c and mm/swap.h, replace flat VM_SPARSE array with 2-level RCU radix chunks: si->cluster_dir[chunk_idx] points to struct swap_cluster_chunk holding 64 swap_cluster_info descriptors, and swap_cluster_lookup_rcu() dereferences via rcu_dereference(). In __free_cluster(), atomic_dec_and_test(&chunk->live_clusters) detects interior empty chunks, scheduling xswap_reclaim_work. The reclaim worker acquires si->xswap_lock and spin_lock(&si->lock), trylocks and unlinks clusters, atomically clears si->cluster_dir[chunk_idx] = NULL, and dispatches asynchronous kfree_rcu(chunk, rcu).",
+  "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, RCU UAF, lock inversion between si->lock and ci->lock, failure of any of the 17 correctness gates, or latency regression beyond calibrated noise."
+}

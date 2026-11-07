@@ -1,0 +1,15 @@
+{
+  "id": "xswap-radix-hole-reclaim-v1-correctness",
+  "campaign": "xswap-radix-hole-reclaim-2026-11-06",
+  "pool": "fast",
+  "status": "STARTED",
+  "reserved_unix": 1794007431.4657362,
+  "identity": {
+    "build": "std-44bd52b92592",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "correctness"
+  },
+  "protocol_sha256": "e7c82da5cc9f8c7120202bf6f0f11aba38822fafe3bc967e14c50e5b5e1383f6",
+  "started_unix": 1794007454.8334174
+}

@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "campaign": "xswap-radix-hole-reclaim-2026-11-06",
+  "evidence_sha256": "75f9d5bf42ffa325073e88e5d257bc2d77256af916cd5d2e0fce17d9f872ebc6",
+  "title": "Two-Level RCU Radix Chunks & Interior Hole Reclamation (xswap-radix-hole-reclaim-v1)",
+  "headline": "Milestone 3 evaluation: 2-level RCU radix chunks with 56-byte zero-overhead descriptors and asynchronous hole reclamation pass all 17 integration gates and achieve zero metadata regression.",
+  "date": "2026-11-06",
+  "harness": "teamwork",
+  "model": "gemini-2.5-pro",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Replacing monolithic flat swap cluster allocation",
+      "lead": "Upstream mm/swapfile.c statically allocates a flat cluster array at swapon time. Large swapfiles pin megabytes of kernel memory even when mostly empty, and interior holes cannot be reclaimed.",
+      "evidence": [
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/research.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-radix-hole-reclaim-v1.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Milestone 3 replaces monolithic cluster arrays with a dynamically expanded 2-level RCU radix directory, allocating chunks of 64 clusters on demand and reclaiming interior holes via asynchronous kfree_rcu()."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Two-level RCU radix chunk directory and 56-byte layout",
+      "lead": "si->cluster_dir maps chunk IDs to 64-cluster leaves. Chunk 0 is permanent to protect swap headers. 4096-byte alignment enables O(1) lockless derivation via PAGE_MASK without adding pointer overhead to struct swap_cluster_info.",
+      "evidence": [
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/research.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/protocol.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Lockless RCU radix lookup and page-aligned chunk derivation guarantee O(1) access without metadata overhead",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "Swap Entry",
+              "col": 0,
+              "row": 0,
+              "sub": "swp_offset",
+              "tone": "default"
+            },
+            {
+              "id": "lookup",
+              "label": "swap_cluster_lookup_rcu",
+              "col": 1,
+              "row": 0,
+              "sub": "2-level directory",
+              "tone": "focus"
+            },
+            {
+              "id": "align",
+              "label": "PAGE_MASK Derivation",
+              "col": 2,
+              "row": 0,
+              "sub": "ci & PAGE_MASK",
+              "tone": "good"
+            },
+            {
+              "id": "slot",
+              "label": "Cluster Slot",
+              "col": 3,
+              "row": 0,
+              "sub": "56-byte descriptor",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "lookup",
+              "label": "chunk index"
+            },
+            {
+              "from": "lookup",
+              "to": "align",
+              "label": "leaf chunk"
+            },
+            {
+              "from": "align",
+              "to": "slot",
+              "label": "cluster offset"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "Lock-free interior hole isolation and asynchronous RCU reclamation",
+      "lead": "When all 64 clusters in a chunk become free, the chunk is unlinked under si->lock via rcu_assign_pointer() and reclaimed asynchronously via kfree_rcu(), preventing swap path stalls and lock inversion.",
+      "evidence": [
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-radix-hole-reclaim-v1.patch",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/reviews/xswap-radix-hole-reclaim-independent-v1.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Atomic free-count tracking and asynchronous kfree_rcu reclaim isolate and free interior holes without latency penalty",
+          "nodes": [
+            {
+              "id": "free",
+              "label": "Slot Freed",
+              "col": 0,
+              "row": 0,
+              "sub": "__free_cluster",
+              "tone": "default"
+            },
+            {
+              "id": "count",
+              "label": "Atomic Check",
+              "col": 1,
+              "row": 0,
+              "sub": "chunk->clusters_free == 64",
+              "tone": "focus"
+            },
+            {
+              "id": "unlink",
+              "label": "RCU Unlink",
+              "col": 2,
+              "row": 0,
+              "sub": "rcu_assign_pointer NULL",
+              "tone": "good"
+            },
+            {
+              "id": "rcu",
+              "label": "kfree_rcu",
+              "col": 3,
+              "row": 0,
+              "sub": "asynchronous reclaim",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "free",
+              "to": "count",
+              "label": "decrement"
+            },
+            {
+              "from": "count",
+              "to": "unlink",
+              "label": "chunk empty"
+            },
+            {
+              "from": "unlink",
+              "to": "rcu",
+              "label": "grace period"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Verified kernel implementation and exact correctness verification",
+      "lead": "Modified 7 kernel paths with 942 lines changed. Passed controller check with 0 checkpatch errors, 17/17 QEMU TCG integration gates, and zero plain-mode metadata regression (0.1109 bytes/slot).",
+      "evidence": [
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-radix-hole-reclaim-v1.patch",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/value.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Comprehensive verification gates prove structural correctness, zero metadata overhead, and functional hole reclamation",
+          "nodes": [
+            {
+              "id": "patch",
+              "label": "Kernel Implementation",
+              "col": 0,
+              "row": 0,
+              "sub": "7 files, 942 lines",
+              "tone": "default"
+            },
+            {
+              "id": "gates",
+              "label": "17 QEMU Gates",
+              "col": 1,
+              "row": 0,
+              "sub": "17/17 BENCH_PASS",
+              "tone": "good"
+            },
+            {
+              "id": "signals",
+              "label": "Reclaim Signals",
+              "col": 2,
+              "row": 0,
+              "sub": "grows=7, shrinks=8",
+              "tone": "good"
+            },
+            {
+              "id": "metadata",
+              "label": "Metadata Parity",
+              "col": 3,
+              "row": 0,
+              "sub": "0.1109 bytes/slot",
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "patch",
+              "to": "gates",
+              "label": "build std-2c1ddb537fd9"
+            },
+            {
+              "from": "gates",
+              "to": "signals",
+              "label": "probe tier"
+            },
+            {
+              "from": "signals",
+              "to": "metadata",
+              "label": "0% regression"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Architectural verdict: Milestone 3 2-level RCU radix chunks & hole reclamation verified",
+      "lead": "Candidate xswap-radix-hole-reclaim-v1 proves that dynamic 2-level RCU radix directories eliminate monolithic metadata preallocation without incurring memory regression or swapin latency overhead, concluding the campaign.",
+      "evidence": [
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/ledger/ledger.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Milestone 3 delivers verified 2-level RCU radix chunk directory and interior hole reclamation with 56-byte descriptors, 17/17 correctness gates passing, verified dynamic growth and shrink signals, and zero metadata regression, completing the xswap milestone series."
+        }
+      ]
+    }
+  ]
+}

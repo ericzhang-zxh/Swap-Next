@@ -12,6 +12,8 @@ Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
 
 Baseline origin: upstream or imported reference.
 
+[Campaign report](../xswap-mthp-reassembly-2026-11-06/report/REPORT.md)
+
 | Candidate | Status | Reason |
 | --- | --- | --- |
 | [xswap-mthp-reassembly-v1](../xswap-mthp-reassembly-2026-11-06/candidates/xswap-mthp-reassembly-v1.json) | closed | Research disposition: rejected |

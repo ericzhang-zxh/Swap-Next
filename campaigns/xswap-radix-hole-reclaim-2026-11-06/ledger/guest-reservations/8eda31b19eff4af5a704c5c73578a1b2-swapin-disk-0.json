@@ -1,0 +1,15 @@
+{
+  "id": "8eda31b19eff4af5a704c5c73578a1b2-swapin-disk-0",
+  "campaign": "xswap-radix-hole-reclaim-2026-11-06",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794008188.342658,
+  "identity": {
+    "build": "codex-r01-base",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "swapin"
+  },
+  "protocol_sha256": "e7c82da5cc9f8c7120202bf6f0f11aba38822fafe3bc967e14c50e5b5e1383f6",
+  "started_unix": 1794008188.386679
+}

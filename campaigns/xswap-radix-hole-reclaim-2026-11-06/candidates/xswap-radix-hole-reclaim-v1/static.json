@@ -1,0 +1,25 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "2c1ddb537fd926482ab4845bd7d5be116b4523ac",
+  "changed_paths": [
+    "include/linux/swap.h",
+    "include/linux/zswap.h",
+    "mm/memory.c",
+    "mm/swap.h",
+    "mm/swap_state.c",
+    "mm/swapfile.c",
+    "mm/zswap.c"
+  ],
+  "changed_lines": 942,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 0,
+    "evidence": "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/checkpatch.log",
+    "sha256": "ba6c29e18d1d8a0ab0be4dbf53da3ecc38ff0b6d6c12614d76fa6e90006b1a70"
+  }
+}

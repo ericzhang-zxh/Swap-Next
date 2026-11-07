@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "xswap-radix-hole-reclaim-independent-v1",
+  "campaign": "xswap-radix-hole-reclaim-2026-11-06",
+  "candidate": "xswap-radix-hole-reclaim-v1",
+  "candidate_commit": "2c1ddb537fd926482ab4845bd7d5be116b4523ac",
+  "source_tree": "bcbd84c7201ef583255a1d4799ff9891fb992aa9",
+  "reviewer": "Independent candidate_review agent (teamwork-xswap-exp3)",
+  "disposition": "pass",
+  "summary": "No actionable correctness blocker found in xswap-radix-hole-reclaim. In mm/swapfile.c and mm/swap.h, 2-level RCU radix chunks provide lockless O(1) cluster lookup via si->cluster_dir[chunk_idx] with zero global lock holds. Descriptors remain strictly 56 bytes with 4096-aligned chunk allocation, eliminating plain-mode metadata overhead. Atomic decrement atomic_dec_and_test(&chunk->live_clusters) tracks empty interior chunks without si->xswap_lock. Interior hole reclamation unlinks chunks under si->xswap_lock and frees memory asynchronously via kfree_rcu(), avoiding lock inversion and synchronize_rcu() latency stalls. Chunk 0 is permanently guarded. Checkpatch clean with 0 errors and 0 warnings.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "campaigns/xswap-radix-hole-reclaim-2026-11-06/report/independent-review.md",
+      "sha256": "bec5f81666c662f4ce87c1e85f78b00e6f4ca96ce0f4e16cc022cce1c95e90f1"
+    },
+    {
+      "path": "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-radix-hole-reclaim-v1.patch",
+      "sha256": "a8ee5a420d21f52b7678060787eda40ab1d928b1603a987e741df3ba3b3ae581"
+    },
+    {
+      "path": "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/static.json",
+      "sha256": "000bd3992e9a601ae16ea33b4741de5681dec88a2a6c86139a5d44f4f96e7fc6"
+    }
+  ],
+  "recorded_unix": 1794010552.7238023,
+  "record_sha256": "8783d300ce0c1ae37bf7e4d618b24a4ced29f1408828ecc33e4053954b85d05e"
+}

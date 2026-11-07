@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "decision": {
+    "schema_version": 1,
+    "identity": {
+      "candidate_commit": "2c1ddb537fd926482ab4845bd7d5be116b4523ac",
+      "candidate_tree": "bcbd84c7201ef583255a1d4799ff9891fb992aa9",
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "protocol_sha256": "e7c82da5cc9f8c7120202bf6f0f11aba38822fafe3bc967e14c50e5b5e1383f6",
+      "evaluation_id": "0f361c6c5428419d9d04479921fab02a",
+      "evaluation_report": "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/evaluations/0f361c6c5428419d9d04479921fab02a/report.json"
+    },
+    "scientific_sha256": "13bb0b9f015b25ca177f9ee9e0aca831a37bce0bc958e80eeb56f9db57bae1b7",
+    "scientific_result": "screen",
+    "review_status": "clear",
+    "complexity": {
+      "parent": {
+        "state": {
+          "change": "increased",
+          "reason": "Dynamic 2-level RCU radix directory replaces flat static cluster array."
+        },
+        "lifetime": {
+          "change": "decreased",
+          "reason": "Empty interior chunks reclaimed asynchronously via kfree_rcu()."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Per-cluster spinlocks and si->lock hierarchy preserved; lockless RCU reads."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Graceful fallback when chunk allocation fails."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "Automatic dynamic chunk management transparent to user space."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying radix directory expansion, interior hole reclamation, and RCU grace periods."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Internal swap subsystem refactoring preserving external interfaces."
+        },
+        "memory_cost": {
+          "change": "decreased",
+          "reason": "Saves static cluster info preallocation; reclaims interior chunk holes dynamically."
+        }
+      },
+      "baseline": {
+        "state": {
+          "change": "increased",
+          "reason": "Dynamic 2-level RCU radix directory replaces flat static cluster array."
+        },
+        "lifetime": {
+          "change": "decreased",
+          "reason": "Empty interior chunks reclaimed asynchronously via kfree_rcu()."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Per-cluster spinlocks and si->lock hierarchy preserved; lockless RCU reads."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Graceful fallback when chunk allocation fails."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "Automatic dynamic chunk management transparent to user space."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying radix directory expansion, interior hole reclamation, and RCU grace periods."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Internal swap subsystem refactoring preserving external interfaces."
+        },
+        "memory_cost": {
+          "change": "decreased",
+          "reason": "Saves static cluster info preallocation; reclaims interior chunk holes dynamically."
+        }
+      }
+    },
+    "complexity_justification": "Two-level RCU radix directory and interior hole reclamation replace static flat cluster allocation with dynamic on-demand chunks and asynchronous kfree_rcu reclamation, trading slight radix lookup and test complexity for significantly decreased kernel memory footprint on sparse swapfiles.",
+    "frontier_eligible": true,
+    "frontier_reason": "First verified implementation of 2-level dynamic RCU radix chunk directory and interior hole reclamation for the Linux swap subsystem, passing all 17 QEMU TCG integration gates with 0 plain-mode metadata overhead.",
+    "performance": {
+      "normalized_gain": -0.0005382643362619177,
+      "noise_relative": 0.04238745219130502,
+      "scored_guards_pass": true
+    },
+    "upstream_comparison": {
+      "status": "not-applicable",
+      "reason": "Frozen line declares no relevant upstream comparison.",
+      "evidence": []
+    },
+    "evidence": [
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/static.json",
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/mechanism.json",
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/reviews/xswap-radix-hole-reclaim-independent-v1.json",
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/evaluations/0f361c6c5428419d9d04479921fab02a/report.json",
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/guests/xswap-radix-hole-reclaim-v1-correctness-3/result.json"
+    ],
+    "advisory_flags": [],
+    "reason": "Candidate completes 16-guest screening evaluation with 17/17 correctness gates passing, verified interior hole reclaim signals (grows=7, shrinks=8), and zero plain-mode metadata overhead (0.1109 bytes/slot).",
+    "learning_value": "Proves that a 2-level RCU radix chunk directory can replace monolithic flat swap cluster arrays without introducing latency regression or metadata bloat (0.1109 bytes/slot), enabling interior hole reclamation while maintaining lockless RCU reads."
+  },
+  "assessment": {
+    "disposition": "rejected",
+    "reasons": [
+      "benefit does not justify added complexity"
+    ],
+    "complexity_relation": "tradeoff",
+    "parent_complexity_relation": "tradeoff",
+    "frontier_eligible": true,
+    "identity": {
+      "candidate_commit": "2c1ddb537fd926482ab4845bd7d5be116b4523ac",
+      "candidate_tree": "bcbd84c7201ef583255a1d4799ff9891fb992aa9",
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "protocol_sha256": "e7c82da5cc9f8c7120202bf6f0f11aba38822fafe3bc967e14c50e5b5e1383f6",
+      "evaluation_id": "0f361c6c5428419d9d04479921fab02a",
+      "evaluation_report": "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/evaluations/0f361c6c5428419d9d04479921fab02a/report.json"
+    },
+    "scientific_sha256": "13bb0b9f015b25ca177f9ee9e0aca831a37bce0bc958e80eeb56f9db57bae1b7",
+    "performance_accepted": false,
+    "auto_promote": false,
+    "confirmation_required": false
+  },
+  "provenance": {
+    "evaluation_sha256": "b466ea996084242de7a4601f2a7c8bcbb96d7dcdd86c0189f80ef93ca4258142",
+    "evidence_sha256": {
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/static.json": "000bd3992e9a601ae16ea33b4741de5681dec88a2a6c86139a5d44f4f96e7fc6",
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/mechanism.json": "dba2fcd0d345d96549e98f197b25ca64562c5382174adfc03272759dbee9c042",
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/reviews/xswap-radix-hole-reclaim-independent-v1.json": "5e311451e5f5abafd298dddfe79db32acc39fb60b59cec45980027af5982b3da",
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/evaluations/0f361c6c5428419d9d04479921fab02a/report.json": "b466ea996084242de7a4601f2a7c8bcbb96d7dcdd86c0189f80ef93ca4258142",
+      "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/guests/xswap-radix-hole-reclaim-v1-correctness-3/result.json": "0e50c1ee03760d68f94a55ee7c27da3e3b2d808be52c7a46f40d5552547d8cc1"
+    }
+  }
+}

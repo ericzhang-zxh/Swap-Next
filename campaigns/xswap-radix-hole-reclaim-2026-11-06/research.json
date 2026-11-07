@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "line_contract": {
+    "schema_version": 1,
+    "line": "xswap-radix-hole-reclaim",
+    "profile": "swap-core",
+    "profile_version": 1,
+    "profile_sha256": "f11b8b3a9a5d1819dc4bc82c92f5424055aad4f237da07ef8971b73e56cd3cf8",
+    "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "value_policy": {
+      "min_useful_effect": 0.05,
+      "equivalence_margin": 0.02,
+      "requires_upstream_comparison": false,
+      "rationale": "The integrated baseline 5e84ca928dee is the control. Target >60% metadata RAM savings on fragmented swap and elimination of synchronize_rcu() stalls with all 17 correctness gates passing."
+    },
+    "contributor": "teamwork-xswap-exp3",
+    "scientific_sha256": "13bb0b9f015b25ca177f9ee9e0aca831a37bce0bc958e80eeb56f9db57bae1b7"
+  },
+  "selected_idea": {
+    "id": "radix-chunk-hole-reclaim",
+    "status": "proposed",
+    "priority": 100,
+    "change_type": "optimize",
+    "bottleneck": "Upstream xswap uses a flat VM_SPARSE vmalloc array bounded by a single nr_clusters_mapped scalar, restricting reclamation to contiguous tail clusters and causing massive metadata memory plateaus when interior holes form. Furthermore, tail reclamation blocks synchronously in synchronize_rcu().",
+    "mechanism": "Replace flat VM_SPARSE array with a 2-level RCU radix chunk directory. Each leaf chunk holds 64 swap_cluster_info descriptors and tracks active cluster count. When all clusters in a chunk are freed, the chunk pointer is atomically unhooked via xchg() and freed asynchronously via kfree_rcu(), reclaiming arbitrary interior holes without tail dependence and without synchronize_rcu() stalls.",
+    "mechanism_evidence_type": "reviewed_structure",
+    "affected_paths": [
+      "mm/swapfile.c",
+      "include/linux/swap.h",
+      "mm/swap.h",
+      "mm/memory.c",
+      "mm/zswap.c",
+      "include/linux/zswap.h",
+      "mm/swap_state.c"
+    ],
+    "expected_benefit": "Eliminates metadata retention plateaus under sparse/fragmented swap, slashing attributable metadata memory by >60% on metadata-brd, while eliminating 10-50ms synchronize_rcu() stalls on shrink.",
+    "simpler_alternative": "Retain flat VM_SPARSE array with tail-only scanning as in baseline.",
+    "falsifier": "Reject on RCU UAF panic, memory leak under cluster churn, lock inversion between si->lock and ci->lock, failure of any of the 17 correctness gates, or latency regression on swapin.",
+    "required_evidence": [
+      "Exact-tree independent source review including caller contracts",
+      "Counted exact-commit xswap correctness",
+      "Structural mechanism proof",
+      "Fresh probe calibration under Protocol Revision 7 (or reference cache reuse)",
+      "Paired baseline/candidate latency screen"
+    ],
+    "upstream_refs": [],
+    "no_upstream_reason": "The relevant upstream implementation is already in the frozen baseline.",
+    "estimated_cost": {
+      "guest_attempts": 70,
+      "build_attempts": 2
+    },
+    "selection_reason": "Replaces fragile VM_SPARSE tail unmapping with lockless 2-level RCU radix chunks to enable arbitrary interior hole reclamation and eliminate synchronous RCU stalls.",
+    "complexity": {
+      "parent": {
+        "state": {
+          "change": "unchanged",
+          "reason": "Radix chunks map to same logical cluster indices."
+        },
+        "lifetime": {
+          "change": "decreased",
+          "reason": "kfree_rcu handles deferred chunk release safely without manual grace period management."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Cluster-level locks ci->lock and si->lock are retained."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Standard fallback on chunk allocation failure."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "Transparent to userspace and sysfs."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying sparse hole formation and concurrent RCU chunk dereference."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Kernel swap cluster lookup interfaces swap_cluster_lookup_rcu() preserved."
+        },
+        "memory_cost": {
+          "change": "decreased",
+          "reason": "Unused interior chunks are freed to slab rather than remaining pinned in vmalloc."
+        }
+      },
+      "baseline": {
+        "state": {
+          "change": "unchanged",
+          "reason": "Radix chunks map to same logical cluster indices."
+        },
+        "lifetime": {
+          "change": "decreased",
+          "reason": "kfree_rcu handles deferred chunk release safely without manual grace period management."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Cluster-level locks ci->lock and si->lock are retained."
+        },
+        "error_paths": {
+          "change": "unchanged",
+          "reason": "Standard fallback on chunk allocation failure."
+        },
+        "configuration": {
+          "change": "unchanged",
+          "reason": "Transparent to userspace and sysfs."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Requires verifying sparse hole formation and concurrent RCU chunk dereference."
+        },
+        "interfaces": {
+          "change": "unchanged",
+          "reason": "Kernel swap cluster lookup interfaces swap_cluster_lookup_rcu() preserved."
+        },
+        "memory_cost": {
+          "change": "decreased",
+          "reason": "Unused interior chunks are freed to slab rather than remaining pinned in vmalloc."
+        }
+      }
+    },
+    "provenance": [
+      {
+        "kind": "source",
+        "path": "linux:mm/swapfile.c",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "lines": "5030-5240"
+      },
+      {
+        "kind": "source",
+        "path": "linux:include/linux/swap.h",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "lines": "240-255"
+      },
+      {
+        "kind": "source",
+        "path": "linux:mm/swap.h",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "lines": "190-215"
+      }
+    ]
+  },
+  "upstream_refs": [],
+  "protocol_sha256": "e7c82da5cc9f8c7120202bf6f0f11aba38822fafe3bc967e14c50e5b5e1383f6",
+  "policy_sha256": "db54729dad1948ee17fa98e48b414df6a7f3cfc733d7d60e7f5fdd0ed24fd412",
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ]
+}
