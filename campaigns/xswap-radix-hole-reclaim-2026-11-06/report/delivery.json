@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
   "campaign": "xswap-radix-hole-reclaim-2026-11-06",
-  "state": "live_verified",
-  "evidence_sha256": "75f9d5bf42ffa325073e88e5d257bc2d77256af916cd5d2e0fce17d9f872ebc6",
+  "state": "visually_checked",
+  "evidence_sha256": "4eda4bafc0786f753fe60a8ff5d116e42d0cf33bba577a13cd866c3b461082cc",
   "artifacts": {
-    "summary.json": "e154add38002e83cc22b10dc9f05248c025ab890c8e50e43c564efaee92fc3e5",
-    "REPORT.md": "d40f636184eb839cf64ef883c476c11a6f083398ddcb2c0e5bfe121322ae52ac",
-    "explainer.json": "a21e663eab48c1158e2448d5c5e5ea1aaaed865635092cb6380022c9ea6036bb",
-    "explainer.html": "6b9752604e2ecff873ffeb6c73ea6e779a2ec7b08566695f94367d41b6a4083a",
+    "summary.json": "b0ea3450a7b78f5607183e8616f832354739c5e2ea8763e768f1009841397f5a",
+    "REPORT.md": "01539887eee49e6cc535a698db4c7b5f915f53cf2e24de43b7d8845d1d37b927",
+    "explainer.json": "a5f25af66f2d73ecb4c0c7cc3b569aa1bd82765fa49129f0896fb57c37561b83",
+    "explainer.html": "eb7da3f9d60ccb59101aa38bc86c0f12aa68d5c2a502e616ac065e1dadc71dfb",
     "generate_report.py": "40efd880d291d4d74f30a0163634bf3688f988aa8ab1faf0357622c4d0fa8d32"
   },
-  "story_sha256": "6534d8057a5f06612ae4a9f47b084e64f74823e6d778f1daf97fd7a01bcec55f",
+  "story_sha256": "a2404ce439b4fac9e89320e63dca8f6b7e619d9ce715a55a82e3ac22cb315505",
   "history": [
     {
       "state": "generated",
@@ -23,17 +23,25 @@
     {
       "state": "live_verified",
       "time": 1794015508.6755507
+    },
+    {
+      "state": "generated",
+      "time": 1794184405.9306629
+    },
+    {
+      "state": "visually_checked",
+      "time": 1794184545.115939
     }
   ],
   "visual_check": {
-    "artifact_sha256": "6b9752604e2ecff873ffeb6c73ea6e779a2ec7b08566695f94367d41b6a4083a",
-    "method": "Direct Chrome headless render and screenshot inspection of desktop (1280px) and mobile (390px) viewports across light and dark themes; DOM overflow, disclosure and theme-toggle checks verified.",
+    "artifact_sha256": "eb7da3f9d60ccb59101aa38bc86c0f12aa68d5c2a502e616ac065e1dadc71dfb",
+    "method": "Direct Chromium headless render and screenshot inspection of desktop (1280px) and mobile (390px) viewports across light and dark themes; DOM overflow, disclosure, 3 patch diff blocks, and theme-toggle checks verified.",
     "views": [
       {
         "width": 1280,
         "theme": "light",
         "screenshot": "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/visual-qa/desktop-light.png",
-        "sha256": "6ab63018b947430a81c77a7ef6c6a5ab59e6a3d3f688a60d351be4b1e0cde66d",
+        "sha256": "5b625ba572042682a0635a7ff7b1a3e40efff3e9dfe0e207c8c7afae695ba9da",
         "readable": true,
         "no_overflow": true,
         "collapsed_evidence": true,
@@ -45,7 +53,7 @@
         "width": 1280,
         "theme": "dark",
         "screenshot": "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/visual-qa/desktop-dark.png",
-        "sha256": "24e16f82dd9b7e7e149940e2cc8c3c6b9e522cae3b1d7d85413b8eba3b576037",
+        "sha256": "0af6e43d82162ca79e1f22a47df92c63a8b4d66e99746c825356a75977e408b5",
         "readable": true,
         "no_overflow": true,
         "collapsed_evidence": true,
@@ -57,7 +65,7 @@
         "width": 390,
         "theme": "light",
         "screenshot": "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/visual-qa/mobile-light.png",
-        "sha256": "ea6b8e816e4c124750afc727487b95e22827f129665de559826be57b0f19390e",
+        "sha256": "b23c8be025e8d8b3f6974cfab0852182cfe1c7a61cc8476d182ed677ac9f4dc6",
         "readable": true,
         "no_overflow": true,
         "collapsed_evidence": true,
@@ -69,7 +77,7 @@
         "width": 390,
         "theme": "dark",
         "screenshot": "campaigns/xswap-radix-hole-reclaim-2026-11-06/runs/visual-qa/mobile-dark.png",
-        "sha256": "7fdd2243bed6ab8746823b81b705d235c8a303452b73a8af3483b99ed9e1e0c7",
+        "sha256": "7efd5fbf4fa6ae9919ef489f22eeccc3a3fde3e0899a8f0a9adfbc812ec690a6",
         "readable": true,
         "no_overflow": true,
         "collapsed_evidence": true,
@@ -78,13 +86,5 @@
         "disclosure_works": true
       }
     ]
-  },
-  "publication": {
-    "commit": "143c60c56d0ed7e821140b86b8a401e3f456e97d",
-    "run_id": "42324987324",
-    "url": "https://ericzhang-zxh.github.io/Swap-Next/xswap-radix-hole-reclaim-2026-11-06/",
-    "html_sha256": "6b9752604e2ecff873ffeb6c73ea6e779a2ec7b08566695f94367d41b6a4083a",
-    "index_sha256": "25e2386141c21bebf56e7594843626abd62ee66348589fcc04dc2ebda52729c5",
-    "verified_unix": 1794015508.6755474
   }
 }

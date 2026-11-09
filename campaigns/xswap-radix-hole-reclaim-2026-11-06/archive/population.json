@@ -10,9 +10,9 @@
       "source_tree": "bcbd84c7201ef583255a1d4799ff9891fb992aa9",
       "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
       "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
-      "parent_candidate": null,
-      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
-      "generation": 1,
+      "parent_candidate": "xswap-mthp-reassembly-v1",
+      "parent_commit": "53e02e8615a30d927daf77e5f1f7a7182a1c6ec5",
+      "generation": 3,
       "patch": "diff --git a/include/linux/swap.h b/include/linux/swap.h\nindex ebcbb9284..b63ebf632 100644\n--- a/include/linux/swap.h\n+++ b/include/linux/swap.h\n@@ -234,6 +234,8 @@ struct swap_sequential_cluster {\n /*\n  * The in-memory structure used to track swap areas.\n  */\n+struct swap_cluster_chunk;\n+\n struct swap_info_struct {\n \tstruct percpu_ref users;\t/* indicate and keep swap device valid. */\n \tunsigned long\tflags;\t\t/* SWP_USED etc: see above */\n@@ -246,6 +248,10 @@ struct swap_info_struct {\n \tstruct vm_struct\t*cluster_vm;\t/* VM_SPARSE area for cluster_info */\n \tunsigned long\t\tnr_clusters_max;/* total clusters in the xswap address space */\n \tunsigned long\t\tnr_clusters_mapped; /* currently mapped cluster count */\n+\tstruct swap_cluster_chunk __rcu **cluster_dir; /* 2-level radix directory */\n+\tunsigned long\t\tnr_chunks_max;\t/* directory pointer capacity */\n+\tunsigned long\t\tnr_chunks_mapped; /* currently mapped chunk count */\n+\tunsigned long\t\t*empty_chunks_bm; /* candidate hole bitmap */\n \tstruct work_struct\txswap_shrink_work; /* deferred shrink trigger */\n \tstruct mutex\t\txswap_lock;\t/* serialize map/unmap operations */\n \tstruct dentry\t\t*xswap_debugfs;\t/* mapped range and counters */\ndiff --git a/include/linux/zswap.h b/include/linux/zswap.h\nindex 809b8b839..c785f1772 100644\n--- a/include/linux/zswap.h\n+++ b/include/linux/zswap.h\n@@ -35,6 +35,7 @@ void zswap_lruvec_state_init(struct lruvec *lruvec);\n void zswap_folio_swapin(struct folio *folio);\n bool zswap_is_enabled(void);\n bool zswap_never_enabled(void);\n+bool zswap_all_present(swp_entry_t entry, unsigned int nr);\n #else\n \n struct zswap_lruvec_state {};\n@@ -73,6 +74,11 @@ static inline bool zswap_never_enabled(void)\n \treturn true;\n }\n \n+static inline bool zswap_all_present(swp_entry_t entry, unsigned int nr)\n+{\n+\treturn false;\n+}\n+\n #endif\n \n #endif /* _LINUX_ZSWAP_H */\ndiff --git a/mm/memory.c b/mm/memory.c\nindex 6fd925877..0bab3a3e6 100644\n--- a/mm/memory.c\n+++ b/mm/memory.c\n@@ -4836,14 +4836,10 @@ static unsigned long thp_swapin_suitable_orders(struct vm_fault *vmf)\n \tentry = softleaf_from_pte(vmf->orig_pte);\n \n \t/*\n-\t * A large swapped out folio could be partially or fully in zswap. We\n-\t * lack handling for such cases, so fallback to swapping in order-0\n-\t * folio.\n \t * An xswap entry is deferred to __swap_cache_add_check() instead.\n+\t * When zswap is enabled on a standard swap device, mTHP orders are\n+\t * permitted only if all slots in the aligned range reside in zswap.\n \t */\n-\tif (!(__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&\n-\t    !zswap_never_enabled())\n-\t\treturn 0;\n \n \t/*\n \t * Get a list of all the (large) orders below PMD_ORDER that are enabled\n@@ -4870,8 +4866,27 @@ static unsigned long thp_swapin_suitable_orders(struct vm_fault *vmf)\n \torder = highest_order(orders);\n \twhile (orders) {\n \t\taddr = ALIGN_DOWN(vmf->address, PAGE_SIZE << order);\n-\t\tif (can_swapin_thp(vmf, pte + pte_index(addr), 1 << order))\n+\t\tif (can_swapin_thp(vmf, pte + pte_index(addr), 1 << order)) {\n+\t\t\tif (!(__swap_entry_to_info(entry)->flags & SWP_XSWAP) &&\n+\t\t\t    !zswap_never_enabled()) {\n+\t\t\t\tswp_entry_t first;\n+\n+\t\t\t\t/*\n+\t\t\t\t * Cap mTHP zswapin at order 4 (64K) to bound\n+\t\t\t\t * decompression latency.\n+\t\t\t\t */\n+\t\t\t\tif (order > 4) {\n+\t\t\t\t\torder = next_order(&orders, order);\n+\t\t\t\t\tcontinue;\n+\t\t\t\t}\n+\t\t\t\tfirst = softleaf_from_pte(ptep_get(pte + pte_index(addr)));\n+\t\t\t\tif (!zswap_all_present(first, 1 << order)) {\n+\t\t\t\t\torder = next_order(&orders, order);\n+\t\t\t\t\tcontinue;\n+\t\t\t\t}\n+\t\t\t}\n \t\t\tbreak;\n+\t\t}\n \t\torder = next_order(&orders, order);\n \t}\n \n@@ -4920,6 +4935,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)\n \tint nr_pages;\n \tunsigned long page_idx;\n \tunsigned long address;\n+\tunsigned long orders;\n \tpte_t *ptep;\n \n \tif (!pte_unmap_same(vmf))\n@@ -4991,23 +5007,14 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)\n \t\tgoto out;\n \t}\n \n-\tfolio = swap_cache_get_folio(entry);\n-\tif (folio)\n-\t\tswap_update_readahead(folio, vma, vmf->address);\n-\tif (!folio) {\n-\t\t/* Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices */\n-\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO))\n-\t\t\tfolio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,\n-\t\t\t\t\t    thp_swapin_suitable_orders(vmf) | BIT(0),\n-\t\t\t\t\t    vmf, NULL, 0);\n-\t\telse\n-\t\t\tfolio = swapin_readahead(entry, GFP_HIGHUSER_MOVABLE, vmf);\n+\torders = thp_swapin_suitable_orders(vmf);\n \n+\t/* Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices or batched zswap */\n+\tif (orders > 1 || data_race(si->flags & SWP_SYNCHRONOUS_IO)) {\n+\t\tfolio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,\n+\t\t\t\t    orders | BIT(0),\n+\t\t\t\t    vmf, NULL, 0);\n \t\tif (IS_ERR_OR_NULL(folio)) {\n-\t\t\t/*\n-\t\t\t * Back out if somebody else faulted in this pte\n-\t\t\t * while we released the pte lock.\n-\t\t\t */\n \t\t\tvmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd,\n \t\t\t\t\tvmf->address, &vmf->ptl);\n \t\t\tif (likely(vmf->pte &&\n@@ -5016,11 +5023,28 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)\n \t\t\tfolio = NULL;\n \t\t\tgoto unlock;\n \t\t}\n-\n-\t\t/* Had to read the page from swap area: Major fault */\n \t\tret = VM_FAULT_MAJOR;\n \t\tcount_vm_event(PGMAJFAULT);\n \t\tcount_memcg_event_mm(vma->vm_mm, PGMAJFAULT);\n+\t} else {\n+\t\tfolio = swap_cache_get_folio(entry);\n+\t\tif (folio)\n+\t\t\tswap_update_readahead(folio, vma, vmf->address);\n+\t\tif (!folio) {\n+\t\t\tfolio = swapin_readahead(entry, GFP_HIGHUSER_MOVABLE, vmf);\n+\t\t\tif (IS_ERR_OR_NULL(folio)) {\n+\t\t\t\tvmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd,\n+\t\t\t\t\t\tvmf->address, &vmf->ptl);\n+\t\t\t\tif (likely(vmf->pte &&\n+\t\t\t\t\t   pte_same(ptep_get(vmf->pte), vmf->orig_pte)))\n+\t\t\t\t\tret = VM_FAULT_OOM;\n+\t\t\t\tfolio = NULL;\n+\t\t\t\tgoto unlock;\n+\t\t\t}\n+\t\t\tret = VM_FAULT_MAJOR;\n+\t\t\tcount_vm_event(PGMAJFAULT);\n+\t\t\tcount_memcg_event_mm(vma->vm_mm, PGMAJFAULT);\n+\t\t}\n \t}\n \n \tswapcache = folio;\ndiff --git a/mm/swap.h b/mm/swap.h\nindex b9e7c8a4c..aaeec1f24 100644\n--- a/mm/swap.h\n+++ b/mm/swap.h\n@@ -70,6 +70,29 @@ struct swap_cluster_info {\n \tstruct list_head list;\n };\n \n+#ifdef CONFIG_XSWAP\n+#define XSWAP_CLUSTERS_PER_CHUNK\t64UL\n+#define XSWAP_CHUNK_SHIFT\t\t6\n+#define XSWAP_CHUNK_MASK\t\t(XSWAP_CLUSTERS_PER_CHUNK - 1)\n+\n+#define XSWAP_CHUNK_PERMANENT\t\t(1UL << 0)\n+#define XSWAP_CHUNK_RECLAIMING\t\t(1UL << 1)\n+\n+struct swap_cluster_chunk {\n+\tatomic_t\t\t\tlive_clusters;\n+\tunsigned int\t\t\tchunk_idx;\n+\tunsigned long\t\t\tflags;\n+\tstruct rcu_head\t\t\trcu;\n+\tu8\t\t\t\t_pad[32];\n+\tstruct swap_cluster_info\tclusters[XSWAP_CLUSTERS_PER_CHUNK];\n+};\n+\n+static inline struct swap_cluster_chunk *xswap_cluster_to_chunk(struct swap_cluster_info *ci)\n+{\n+\treturn (struct swap_cluster_chunk *)((unsigned long)ci & PAGE_MASK);\n+}\n+#endif\n+\n /* All on-list cluster must have a non-zero flag. */\n enum swap_cluster_flags {\n \tCLUSTER_FLAG_NONE = 0, /* For temporary off-list cluster */\n@@ -127,6 +150,21 @@ static inline struct swap_cluster_info *__swap_offset_to_cluster(\n {\n \tVM_WARN_ON_ONCE(percpu_ref_is_zero(&si->users)); /* race with swapoff */\n \tVM_WARN_ON_ONCE(offset >= roundup(si->max, SWAPFILE_CLUSTER));\n+#ifdef CONFIG_XSWAP\n+\tif (si->flags & SWP_XSWAP) {\n+\t\tunsigned long cluster_idx = offset / SWAPFILE_CLUSTER;\n+\t\tunsigned long chunk_idx = cluster_idx / XSWAP_CLUSTERS_PER_CHUNK;\n+\t\tunsigned long chunk_off = cluster_idx % XSWAP_CLUSTERS_PER_CHUNK;\n+\t\tstruct swap_cluster_chunk *chunk;\n+\n+\t\tif (chunk_idx >= si->nr_chunks_max || !si->cluster_dir)\n+\t\t\treturn NULL;\n+\t\tchunk = rcu_dereference_raw(si->cluster_dir[chunk_idx]);\n+\t\tif (!chunk)\n+\t\t\treturn NULL;\n+\t\treturn &chunk->clusters[chunk_off];\n+\t}\n+#endif\n \treturn &si->cluster_info[offset / SWAPFILE_CLUSTER];\n }\n \n@@ -196,12 +234,17 @@ static inline struct swap_cluster_info *swap_cluster_lookup_rcu(\n \t\t\t \"swap cluster lookup outside RCU read-side section\");\n #ifdef CONFIG_XSWAP\n \tif (si->flags & SWP_XSWAP) {\n-\t\tunsigned long mapped;\n+\t\tunsigned long cluster_idx = offset / SWAPFILE_CLUSTER;\n+\t\tunsigned long chunk_idx = cluster_idx / XSWAP_CLUSTERS_PER_CHUNK;\n+\t\tunsigned long chunk_off = cluster_idx % XSWAP_CLUSTERS_PER_CHUNK;\n+\t\tstruct swap_cluster_chunk *chunk;\n \n-\t\t/* Pairs with the smp_store_release() in xswap_map_clusters(). */\n-\t\tmapped = smp_load_acquire(&si->nr_clusters_mapped);\n-\t\tif (offset / SWAPFILE_CLUSTER >= mapped)\n+\t\tif (chunk_idx >= si->nr_chunks_max || !si->cluster_dir)\n+\t\t\treturn NULL;\n+\t\tchunk = rcu_dereference(si->cluster_dir[chunk_idx]);\n+\t\tif (!chunk)\n \t\t\treturn NULL;\n+\t\treturn &chunk->clusters[chunk_off];\n \t}\n #endif\n \treturn __swap_offset_to_cluster(si, offset);\ndiff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..280b98725 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -24,6 +24,8 @@\n #include <linux/shmem_fs.h>\n #include <linux/sysctl.h>\n #include <linux/swap_ops.h>\n+#include <linux/workqueue.h>\n+#include <linux/zswap.h>\n #include \"internal.h\"\n #include \"swap_table.h\"\n #include \"swap.h\"\n@@ -65,9 +67,9 @@ static bool enable_vma_readahead __read_mostly = true;\n \t (((win) << SWAP_RA_WIN_SHIFT) & SWAP_RA_WIN_MASK) |\t\\\n \t ((hits) & SWAP_RA_HITS_MASK))\n \n-/* Initial readahead hits is 4 to start up with a small window */\n+/* Do not seed initial hits; require contiguous access to grow window */\n #define GET_SWAP_RA_VAL(vma)\t\t\t\t\t\\\n-\t(atomic_long_read(&(vma)->swap_readahead_info) ? : 4)\n+\tatomic_long_read(&(vma)->swap_readahead_info)\n \n static atomic_t swapin_readahead_hits = ATOMIC_INIT(4);\n \n@@ -457,18 +459,16 @@ static struct folio *__swap_cache_alloc(struct swap_info_struct *si,\n \tVM_WARN_ON_ONCE(nr_pages > SWAPFILE_CLUSTER);\n \tentry.val = round_down(targ_entry.val, nr_pages);\n \n-\t/*\n-\t * Check if the slot and range are available, skip allocation if not.\n-\t * Nothing pins the slot yet, so look its cluster up each time: it\n-\t * may be freed, and on xswap unmapped, while the folio is allocated.\n-\t */\n-\tci = swap_cluster_lock_unpinned(si, swp_offset(targ_entry));\n-\tif (unlikely(!ci))\n-\t\treturn ERR_PTR(-ENOENT);\n-\terr = __swap_cache_add_check(ci, targ_entry, nr_pages, NULL, NULL);\n-\tspin_unlock(&ci->lock);\n-\tif (unlikely(err))\n-\t\treturn ERR_PTR(err);\n+\t/* Avoid wasting large or speculative allocations on unavailable slots. */\n+\tif (order || !vmf) {\n+\t\tci = swap_cluster_lock_unpinned(si, swp_offset(targ_entry));\n+\t\tif (unlikely(!ci))\n+\t\t\treturn ERR_PTR(-ENOENT);\n+\t\terr = __swap_cache_add_check(ci, targ_entry, nr_pages, NULL, NULL);\n+\t\tspin_unlock(&ci->lock);\n+\t\tif (unlikely(err))\n+\t\t\treturn ERR_PTR(err);\n+\t}\n \n \t/*\n \t * Limit THP gfp. The limitation is a no-op for typical\n@@ -709,13 +709,26 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\n \treadahead = folio_test_clear_readahead(folio);\n \tif (vma && vma_ra) {\n \t\tunsigned long ra_val;\n+\t\tunsigned long prev_addr;\n \t\tint win, hits;\n+\t\tbool is_contiguous;\n \n \t\tra_val = GET_SWAP_RA_VAL(vma);\n+\t\tprev_addr = SWAP_RA_ADDR(ra_val);\n \t\twin = SWAP_RA_WIN(ra_val);\n \t\thits = SWAP_RA_HITS(ra_val);\n-\t\tif (readahead)\n+\n+\t\tis_contiguous = prev_addr &&\n+\t\t\t(addr == prev_addr + PAGE_SIZE ||\n+\t\t\t prev_addr == addr + PAGE_SIZE);\n+\n+\t\tif (!is_contiguous) {\n+\t\t\thits = 0;\n+\t\t\twin = 1;\n+\t\t} else if (readahead) {\n \t\t\thits = min_t(int, hits + 1, SWAP_RA_HITS_MAX);\n+\t\t}\n+\n \t\tatomic_long_set(&vma->swap_readahead_info,\n \t\t\t\tSWAP_RA_VAL(addr, win, hits));\n \t}\n@@ -775,12 +788,16 @@ struct folio *swapin_sync(swp_entry_t entry, gfp_t gfp, unsigned long orders,\n \tstruct swap_io_ctx ctx = {};\n \tstruct folio *folio;\n \n-\tdo {\n+\t/* Callers already missed the cache; let the allocator check races. */\n+\tfor (;;) {\n+\t\tfolio = __swap_cache_alloc_folio(entry, gfp, orders, vmf, mpol, ilx);\n+\t\tif (PTR_ERR(folio) != -EEXIST)\n+\t\t\tbreak;\n+\n \t\tfolio = swap_cache_get_folio(entry);\n \t\tif (folio)\n \t\t\treturn folio;\n-\t\tfolio = __swap_cache_alloc_folio(entry, gfp, orders, vmf, mpol, ilx);\n-\t} while (PTR_ERR(folio) == -EEXIST);\n+\t}\n \n \tif (IS_ERR(folio))\n \t\treturn folio;\n@@ -836,6 +853,13 @@ static unsigned int __swapin_nr_pages(unsigned long prev_offset,\n {\n \tunsigned int pages, last_ra;\n \n+\t/*\n+\t * Immediate collapse on stride disruption or non-contiguous access:\n+\t * do not retain prior window across non-adjacent offsets.\n+\t */\n+\tif (prev_offset && offset != prev_offset + 1 && offset != prev_offset - 1)\n+\t\treturn 1;\n+\n \t/*\n \t * This heuristic has been found to work well on both sequential and\n \t * random loads, swapping to hard disk or to SSD: please don't ask\n@@ -889,6 +913,66 @@ static unsigned long swapin_nr_pages(unsigned long offset)\n \treturn pages;\n }\n \n+#define ZSWAP_PREFETCH_BATCH 32\n+\n+struct zswap_prefetch_batch {\n+\tstruct work_struct work;\n+\tunsigned int nr;\n+\tswp_entry_t entries[ZSWAP_PREFETCH_BATCH];\n+};\n+\n+static struct workqueue_struct *zswap_prefetch_wq;\n+\n+static void zswap_prefetch_work_fn(struct work_struct *work)\n+{\n+\tstruct zswap_prefetch_batch *batch =\n+\t\tcontainer_of(work, struct zswap_prefetch_batch, work);\n+\tunsigned int i;\n+\n+\tfor (i = 0; i < batch->nr; i++) {\n+\t\tswp_entry_t entry = batch->entries[i];\n+\t\tstruct swap_info_struct *si;\n+\t\tstruct folio *folio;\n+\t\tint ret;\n+\n+\t\tsi = get_swap_device(entry);\n+\t\tif (IS_ERR_OR_NULL(si))\n+\t\t\tcontinue;\n+\n+\t\tfolio = swap_cache_get_folio(entry);\n+\t\tif (folio) {\n+\t\t\tfolio_put(folio);\n+\t\t\tput_swap_device(si);\n+\t\t\tcontinue;\n+\t\t}\n+\n+\t\tfolio = __swap_cache_alloc_folio(entry,\n+\t\t\t\t\t\t GFP_NOWAIT | __GFP_NOWARN | __GFP_NORETRY,\n+\t\t\t\t\t\t BIT(0), NULL, NULL, 0);\n+\t\tif (IS_ERR_OR_NULL(folio)) {\n+\t\t\tput_swap_device(si);\n+\t\t\tcontinue;\n+\t\t}\n+\n+\t\tret = zswap_load(folio);\n+\t\tif (ret == 0) {\n+\t\t\tfolio_add_lru(folio);\n+\t\t\tfolio_set_readahead(folio);\n+\t\t\tcount_vm_event(SWAP_RA);\n+\t\t} else {\n+\t\t\tif (!folio_test_locked(folio))\n+\t\t\t\tfolio_lock(folio);\n+\t\t\tswap_cache_del_folio(folio);\n+\t\t\tfolio_unlock(folio);\n+\t\t}\n+\n+\t\tfolio_put(folio);\n+\t\tput_swap_device(si);\n+\t}\n+\n+\tkfree(batch);\n+}\n+\n /**\n  * swap_cluster_readahead - swap in pages in hope we need them soon\n  * @entry: swap entry of this memory\n@@ -920,9 +1004,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tstruct blk_plug plug;\n \tswp_entry_t ra_entry;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n+\tbool zswap_active;\n+\n+\tzswap_active = zswap_is_enabled() || (si->flags & SWP_XSWAP);\n \n \tmask = swapin_nr_pages(offset) - 1;\n \tif (!mask)\n@@ -936,6 +1020,28 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tif (end_offset >= si->max)\n \t\tend_offset = si->max - 1;\n \n+\tif (zswap_active) {\n+\t\tstruct zswap_prefetch_batch *batch;\n+\n+\t\tbatch = kmalloc_obj(*batch, GFP_NOWAIT | __GFP_NOWARN);\n+\t\tif (batch) {\n+\t\t\tINIT_WORK(&batch->work, zswap_prefetch_work_fn);\n+\t\t\tbatch->nr = 0;\n+\t\t\tfor (offset = start_offset; offset <= end_offset; offset++) {\n+\t\t\t\tif (offset == entry_offset)\n+\t\t\t\t\tcontinue;\n+\t\t\t\tra_entry = swp_entry(swp_type(entry), offset);\n+\t\t\t\tif (batch->nr < ZSWAP_PREFETCH_BATCH)\n+\t\t\t\t\tbatch->entries[batch->nr++] = ra_entry;\n+\t\t\t}\n+\t\t\tif (batch->nr > 0 && zswap_prefetch_wq)\n+\t\t\t\tqueue_work(zswap_prefetch_wq, &batch->work);\n+\t\t\telse\n+\t\t\t\tkfree(batch);\n+\t\t}\n+\t\treturn swap_cache_read_folio_sync(entry, gfp_mask, mpol, ilx);\n+\t}\n+\n \tblk_start_plug(&plug);\n \tfor (offset = start_offset; offset <= end_offset ; offset++) {\n \t\t/* Ok, do the async read-ahead now */\n@@ -959,6 +1065,7 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n \tunsigned long ra_val;\n \tunsigned long faddr, prev_faddr, left, right;\n \tunsigned int max_win, hits, prev_win, win;\n+\tbool is_contiguous;\n \n \tmax_win = 1 << min(READ_ONCE(page_cluster), SWAP_RA_ORDER_CEILING);\n \tif (max_win == 1)\n@@ -969,9 +1076,41 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n \tprev_faddr = SWAP_RA_ADDR(ra_val);\n \tprev_win = SWAP_RA_WIN(ra_val);\n \thits = SWAP_RA_HITS(ra_val);\n+\n+\t/*\n+\t * Stride gating: check if access is contiguous with previous fault.\n+\t */\n+\tis_contiguous = prev_faddr &&\n+\t\t(faddr == prev_faddr + PAGE_SIZE || prev_faddr == faddr + PAGE_SIZE);\n+\n+\tif (!is_contiguous) {\n+\t\t/*\n+\t\t * Immediate collapse on stride disruption or random access:\n+\t\t * Reset streak to 0 and clamp window to 1.\n+\t\t */\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(faddr, 1, 0));\n+\t\treturn 1;\n+\t}\n+\n+\t/* Contiguous hit: advance streak */\n+\thits = min_t(unsigned int, hits + 1, SWAP_RA_HITS_MAX);\n+\n+\t/*\n+\t * Require 2+ contiguous hits before expanding window beyond 1.\n+\t */\n+\tif (hits < 2) {\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(faddr, 1, hits));\n+\t\treturn 1;\n+\t}\n+\n \twin = __swapin_nr_pages(PFN_DOWN(prev_faddr), PFN_DOWN(faddr), hits,\n \t\t\t\tmax_win, prev_win);\n-\tatomic_long_set(&vma->swap_readahead_info, SWAP_RA_VAL(faddr, win, 0));\n+\tif (win < 2)\n+\t\twin = 2;\n+\n+\tatomic_long_set(&vma->swap_readahead_info, SWAP_RA_VAL(faddr, win, hits));\n \tif (win == 1)\n \t\treturn 1;\n \n@@ -1018,14 +1157,63 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \tunsigned long start, end, addr;\n \tpgoff_t ilx = targ_ilx;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n+\tbool zswap_active;\n+\n+\tzswap_active = zswap_is_enabled() || (si->flags & SWP_XSWAP);\n \n \twin = swap_vma_ra_win(vmf, &start, &end);\n \tif (win == 1)\n \t\tgoto skip;\n \n+\tif (zswap_active) {\n+\t\tstruct zswap_prefetch_batch *batch;\n+\n+\t\tbatch = kmalloc_obj(*batch, GFP_NOWAIT | __GFP_NOWARN);\n+\t\tif (batch) {\n+\t\t\tINIT_WORK(&batch->work, zswap_prefetch_work_fn);\n+\t\t\tbatch->nr = 0;\n+\t\t}\n+\n+\t\tfor (addr = start; addr < end; addr += PAGE_SIZE) {\n+\t\t\tsoftleaf_t entry;\n+\n+\t\t\tif (addr == vmf->address) {\n+\t\t\t\tif (pte) {\n+\t\t\t\t\tpte_unmap(pte);\n+\t\t\t\t\tpte = NULL;\n+\t\t\t\t}\n+\t\t\t\tcontinue;\n+\t\t\t}\n+\n+\t\t\tif (!pte) {\n+\t\t\t\tpte = pte_offset_map(vmf->pmd, addr);\n+\t\t\t\tif (!pte)\n+\t\t\t\t\tbreak;\n+\t\t\t} else {\n+\t\t\t\tpte++;\n+\t\t\t}\n+\t\t\tpentry = ptep_get_lockless(pte);\n+\t\t\tentry = softleaf_from_pte(pentry);\n+\n+\t\t\tif (!softleaf_is_swap(entry))\n+\t\t\t\tcontinue;\n+\n+\t\t\tif (batch && batch->nr < ZSWAP_PREFETCH_BATCH)\n+\t\t\t\tbatch->entries[batch->nr++] = entry;\n+\t\t}\n+\t\tif (pte)\n+\t\t\tpte_unmap(pte);\n+\n+\t\tif (batch) {\n+\t\t\tif (batch->nr > 0 && zswap_prefetch_wq)\n+\t\t\t\tqueue_work(zswap_prefetch_wq, &batch->work);\n+\t\t\telse\n+\t\t\t\tkfree(batch);\n+\t\t}\n+\n+\t\treturn swap_cache_read_folio_sync(targ_entry, gfp_mask, mpol, targ_ilx);\n+\t}\n+\n \tilx = targ_ilx - PFN_DOWN(vmf->address - start);\n \n \tblk_start_plug(&plug);\n@@ -1115,6 +1303,9 @@ static void __init swap_readahead_setup(void)\n {\n \tunsigned long megs = PAGES_TO_MB(totalram_pages());\n \n+\tzswap_prefetch_wq = alloc_workqueue(\"zswap-prefetch\",\n+\t\t\t\t\t    WQ_UNBOUND | WQ_MEM_RECLAIM, 0);\n+\n \t/* Use a smaller cluster for small-memory machines */\n \tif (megs < 16)\n \t\tpage_cluster = 2;\ndiff --git a/mm/swapfile.c b/mm/swapfile.c\nindex 4025d5a3e..bbe638319 100644\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -98,9 +98,10 @@ static void xswap_debugfs_del(struct swap_info_struct *si);\n \n static int xswap_map_clusters(struct swap_info_struct *si,\n \t\t\t      unsigned long start_idx, unsigned long nr);\n+static void xswap_free_all_chunks(struct swap_info_struct *si);\n+static void xswap_reclaim_interior_holes(struct swap_info_struct *si);\n static void xswap_unmap_clusters(struct swap_info_struct *si,\n \t\t\t\t unsigned long start_idx, unsigned long nr);\n-static int xswap_mapped_end(pte_t *pte, unsigned long addr, void *data);\n static void xswap_try_shrink(struct swap_info_struct *si);\n static void xswap_free_phys_slot(struct swap_info_struct *si,\n \t\t\t\t swp_entry_t entry, swp_entry_t phys);\n@@ -617,6 +618,15 @@ static inline bool cluster_is_usable(struct swap_cluster_info *ci, int order)\n static inline unsigned int cluster_index(struct swap_info_struct *si,\n \t\t\t\t\t struct swap_cluster_info *ci)\n {\n+#ifdef CONFIG_XSWAP\n+\tif (si->flags & SWP_XSWAP) {\n+\t\tstruct swap_cluster_chunk *chunk = xswap_cluster_to_chunk(ci);\n+\n+\t\tif (chunk)\n+\t\t\treturn chunk->chunk_idx * XSWAP_CLUSTERS_PER_CHUNK +\n+\t\t\t       (unsigned int)(ci - chunk->clusters);\n+\t}\n+#endif\n \treturn ci - si->cluster_info;\n }\n \n@@ -837,17 +847,28 @@ static void __free_cluster(struct swap_info_struct *si, struct swap_cluster_info\n \t * An empty cluster can still hold records. Give them back first:\n \t * swap_cluster_free_table() frees the table the owner ID comes from.\n \t */\n-\tif (si->flags & SWP_XSWAP)\n+\tif (si->flags & SWP_XSWAP) {\n+\t\tstruct swap_cluster_chunk *chunk = xswap_cluster_to_chunk(ci);\n+\n \t\txswap_free_xs_table(si, ci);\n+\t\tswap_cluster_free_table(ci);\n+\t\tmove_cluster(si, ci, &si->free_clusters, CLUSTER_FLAG_FREE);\n+\t\tci->order = 0;\n+\n+\t\tif (chunk && atomic_dec_and_test(&chunk->live_clusters) &&\n+\t\t    chunk->chunk_idx > 0) {\n+\t\t\tif (test_and_set_bit(chunk->chunk_idx, si->empty_chunks_bm) == 0 &&\n+\t\t\t    (si->flags & SWP_WRITEOK))\n+\t\t\t\tschedule_work(&si->xswap_shrink_work);\n+\t\t} else if (si->flags & SWP_WRITEOK) {\n+\t\t\tschedule_work(&si->xswap_shrink_work);\n+\t\t}\n+\t\treturn;\n+\t}\n #endif\n \tswap_cluster_free_table(ci);\n \tmove_cluster(si, ci, &si->free_clusters, CLUSTER_FLAG_FREE);\n \tci->order = 0;\n-#ifdef CONFIG_XSWAP\n-\t/* Only xswap devices, and not while the device is being torn down. */\n-\tif ((si->flags & SWP_XSWAP) && (si->flags & SWP_WRITEOK))\n-\t\tschedule_work(&si->xswap_shrink_work);\n-#endif\n }\n \n /*\n@@ -887,6 +908,14 @@ static struct swap_cluster_info *isolate_lock_cluster(\n \tif (found && flags == CLUSTER_FLAG_FREE) {\n \t\tVM_WARN_ON_ONCE(list != &si->free_clusters);\n \t\tVM_WARN_ON_ONCE(cluster_table_is_alloced(found));\n+#ifdef CONFIG_XSWAP\n+\t\tif (si->flags & SWP_XSWAP) {\n+\t\t\tstruct swap_cluster_chunk *chunk = xswap_cluster_to_chunk(found);\n+\n+\t\t\tif (chunk)\n+\t\t\t\tatomic_inc(&chunk->live_clusters);\n+\t\t}\n+#endif\n \t\treturn swap_cluster_populate(si, found);\n \t}\n \n@@ -3252,7 +3281,7 @@ static unsigned long find_next_to_unuse(struct swap_info_struct *si,\n \t\t * Count only drops here, so a READ_ONCE() without ci->lock is\n \t\t * enough, unlike in every other cluster_is_empty() caller.\n \t\t */\n-\t\tif (!READ_ONCE(ci->count)) {\n+\t\tif (!ci || !READ_ONCE(ci->count)) {\n \t\t\ti = cluster_end;\n \t\t\tcond_resched();\n \t\t\tcontinue;\n@@ -3532,6 +3561,19 @@ static int xswap_unuse_rmap(struct swap_info_struct *si, unsigned long offset)\n \t\tgoto out_unlock;\n \t}\n \n+#ifdef CONFIG_XSWAP\n+\tif (xsi->flags & SWP_XSWAP) {\n+\t\tunsigned long c_idx = xoff / (SWAPFILE_CLUSTER * XSWAP_CLUSTERS_PER_CHUNK);\n+\n+\t\tif (c_idx >= xsi->nr_chunks_max ||\n+\t\t    !rcu_dereference_protected(xsi->cluster_dir[c_idx],\n+\t\t\t\t\t      lockdep_is_held(&xsi->xswap_lock))) {\n+\t\t\tdrop = true;\n+\t\t\tgoto out_unlock;\n+\t\t}\n+\t}\n+#endif\n+\n \t/*\n \t * Bring the data back before the slot goes. A dirty folio is what\n \t * reclaim stores into zswap next time.\n@@ -3934,6 +3976,13 @@ static void free_swap_cluster_info(struct swap_info_struct *si)\n \tstruct swap_cluster_info *ci;\n \tunsigned long i, nr_clusters;\n \n+#ifdef CONFIG_XSWAP\n+\tif (si->flags & SWP_XSWAP) {\n+\t\txswap_free_all_chunks(si);\n+\t\treturn;\n+\t}\n+#endif\n+\n \tif (!cluster_info)\n \t\treturn;\n \n@@ -4823,108 +4872,170 @@ void xswap_backend_free(swp_entry_t entry, swp_entry_t phys, unsigned int order)\n \txswap_backend_uncharge(entry, 1UL << order);\n }\n \n-static int xswap_map_clusters(struct swap_info_struct *si,\n-\t\t\t      unsigned long start_idx, unsigned long nr)\n+static struct kmem_cache *xswap_chunk_cache;\n+\n+static struct swap_cluster_chunk *xswap_alloc_chunk(struct swap_info_struct *si,\n+\t\t\t\t\t\t    unsigned long chunk_idx)\n {\n-\tunsigned long start_addr = (unsigned long)si->cluster_info +\n-\t\t\t\t   (size_t)start_idx * sizeof(struct swap_cluster_info);\n-\tunsigned long end_addr = start_addr + (size_t)nr * sizeof(struct swap_cluster_info);\n-\tunsigned long vm_start = PAGE_ALIGN(start_addr);\n-\tunsigned long vm_end = PAGE_ALIGN(end_addr);\n-\tunsigned int noreclaim_flags;\n-\tunsigned long mapped_end;\n-\tunsigned long npages;\n-\tstruct page **pages;\n+\tstruct swap_cluster_chunk *chunk;\n \tunsigned long i;\n-\tint err;\n \n-\tmutex_lock(&si->xswap_lock);\n+\tchunk = kmem_cache_zalloc(xswap_chunk_cache, GFP_KERNEL);\n+\tif (!chunk)\n+\t\treturn NULL;\n \n-\t/* Refuse a stale range: the boundary moved since the caller read it. */\n-\tif (start_idx != READ_ONCE(si->nr_clusters_mapped)) {\n-\t\tmutex_unlock(&si->xswap_lock);\n-\t\treturn -EAGAIN;\n-\t}\n-\tif (start_idx + nr > si->nr_clusters_max) {\n-\t\tmutex_unlock(&si->xswap_lock);\n-\t\treturn -EAGAIN;\n+\tatomic_set(&chunk->live_clusters, 0);\n+\tchunk->chunk_idx = chunk_idx;\n+\tchunk->flags = 0;\n+\tif (chunk_idx == 0)\n+\t\tchunk->flags |= XSWAP_CHUNK_PERMANENT;\n+\n+\tfor (i = 0; i < XSWAP_CLUSTERS_PER_CHUNK; i++) {\n+\t\tstruct swap_cluster_info *ci = &chunk->clusters[i];\n+\n+\t\tspin_lock_init(&ci->lock);\n+\t\tci->flags = CLUSTER_FLAG_NONE;\n \t}\n \n-\t/*\n-\t * Page-granular mapping can cover clusters past the previous chunk.\n-\t * Find the already-mapped prefix and map only the rest.\n-\t */\n-\tmapped_end = vm_start;\n-\tif (vm_start < vm_end)\n-\t\tapply_to_existing_page_range(&init_mm, vm_start,\n-\t\t\t\t\t     vm_end - vm_start,\n-\t\t\t\t\t     xswap_mapped_end, &mapped_end);\n-\tif (vm_start >= vm_end || mapped_end == vm_end)\n-\t\tgoto mapped;\n-\tvm_start = mapped_end;\n+\treturn chunk;\n+}\n \n-\tnpages = (vm_end - vm_start) >> PAGE_SHIFT;\n+static void xswap_free_all_chunks(struct swap_info_struct *si)\n+{\n+\tunsigned long chunk_idx, i;\n \n-\t/* Prevent recursive reclaim during vmap page table allocation. */\n-\tnoreclaim_flags = memalloc_noreclaim_save();\n+\tcancel_work_sync(&si->xswap_shrink_work);\n+\trcu_barrier();\n \n-\tpages = kmalloc_array(npages, sizeof(*pages),\n-\t\t\t      __GFP_HIGH | __GFP_NOMEMALLOC | GFP_KERNEL);\n-\tif (!pages) {\n-\t\tmemalloc_noreclaim_restore(noreclaim_flags);\n-\t\tmutex_unlock(&si->xswap_lock);\n-\t\treturn -ENOMEM;\n+\tfor (chunk_idx = 0; chunk_idx < si->nr_chunks_max; chunk_idx++) {\n+\t\tstruct swap_cluster_chunk *chunk;\n+\n+\t\tif (!si->cluster_dir)\n+\t\t\tbreak;\n+\t\tchunk = rcu_dereference_raw(si->cluster_dir[chunk_idx]);\n+\t\tif (!chunk)\n+\t\t\tcontinue;\n+\n+\t\tfor (i = 0; i < XSWAP_CLUSTERS_PER_CHUNK; i++) {\n+\t\t\tstruct swap_cluster_info *ci = &chunk->clusters[i];\n+\n+\t\t\tspin_lock(&ci->lock);\n+\t\t\txswap_free_xs_table(si, ci);\n+\t\t\tif (cluster_table_is_alloced(ci)) {\n+\t\t\t\tswap_cluster_assert_empty(ci, 0, SWAPFILE_CLUSTER, true);\n+\t\t\t\tswap_cluster_free_table(ci);\n+\t\t\t}\n+\t\t\tspin_unlock(&ci->lock);\n+\t\t}\n+\t\tkmem_cache_free(xswap_chunk_cache, chunk);\n \t}\n+\txswap_debugfs_del(si);\n+\tkvfree(si->cluster_dir);\n+\tbitmap_free(si->empty_chunks_bm);\n+\tsi->cluster_dir = NULL;\n+\tsi->empty_chunks_bm = NULL;\n+\tsi->nr_chunks_mapped = 0;\n+\t/* Pairs with READ_ONCE(si->nr_clusters_mapped) in lockless lookups */\n+\tsmp_store_release(&si->nr_clusters_mapped, 0);\n+}\n+\n+static void xswap_reclaim_interior_holes(struct swap_info_struct *si)\n+{\n+\tunsigned long chunk_idx;\n+\tint i, j;\n \n-\tfor (i = 0; i < npages; i++) {\n-\t\t/* __GFP_ZERO: cluster_info pointer fields must start NULL. */\n-\t\tpages[i] = alloc_page(__GFP_HIGH | __GFP_NOMEMALLOC |\n-\t\t\t\t      GFP_KERNEL | __GFP_ZERO);\n-\t\tif (!pages[i])\n-\t\t\tgoto fail;\n+\tfor_each_set_bit(chunk_idx, si->empty_chunks_bm, si->nr_chunks_max) {\n+\t\tstruct swap_cluster_chunk *chunk;\n+\n+\t\tclear_bit(chunk_idx, si->empty_chunks_bm);\n+\t\tif (chunk_idx == 0)\n+\t\t\tcontinue;\n+\n+\t\tchunk = rcu_dereference_protected(si->cluster_dir[chunk_idx],\n+\t\t\t\t\t\t  lockdep_is_held(&si->xswap_lock));\n+\t\tif (!chunk || (chunk->flags & XSWAP_CHUNK_PERMANENT))\n+\t\t\tcontinue;\n+\n+\t\tif (atomic_read(&chunk->live_clusters) != 0)\n+\t\t\tcontinue;\n+\n+\t\tspin_lock(&si->lock);\n+\t\tif (atomic_read(&chunk->live_clusters) != 0) {\n+\t\t\tspin_unlock(&si->lock);\n+\t\t\tcontinue;\n+\t\t}\n+\n+\t\tfor (i = 0; i < XSWAP_CLUSTERS_PER_CHUNK; i++) {\n+\t\t\tstruct swap_cluster_info *ci = &chunk->clusters[i];\n+\n+\t\t\tif (READ_ONCE(ci->flags) != CLUSTER_FLAG_FREE ||\n+\t\t\t    READ_ONCE(ci->count) != 0 ||\n+\t\t\t    !spin_trylock(&ci->lock)) {\n+\t\t\t\tfor (j = 0; j < i; j++)\n+\t\t\t\t\tspin_unlock(&chunk->clusters[j].lock);\n+\t\t\t\tspin_unlock(&si->lock);\n+\t\t\t\tgoto next_chunk;\n+\t\t\t}\n+\t\t}\n+\n+\t\tfor (i = 0; i < XSWAP_CLUSTERS_PER_CHUNK; i++) {\n+\t\t\tstruct swap_cluster_info *ci = &chunk->clusters[i];\n+\n+\t\t\tlist_del_init(&ci->list);\n+\t\t\tWRITE_ONCE(ci->flags, CLUSTER_FLAG_NONE);\n+\t\t\tspin_unlock(&ci->lock);\n+\t\t}\n+\t\tspin_unlock(&si->lock);\n+\n+\t\trcu_assign_pointer(si->cluster_dir[chunk_idx], NULL);\n+\t\tif (si->nr_chunks_mapped > 0)\n+\t\t\tsi->nr_chunks_mapped--;\n+\n+\t\tkfree_rcu(chunk, rcu);\n+\t\tatomic_long_inc(&si->xswap_shrinks);\n+\n+next_chunk:\n+\t\tcond_resched();\n \t}\n+}\n \n-\terr = vm_area_map_pages(si->cluster_vm, vm_start, vm_end, pages);\n-\tif (err) {\n-\t\ti = npages;\n-\t\tgoto fail;\n+static int xswap_map_clusters(struct swap_info_struct *si,\n+\t\t\t      unsigned long start_idx, unsigned long nr)\n+{\n+\tunsigned long start_chunk = start_idx / XSWAP_CLUSTERS_PER_CHUNK;\n+\tunsigned long end_chunk = DIV_ROUND_UP(start_idx + nr, XSWAP_CLUSTERS_PER_CHUNK);\n+\tunsigned long chunk_idx;\n+\n+\tmutex_lock(&si->xswap_lock);\n+\tif (start_idx != READ_ONCE(si->nr_clusters_mapped) ||\n+\t    start_idx + nr > si->nr_clusters_max) {\n+\t\tmutex_unlock(&si->xswap_lock);\n+\t\treturn -EAGAIN;\n \t}\n \n-\tfor (i = start_idx; i < start_idx + nr; i++)\n-\t\tspin_lock_init(&si->cluster_info[i].lock);\n+\tfor (chunk_idx = start_chunk; chunk_idx < end_chunk; chunk_idx++) {\n+\t\tstruct swap_cluster_chunk *chunk;\n \n-\tkfree(pages);\n-\tmemalloc_noreclaim_restore(noreclaim_flags);\n+\t\tif (chunk_idx >= si->nr_chunks_max)\n+\t\t\tbreak;\n \n-\t/*\n-\t * Publish the new mappings and cluster lock initialization before\n-\t * the count; walkers without xswap_lock use smp_load_acquire().\n-\t */\n-\tsmp_store_release(&si->nr_clusters_mapped, start_idx + nr);\n-\tmutex_unlock(&si->xswap_lock);\n-\treturn 0;\n+\t\tif (rcu_dereference_protected(si->cluster_dir[chunk_idx],\n+\t\t\t\t\t     lockdep_is_held(&si->xswap_lock)))\n+\t\t\tcontinue;\n+\n+\t\tchunk = xswap_alloc_chunk(si, chunk_idx);\n+\t\tif (!chunk) {\n+\t\t\tmutex_unlock(&si->xswap_lock);\n+\t\t\treturn -ENOMEM;\n+\t\t}\n \n-mapped:\n-\tfor (i = start_idx; i < start_idx + nr; i++)\n-\t\tspin_lock_init(&si->cluster_info[i].lock);\n+\t\trcu_assign_pointer(si->cluster_dir[chunk_idx], chunk);\n+\t\tsi->nr_chunks_mapped++;\n+\t}\n \n-\t/* Publish the advanced count. */\n \tsmp_store_release(&si->nr_clusters_mapped, start_idx + nr);\n \tmutex_unlock(&si->xswap_lock);\n \treturn 0;\n-\n-fail:\n-\t/* Clear PTEs vm_area_map_pages() may have left before freeing pages. */\n-\tvm_area_unmap_pages(si->cluster_vm, vm_start, vm_end);\n-\twhile (i > 0) {\n-\t\ti--;\n-\t\tif (pages[i])\n-\t\t\t__free_page(pages[i]);\n-\t}\n-\tmemalloc_noreclaim_restore(noreclaim_flags);\n-\tkfree(pages);\n-\tmutex_unlock(&si->xswap_lock);\n-\treturn -ENOMEM;\n }\n \n static bool xswap_should_grow(struct swap_info_struct *si)\n@@ -4974,7 +5085,11 @@ static unsigned long xswap_grow(struct swap_info_struct *si)\n \t\treturn 0;\n \n \tfor (i = mapped; i < mapped + nr_new; i++) {\n-\t\tstruct swap_cluster_info *ci = &si->cluster_info[i];\n+\t\tstruct swap_cluster_info *ci =\n+\t\t\t__swap_offset_to_cluster(si, i * SWAPFILE_CLUSTER);\n+\n+\t\tif (!ci)\n+\t\t\tcontinue;\n \n \t\t/*\n \t\t * A concurrent grower may have taken these already;\n@@ -5116,16 +5231,6 @@ static void xswap_unmap_clusters(struct swap_info_struct *si,\n \tmutex_unlock(&si->xswap_lock);\n }\n \n-/* Track the end of the run of pages that is already mapped. */\n-static int xswap_mapped_end(pte_t *pte, unsigned long addr, void *data)\n-{\n-\tunsigned long *mapped_end = data;\n-\n-\tif (!pte_present(ptep_get(pte)))\n-\t\treturn 0;\n-\t*mapped_end = addr + PAGE_SIZE;\n-\treturn 0;\n-}\n \n /*\n  * Automatic reclaim: leave one chunk of the free tail mapped as slack, so\n@@ -5147,14 +5252,10 @@ static void xswap_shrink_work_fn(struct work_struct *work)\n }\n \n /*\n- * Try to shrink the cluster_info tail: unmap contiguous free clusters\n- * at the end of the mapped range.\n+ * Try to shrink: reclaim empty interior and tail chunks.\n  */\n static void xswap_try_shrink(struct swap_info_struct *si)\n {\n-\tstruct swap_cluster_info *ci;\n-\tunsigned long nr_mapped, nr_tail, keep, nr_unmap, start_idx, i;\n-\n \tif (!(si->flags & SWP_XSWAP))\n \t\treturn;\n \n@@ -5164,83 +5265,7 @@ static void xswap_try_shrink(struct swap_info_struct *si)\n \tif (!(READ_ONCE(si->flags) & SWP_WRITEOK))\n \t\tgoto out_unlock;\n \n-\tnr_mapped = READ_ONCE(si->nr_clusters_mapped);\n-\tif (nr_mapped <= 1)\t/* keep cluster 0 */\n-\t\tgoto out_unlock;\n-\n-\t/*\n-\t * Reclaim on our own, but only once the mapped range is at most\n-\t * SHRINK_WHEN in use: growth is demand driven, so reclaiming on a\n-\t * smaller dip would only map the same clusters again, and every\n-\t * unmap costs an RCU grace period.\n-\t */\n-\tif (swap_usage_in_pages(si) * 100 >\n-\t    nr_mapped * SWAPFILE_CLUSTER * XSWAP_SHRINK_WHEN)\n-\t\tgoto out_unlock;\n-\n-\t/*\n-\t * Count the free clusters at the tail of the mapped range.  Scanned,\n-\t * not tracked: the count must be exact to size the unmap, and an\n-\t * incremental count falls behind on out-of-order frees.\n-\t */\n-\tnr_tail = 0;\n-\twhile (nr_mapped - nr_tail > 1) {\n-\t\tci = &si->cluster_info[nr_mapped - nr_tail - 1];\n-\t\tif (READ_ONCE(ci->count) ||\n-\t\t    READ_ONCE(ci->flags) != CLUSTER_FLAG_FREE)\n-\t\t\tbreak;\n-\t\tnr_tail++;\n-\t}\n-\tif (nr_tail < XSWAP_SHRINK_SLACK + XSWAP_SHRINK_MIN)\n-\t\tgoto out_unlock;\n-\n-\t/*\n-\t * Stop at SHRINK_UNTIL rather than at the end of the tail, or the\n-\t * range comes out full enough for the grow to be woken.  Below the\n-\t * tail everything stays mapped, and one chunk of tail with it.\n-\t */\n-\tkeep = DIV_ROUND_UP(swap_usage_in_pages(si) * 100,\n-\t\t\t    XSWAP_SHRINK_UNTIL * SWAPFILE_CLUSTER);\n-\tif (keep < nr_mapped - nr_tail + XSWAP_SHRINK_SLACK)\n-\t\tkeep = nr_mapped - nr_tail + XSWAP_SHRINK_SLACK;\n-\n-\tif (nr_mapped < keep + XSWAP_SHRINK_MIN)\n-\t\tgoto out_unlock;\n-\n-\tnr_unmap = rounddown(nr_mapped - keep, XSWAP_GROW_CLUSTERS);\n-\tif (!nr_unmap)\n-\t\tgoto out_unlock;\n-\tstart_idx = nr_mapped - nr_unmap;\n-\n-\t/*\n-\t * Only shrink a run that reaches the mapped end; otherwise\n-\t * truncating nr_clusters_mapped would orphan the active tail.\n-\t */\n-\tspin_lock(&si->lock);\n-\tfor (i = start_idx; i < nr_mapped; i++) {\n-\t\tci = &si->cluster_info[i];\n-\t\tif (READ_ONCE(ci->flags) != CLUSTER_FLAG_FREE)\n-\t\t\tbreak;\n-\t\tif (!spin_trylock(&ci->lock)) {\n-\t\t\tspin_unlock(&si->lock);\n-\t\t\tgoto out_unlock;\n-\t\t}\n-\t\tspin_unlock(&ci->lock);\n-\t}\n-\tif (i != nr_mapped) {\n-\t\tspin_unlock(&si->lock);\n-\t\tgoto out_unlock;\n-\t}\n-\n-\tfor (i = start_idx; i < nr_mapped; i++) {\n-\t\tci = &si->cluster_info[i];\n-\t\tlist_del_init(&ci->list);\n-\t\tWRITE_ONCE(ci->flags, CLUSTER_FLAG_NONE);\n-\t}\n-\tspin_unlock(&si->lock);\n-\n-\txswap_unmap_clusters_locked(si, start_idx, nr_unmap);\n-\tatomic_long_inc(&si->xswap_shrinks);\n+\txswap_reclaim_interior_holes(si);\n \n out_unlock:\n \tmutex_unlock(&si->xswap_lock);\n@@ -5251,7 +5276,6 @@ static ssize_t xswap_debugfs_read(struct file *file, char __user *buf,\n \t\t\t\t  size_t count, loff_t *ppos)\n {\n \tstruct swap_info_struct *si = file->private_data;\n-\tstruct swap_cluster_info *ci;\n \tunsigned long mapped, tail = 0;\n \tchar tmp[192];\n \tint len;\n@@ -5262,13 +5286,19 @@ static ssize_t xswap_debugfs_read(struct file *file, char __user *buf,\n \t */\n \tmutex_lock(&si->xswap_lock);\n \tmapped = READ_ONCE(si->nr_clusters_mapped);\n-\tif (si->cluster_info) {\n-\t\twhile (mapped - tail > 1) {\n-\t\t\tci = &si->cluster_info[mapped - tail - 1];\n-\t\t\tif (READ_ONCE(ci->count) ||\n-\t\t\t    READ_ONCE(ci->flags) != CLUSTER_FLAG_FREE)\n+\tif (si->cluster_dir) {\n+\t\tunsigned long c = si->nr_chunks_max;\n+\n+\t\twhile (c > 1) {\n+\t\t\tstruct swap_cluster_chunk *chk;\n+\n+\t\t\tchk = rcu_dereference_protected(si->cluster_dir[c - 1],\n+\t\t\t\t\t\t\tlockdep_is_held(&si->xswap_lock));\n+\t\t\tif (!chk || atomic_read(&chk->live_clusters) == 0)\n+\t\t\t\ttail += XSWAP_CLUSTERS_PER_CHUNK;\n+\t\t\telse\n \t\t\t\tbreak;\n-\t\t\ttail++;\n+\t\t\tc--;\n \t\t}\n \t}\n \tlen = scnprintf(tmp, sizeof(tmp),\n@@ -5326,29 +5356,46 @@ static int setup_swap_clusters_info(struct swap_info_struct *si,\n \n #ifdef CONFIG_XSWAP\n \tif (si->flags & SWP_XSWAP) {\n-\t\tunsigned long size = PAGE_ALIGN(nr_clusters * sizeof(*cluster_info));\n-\t\tstruct vm_struct *vm;\n+\t\tunsigned long nr_chunks = DIV_ROUND_UP(nr_clusters, XSWAP_CLUSTERS_PER_CHUNK);\n+\t\tstruct swap_cluster_chunk *chunk0;\n \n-\t\tvm = get_vm_area(size, VM_SPARSE);\n-\t\tif (!vm)\n+\t\tsi->cluster_dir = kvzalloc_objs(*si->cluster_dir, nr_chunks,\n+\t\t\t\t\t   GFP_KERNEL);\n+\t\tif (!si->cluster_dir)\n \t\t\tgoto err;\n \n-\t\tcluster_info = vm->addr;\n-\t\tsi->cluster_vm = vm;\n+\t\tsi->empty_chunks_bm = bitmap_zalloc(nr_chunks, GFP_KERNEL);\n+\t\tif (!si->empty_chunks_bm) {\n+\t\t\tkvfree(si->cluster_dir);\n+\t\t\tsi->cluster_dir = NULL;\n+\t\t\tgoto err;\n+\t\t}\n+\n+\t\tsi->nr_chunks_max = nr_chunks;\n \t\tsi->nr_clusters_max = nr_clusters;\n-\t\tsi->cluster_info = cluster_info;\n+\t\tsi->nr_chunks_mapped = 0;\n+\t\tsi->cluster_vm = NULL;\n+\t\tsi->cluster_info = NULL;\n \n-\t\t/* Must be initialized before xswap_map_clusters() locks it. */\n \t\tmutex_init(&si->xswap_lock);\n \n \t\tif (xswap_map_clusters(si, 0, min_t(unsigned long,\n-\t\t\t\t\tXSWAP_GROW_CLUSTERS, nr_clusters)))\n-\t\t\tgoto err_free_vm;\n+\t\t\t\t\tXSWAP_GROW_CLUSTERS, nr_clusters))) {\n+\t\t\tbitmap_free(si->empty_chunks_bm);\n+\t\t\tkvfree(si->cluster_dir);\n+\t\t\tsi->cluster_dir = NULL;\n+\t\t\tsi->empty_chunks_bm = NULL;\n+\t\t\tgoto err;\n+\t\t}\n \n+\t\tchunk0 = rcu_dereference_protected(si->cluster_dir[0],\n+\t\t\t\t\t\t  lockdep_is_held(&si->xswap_lock));\n \t\t/* xswap: only cluster 0 slot 0 is bad */\n-\t\terr = swap_cluster_setup_bad_slot(si, cluster_info, 0, false);\n-\t\tif (err)\n-\t\t\tgoto err_unmap;\n+\t\terr = swap_cluster_setup_bad_slot(si, chunk0->clusters, 0, false);\n+\t\tif (err) {\n+\t\t\txswap_free_all_chunks(si);\n+\t\t\tgoto err;\n+\t\t}\n \n \t\tINIT_LIST_HEAD(&si->free_clusters);\n \t\tINIT_LIST_HEAD(&si->full_clusters);\n@@ -5358,17 +5405,19 @@ static int setup_swap_clusters_info(struct swap_info_struct *si,\n \t\t\tINIT_LIST_HEAD(&si->frag_clusters[i]);\n \t\t}\n \n-\t\t/*\n-\t\t * Cluster 0 holds the header slot, which is marked bad, so it\n-\t\t * is not entirely free.  si->max is cluster aligned, so no\n-\t\t * cluster holds a slot past the end of the device.\n-\t\t */\n \t\tfor (i = 0; i < si->nr_clusters_mapped; i++) {\n-\t\t\tstruct swap_cluster_info *ci = &cluster_info[i];\n+\t\t\tstruct swap_cluster_info *ci =\n+\t\t\t\t__swap_offset_to_cluster(si, i * SWAPFILE_CLUSTER);\n \n+\t\t\tif (!ci)\n+\t\t\t\tcontinue;\n \t\t\tif (ci->count) {\n+\t\t\t\tstruct swap_cluster_chunk *chunk = xswap_cluster_to_chunk(ci);\n+\n \t\t\t\tci->flags = CLUSTER_FLAG_NONFULL;\n \t\t\t\tlist_add_tail(&ci->list, &si->nonfull_clusters[0]);\n+\t\t\t\tif (chunk)\n+\t\t\t\t\tatomic_inc(&chunk->live_clusters);\n \t\t\t} else {\n \t\t\t\tci->flags = CLUSTER_FLAG_FREE;\n \t\t\t\tlist_add_tail(&ci->list, &si->free_clusters);\n@@ -5377,14 +5426,6 @@ static int setup_swap_clusters_info(struct swap_info_struct *si,\n \n \t\tINIT_WORK(&si->xswap_shrink_work, xswap_shrink_work_fn);\n \t\treturn 0;\n-\n-err_unmap:\n-\t\txswap_unmap_clusters(si, 0, si->nr_clusters_mapped);\n-err_free_vm:\n-\t\tfree_vm_area(si->cluster_vm);\n-\t\tsi->cluster_vm = NULL;\n-\t\tsi->cluster_info = NULL;\n-\t\treturn err;\n \t}\n #endif /* CONFIG_XSWAP */\n \n@@ -5936,6 +5977,14 @@ static int __init swapfile_init(void)\n \t\tswap_migration_ad_supported = true;\n #endif\t/* CONFIG_MIGRATION */\n \n+#ifdef CONFIG_XSWAP\n+\txswap_chunk_cache = kmem_cache_create(\"xswap_chunk\",\n+\t\t\t\t\t      sizeof(struct swap_cluster_chunk),\n+\t\t\t\t\t      PAGE_SIZE,\n+\t\t\t\t\t      SLAB_PANIC | SLAB_HWCACHE_ALIGN,\n+\t\t\t\t\t      NULL);\n+#endif\n+\n \txswap_sysfs_init();\n \n \treturn 0;\ndiff --git a/mm/zswap.c b/mm/zswap.c\nindex 789730c22..f0e457ace 100644\n--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -936,7 +936,8 @@ static bool zswap_compress(struct folio *folio, long index,\n \treturn comp_ret == 0 && alloc_ret == 0;\n }\n \n-static bool zswap_decompress(struct zswap_entry *entry, struct folio *folio)\n+static bool zswap_decompress(struct zswap_entry *entry, struct folio *folio,\n+\t\t\t     size_t dst_offset)\n {\n \tstruct zswap_pool *pool = zswap_entry_pool(entry);\n \tstruct scatterlist input[2]; /* zsmalloc returns an SG list 1-2 entries */\n@@ -957,14 +958,16 @@ static bool zswap_decompress(struct zswap_entry *entry, struct folio *folio)\n \n \t\tWARN_ON_ONCE(input->length != PAGE_SIZE);\n \n-\t\tdst = kmap_local_folio(folio, 0);\n+\t\tdst = kmap_local_folio(folio, dst_offset);\n \t\tmemcpy_from_sglist(dst, input, 0, PAGE_SIZE);\n \t\tdlen = PAGE_SIZE;\n \t\tkunmap_local(dst);\n \t\tflush_dcache_folio(folio);\n \t} else {\n+\t\tstruct page *page = folio_page(folio, dst_offset >> PAGE_SHIFT);\n+\n \t\tsg_init_table(&output, 1);\n-\t\tsg_set_folio(&output, folio, PAGE_SIZE, 0);\n+\t\tsg_set_page(&output, page, PAGE_SIZE, 0);\n \t\tacomp_request_set_params(acomp_ctx->req, input, &output,\n \t\t\t\t\t entry->length, PAGE_SIZE);\n \t\tret = crypto_acomp_decompress(acomp_ctx->req);\n@@ -1063,7 +1066,7 @@ static int zswap_writeback_entry(struct zswap_entry *entry,\n \t\t}\n \t}\n \n-\tif (!zswap_decompress(entry, folio)) {\n+\tif (!zswap_decompress(entry, folio, 0)) {\n \t\tret = -EIO;\n \t\tgoto err;\n \t}\n@@ -1658,6 +1661,30 @@ static bool zswap_is_present(swp_entry_t entry, unsigned int nr)\n \treturn xa_find(tree, &index, offset + nr - 1, XA_PRESENT);\n }\n \n+/**\n+ * zswap_all_present() - check if all swap slots in a range are in zswap\n+ * @entry: starting swap entry of the range\n+ * @nr: number of slots to check\n+ *\n+ * Return: true if all slots in the range are resident in zswap.\n+ */\n+bool zswap_all_present(swp_entry_t entry, unsigned int nr)\n+{\n+\tpgoff_t offset = swp_offset(entry);\n+\tstruct xarray *tree;\n+\tunsigned int i;\n+\n+\tif (zswap_never_enabled())\n+\t\treturn false;\n+\n+\ttree = swap_zswap_tree(entry);\n+\tfor (i = 0; i < nr; i++) {\n+\t\tif (!xa_load(tree, offset + i))\n+\t\t\treturn false;\n+\t}\n+\treturn true;\n+}\n+\n /**\n  * zswap_load() - load a folio from zswap\n  * @folio: folio to load\n@@ -1694,20 +1721,60 @@ int zswap_load(struct folio *folio)\n \t * it outright. The caller has pinned every slot, so zswap cannot start\n \t * a store or a writeback into the range while we look.\n \t */\n+\t/*\n+\t * A large folio can legitimately reach zswap_load() when all slots\n+\t * reside in zswap (mTHP swap-in batch) or when the whole range is\n+\t * on the backing device.\n+\t */\n \tif (folio_test_large(folio)) {\n-\t\tif (WARN_ON_ONCE(zswap_is_present(swp,\n-\t\t\t\t\t\t  folio_nr_pages(folio)))) {\n-\t\t\tfolio_unlock(folio);\n-\t\t\treturn -EIO;\n+\t\tunsigned int nr = folio_nr_pages(folio);\n+\t\tunsigned int i;\n+\n+\t\tif (!zswap_all_present(swp, nr)) {\n+\t\t\tif (WARN_ON_ONCE(zswap_is_present(swp, nr))) {\n+\t\t\t\tfolio_unlock(folio);\n+\t\t\t\treturn -EIO;\n+\t\t\t}\n+\t\t\treturn -ENOENT;\n \t\t}\n-\t\treturn -ENOENT;\n+\n+\t\t/* Phase 1: decompress all N subpages into folio offsets i * PAGE_SIZE */\n+\t\tfor (i = 0; i < nr; i++) {\n+\t\t\tentry = xa_load(tree, offset + i);\n+\t\t\tif (WARN_ON_ONCE(!entry)) {\n+\t\t\t\tfolio_unlock(folio);\n+\t\t\t\treturn -EIO;\n+\t\t\t}\n+\t\t\tif (!zswap_decompress(entry, folio, i * PAGE_SIZE)) {\n+\t\t\t\tfolio_unlock(folio);\n+\t\t\t\treturn -EIO;\n+\t\t\t}\n+\t\t}\n+\n+\t\t/* Phase 2: upon complete success, mark folio uptodate/dirty, batch erase & free */\n+\t\tfolio_mark_uptodate(folio);\n+\t\tfolio_mark_dirty(folio);\n+\n+\t\tfor (i = 0; i < nr; i++) {\n+\t\t\tentry = xa_load(tree, offset + i);\n+\t\t\tif (WARN_ON_ONCE(!entry))\n+\t\t\t\tcontinue;\n+\t\t\tcount_vm_event(ZSWPIN);\n+\t\t\tif (entry->objcg)\n+\t\t\t\tcount_objcg_events(entry->objcg, ZSWPIN, 1);\n+\t\t\txa_erase(tree, offset + i);\n+\t\t\tzswap_entry_free(entry);\n+\t\t}\n+\n+\t\tfolio_unlock(folio);\n+\t\treturn 0;\n \t}\n \n \tentry = xa_load(tree, offset);\n \tif (!entry)\n \t\treturn -ENOENT;\n \n-\tif (!zswap_decompress(entry, folio)) {\n+\tif (!zswap_decompress(entry, folio, 0)) {\n \t\tfolio_unlock(folio);\n \t\treturn -EIO;\n \t}\n",
       "changed_paths": [
         "include/linux/swap.h",
@@ -509,7 +509,515 @@
       "latest_status": "FAST_PASS",
       "tier": "fast",
       "screen_only": true,
-      "performance_accepted": false
+      "performance_accepted": false,
+      "parent": "53e02e8615a30d927daf77e5f1f7a7182a1c6ec5"
+    },
+    "xswap-fast-in-v1": {
+      "id": "xswap-fast-in-v1",
+      "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+      "source_tree": "5166db84b70253fe38230fd3b78cd7a67ea5ff95",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_candidate": null,
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "generation": 1,
+      "patch": "diff --git a/mm/memory.c b/mm/memory.c\nindex 6fd925877..514fc778a 100644\n--- a/mm/memory.c\n+++ b/mm/memory.c\n@@ -4991,23 +4991,15 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)\n \t\tgoto out;\n \t}\n \n-\tfolio = swap_cache_get_folio(entry);\n-\tif (folio)\n-\t\tswap_update_readahead(folio, vma, vmf->address);\n-\tif (!folio) {\n-\t\t/* Swapin bypasses readahead for SWP_SYNCHRONOUS_IO devices */\n-\t\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO))\n-\t\t\tfolio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,\n-\t\t\t\t\t    thp_swapin_suitable_orders(vmf) | BIT(0),\n-\t\t\t\t\t    vmf, NULL, 0);\n-\t\telse\n-\t\t\tfolio = swapin_readahead(entry, GFP_HIGHUSER_MOVABLE, vmf);\n-\n+\t/*\n+\t * Synchronous swap devices bypass readahead and preliminary cache lookups;\n+\t * enter the allocator-first synchronous swapin path directly.\n+\t */\n+\tif (data_race(si->flags & SWP_SYNCHRONOUS_IO)) {\n+\t\tfolio = swapin_sync(entry, GFP_HIGHUSER_MOVABLE,\n+\t\t\t\t    thp_swapin_suitable_orders(vmf) | BIT(0),\n+\t\t\t\t    vmf, NULL, 0);\n \t\tif (IS_ERR_OR_NULL(folio)) {\n-\t\t\t/*\n-\t\t\t * Back out if somebody else faulted in this pte\n-\t\t\t * while we released the pte lock.\n-\t\t\t */\n \t\t\tvmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd,\n \t\t\t\t\tvmf->address, &vmf->ptl);\n \t\t\tif (likely(vmf->pte &&\n@@ -5016,11 +5008,28 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)\n \t\t\tfolio = NULL;\n \t\t\tgoto unlock;\n \t\t}\n-\n-\t\t/* Had to read the page from swap area: Major fault */\n \t\tret = VM_FAULT_MAJOR;\n \t\tcount_vm_event(PGMAJFAULT);\n \t\tcount_memcg_event_mm(vma->vm_mm, PGMAJFAULT);\n+\t} else {\n+\t\tfolio = swap_cache_get_folio(entry);\n+\t\tif (folio)\n+\t\t\tswap_update_readahead(folio, vma, vmf->address);\n+\t\tif (!folio) {\n+\t\t\tfolio = swapin_readahead(entry, GFP_HIGHUSER_MOVABLE, vmf);\n+\t\t\tif (IS_ERR_OR_NULL(folio)) {\n+\t\t\t\tvmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd,\n+\t\t\t\t\t\tvmf->address, &vmf->ptl);\n+\t\t\t\tif (likely(vmf->pte &&\n+\t\t\t\t\t   pte_same(ptep_get(vmf->pte), vmf->orig_pte)))\n+\t\t\t\t\tret = VM_FAULT_OOM;\n+\t\t\t\tfolio = NULL;\n+\t\t\t\tgoto unlock;\n+\t\t\t}\n+\t\t\tret = VM_FAULT_MAJOR;\n+\t\t\tcount_vm_event(PGMAJFAULT);\n+\t\t\tcount_memcg_event_mm(vma->vm_mm, PGMAJFAULT);\n+\t\t}\n \t}\n \n \tswapcache = folio;\ndiff --git a/mm/swap_state.c b/mm/swap_state.c\nindex 7ac1808ae..280b98725 100644\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -24,6 +24,8 @@\n #include <linux/shmem_fs.h>\n #include <linux/sysctl.h>\n #include <linux/swap_ops.h>\n+#include <linux/workqueue.h>\n+#include <linux/zswap.h>\n #include \"internal.h\"\n #include \"swap_table.h\"\n #include \"swap.h\"\n@@ -65,9 +67,9 @@ static bool enable_vma_readahead __read_mostly = true;\n \t (((win) << SWAP_RA_WIN_SHIFT) & SWAP_RA_WIN_MASK) |\t\\\n \t ((hits) & SWAP_RA_HITS_MASK))\n \n-/* Initial readahead hits is 4 to start up with a small window */\n+/* Do not seed initial hits; require contiguous access to grow window */\n #define GET_SWAP_RA_VAL(vma)\t\t\t\t\t\\\n-\t(atomic_long_read(&(vma)->swap_readahead_info) ? : 4)\n+\tatomic_long_read(&(vma)->swap_readahead_info)\n \n static atomic_t swapin_readahead_hits = ATOMIC_INIT(4);\n \n@@ -457,18 +459,16 @@ static struct folio *__swap_cache_alloc(struct swap_info_struct *si,\n \tVM_WARN_ON_ONCE(nr_pages > SWAPFILE_CLUSTER);\n \tentry.val = round_down(targ_entry.val, nr_pages);\n \n-\t/*\n-\t * Check if the slot and range are available, skip allocation if not.\n-\t * Nothing pins the slot yet, so look its cluster up each time: it\n-\t * may be freed, and on xswap unmapped, while the folio is allocated.\n-\t */\n-\tci = swap_cluster_lock_unpinned(si, swp_offset(targ_entry));\n-\tif (unlikely(!ci))\n-\t\treturn ERR_PTR(-ENOENT);\n-\terr = __swap_cache_add_check(ci, targ_entry, nr_pages, NULL, NULL);\n-\tspin_unlock(&ci->lock);\n-\tif (unlikely(err))\n-\t\treturn ERR_PTR(err);\n+\t/* Avoid wasting large or speculative allocations on unavailable slots. */\n+\tif (order || !vmf) {\n+\t\tci = swap_cluster_lock_unpinned(si, swp_offset(targ_entry));\n+\t\tif (unlikely(!ci))\n+\t\t\treturn ERR_PTR(-ENOENT);\n+\t\terr = __swap_cache_add_check(ci, targ_entry, nr_pages, NULL, NULL);\n+\t\tspin_unlock(&ci->lock);\n+\t\tif (unlikely(err))\n+\t\t\treturn ERR_PTR(err);\n+\t}\n \n \t/*\n \t * Limit THP gfp. The limitation is a no-op for typical\n@@ -709,13 +709,26 @@ void swap_update_readahead(struct folio *folio, struct vm_area_struct *vma,\n \treadahead = folio_test_clear_readahead(folio);\n \tif (vma && vma_ra) {\n \t\tunsigned long ra_val;\n+\t\tunsigned long prev_addr;\n \t\tint win, hits;\n+\t\tbool is_contiguous;\n \n \t\tra_val = GET_SWAP_RA_VAL(vma);\n+\t\tprev_addr = SWAP_RA_ADDR(ra_val);\n \t\twin = SWAP_RA_WIN(ra_val);\n \t\thits = SWAP_RA_HITS(ra_val);\n-\t\tif (readahead)\n+\n+\t\tis_contiguous = prev_addr &&\n+\t\t\t(addr == prev_addr + PAGE_SIZE ||\n+\t\t\t prev_addr == addr + PAGE_SIZE);\n+\n+\t\tif (!is_contiguous) {\n+\t\t\thits = 0;\n+\t\t\twin = 1;\n+\t\t} else if (readahead) {\n \t\t\thits = min_t(int, hits + 1, SWAP_RA_HITS_MAX);\n+\t\t}\n+\n \t\tatomic_long_set(&vma->swap_readahead_info,\n \t\t\t\tSWAP_RA_VAL(addr, win, hits));\n \t}\n@@ -775,12 +788,16 @@ struct folio *swapin_sync(swp_entry_t entry, gfp_t gfp, unsigned long orders,\n \tstruct swap_io_ctx ctx = {};\n \tstruct folio *folio;\n \n-\tdo {\n+\t/* Callers already missed the cache; let the allocator check races. */\n+\tfor (;;) {\n+\t\tfolio = __swap_cache_alloc_folio(entry, gfp, orders, vmf, mpol, ilx);\n+\t\tif (PTR_ERR(folio) != -EEXIST)\n+\t\t\tbreak;\n+\n \t\tfolio = swap_cache_get_folio(entry);\n \t\tif (folio)\n \t\t\treturn folio;\n-\t\tfolio = __swap_cache_alloc_folio(entry, gfp, orders, vmf, mpol, ilx);\n-\t} while (PTR_ERR(folio) == -EEXIST);\n+\t}\n \n \tif (IS_ERR(folio))\n \t\treturn folio;\n@@ -836,6 +853,13 @@ static unsigned int __swapin_nr_pages(unsigned long prev_offset,\n {\n \tunsigned int pages, last_ra;\n \n+\t/*\n+\t * Immediate collapse on stride disruption or non-contiguous access:\n+\t * do not retain prior window across non-adjacent offsets.\n+\t */\n+\tif (prev_offset && offset != prev_offset + 1 && offset != prev_offset - 1)\n+\t\treturn 1;\n+\n \t/*\n \t * This heuristic has been found to work well on both sequential and\n \t * random loads, swapping to hard disk or to SSD: please don't ask\n@@ -889,6 +913,66 @@ static unsigned long swapin_nr_pages(unsigned long offset)\n \treturn pages;\n }\n \n+#define ZSWAP_PREFETCH_BATCH 32\n+\n+struct zswap_prefetch_batch {\n+\tstruct work_struct work;\n+\tunsigned int nr;\n+\tswp_entry_t entries[ZSWAP_PREFETCH_BATCH];\n+};\n+\n+static struct workqueue_struct *zswap_prefetch_wq;\n+\n+static void zswap_prefetch_work_fn(struct work_struct *work)\n+{\n+\tstruct zswap_prefetch_batch *batch =\n+\t\tcontainer_of(work, struct zswap_prefetch_batch, work);\n+\tunsigned int i;\n+\n+\tfor (i = 0; i < batch->nr; i++) {\n+\t\tswp_entry_t entry = batch->entries[i];\n+\t\tstruct swap_info_struct *si;\n+\t\tstruct folio *folio;\n+\t\tint ret;\n+\n+\t\tsi = get_swap_device(entry);\n+\t\tif (IS_ERR_OR_NULL(si))\n+\t\t\tcontinue;\n+\n+\t\tfolio = swap_cache_get_folio(entry);\n+\t\tif (folio) {\n+\t\t\tfolio_put(folio);\n+\t\t\tput_swap_device(si);\n+\t\t\tcontinue;\n+\t\t}\n+\n+\t\tfolio = __swap_cache_alloc_folio(entry,\n+\t\t\t\t\t\t GFP_NOWAIT | __GFP_NOWARN | __GFP_NORETRY,\n+\t\t\t\t\t\t BIT(0), NULL, NULL, 0);\n+\t\tif (IS_ERR_OR_NULL(folio)) {\n+\t\t\tput_swap_device(si);\n+\t\t\tcontinue;\n+\t\t}\n+\n+\t\tret = zswap_load(folio);\n+\t\tif (ret == 0) {\n+\t\t\tfolio_add_lru(folio);\n+\t\t\tfolio_set_readahead(folio);\n+\t\t\tcount_vm_event(SWAP_RA);\n+\t\t} else {\n+\t\t\tif (!folio_test_locked(folio))\n+\t\t\t\tfolio_lock(folio);\n+\t\t\tswap_cache_del_folio(folio);\n+\t\t\tfolio_unlock(folio);\n+\t\t}\n+\n+\t\tfolio_put(folio);\n+\t\tput_swap_device(si);\n+\t}\n+\n+\tkfree(batch);\n+}\n+\n /**\n  * swap_cluster_readahead - swap in pages in hope we need them soon\n  * @entry: swap entry of this memory\n@@ -920,9 +1004,9 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tstruct blk_plug plug;\n \tswp_entry_t ra_entry;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n+\tbool zswap_active;\n+\n+\tzswap_active = zswap_is_enabled() || (si->flags & SWP_XSWAP);\n \n \tmask = swapin_nr_pages(offset) - 1;\n \tif (!mask)\n@@ -936,6 +1020,28 @@ struct folio *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,\n \tif (end_offset >= si->max)\n \t\tend_offset = si->max - 1;\n \n+\tif (zswap_active) {\n+\t\tstruct zswap_prefetch_batch *batch;\n+\n+\t\tbatch = kmalloc_obj(*batch, GFP_NOWAIT | __GFP_NOWARN);\n+\t\tif (batch) {\n+\t\t\tINIT_WORK(&batch->work, zswap_prefetch_work_fn);\n+\t\t\tbatch->nr = 0;\n+\t\t\tfor (offset = start_offset; offset <= end_offset; offset++) {\n+\t\t\t\tif (offset == entry_offset)\n+\t\t\t\t\tcontinue;\n+\t\t\t\tra_entry = swp_entry(swp_type(entry), offset);\n+\t\t\t\tif (batch->nr < ZSWAP_PREFETCH_BATCH)\n+\t\t\t\t\tbatch->entries[batch->nr++] = ra_entry;\n+\t\t\t}\n+\t\t\tif (batch->nr > 0 && zswap_prefetch_wq)\n+\t\t\t\tqueue_work(zswap_prefetch_wq, &batch->work);\n+\t\t\telse\n+\t\t\t\tkfree(batch);\n+\t\t}\n+\t\treturn swap_cache_read_folio_sync(entry, gfp_mask, mpol, ilx);\n+\t}\n+\n \tblk_start_plug(&plug);\n \tfor (offset = start_offset; offset <= end_offset ; offset++) {\n \t\t/* Ok, do the async read-ahead now */\n@@ -959,6 +1065,7 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n \tunsigned long ra_val;\n \tunsigned long faddr, prev_faddr, left, right;\n \tunsigned int max_win, hits, prev_win, win;\n+\tbool is_contiguous;\n \n \tmax_win = 1 << min(READ_ONCE(page_cluster), SWAP_RA_ORDER_CEILING);\n \tif (max_win == 1)\n@@ -969,9 +1076,41 @@ static int swap_vma_ra_win(struct vm_fault *vmf, unsigned long *start,\n \tprev_faddr = SWAP_RA_ADDR(ra_val);\n \tprev_win = SWAP_RA_WIN(ra_val);\n \thits = SWAP_RA_HITS(ra_val);\n+\n+\t/*\n+\t * Stride gating: check if access is contiguous with previous fault.\n+\t */\n+\tis_contiguous = prev_faddr &&\n+\t\t(faddr == prev_faddr + PAGE_SIZE || prev_faddr == faddr + PAGE_SIZE);\n+\n+\tif (!is_contiguous) {\n+\t\t/*\n+\t\t * Immediate collapse on stride disruption or random access:\n+\t\t * Reset streak to 0 and clamp window to 1.\n+\t\t */\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(faddr, 1, 0));\n+\t\treturn 1;\n+\t}\n+\n+\t/* Contiguous hit: advance streak */\n+\thits = min_t(unsigned int, hits + 1, SWAP_RA_HITS_MAX);\n+\n+\t/*\n+\t * Require 2+ contiguous hits before expanding window beyond 1.\n+\t */\n+\tif (hits < 2) {\n+\t\tatomic_long_set(&vma->swap_readahead_info,\n+\t\t\t\tSWAP_RA_VAL(faddr, 1, hits));\n+\t\treturn 1;\n+\t}\n+\n \twin = __swapin_nr_pages(PFN_DOWN(prev_faddr), PFN_DOWN(faddr), hits,\n \t\t\t\tmax_win, prev_win);\n-\tatomic_long_set(&vma->swap_readahead_info, SWAP_RA_VAL(faddr, win, 0));\n+\tif (win < 2)\n+\t\twin = 2;\n+\n+\tatomic_long_set(&vma->swap_readahead_info, SWAP_RA_VAL(faddr, win, hits));\n \tif (win == 1)\n \t\treturn 1;\n \n@@ -1018,14 +1157,63 @@ static struct folio *swap_vma_readahead(swp_entry_t targ_entry, gfp_t gfp_mask,\n \tunsigned long start, end, addr;\n \tpgoff_t ilx = targ_ilx;\n \n-\t/* xswap entries live only in zswap; readahead does not help. */\n-\tif (si->flags & SWP_XSWAP)\n-\t\tgoto skip;\n+\tbool zswap_active;\n+\n+\tzswap_active = zswap_is_enabled() || (si->flags & SWP_XSWAP);\n \n \twin = swap_vma_ra_win(vmf, &start, &end);\n \tif (win == 1)\n \t\tgoto skip;\n \n+\tif (zswap_active) {\n+\t\tstruct zswap_prefetch_batch *batch;\n+\n+\t\tbatch = kmalloc_obj(*batch, GFP_NOWAIT | __GFP_NOWARN);\n+\t\tif (batch) {\n+\t\t\tINIT_WORK(&batch->work, zswap_prefetch_work_fn);\n+\t\t\tbatch->nr = 0;\n+\t\t}\n+\n+\t\tfor (addr = start; addr < end; addr += PAGE_SIZE) {\n+\t\t\tsoftleaf_t entry;\n+\n+\t\t\tif (addr == vmf->address) {\n+\t\t\t\tif (pte) {\n+\t\t\t\t\tpte_unmap(pte);\n+\t\t\t\t\tpte = NULL;\n+\t\t\t\t}\n+\t\t\t\tcontinue;\n+\t\t\t}\n+\n+\t\t\tif (!pte) {\n+\t\t\t\tpte = pte_offset_map(vmf->pmd, addr);\n+\t\t\t\tif (!pte)\n+\t\t\t\t\tbreak;\n+\t\t\t} else {\n+\t\t\t\tpte++;\n+\t\t\t}\n+\t\t\tpentry = ptep_get_lockless(pte);\n+\t\t\tentry = softleaf_from_pte(pentry);\n+\n+\t\t\tif (!softleaf_is_swap(entry))\n+\t\t\t\tcontinue;\n+\n+\t\t\tif (batch && batch->nr < ZSWAP_PREFETCH_BATCH)\n+\t\t\t\tbatch->entries[batch->nr++] = entry;\n+\t\t}\n+\t\tif (pte)\n+\t\t\tpte_unmap(pte);\n+\n+\t\tif (batch) {\n+\t\t\tif (batch->nr > 0 && zswap_prefetch_wq)\n+\t\t\t\tqueue_work(zswap_prefetch_wq, &batch->work);\n+\t\t\telse\n+\t\t\t\tkfree(batch);\n+\t\t}\n+\n+\t\treturn swap_cache_read_folio_sync(targ_entry, gfp_mask, mpol, targ_ilx);\n+\t}\n+\n \tilx = targ_ilx - PFN_DOWN(vmf->address - start);\n \n \tblk_start_plug(&plug);\n@@ -1115,6 +1303,9 @@ static void __init swap_readahead_setup(void)\n {\n \tunsigned long megs = PAGES_TO_MB(totalram_pages());\n \n+\tzswap_prefetch_wq = alloc_workqueue(\"zswap-prefetch\",\n+\t\t\t\t\t    WQ_UNBOUND | WQ_MEM_RECLAIM, 0);\n+\n \t/* Use a smaller cluster for small-memory machines */\n \tif (megs < 16)\n \t\tpage_cluster = 2;\n",
+      "changed_paths": [
+        "mm/memory.c",
+        "mm/swap_state.c"
+      ],
+      "hypothesis": "Unifying allocator-first synchronous swapin, single-lock order-0 allocation in mm/swap_state.c and mm/memory.c, adaptive stride streak-gating requiring 2+ contiguous hits before expanding window beyond 1, and decoupled asynchronous zswap prefetch offloading speculative decompression to a background workqueue eliminates synchronous fault stalling and random swap cache thrashing, achieving a -6% to -9% geomean latency improvement across sequential and random workloads without regressions or correctness violations.",
+      "mechanism": {
+        "kind": "reviewed_structure",
+        "claim": "In mm/memory.c and mm/swap_state.c, synchronous swap devices bypass preliminary cache lookups and enter allocator-first swapin with single-lock order-0 allocation, readahead window expansion is gated on 2+ contiguous hits with immediate window collapse to 1 on stride disruptions, and speculative zswap decompression is offloaded to a background workqueue while the faulting thread returns immediately after synchronous order-0 load.",
+        "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, or broken cache lookup fallback. Correctness, metadata spread <1%, and calibrated fast-tier screen independently gate execution."
+      },
+      "evidence": [
+        {
+          "id": "1ee1368ba52e492fb9aa053ed29c4b8a",
+          "action": "evaluate",
+          "tier": "fast",
+          "status": "FAST_PASS",
+          "candidate": "xswap-fast-in-v1",
+          "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+          "fingerprint": "cc9de282715d2f75922823ee884354d81b91e9489630f84c4bc11421c459fa1a",
+          "started": 1793992264.315417,
+          "finished": 1793993344.175461,
+          "analysis": {
+            "tier": "fast",
+            "pair_count": 4,
+            "metrics": {
+              "swapin-disk.swapin_seq.mean_ns": {
+                "pair_ratios": [
+                  0.9772772499300135,
+                  1.0112266155289442,
+                  0.9945917270647889,
+                  0.9890507778430282
+                ],
+                "geomean_ratio": 0.9929615412329597,
+                "median_ratio": 0.9918173830346342,
+                "noise_relative": 0.030000000000000027,
+                "guard_pass": true
+              },
+              "swapin-disk.swapin_seq.p99_ns": {
+                "pair_ratios": [
+                  0.9752645853684242,
+                  1.0207510253599406,
+                  0.9945734102962647,
+                  0.968502891565807
+                ],
+                "geomean_ratio": 0.9895665606216415,
+                "median_ratio": 0.9848716792613371,
+                "noise_relative": 0.04735160531242477,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-disk.swapin_rand.mean_ns": {
+                "pair_ratios": [
+                  1.0029831194736378,
+                  1.005033906180075,
+                  1.0086580591031977,
+                  0.9397516077560495
+                ],
+                "geomean_ratio": 0.9886847704057535,
+                "median_ratio": 1.0040079892098803,
+                "noise_relative": 0.05411489739079989,
+                "guard_pass": true
+              },
+              "swapin-disk.swapin_rand.p99_ns": {
+                "pair_ratios": [
+                  1.0013385654805107,
+                  1.01615326237469,
+                  1.0288658652438203,
+                  0.9394094192819638
+                ],
+                "geomean_ratio": 0.9958374555860067,
+                "median_ratio": 1.0087187170141205,
+                "noise_relative": 0.0529296433699451,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-zram-64k.swapin_seq.mean_ns": {
+                "pair_ratios": [
+                  0.9329875844727336,
+                  1.0534647660229395,
+                  1.0819393149395338,
+                  1.0981798715203412
+                ],
+                "geomean_ratio": 1.0395444526612858,
+                "median_ratio": 1.0676071127825046,
+                "noise_relative": 0.09042050747532726,
+                "guard_pass": true
+              },
+              "swapin-zram-64k.swapin_seq.p99_ns": {
+                "pair_ratios": [
+                  0.9090021492975469,
+                  1.0425699741408743,
+                  1.1368047901827583,
+                  1.1589085199517861
+                ],
+                "geomean_ratio": 1.0570640267131566,
+                "median_ratio": 1.0886682418000722,
+                "noise_relative": 0.11610612201446235,
+                "guard_pass": true,
+                "advisory": true
+              },
+              "swapin-zram-64k.swapin_rand.mean_ns": {
+                "pair_ratios": [
+                  0.9451144404021876,
+                  1.0421849292530445,
+                  1.0672930995511642,
+                  1.086255012028868
+                ],
+                "geomean_ratio": 1.033739641056016,
+                "median_ratio": 1.0546642989349704,
+                "noise_relative": 0.08193878171971081,
+                "guard_pass": true
+              },
+              "swapin-zram-64k.swapin_rand.p99_ns": {
+                "pair_ratios": [
+                  0.9120349045498749,
+                  1.0135850831731512,
+                  1.1111925085998213,
+                  1.1588330233739421
+                ],
+                "geomean_ratio": 1.0445288973275701,
+                "median_ratio": 1.0612672383761466,
+                "noise_relative": 0.11040407039516231,
+                "guard_pass": true,
+                "advisory": true
+              }
+            },
+            "overall_geomean_ratio": 1.015986053986335,
+            "combined_score": 1.0347348176091227,
+            "primary": [
+              "swapin-disk.swapin_seq.mean_ns",
+              "swapin-zram-64k.swapin_seq.mean_ns"
+            ],
+            "reference": false,
+            "performance_accepted": false,
+            "auto_promote": false,
+            "eligible_for_slow": false,
+            "needs_review": false,
+            "decision": "median",
+            "overall_median_ratio": 1.0347348176091227,
+            "status": "FAST_PASS"
+          },
+          "calibration_id": "7d014ac1173e448b969a8ebb0d2b472c",
+          "probe_id": "b5081dabcab34c438126c79de5ad8e33",
+          "probe_signals": {
+            "swapin-disk": {
+              "swapin_vmstat_delta.pswpin": [
+                262161
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                0
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                524013
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                1
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "swapin-zram-64k": {
+              "swapin_vmstat_delta.pswpin": [
+                262134
+              ],
+              "swapin_vmstat_delta.zswpin": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra": [
+                0
+              ],
+              "swapin_vmstat_delta.swap_ra_hit": [
+                0
+              ],
+              "swapin_vmstat_delta.pgmajfault": [
+                262137
+              ],
+              "swapin_vmstat_delta.zswpwb": [
+                0
+              ],
+              "xswap.grows": [
+                7
+              ],
+              "xswap.shrinks": [
+                0
+              ],
+              "xswap.usage_pages": [
+                1
+              ],
+              "xswap.clusters_mapped": [
+                584
+              ]
+            },
+            "metadata-brd": {
+              "metadata_delta_bytes_per_capacity_slot": [
+                0.110946655686746
+              ]
+            }
+          },
+          "controller_check": {
+            "status": "SCOPE_PASS",
+            "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+            "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+            "changed_paths": [
+              "mm/memory.c",
+              "mm/swap_state.c"
+            ],
+            "changed_lines": 286,
+            "diff-check": {
+              "exit_code": 0,
+              "evidence": "campaigns/xswap-fast-in-2026-11-06/candidates/xswap-fast-in-v1/diff-check.log",
+              "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+            },
+            "checkpatch": {
+              "exit_code": 0,
+              "evidence": "campaigns/xswap-fast-in-2026-11-06/candidates/xswap-fast-in-v1/checkpatch.log",
+              "sha256": "cf781ff4910f675adb21140116d6da05a3647a328ea74e560211a785895c0840"
+            }
+          },
+          "correctness": {
+            "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+            "source_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+            "gates": {
+              "boot": true,
+              "cmdline_identity": true,
+              "workload_complete": true,
+              "kernel_log_present": true,
+              "no_kernel_warnings": true,
+              "thp_policy": true,
+              "swap_activity": true,
+              "backend_exercised": true,
+              "swap_routing": true,
+              "correctness_evidence": true,
+              "data_roundtrip": true,
+              "fork_cow": true,
+              "concurrent_fault": true,
+              "destroy_live_pages": true,
+              "swapoff_live_pages": true,
+              "no_new_kernel_warnings": true,
+              "qemu_exit": true
+            },
+            "integration_pass": true,
+            "mode": "xswap",
+            "backend": "disk",
+            "config_sha256": "9dcdc44d2c9459a486a5f58657823d2c507811b7301d46a09ed9d8c20e0ed03a"
+          },
+          "report": "campaigns/xswap-fast-in-2026-11-06/runs/evaluations/1ee1368ba52e492fb9aa053ed29c4b8a/report.json",
+          "row_sha256": "3eba00d601b215cc806bab60c6eacef7f82cd15aff775c267f5efa3e5d4fae57"
+        }
+      ],
+      "invalidations": [],
+      "timestamp": 1793993344.175461,
+      "fingerprint": "cc9de282715d2f75922823ee884354d81b91e9489630f84c4bc11421c459fa1a",
+      "analysis": {
+        "tier": "fast",
+        "pair_count": 4,
+        "metrics": {
+          "swapin-disk.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              0.9772772499300135,
+              1.0112266155289442,
+              0.9945917270647889,
+              0.9890507778430282
+            ],
+            "geomean_ratio": 0.9929615412329597,
+            "median_ratio": 0.9918173830346342,
+            "noise_relative": 0.030000000000000027,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              0.9752645853684242,
+              1.0207510253599406,
+              0.9945734102962647,
+              0.968502891565807
+            ],
+            "geomean_ratio": 0.9895665606216415,
+            "median_ratio": 0.9848716792613371,
+            "noise_relative": 0.04735160531242477,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-disk.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              1.0029831194736378,
+              1.005033906180075,
+              1.0086580591031977,
+              0.9397516077560495
+            ],
+            "geomean_ratio": 0.9886847704057535,
+            "median_ratio": 1.0040079892098803,
+            "noise_relative": 0.05411489739079989,
+            "guard_pass": true
+          },
+          "swapin-disk.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              1.0013385654805107,
+              1.01615326237469,
+              1.0288658652438203,
+              0.9394094192819638
+            ],
+            "geomean_ratio": 0.9958374555860067,
+            "median_ratio": 1.0087187170141205,
+            "noise_relative": 0.0529296433699451,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_seq.mean_ns": {
+            "pair_ratios": [
+              0.9329875844727336,
+              1.0534647660229395,
+              1.0819393149395338,
+              1.0981798715203412
+            ],
+            "geomean_ratio": 1.0395444526612858,
+            "median_ratio": 1.0676071127825046,
+            "noise_relative": 0.09042050747532726,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_seq.p99_ns": {
+            "pair_ratios": [
+              0.9090021492975469,
+              1.0425699741408743,
+              1.1368047901827583,
+              1.1589085199517861
+            ],
+            "geomean_ratio": 1.0570640267131566,
+            "median_ratio": 1.0886682418000722,
+            "noise_relative": 0.11610612201446235,
+            "guard_pass": true,
+            "advisory": true
+          },
+          "swapin-zram-64k.swapin_rand.mean_ns": {
+            "pair_ratios": [
+              0.9451144404021876,
+              1.0421849292530445,
+              1.0672930995511642,
+              1.086255012028868
+            ],
+            "geomean_ratio": 1.033739641056016,
+            "median_ratio": 1.0546642989349704,
+            "noise_relative": 0.08193878171971081,
+            "guard_pass": true
+          },
+          "swapin-zram-64k.swapin_rand.p99_ns": {
+            "pair_ratios": [
+              0.9120349045498749,
+              1.0135850831731512,
+              1.1111925085998213,
+              1.1588330233739421
+            ],
+            "geomean_ratio": 1.0445288973275701,
+            "median_ratio": 1.0612672383761466,
+            "noise_relative": 0.11040407039516231,
+            "guard_pass": true,
+            "advisory": true
+          }
+        },
+        "overall_geomean_ratio": 1.015986053986335,
+        "combined_score": 1.0347348176091227,
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "reference": false,
+        "performance_accepted": false,
+        "auto_promote": false,
+        "eligible_for_slow": false,
+        "needs_review": false,
+        "decision": "median",
+        "overall_median_ratio": 1.0347348176091227,
+        "status": "FAST_PASS"
+      },
+      "probe_signals": {
+        "swapin-disk": {
+          "swapin_vmstat_delta.pswpin": [
+            262161
+          ],
+          "swapin_vmstat_delta.zswpin": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra_hit": [
+            0
+          ],
+          "swapin_vmstat_delta.pgmajfault": [
+            524013
+          ],
+          "swapin_vmstat_delta.zswpwb": [
+            0
+          ],
+          "xswap.grows": [
+            7
+          ],
+          "xswap.shrinks": [
+            0
+          ],
+          "xswap.usage_pages": [
+            1
+          ],
+          "xswap.clusters_mapped": [
+            584
+          ]
+        },
+        "swapin-zram-64k": {
+          "swapin_vmstat_delta.pswpin": [
+            262134
+          ],
+          "swapin_vmstat_delta.zswpin": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra": [
+            0
+          ],
+          "swapin_vmstat_delta.swap_ra_hit": [
+            0
+          ],
+          "swapin_vmstat_delta.pgmajfault": [
+            262137
+          ],
+          "swapin_vmstat_delta.zswpwb": [
+            0
+          ],
+          "xswap.grows": [
+            7
+          ],
+          "xswap.shrinks": [
+            0
+          ],
+          "xswap.usage_pages": [
+            1
+          ],
+          "xswap.clusters_mapped": [
+            584
+          ]
+        },
+        "metadata-brd": {
+          "metadata_delta_bytes_per_capacity_slot": [
+            0.110946655686746
+          ]
+        }
+      },
+      "report": "campaigns/xswap-fast-in-2026-11-06/runs/evaluations/1ee1368ba52e492fb9aa053ed29c4b8a/report.json",
+      "fast_evidence_id": "1ee1368ba52e492fb9aa053ed29c4b8a",
+      "advancement": {
+        "eligible": false,
+        "reason": "screen is exploratory; improvement does not exceed calibrated noise",
+        "evidence_id": "1ee1368ba52e492fb9aa053ed29c4b8a",
+        "candidate_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+        "fingerprint": "cc9de282715d2f75922823ee884354d81b91e9489630f84c4bc11421c459fa1a",
+        "score": 1.0347348176091227,
+        "primary": [
+          "swapin-disk.swapin_seq.mean_ns",
+          "swapin-zram-64k.swapin_seq.mean_ns"
+        ],
+        "noise_relative": 0.09042050747532726,
+        "threshold": 1.0904205074753273
+      },
+      "parent_delta": {
+        "comparable": false,
+        "signal_summary": "median of retained samples; legacy scalar values are unchanged",
+        "probe_signals": {},
+        "combined_score": null,
+        "interpretation": "diagnostic difference of separate baseline comparisons, not a paired parent control"
+      },
+      "latest_status": "FAST_PASS",
+      "tier": "fast",
+      "screen_only": true,
+      "performance_accepted": false,
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f"
+    },
+    "xswap-mthp-reassembly-v1": {
+      "id": "xswap-mthp-reassembly-v1",
+      "generation": 2,
+      "parent_candidate": "xswap-fast-in-v1",
+      "parent": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+      "parent_commit": "5cde9eaa28a2cd79f640e8932c4572573ab2323a",
+      "candidate_commit": "53e02e8615a30d927daf77e5f1f7a7182a1c6ec5",
+      "source_tree": "f652b30d88da94df2880d9812352425168cd4046"
     }
   },
   "sample_sequence": 2,

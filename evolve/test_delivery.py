@@ -240,6 +240,28 @@ class DeliveryTests(unittest.TestCase):
         self.assertNotIn("rev7", sub)
 
 
+
+    def test_patches_section_renders_diffs_and_validates_sources(self):
+        patch_path = self.campaign / "patches/one.patch"
+        patch_path.parent.mkdir(parents=True, exist_ok=True)
+        patch_path.write_text("--- a/mm/xswap.c\n+++ b/mm/xswap.c\n@@ -1,2 +1,3 @@\n+bool xswap_load_batch(void);\n")
+        story = explain(self.root)
+        story["patches"] = [{"takeaway": "M1 batch swap-in loader",
+                             "source": "campaigns/test-line/patches/one.patch",
+                             "patch": patch_path.read_text()}]
+        d.write(self.campaign / "report/story.json", story)
+        d.render(self.root, "test-line")
+        html = (self.campaign / "report/explainer.html").read_text()
+        md = (self.campaign / "report/REPORT.md").read_text()
+        self.assertIn("Core kernel patches", html)
+        self.assertIn("xswap_load_batch", html)
+        self.assertIn("## Core kernel patches", md)
+        self.assertIn("```diff", md)
+        story["patches"][0]["source"] = "campaigns/test-line/ledger/ledger.json"
+        with self.assertRaisesRegex(ValueError, "patch source reference"):
+            d.make_spec(d.extract(self.root, "test-line"), story)
+
+
 if __name__ == "__main__":
     unittest.main()
 

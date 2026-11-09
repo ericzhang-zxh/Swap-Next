@@ -1,238 +1,361 @@
 {
   "schema_version": 1,
   "campaign": "xswap-radix-hole-reclaim-2026-11-06",
-  "evidence_sha256": "75f9d5bf42ffa325073e88e5d257bc2d77256af916cd5d2e0fce17d9f872ebc6",
-  "title": "Two-Level RCU Radix Chunks & Interior Hole Reclamation (xswap-radix-hole-reclaim-v1)",
-  "headline": "Milestone 3 evaluation: 2-level RCU radix chunks with 56-byte zero-overhead descriptors and asynchronous hole reclamation pass all 17 integration gates and achieve zero metadata regression.",
+  "evidence_sha256": "4eda4bafc0786f753fe60a8ff5d116e42d0cf33bba577a13cd866c3b461082cc",
   "date": "2026-11-06",
-  "harness": "teamwork",
-  "model": "gemini-2.5-pro",
+  "harness": "agy",
+  "model": "gemini4argon",
+  "line": "xswap-superset-chain",
+  "title": "Unified xswap Superset Chain: Batch Swap-In, Order-4 mTHP Reassembly, and 2-Level RCU Radix Reclaim",
+  "headline": "A three-stage compounding kernel chain evolved upstream xswap across synchronous zswap batching (M1), 64KB mTHP fault reassembly (M2), and 2-level RCU radix hole reclamation (M3), achieving -63.1% fragmented metadata overhead across all 17 correctness gates.",
+  "patches_title": "Core kernel patches (M1 \u2192 M2 \u2192 M3)",
+  "patches_lead": "Key kernel hunks across the three-stage compounding commit chain (5e84ca92 -> 5cde9eaa -> 53e02e86 -> 2c1ddb53).",
+  "patches": [
+    {
+      "takeaway": "Milestone 1 (5cde9eaa28a2): Synchronous zswap batch swap-in loader in mm/xswap.c and mm/swap_state.c",
+      "source": "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-fast-in-v1.patch",
+      "patch": "--- a/mm/xswap.c\n+++ b/mm/xswap.c\n@@ -295,6 +295,38 @@ bool xswap_load(struct folio *folio)\n+unsigned int xswap_load_batch(struct folio **folios, swp_entry_t *entries,\n+\t\t\t      unsigned int nr)\n+{\n+\tunsigned int i, loaded = 0;\n+\n+\tfor (i = 0; i < nr; i++) {\n+\t\tif (!zswap_load(folios[i]))\n+\t\t\tbreak;\n+\t\tloaded++;\n+\t}\n+\treturn loaded;\n+}\n+\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -645,6 +645,44 @@ struct folio *swapin_sync(swp_entry_t entry, gfp_t gfp_mask,\n+\tif (nr_batch > 1 && zswap_is_enabled()) {\n+\t\tfor (i = 1; i < nr_batch; i++) {\n+\t\t\tbatch_folios[i] = __swap_cache_alloc(si, batch_entries[i],\n+\t\t\t\t\t\t\t     gfp_mask, 0, &ci,\n+\t\t\t\t\t\t\t     &shadow, &need_Init);\n+\t\t\tif (!batch_folios[i])\n+\t\t\t\tbreak;\n+\t\t}\n+\t\tloaded = xswap_load_batch(batch_folios, batch_entries, i);\n+\t\tfor (j = 1; j < loaded; j++) {\n+\t\t\tfolio_mark_uptodate(batch_folios[j]);\n+\t\t\tfolio_unlock(batch_folios[j]);\n+\t\t\tfolio_put(batch_folios[j]);\n+\t\t}\n+\t}"
+    },
+    {
+      "takeaway": "Milestone 2 (53e02e8615a3): Speculative order-4 (64KB) mTHP swap-in reassembly in mm/xswap.c and mm/swap_state.c",
+      "source": "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-mthp-reassembly-v1.patch",
+      "patch": "--- a/mm/xswap.c\n+++ b/mm/xswap.c\n@@ -335,6 +335,51 @@ unsigned int xswap_load_batch(struct folio **folios, swp_entry_t *entries,\n+bool xswap_load_mthp(struct folio *folio, swp_entry_t base_entry,\n+\t\t     struct swap_cluster_info *ci)\n+{\n+\tunsigned int i, nr_pages = folio_nr_pages(folio);\n+\tunsigned int base_off = swp_offset(base_entry) % SWAPFILE_CLUSTER;\n+\n+\tlockdep_assert_held(&ci->lock);\n+\tfor (i = 0; i < nr_pages; i++) {\n+\t\tunsigned long swp_tb = __swap_table_get(ci, base_off + i);\n+\t\tif (!swp_tb_is_count(swp_tb) || __swp_tb_to_count(swp_tb) != 1)\n+\t\t\treturn false;\n+\t}\n+\tspin_unlock(&ci->lock);\n+\tfor (i = 0; i < nr_pages; i++) {\n+\t\tstruct folio *sub = page_folio(folio_page(folio, i));\n+\t\tif (!zswap_load_subpage(folio, i, swp_entry(swp_type(base_entry),\n+\t\t\t\t\tswp_offset(base_entry) + i)))\n+\t\t\tgoto fail_relock;\n+\t}\n+\tfolio_mark_uptodate(folio);\n+\treturn true;\n+fail_relock:\n+\treturn false;\n+}\n+\n--- a/mm/swap_state.c\n+++ b/mm/swap_state.c\n@@ -572,6 +572,49 @@ static struct folio *swapin_sync_mthp_reassemble(\n+\tfolio = vma_alloc_folio(gfp_mask | __GFP_COMP | __GFP_NOWARN |\n+\t\t\t\t__GFP_NORETRY, order, vmf->vma, aligned_addr);\n+\tif (!folio)\n+\t\treturn NULL;\n+\tci = swap_cluster_lock(si, swp_offset(base_entry));\n+\tif (!__swap_cache_prepare_mthp_locked(si, ci, base_entry, folio)) {\n+\t\tswap_cluster_unlock(ci);\n+\t\tfolio_put(folio);\n+\t\treturn NULL;\n+\t}\n+\tif (xswap_load_mthp(folio, base_entry, ci))\n+\t\treturn folio;"
+    },
+    {
+      "takeaway": "Milestone 3 (2c1ddb537fd9): 2-level RCU radix cluster directory and lockless kfree_rcu() hole reclaim in include/linux/swap.h and mm/swapfile.c",
+      "source": "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-radix-hole-reclaim-v1.patch",
+      "patch": "--- a/include/linux/swap.h\n+++ b/include/linux/swap.h\n@@ -312,8 +312,17 @@ struct swap_cluster_info {\n+#define XSWAP_CHUNK_SHIFT\t6\n+#define XSWAP_CHUNK_CLUSTERS\t(1UL << XSWAP_CHUNK_SHIFT)\n+#define XSWAP_CHUNK_MASK\t(XSWAP_CHUNK_CLUSTERS - 1)\n+\n+struct swap_cluster_chunk {\n+\tatomic_t live_clusters;\n+\tunsigned int chunk_idx;\n+\tstruct rcu_head rcu;\n+\tstruct swap_cluster_info clusters[XSWAP_CHUNK_CLUSTERS];\n+};\n+\n--- a/mm/swapfile.c\n+++ b/mm/swapfile.c\n@@ -418,16 +418,62 @@ struct swap_cluster_info *swap_cluster_lookup_rcu(\n+\trcu_read_lock();\n+\tchunk = rcu_dereference(si->cluster_dir[chunk_idx]);\n+\tif (unlikely(!chunk)) {\n+\t\trcu_read_unlock();\n+\t\treturn NULL;\n+\t}\n+\tci = &chunk->clusters[ offset / SWAPFILE_CLUSTER & XSWAP_CHUNK_MASK ];\n+\tspin_lock(&ci->lock);\n+\tif (unlikely(rcu_access_pointer(si->cluster_dir[chunk_idx]) != chunk)) {\n+\t\tspin_unlock(&ci->lock);\n+\t\trcu_read_unlock();\n+\t\treturn NULL;\n+\t}\n+\trcu_read_unlock();\n+\treturn ci;\n+\n+static void xswap_reclaim_work_fn(struct work_struct *work)\n+{\n+\tmutex_lock(&si->xswap_lock);\n+\tfor (chunk_idx = 0; chunk_idx < si->nr_cluster_chunks; chunk_idx++) {\n+\t\tchunk = rcu_dereference_protected(si->cluster_dir[chunk_idx],\n+\t\t\t\t\tlockdep_is_held(&si->xswap_lock));\n+\t\tif (!chunk || atomic_read(&chunk->live_clusters) != 0)\n+\t\t\tcontinue;\n+\t\tspin_lock(&si->lock);\n+\t\tif (xswap_try_unlink_empty_chunk_locked(si, chunk)) {\n+\t\t\trcu_assign_pointer(si->cluster_dir[chunk_idx], NULL);\n+\t\t\tspin_unlock(&si->lock);\n+\t\t\tkfree_rcu(chunk, rcu);\n+\t\t\tcontinue;\n+\t\t}\n+\t\tspin_unlock(&si->lock);\n+\t}\n+\tmutex_unlock(&si->xswap_lock);\n+}"
+    }
+  ],
   "sections": [
     {
       "id": "context",
-      "title": "Replacing monolithic flat swap cluster allocation",
-      "lead": "Upstream mm/swapfile.c statically allocates a flat cluster array at swapon time. Large swapfiles pin megabytes of kernel memory even when mostly empty, and interior holes cannot be reclaimed.",
+      "title": "Why this experiment",
+      "lead": "Upstream xswap stops at dynamic VM_SPARSE high-water-mark growth and single-page synchronous swap-in, leaving three structural gaps along the swap lifecycle.",
       "evidence": [
-        "campaigns/xswap-radix-hole-reclaim-2026-11-06/research.json",
-        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-radix-hole-reclaim-v1.patch"
-      ],
-      "blocks": [
-        {
-          "type": "note",
-          "text": "Milestone 3 replaces monolithic cluster arrays with a dynamically expanded 2-level RCU radix directory, allocating chunks of 64 clusters on demand and reclaiming interior holes via asynchronous kfree_rcu()."
-        }
-      ]
-    },
-    {
-      "id": "system",
-      "title": "Two-level RCU radix chunk directory and 56-byte layout",
-      "lead": "si->cluster_dir maps chunk IDs to 64-cluster leaves. Chunk 0 is permanent to protect swap headers. 4096-byte alignment enables O(1) lockless derivation via PAGE_MASK without adding pointer overhead to struct swap_cluster_info.",
-      "evidence": [
-        "campaigns/xswap-radix-hole-reclaim-2026-11-06/research.json",
-        "campaigns/xswap-radix-hole-reclaim-2026-11-06/protocol.json"
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/campaign.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/protocol.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-fast-in-v1.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-mthp-reassembly-v1.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1.json"
       ],
       "blocks": [
         {
           "type": "flow",
-          "takeaway": "Lockless RCU radix lookup and page-aligned chunk derivation guarantee O(1) access without metadata overhead",
+          "takeaway": "Three compounding milestones upgrade swap-in batching, 64KB mTHP reassembly, and interior metadata hole reclamation",
           "nodes": [
             {
-              "id": "entry",
-              "label": "Swap Entry",
+              "id": "base",
+              "label": "Upstream xswap",
+              "sub": "5e84ca92 baseline",
               "col": 0,
               "row": 0,
-              "sub": "swp_offset",
-              "tone": "default"
+              "tone": "muted"
             },
             {
-              "id": "lookup",
-              "label": "swap_cluster_lookup_rcu",
+              "id": "m1",
+              "label": "M1: Fast Swap-In",
+              "sub": "5cde9eaa (+1.09%)",
               "col": 1,
               "row": 0,
-              "sub": "2-level directory",
               "tone": "focus"
             },
             {
-              "id": "align",
-              "label": "PAGE_MASK Derivation",
+              "id": "m2",
+              "label": "M2: 64KB mTHP",
+              "sub": "53e02e86 (+2.33% zram)",
               "col": 2,
               "row": 0,
-              "sub": "ci & PAGE_MASK",
-              "tone": "good"
+              "tone": "focus"
             },
             {
-              "id": "slot",
-              "label": "Cluster Slot",
+              "id": "m3",
+              "label": "M3: Radix Reclaim",
+              "sub": "2c1ddb53 (-63.1% meta)",
               "col": 3,
               "row": 0,
-              "sub": "56-byte descriptor",
               "tone": "good"
             }
           ],
           "edges": [
             {
-              "from": "entry",
-              "to": "lookup",
-              "label": "chunk index"
+              "from": "base",
+              "to": "m1",
+              "label": "batch zswap"
             },
             {
-              "from": "lookup",
-              "to": "align",
-              "label": "leaf chunk"
+              "from": "m1",
+              "to": "m2",
+              "label": "order-4 folio"
             },
             {
-              "from": "align",
-              "to": "slot",
-              "label": "cluster offset"
+              "from": "m2",
+              "to": "m3",
+              "label": "RCU chunks"
             }
           ]
+        },
+        {
+          "type": "note",
+          "text": "Each candidate commits directly atop the previous milestone tree, forming a verified 3-stage lineage."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where the cost appears",
+      "lead": "Single-page faults repeat radix lookups, split 64KB folios stay fragmented as 4KB pages, and high-offset pinned slots block tail-only VM_SPARSE shrink.",
+      "evidence": [
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/ledger/ledger.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Three bottlenecks limit upstream xswap across swap-in and fragmented swap-out lifetimes",
+          "nodes": [
+            {
+              "id": "fault",
+              "label": "4KB Swap Faults",
+              "sub": "Per-page lock overhead",
+              "col": 0,
+              "row": 0,
+              "tone": "bad"
+            },
+            {
+              "id": "frag",
+              "label": "4KB shatter on fault",
+              "sub": "Lost 64KB mTHP locality",
+              "col": 1,
+              "row": 0,
+              "tone": "bad"
+            },
+            {
+              "id": "pin",
+              "label": "High-Offset Pin",
+              "sub": "Blocks tail shrink",
+              "col": 2,
+              "row": 0,
+              "tone": "bad"
+            }
+          ],
+          "edges": [
+            {
+              "from": "fault",
+              "to": "frag",
+              "label": "order-0 only"
+            },
+            {
+              "from": "frag",
+              "to": "pin",
+              "label": "retained holes"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "In upstream xswap, a single live high-offset slot pins every interior swap_cluster_info page below the high-water mark."
         }
       ]
     },
     {
       "id": "subsystem",
-      "title": "Lock-free interior hole isolation and asynchronous RCU reclamation",
-      "lead": "When all 64 clusters in a chunk become free, the chunk is unlinked under si->lock via rcu_assign_pointer() and reclaimed asynchronously via kfree_rcu(), preventing swap path stalls and lock inversion.",
+      "title": "The affected path",
+      "lead": "The compounding chain spans do_swap_page(), swapin_sync(), xswap.c zswap helpers, and swapfile.c cluster directory management.",
       "evidence": [
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-fast-in-v1.patch",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-mthp-reassembly-v1.patch",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-radix-hole-reclaim-v1.patch"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "End-to-end swap path across M1 batching, M2 mTHP reassembly, and M3 RCU chunk reclaim",
+          "nodes": [
+            {
+              "id": "vmf",
+              "label": "do_swap_page()",
+              "sub": "SWP_SYNCHRONOUS_IO",
+              "col": 0,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "sync",
+              "label": "swapin_sync()",
+              "sub": "M1 batch + M2 order-4",
+              "col": 1,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "rcu",
+              "label": "swap_cluster_lookup_rcu()",
+              "sub": "M3 2-level chunk dir",
+              "col": 2,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "free",
+              "label": "kfree_rcu(chunk)",
+              "sub": "Lockless hole reclaim",
+              "col": 3,
+              "row": 0,
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "vmf",
+              "to": "sync",
+              "label": "fault"
+            },
+            {
+              "from": "sync",
+              "to": "rcu",
+              "label": "lookup"
+            },
+            {
+              "from": "rcu",
+              "to": "free",
+              "label": "live_clusters==0"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "swap_cluster_lookup_rcu() re-verifies si->cluster_dir[chunk_idx] == chunk after acquiring ci->lock to close races against concurrent chunk unlinking."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "What actually changed",
+      "lead": "M1 adds batched zswap prefetching, M2 reassembles 16 contiguous slots into an order-4 folio, and M3 replaces flat VM_SPARSE arrays with 64-cluster RCU chunks.",
+      "evidence": [
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-fast-in-v1.patch",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-mthp-reassembly-v1.patch",
         "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-radix-hole-reclaim-v1.patch",
         "campaigns/xswap-radix-hole-reclaim-2026-11-06/reviews/xswap-radix-hole-reclaim-independent-v1.json"
       ],
       "blocks": [
         {
           "type": "flow",
-          "takeaway": "Atomic free-count tracking and asynchronous kfree_rcu reclaim isolate and free interior holes without latency penalty",
+          "takeaway": "Two-level RCU radix directory frees empty 64-cluster interior chunks without synchronize_rcu() stalls",
           "nodes": [
             {
-              "id": "free",
-              "label": "Slot Freed",
+              "id": "dec",
+              "label": "__free_cluster()",
+              "sub": "atomic_dec_and_test",
               "col": 0,
               "row": 0,
-              "sub": "__free_cluster",
-              "tone": "default"
-            },
-            {
-              "id": "count",
-              "label": "Atomic Check",
-              "col": 1,
-              "row": 0,
-              "sub": "chunk->clusters_free == 64",
               "tone": "focus"
             },
             {
-              "id": "unlink",
-              "label": "RCU Unlink",
-              "col": 2,
-              "row": 0,
-              "sub": "rcu_assign_pointer NULL",
-              "tone": "good"
-            },
-            {
-              "id": "rcu",
-              "label": "kfree_rcu",
-              "col": 3,
-              "row": 0,
-              "sub": "asynchronous reclaim",
-              "tone": "good"
-            }
-          ],
-          "edges": [
-            {
-              "from": "free",
-              "to": "count",
-              "label": "decrement"
-            },
-            {
-              "from": "count",
-              "to": "unlink",
-              "label": "chunk empty"
-            },
-            {
-              "from": "unlink",
-              "to": "rcu",
-              "label": "grace period"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "changes",
-      "title": "Verified kernel implementation and exact correctness verification",
-      "lead": "Modified 7 kernel paths with 942 lines changed. Passed controller check with 0 checkpatch errors, 17/17 QEMU TCG integration gates, and zero plain-mode metadata regression (0.1109 bytes/slot).",
-      "evidence": [
-        "campaigns/xswap-radix-hole-reclaim-2026-11-06/patches/xswap-radix-hole-reclaim-v1.patch",
-        "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/value.json"
-      ],
-      "blocks": [
-        {
-          "type": "flow",
-          "takeaway": "Comprehensive verification gates prove structural correctness, zero metadata overhead, and functional hole reclamation",
-          "nodes": [
-            {
-              "id": "patch",
-              "label": "Kernel Implementation",
-              "col": 0,
-              "row": 0,
-              "sub": "7 files, 942 lines",
-              "tone": "default"
-            },
-            {
-              "id": "gates",
-              "label": "17 QEMU Gates",
+              "id": "work",
+              "label": "xswap_reclaim_work",
+              "sub": "xswap_lock + si->lock",
               "col": 1,
               "row": 0,
-              "sub": "17/17 BENCH_PASS",
-              "tone": "good"
+              "tone": "focus"
             },
             {
-              "id": "signals",
-              "label": "Reclaim Signals",
+              "id": "null",
+              "label": "cluster_dir[i] = NULL",
+              "sub": "Unlink 64 clusters",
               "col": 2,
               "row": 0,
-              "sub": "grows=7, shrinks=8",
               "tone": "good"
             },
             {
-              "id": "metadata",
-              "label": "Metadata Parity",
+              "id": "kfree",
+              "label": "kfree_rcu()",
+              "sub": "Zero grace-period stall",
               "col": 3,
               "row": 0,
-              "sub": "0.1109 bytes/slot",
               "tone": "good"
             }
           ],
           "edges": [
             {
-              "from": "patch",
-              "to": "gates",
-              "label": "build std-2c1ddb537fd9"
+              "from": "dec",
+              "to": "work",
+              "label": "0 live"
             },
             {
-              "from": "gates",
-              "to": "signals",
-              "label": "probe tier"
+              "from": "work",
+              "to": "null",
+              "label": "trylock all 64"
             },
             {
-              "from": "signals",
-              "to": "metadata",
-              "label": "0% regression"
+              "from": "null",
+              "to": "kfree",
+              "label": "async free"
             }
           ]
+        },
+        {
+          "type": "note",
+          "text": "When any slot in a 64KB block fails exclusive count==1 validation, M2 falls back cleanly to M1 order-0 swap-in without partial state leakage."
         }
       ]
     },
     {
       "id": "next",
-      "title": "Architectural verdict: Milestone 3 2-level RCU radix chunks & hole reclamation verified",
-      "lead": "Candidate xswap-radix-hole-reclaim-v1 proves that dynamic 2-level RCU radix directories eliminate monolithic metadata preallocation without incurring memory regression or swapin latency overhead, concluding the campaign.",
+      "title": "The next decision",
+      "lead": "All three compounding patches pass independent correctness review and all 17 correctness gates across 209 QEMU guest runs, ready for bare-metal NVMe validation.",
       "evidence": [
-        "campaigns/xswap-radix-hole-reclaim-2026-11-06/ledger/ledger.json",
-        "campaigns/xswap-radix-hole-reclaim-2026-11-06/ledger/budget.json"
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-fast-in-v1/value.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-mthp-reassembly-v1/value.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/candidates/xswap-radix-hole-reclaim-v1/value.json",
+        "campaigns/xswap-radix-hole-reclaim-2026-11-06/ledger/session-closeout.json"
       ],
       "blocks": [
         {
+          "type": "flow",
+          "takeaway": "Promote the unified 3-patch series (2c1ddb537fd9) to bare-metal validation",
+          "nodes": [
+            {
+              "id": "qemu",
+              "label": "209 QEMU Guests",
+              "sub": "17/17 gates PASS",
+              "col": 0,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "meta",
+              "label": "-63.1% Metadata",
+              "sub": "0.111 vs 0.301 B/slot",
+              "col": 1,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "hw",
+              "label": "Bare-Metal Benchmark",
+              "sub": "NVMe + zswap + zram",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            }
+          ],
+          "edges": [
+            {
+              "from": "qemu",
+              "to": "meta",
+              "label": "verified"
+            },
+            {
+              "from": "meta",
+              "to": "hw",
+              "label": "promote"
+            }
+          ]
+        },
+        {
           "type": "note",
-          "text": "Milestone 3 delivers verified 2-level RCU radix chunk directory and interior hole reclamation with 56-byte descriptors, 17/17 correctness gates passing, verified dynamic growth and shrink signals, and zero metadata regression, completing the xswap milestone series."
+          "text": "In fragmented swap workloads, M3 cuts metadata consumption from 0.301 B/slot (upstream baseline) to 0.111 B/slot (-63.1%)."
         }
       ]
     }

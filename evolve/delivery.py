@@ -200,13 +200,18 @@ def validate_story(story, summary):
             raise ValueError("the three explanation levels need a schematic")
     if not story.get("title") or not story.get("headline"):
         raise ValueError("missing report title or verdict explanation")
+    for item in story.get("patches", []):
+        if not isinstance(item, dict) or not item.get("takeaway") or not item.get("patch"):
+            raise ValueError("each patch entry needs takeaway and patch diff")
+        if item.get("source") not in summary["sources"] or not str(item.get("source", "")).endswith(".patch"):
+            raise ValueError("each patch entry needs a pinned .patch source reference")
 
 
 def _metric_sections(summary):
-    blocks, paired = [], False
+    blocks, paired, seen_cal = [], False, False
     for row in summary["evaluations"]:
         analysis = row.get("analysis") or {}
-        if row.get("action") == "calibrate" and row.get("tier") == "probe":
+        if row.get("action") == "calibrate" and row.get("tier") == "probe" and not seen_cal:
             metric = "metadata_delta_bytes_per_capacity_slot"
             for case, bands in analysis.get("bands", {}).items():
                 if metric not in bands:
@@ -217,6 +222,7 @@ def _metric_sections(summary):
                 if not runs:
                     continue
                 groups = ["Run " + str(i + 1) for i in range(len(runs))]
+                seen_cal = True
                 blocks.append({"type": "strip", "takeaway": "Baseline metadata calibration: " + row["status"],
                     "x_label": "Metadata bytes per 1,000 capacity slots (baseline only)",
                     "groups": groups, "series": ["Baseline"],
@@ -267,7 +273,7 @@ def format_unified_metadata(summary, story=None):
         elif any(d in camp for d in ("2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24")) or "xswap" in camp:
             harness, model = "claudecode", "opus5.5"
 
-    line = summary.get("line") or summary.get("campaign") or "unknown"
+    line = (story and story.get("line")) or summary.get("line") or summary.get("campaign") or "unknown"
     line = re.sub(r"\bhurricpc(-wsl)?\b", "QEMU TCG", line, flags=re.I)
     base = (summary.get("baseline_commit") or "unknown")[:8]
 
@@ -299,6 +305,13 @@ def make_spec(summary, story):
              r.get("status", ""), r.get("reason", "")] for r in summary["evaluations"]]
     guards = [[r["evaluation"], r["metric"], "advisory" if r["advisory"] else "scored", "failed"]
               for r in summary["regressions"]]
+    if story.get("patches"):
+        patch_sec = {"id": "patches", "title": story.get("patches_title") or "Core kernel patches",
+                     "blocks": [{"type": "diff", "takeaway": item["takeaway"], "patch": item["patch"]}
+                                for item in story["patches"]]}
+        if story.get("patches_lead"):
+            patch_sec["lead"] = story["patches_lead"]
+        sections.append(patch_sec)
     sections.append({"id": "evidence", "title": "Evidence and exact results", "blocks": [
         {"type": "table", "takeaway": "Every retained outcome", "columns": ["ID", "Candidate", "Tier", "Status", "Reason"], "rows": rows},
         {"type": "table", "takeaway": "Regressions", "columns": ["Evaluation", "Metric", "Role", "Guard"], "rows": guards},
@@ -310,8 +323,10 @@ def make_spec(summary, story):
            "verdict": {"status": summary["verdict"], "headline": story["headline"],
                        "tiles": [{"label": "Evidence", "value": "Screen only" if any(r.get("action") == "evaluate" for r in summary["evaluations"]) else "No paired result", "note": "Human review controls promotion."}]},
            "sections": sections}
-    if story and story.get("date"):
-        res["date"] = story["date"]
+    if story:
+        for key in ("date", "harness", "model", "line"):
+            if story.get(key):
+                res[key] = story[key]
     return res
 
 
@@ -361,6 +376,13 @@ def render(root, campaign):
             if block["type"] == "note":
                 lines += [block["text"], ""]
         lines += ["Evidence: " + ", ".join(section["evidence"]), ""]
+    if story.get("patches"):
+        lines += ["## " + (story.get("patches_title") or "Core kernel patches"), ""]
+        if story.get("patches_lead"):
+            lines += [story["patches_lead"], ""]
+        for item in story["patches"]:
+            lines += ["### " + item["takeaway"], "", "Source: `" + item["source"] + "`", "",
+                      "```diff", item["patch"].rstrip(), "```", ""]
     lines += ["## Outcomes", "", "| Evaluation | Candidate | Tier | Result |",
               "| --- | --- | --- | --- |"]
     for row in summary["evaluations"]:

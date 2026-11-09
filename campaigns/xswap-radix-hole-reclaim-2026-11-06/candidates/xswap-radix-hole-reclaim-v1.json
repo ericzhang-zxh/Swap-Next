@@ -1,9 +1,9 @@
 {
   "id": "xswap-radix-hole-reclaim-v1",
-  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
-  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
-  "parent_candidate": null,
-  "generation": 1,
+  "parent": "53e02e8615a30d927daf77e5f1f7a7182a1c6ec5",
+  "parent_commit": "53e02e8615a30d927daf77e5f1f7a7182a1c6ec5",
+  "parent_candidate": "xswap-mthp-reassembly-v1",
+  "generation": 3,
   "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
   "brief_id": "brief-000001-b31ae8046ca7",
   "worktree": "worktrees/xswap-radix-hole-reclaim-2026-11-06/xswap-radix-hole-reclaim-v1",
@@ -16,5 +16,7 @@
     "claim": "In mm/swapfile.c and mm/swap.h, replace flat VM_SPARSE array with 2-level RCU radix chunks: si->cluster_dir[chunk_idx] points to struct swap_cluster_chunk holding 64 swap_cluster_info descriptors, and swap_cluster_lookup_rcu() dereferences via rcu_dereference(). In __free_cluster(), atomic_dec_and_test(&chunk->live_clusters) detects interior empty chunks, scheduling xswap_reclaim_work. The reclaim worker acquires si->xswap_lock and spin_lock(&si->lock), trylocks and unlinks clusters, atomically clears si->cluster_dir[chunk_idx] = NULL, and dispatches asynchronous kfree_rcu(chunk, rcu).",
     "falsifier": "Exact-tree review shows lost lifetime protection, incorrect slot conflict handling, RCU UAF, lock inversion between si->lock and ci->lock, failure of any of the 17 correctness gates, or latency regression beyond calibrated noise."
   },
-  "reason": "Research disposition: rejected"
+  "reason": "Research disposition: rejected",
+  "candidate_commit": "2c1ddb537fd926482ab4845bd7d5be116b4523ac",
+  "source_tree": "bcbd84c7201ef583255a1d4799ff9891fb992aa9"
 }
