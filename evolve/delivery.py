@@ -170,7 +170,8 @@ def extract(root, campaign):
 
 def story_template(summary):
     """An agent fills explanations from patches; never invent a mechanism."""
-    return {"schema_version": 1, "campaign": summary["campaign"],
+    patch_sources = [ref for ref in sorted(summary.get("sources", {})) if ref.endswith(".patch")]
+    tmpl = {"schema_version": 1, "campaign": summary["campaign"],
             "evidence_sha256": summary["evidence_sha256"],
             "title": summary["campaign"],
             "headline": "Explain the decisive result and its cost.",
@@ -181,6 +182,10 @@ def story_template(summary):
                                            ("subsystem", "The affected path"),
                                            ("changes", "What actually changed"),
                                            ("next", "The next decision"))]}
+    if patch_sources:
+        tmpl["patches"] = [{"takeaway": "Core kernel diff for " + Path(ref).stem,
+                            "source": ref, "patch": ""} for ref in patch_sources]
+    return tmpl
 
 
 def validate_story(story, summary):

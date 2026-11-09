@@ -30,14 +30,20 @@ available on demand.
    work may move elsewhere in the system. Then zoom into before/after or branching
    flow diagrams for each candidate's actual mechanism and expected tradeoff.
    Use plain component roles before code symbols; keep the overview scoped to
-   what helps explain this experiment. Put exact patches in collapsed evidence.
-   State whether candidates are independent or stacked.
+   what helps explain this experiment. State whether candidates are independent
+   or stacked as an evolutionary chain.
 4. **Results and explanation.** Use charts for the decisive comparisons and
    diagrams for the mechanism. Keep failures, uncertainty and important coverage
    limits visible. Label causal interpretations as inference unless demonstrated.
 5. **Next.** Show the next hypothesis, the cost it addresses and the observation
-   that would falsify it, using a short flow or diagram. End with expandable
-   evidence: measurement protocol, full samples, counters, patches and checks.
+   that would falsify it, using a short flow or diagram.
+6. **Core kernel patches.** Immediately after `Next` (and before the collapsed
+   audit evidence), attach the main code hunks of each candidate patch using
+   `diff` blocks (`story["patches"]` in `evolve/delivery.py`). Each block states
+   a one-line takeaway, cites its pinned `campaigns/<c>/patches/<cand>.patch`
+   source, and shows the key kernel implementation diff in both `explainer.html`
+   and `REPORT.md`. End with expandable evidence: measurement protocol, full
+   samples, counters, and audit tables.
 
 ## Default visual standard
 
@@ -65,6 +71,45 @@ Use a step-through interaction when sequence helps: show a meaningful comparison
 on initial load, offer next/reset controls, and preserve a useful static explanation.
 Mark illustrative counts, sizes and timing as schematic; real measurements remain
 separate evidence. On phones, reflow scenes rather than shrinking the whole picture.
+
+## Multi-experiment chains and core patch code
+
+- **Unify chained experiments into a single report:** When multiple experiments
+  or rounds form a sequential, compounding evolutionary chain (e.g.
+  `baseline -> M1 -> M2 -> M3` where each stage builds atop or directly
+  continues the prior candidate), merge them into **one unified campaign report**
+  rather than publishing separate per-stage cards on the site index.
+  - Consolidate the chain's candidate records (`candidates/*.json` and
+    `candidates/<cand>/`), patches (`patches/*.patch`), `archive/population.json`
+    lineage (`parent_candidate`, `parent_commit`, `generation`), evaluation
+    ledger rows (`ledger/ledger.json`), and cumulative budget (`ledger/budget.json`)
+    into the final chain campaign directory.
+  - Remove standalone report outputs (`explainer.html`, `explainer.json`,
+    `REPORT.md`, `summary.json`, `story.json`, `delivery.json`,
+    `generate_report.py`, `visual-verification.json`) from the intermediate
+    stage directories so `scripts/build_site.py` emits only the single unified
+    card on the homepage.
+  - **Preserve review integrity:** Never delete `report/independent-review.md`,
+    `reviews/*.json`, `candidates/**`, or `patches/*.patch` from earlier stage
+    directories, because `evolve/reviews.py` verifies their SHA-256 hashes
+    across the entire repository.
+- **Always attach core patch diffs at the end:** Populate `story["patches"]` in
+  `report/story.json` with the core kernel implementation hunks for every
+  candidate in the campaign or chain:
+  ```json
+  "patches_title": "Core kernel patches",
+  "patches_lead": "Key kernel hunks across the candidate commit chain.",
+  "patches": [
+    {
+      "takeaway": "Milestone 1 (<short-sha>): ...",
+      "source": "campaigns/<campaign>/patches/<candidate>.patch",
+      "patch": "--- a/mm/xswap.c\n+++ b/mm/xswap.c\n@@ ... @@\n+..."
+    }
+  ]
+  ```
+  `evolve/delivery.py` validates that every `source` is a pinned `.patch` in
+  `summary["sources"]` and renders syntax-highlighted `<pre class="diff">` cards
+  in `explainer.html` plus fenced ```` ```diff ```` sections in `REPORT.md`.
 
 ## Visual and disclosure rules
 

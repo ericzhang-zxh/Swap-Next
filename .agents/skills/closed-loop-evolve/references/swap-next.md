@@ -83,8 +83,13 @@ Use `close-campaign --reason`, which regenerates campaign/line indexes. Keep
 patches and failed outcomes in the campaign directory. Generate the review page
 with [explaining-campaign-results](../../explaining-campaign-results/SKILL.md)
 from the same evidence: verdict first, whole system, subsystem, concrete change,
-then measurements. Keep detailed data folded, limits visible, and test mobile
-and both themes.
+measurements, next decision, and core kernel patch diffs (`story["patches"]`).
+When multiple experiments or rounds form a sequential evolutionary chain,
+synthesize them into a single unified campaign report (replacing intermediate
+per-stage standalone `explainer.html` cards on the site index while preserving
+`independent-review.md`, `reviews/*.json`, and `patches/*.patch` for review
+integrity). Keep detailed data folded, limits visible, and test mobile and both
+themes.
 
 Follow the standing report-publication policy in AGENTS.md: commit to main,
 build the Pages site from `campaigns`, publish and verify the exact deployment,
