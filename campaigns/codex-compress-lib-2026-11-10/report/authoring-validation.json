@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-2026-11-10",
+  "scope": "Isolated authoring snapshot; regenerate and visually verify after coordinator integration and final source pinning.",
+  "framework_commit": "2ace421b26361c4f80d149e0a93519eacc30348b",
+  "evidence_sha256": "b38eac31fdd29ae0ef949df8ab0afff75ec51ce2e83bb0862609d9bfcbfc80c9",
+  "html_sha256": "8af96076328d114fd13cf2ea250ca93c0b680d6512ea966e3bb12cf8af9a6e1d",
+  "checks": {
+    "native_story_schema": true,
+    "native_render_text_budget": true,
+    "identical_input_artifact_reproduction": true,
+    "native_delivery_receipt": true,
+    "closed_evidence_tables": true,
+    "three_explanation_levels": true,
+    "pinned_patch_source_hashes": true,
+    "no_absolute_host_paths": true,
+    "clean_card_metadata": true,
+    "single_dated_explainer": true,
+    "prose_whitespace": true
+  },
+  "diff_whitespace_note": "REPORT.md preserves the required space-prefixed context lines inside exact unified-diff excerpts.",
+  "prose_words": 616,
+  "visual_qa": "pending; no browser screenshots or visual-check receipt produced",
+  "publication": "not attempted"
+}

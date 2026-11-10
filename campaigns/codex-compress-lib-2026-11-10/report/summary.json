@@ -1,0 +1,448 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-2026-11-10",
+  "status": "closed",
+  "line": "xswap-compression-tiering",
+  "machine": "hurricpc",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "protocol_sha256": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+  "verdict": "inconclusive",
+  "performance_accepted": false,
+  "auto_promote": false,
+  "budget": {
+    "created": 1794340417.3836553,
+    "guests": 0,
+    "probe_guests": 3,
+    "builds": 3
+  },
+  "candidates": [
+    {
+      "id": "c1-shared-store-v1",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_candidate": null,
+      "generation": 1,
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "brief_id": "brief-000001-cf557787980f",
+      "worktree": "worktrees/codex-compress-lib-2026-11-10/c1-shared-store-v1",
+      "status": "closed",
+      "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+      "created_unix": 1794340616.313758,
+      "protocol_sha256": "f8578dc514993c8e3f6c31e00b914287551837f30ff4b1d39cb1b5ac191e86e6",
+      "mechanism": {
+        "kind": "reviewed_structure",
+        "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+        "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+      },
+      "reason": "Infrastructure-incomplete: the frozen c1-debug input sets SLUB_TINY=y, which disables the required KASAN. K1 compiled but no candidate guest or timing ran. Preserve this contract, code and spent 3 guests/3 builds; a separately frozen corrected C1 contract must deduct these costs and elapsed time from the original phase caps, with no reset or candidate outcome claim.",
+      "value_decision": null
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "3868cc40b0944c8f9b13b3aa529b5005",
+      "action": "build-coverage",
+      "tier": "correctness",
+      "candidate": null,
+      "case_id": "b-common",
+      "config_id": "c1-common",
+      "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "role": "baseline",
+      "build": "c1-base-common-20261110",
+      "status": "BUILD_VERIFIED",
+      "started": 1794340417.3399003,
+      "build_reserved": true,
+      "execution_started": true,
+      "build_reused": false,
+      "build_manifest": "benchmark/kernel/builds/c1-base-common-20261110/result.json",
+      "build_manifest_sha256": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+      "build_provenance": "benchmark/kernel/builds/c1-base-common-20261110/configured-build.json",
+      "build_provenance_sha256": "9575b9f4422433f8a97d5f32dd314d73bba1d82c72fe486202ffd899f618b407",
+      "finished": 1794340532.49943,
+      "build_cache": {
+        "status": "reusable",
+        "identity_key": "7aa5714064c80a9b789c223d59aa831d493f5adc74240719ecd565e549160273",
+        "record_sha256": "1831b8917061672102318f35566dd83c9ff16ed5538b5753d7887b45dec5ee05"
+      }
+    },
+    {
+      "id": "4894c2e365c1463292ae02dd5914fffd",
+      "action": "build-coverage",
+      "tier": "correctness",
+      "candidate": null,
+      "case_id": "b-legacy",
+      "config_id": "c1-legacy",
+      "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "role": "baseline",
+      "build": "c1-5e84ca928dee-legacy",
+      "status": "BUILD_VERIFIED",
+      "started": 1794340851.4921744,
+      "build_reserved": true,
+      "execution_started": true,
+      "build_reused": false,
+      "build_manifest": "benchmark/kernel/builds/c1-5e84ca928dee-legacy/result.json",
+      "build_manifest_sha256": "ddac55cc53053dae857517e7c3f0dffd0815f61f89c5e5c92051e990ecdcb2cc",
+      "build_provenance": "benchmark/kernel/builds/c1-5e84ca928dee-legacy/configured-build.json",
+      "build_provenance_sha256": "cc4893e70e8135468cddbe6a861555243e8316f879c96d9242293f999414edb6",
+      "finished": 1794340969.2295036,
+      "build_cache": {
+        "status": "reusable",
+        "identity_key": "5d5c13df8786daf1e13ad2d013b6df74ebc6ab3aa4e1d801d6765535f557123d",
+        "record_sha256": "11f04c1515faaef16b3e168e3690871e5245102de1e848681e1d0e76b21e2d7b"
+      }
+    },
+    {
+      "id": "6e88313ec6184c6a9e46c510e55150e0",
+      "action": "supersede-baseline-infra",
+      "status": "INFRA_RETRY_REQUIRED",
+      "case_id": "b-common",
+      "invalid_run_id": "c1-b-common-001",
+      "replacement_run_id": "c1-b-common-002",
+      "record": "campaigns/codex-compress-lib-2026-11-10/ledger/baseline-infra-supersessions/c1-b-common-001.json",
+      "record_sha256": "8a7a9b4614c0b6336df8d8eda0759747f35f82a17f2bdcd96a73e912e40dd273",
+      "reason": "Retained baseline has the sole blank flat-topology observation defect; retry uses the fixed image."
+    },
+    {
+      "id": "6be443dc6e384b909ef8dd544f9e7211",
+      "action": "build-coverage",
+      "tier": "correctness",
+      "candidate": "c1-shared-store-v1",
+      "case_id": "c-debug",
+      "config_id": "c1-debug",
+      "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "role": "candidate",
+      "build": "c1-7d5a3cfab2ab-debug",
+      "status": "BUILD_FAILED",
+      "started": 1794343004.997394,
+      "build_reserved": true,
+      "controller_check": {
+        "status": "SCOPE_PASS",
+        "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "changed_paths": [
+          "include/linux/cpuhotplug.h",
+          "include/linux/page_compress.h",
+          "mm/Kconfig",
+          "mm/Makefile",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c",
+          "mm/zswap.c"
+        ],
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "changed_lines": 1362,
+        "checker_identity": {
+          "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+          "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+        },
+        "diff-check": {
+          "exit_code": 0,
+          "evidence": "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1/static/1794343006122714768-698cdc19297a/diff-check.log",
+          "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+        },
+        "checkpatch": {
+          "exit_code": 1,
+          "evidence": "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1/static/1794343006122714768-698cdc19297a/checkpatch.log",
+          "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+        },
+        "checkpatch-filtered": {
+          "exit_code": 0,
+          "evidence": "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1/static/1794343006122714768-698cdc19297a/checkpatch-filtered.log",
+          "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+        },
+        "checkpatch_advisory": {
+          "type": "FILE_PATH_CHANGES",
+          "classification": "administrative_allowed_add",
+          "added_paths": [
+            "include/linux/page_compress.h",
+            "mm/page_compress.c",
+            "mm/page_compress_test.c"
+          ],
+          "validated_by": "checkpatch-filtered"
+        }
+      },
+      "execution_started": true,
+      "reason": "required final CONFIG_KASAN=y missing",
+      "finished": 1794343131.8610094
+    }
+  ],
+  "execution_closeout": {
+    "schema_version": 1,
+    "campaign": "codex-compress-lib-2026-11-10",
+    "mode": "research",
+    "reason": "Infrastructure-incomplete: the frozen c1-debug input sets SLUB_TINY=y, which disables the required KASAN. K1 compiled but no candidate guest or timing ran. Preserve this contract, code and spent 3 guests/3 builds; a separately frozen corrected C1 contract must deduct these costs and elapsed time from the original phase caps, with no reset or candidate outcome claim.",
+    "frozen_inputs": {
+      "owner.json": "56a9b0408abda90680b94de054fe2695b3b0b493131794a586ff6d1359bba7e4",
+      "policy.json": "56a0bdd0afc689127fcd21ab7a1e489e5daa9438321249dedf9d1afb3d58d2c9",
+      "protocol.json": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+      "research.json": "6acd0b47a8485afe2639efbd40e54eccb495d53f4e97efed889c5700590f3ae9"
+    },
+    "decisions": [
+      {
+        "id": "decision-2124c1b239c840d1edad0dc9",
+        "action_id": "action-2b65cff5eb53a84af8138033",
+        "kind": "propose",
+        "identity": {
+          "brief_id": "brief-000001-cf557787980f",
+          "brief_sha256": "c22cece8493c1117e11af1c89f93ae8423e737ec69e32fb67a547c5b2703033a",
+          "allowed_parents": [
+            "5e84ca928deeacb4eee656806a003f27d1eca82f"
+          ],
+          "idea": "shared-page-store"
+        },
+        "input_hashes": {
+          "evolve/session.py": "5cf6c917b9be987180e0842eb02fe6b85a7dc70e703ebf951ffe609602361b0d",
+          "evolve/control/controller.py": "1770ef0ccf49b718cd1a892422881bcfb9114738bd2274eb03e93eb7742bd130",
+          "evolve/standard_workflow.py": "aed9465840fd24cdd930c4e2edc15a72af493fa1db5ed3e83452aab0af07dfa5",
+          "evolve/research.py": "4fd4cbc7b7aeba4398504f41ab7cd2d382286e126a92bb8855baebc04367b76d",
+          "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+          "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+          "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+          "evolve/delivery.py": "7061a7b7a97d1f52aa05b416e2eecb93eaf42f5d3a18379ba604c5b5a8a72293",
+          "evolve/calibration_cache.py": "3be207df36ce814c78ba8de89fd8ad9e3ea2a32fcb69270d5ca9e6b0fac0e8f0",
+          "evolve/reference_cache.py": "8fd739eec61e152c179f13819c6384596bca324e389b4f20617874b4f9b9a524",
+          "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+          "campaigns/codex-compress-lib-2026-11-10/campaign.json": "de01100773463d5f97012495d716e4049910cc523962d732c365a51affa57a0e",
+          "campaigns/codex-compress-lib-2026-11-10/protocol.json": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+          "campaigns/codex-compress-lib-2026-11-10/policy.json": "56a0bdd0afc689127fcd21ab7a1e489e5daa9438321249dedf9d1afb3d58d2c9",
+          "campaigns/codex-compress-lib-2026-11-10/research.json": "6acd0b47a8485afe2639efbd40e54eccb495d53f4e97efed889c5700590f3ae9",
+          "campaigns/codex-compress-lib-2026-11-10/ledger/ledger.json": "e96e13e949c083432864dbd80ebd5fc1fbee06e835b2d1fb549bec65893148d8",
+          "campaigns/codex-compress-lib-2026-11-10/runs/evaluations/3868cc40b0944c8f9b13b3aa529b5005/report.json": "00c8001b596975088afecbf13d667deccf8bb54acc426dec557adf9f43b27438",
+          "campaigns/codex-compress-lib-2026-11-10/ledger/budget.json": "26fc3ccd3e2e6f322cde60e8fddebca1a2d36dd1b7f21c3a68559fdccb0986de",
+          "benchmark/kernel/builds/c1-base-common-20261110/result.json": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+          "benchmark/swap-standard/image.json": "058e4b872c16acc262dcdb2749064fdd3cafbeed3013beb9213fb52719e381b3",
+          "campaigns/codex-compress-lib-2026-11-10/ledger/calibration-probe.json": null,
+          "campaigns/codex-compress-lib-2026-11-10/ledger/calibration-fast.json": null,
+          "campaigns/codex-compress-lib-2026-11-10/archive/population.json": "3e92416a1120461b507470ea4ea9c19631e411546c72052f925c8524d11a4c19",
+          "campaigns/codex-compress-lib-2026-11-10/archive/briefs/brief-000001-cf557787980f.json": "c22cece8493c1117e11af1c89f93ae8423e737ec69e32fb67a547c5b2703033a"
+        },
+        "payload": {
+          "kind": "propose",
+          "candidate": "c1-shared-store-v1",
+          "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+          "mechanism": {
+            "kind": "reviewed_structure",
+            "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+            "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+          },
+          "reason": "The pinned source audit identifies compression and storage ownership embedded in ZSwap. Test the smallest reusable boundary first, using the frozen original anchor and complete eight-case correctness matrix."
+        }
+      },
+      {
+        "id": "decision-c6cb5b7eeca39de7714bf5a3",
+        "action_id": "action-1a55082efcc29817a6003bd1",
+        "kind": "stop",
+        "identity": {
+          "candidate": "c1-shared-store-v1",
+          "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+          "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+          "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+          "matrix": {
+            "verified_cases": [
+              "b-common",
+              "b-legacy"
+            ],
+            "next_missing_case": {
+              "config_id": "c1-common",
+              "mode": "xswap",
+              "backend": "disk",
+              "workload": "correctness",
+              "topology_id": "single",
+              "subcases": [],
+              "id": "c-common",
+              "role": "candidate",
+              "group": "regression",
+              "required_gates": [
+                "data_roundtrip",
+                "fork_cow",
+                "concurrent_fault",
+                "swapoff_live_pages",
+                "no_new_kernel_warnings"
+              ]
+            },
+            "missing_builds": [
+              {
+                "id": "c-noswap",
+                "role": "candidate",
+                "config_id": "c1-noswap"
+              },
+              {
+                "id": "c-no-frontends",
+                "role": "candidate",
+                "config_id": "c1-no-frontends"
+              }
+            ],
+            "matrix_complete": null
+          }
+        },
+        "input_hashes": {
+          "evolve/session.py": "e4067291d7e46e02b6ecdf649dffcbfc8b753ae814e36aed9d5ecb425dae49d6",
+          "evolve/control/controller.py": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+          "evolve/standard_workflow.py": "f58c77a241f8918181e9ac30020f721d1d5c6ca34a7a748b94a7d8da1ea9053f",
+          "evolve/research.py": "4fd4cbc7b7aeba4398504f41ab7cd2d382286e126a92bb8855baebc04367b76d",
+          "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+          "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+          "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+          "evolve/delivery.py": "7061a7b7a97d1f52aa05b416e2eecb93eaf42f5d3a18379ba604c5b5a8a72293",
+          "evolve/calibration_cache.py": "3be207df36ce814c78ba8de89fd8ad9e3ea2a32fcb69270d5ca9e6b0fac0e8f0",
+          "evolve/reference_cache.py": "8fd739eec61e152c179f13819c6384596bca324e389b4f20617874b4f9b9a524",
+          "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+          "linux/scripts/checkpatch.pl": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926",
+          "campaigns/codex-compress-lib-2026-11-10/campaign.json": "de01100773463d5f97012495d716e4049910cc523962d732c365a51affa57a0e",
+          "campaigns/codex-compress-lib-2026-11-10/protocol.json": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+          "campaigns/codex-compress-lib-2026-11-10/policy.json": "56a0bdd0afc689127fcd21ab7a1e489e5daa9438321249dedf9d1afb3d58d2c9",
+          "campaigns/codex-compress-lib-2026-11-10/research.json": "6acd0b47a8485afe2639efbd40e54eccb495d53f4e97efed889c5700590f3ae9",
+          "campaigns/codex-compress-lib-2026-11-10/ledger/ledger.json": "18f7b7d01787285f4537d194675189b23f32378bb1783ad12ec488b6a21e8ba0",
+          "campaigns/codex-compress-lib-2026-11-10/runs/evaluations/3868cc40b0944c8f9b13b3aa529b5005/report.json": "00c8001b596975088afecbf13d667deccf8bb54acc426dec557adf9f43b27438",
+          "campaigns/codex-compress-lib-2026-11-10/runs/evaluations/4894c2e365c1463292ae02dd5914fffd/report.json": "657b1a62d2db3c4c05b073b0c095fa7f54a47864a1a4927cff6b874a775cde81",
+          "campaigns/codex-compress-lib-2026-11-10/runs/evaluations/6e88313ec6184c6a9e46c510e55150e0/report.json": null,
+          "campaigns/codex-compress-lib-2026-11-10/runs/evaluations/6be443dc6e384b909ef8dd544f9e7211/report.json": "d0d76bae6fa156252393d01886fd22fc0994a1986b11afdbc65c3ff17a268170",
+          "campaigns/codex-compress-lib-2026-11-10/ledger/budget.json": "2e03ba0eee0c337bc1ee57e4729b5dd912f7e78d0d4ce30d23091173fe5dac0b",
+          "campaigns/codex-compress-lib-2026-11-10/ledger/guest-reservations/c1-b-legacy-001.json": "bed24d9bea66bbd711a88ca3e99ccf182da4f8618726b6d8d8d5f5433080b994",
+          "campaigns/codex-compress-lib-2026-11-10/ledger/guest-reservations/c1-b-common-002.json": "bca7adc58e984cf352453d98106fb0112067d94187f5acab8819dc4f066e7944",
+          "campaigns/codex-compress-lib-2026-11-10/ledger/guest-reservations/c1-b-common-001.json": "68ad7584b3817a45933e8d4e585e2a70d1d842a3cfe63dc0f13f472eba8f29fc",
+          "benchmark/kernel/builds/c1-base-common-20261110/result.json": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+          "benchmark/swap-standard/image.json": "05a41c8449135395ea97112233197afbd5ef25eea70d7172e93b32941c870353",
+          "campaigns/codex-compress-lib-2026-11-10/ledger/calibration-probe.json": null,
+          "campaigns/codex-compress-lib-2026-11-10/ledger/calibration-fast.json": null,
+          "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1.json": "7d55f5344e4a29abf762d1d3b9dd1094276995964276a5dceca9989b017fabf6",
+          "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1/static.json": "78259a993ec1ab3bac7626be772fd142f4739c0cdc4cbb7abfaa0d7c2826c5bd",
+          "campaigns/codex-compress-lib-2026-11-10/archive/population.json": "f762d2fe1b2233f8496138dfa3651701d63adbda73861a43770bf1c32a014c94",
+          "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1/mechanism.json": "91f327d0268172cf550c852f88359055ff04b94e9fee3ad4215db19b681a61a9",
+          "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1/correctness.json": null,
+          "campaigns/codex-compress-lib-2026-11-10/runs/guests/c1-b-common-001/result.json": "5076e03403000c191c77338785c38d60e7bf98b1941162059ad39d42acfedb0d",
+          "campaigns/codex-compress-lib-2026-11-10/runs/guests/c1-b-common-001/serial.log": "13d0051f8d9c9a6a853efa4ad78cf4abe4f21df2ac571922be28adb244ba9a46",
+          "campaigns/codex-compress-lib-2026-11-10/runs/guests/c1-b-common-002/result.json": "ac6efb4096b6361f064626fd2a68fe8d6f8e80fa23e834c1cd393c7191b45064",
+          "campaigns/codex-compress-lib-2026-11-10/runs/guests/c1-b-common-002/serial.log": "a553d2a3141c7e08597b5d2aa1acb7a7688756a16e506f6a0ea6f1e0bad3c456",
+          "campaigns/codex-compress-lib-2026-11-10/runs/guests/c1-b-legacy-001/result.json": "e80ead65e8fcb02e8c37744f14ff884b95afdd5d8a6c54f10a7e47d7d91a5658",
+          "campaigns/codex-compress-lib-2026-11-10/runs/guests/c1-b-legacy-001/serial.log": "49cf881a474036855e90248d030d8d2cb05190ceec921915c5ca48844b5eedb8"
+        },
+        "payload": {
+          "kind": "stop",
+          "reason": "Infrastructure-incomplete: the frozen c1-debug input sets SLUB_TINY=y, which disables the required KASAN. K1 compiled but no candidate guest or timing ran. Preserve this contract, code and spent 3 guests/3 builds; a separately frozen corrected C1 contract must deduct these costs and elapsed time from the original phase caps, with no reset or candidate outcome claim."
+        }
+      }
+    ],
+    "actions": [
+      {
+        "action_id": "action-f91ac06c9c0d7d3f3627257e",
+        "command": "open",
+        "identity": {
+          "protocol_sha256": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+          "policy_sha256": "56a0bdd0afc689127fcd21ab7a1e489e5daa9438321249dedf9d1afb3d58d2c9"
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-2026-11-10/runs/session/action-f91ac06c9c0d7d3f3627257e-26014ffc.log"
+      },
+      {
+        "action_id": "action-7a4cbcde7dbd14f2561154a0",
+        "command": "brief",
+        "identity": {
+          "fingerprint": "8a895e92cb53cfbc8c43f5577ae8245877393372991465e2c429d8860b8ea82c",
+          "idea": "shared-page-store"
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-2026-11-10/runs/session/action-7a4cbcde7dbd14f2561154a0-a7c0d227.log"
+      },
+      {
+        "action_id": "action-2c2632bfaac4bbf1be9a39f4",
+        "command": "new",
+        "identity": {
+          "brief_id": "brief-000001-cf557787980f",
+          "idea": "shared-page-store"
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-2026-11-10/runs/session/action-2c2632bfaac4bbf1be9a39f4-73932de8.log"
+      },
+      {
+        "action_id": "action-d003b8fe268a26c508c904c9",
+        "command": "check",
+        "identity": {
+          "candidate": "c1-shared-store-v1",
+          "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+          "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+          "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+        },
+        "status": "failed",
+        "returncode": 1,
+        "log": "campaigns/codex-compress-lib-2026-11-10/runs/session/action-d003b8fe268a26c508c904c9-65bd0a3b.log"
+      },
+      {
+        "action_id": "action-e87ca7662ea01376123b88fa",
+        "command": "check",
+        "identity": {
+          "candidate": "c1-shared-store-v1",
+          "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+          "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+          "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+          "checker_identity": {
+            "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+            "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+          }
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-2026-11-10/runs/session/action-e87ca7662ea01376123b88fa-82027e70.log"
+      },
+      {
+        "action_id": "action-aba61f52a8abc0d2895e6e50",
+        "command": "close-candidate",
+        "identity": {
+          "candidate": "c1-shared-store-v1",
+          "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+          "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+          "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-2026-11-10/runs/session/action-aba61f52a8abc0d2895e6e50-7e735595.log"
+      },
+      {
+        "action_id": "action-6699044f256c05afd873d5e4",
+        "command": "close-campaign",
+        "identity": {},
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-2026-11-10/runs/session/action-6699044f256c05afd873d5e4-bd48d0db.log"
+      }
+    ],
+    "candidate_reasons": {
+      "c1-shared-store-v1": "Infrastructure-incomplete: the frozen c1-debug input sets SLUB_TINY=y, which disables the required KASAN. K1 compiled but no candidate guest or timing ran. Preserve this contract, code and spent 3 guests/3 builds; a separately frozen corrected C1 contract must deduct these costs and elapsed time from the original phase caps, with no reset or candidate outcome claim."
+    },
+    "performance_accepted": false,
+    "auto_promote": false
+  },
+  "regressions": [],
+  "review_blockers": [],
+  "missing_raw_evidence": [],
+  "upstream_comparisons": [],
+  "evidence_reuse": [],
+  "sources": {
+    "campaigns/codex-compress-lib-2026-11-10/campaign.json": "368180778582b7ec4ecadaed1de28d018c2e9f81b439c4cf69f3aae96198ae04",
+    "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1.json": "95ce2f9280dbe48e91f6186cb62391faa5340fc46d674546f56a64d044fbc58d",
+    "campaigns/codex-compress-lib-2026-11-10/ledger/budget.json": "2e03ba0eee0c337bc1ee57e4729b5dd912f7e78d0d4ce30d23091173fe5dac0b",
+    "campaigns/codex-compress-lib-2026-11-10/ledger/ledger.json": "18f7b7d01787285f4537d194675189b23f32378bb1783ad12ec488b6a21e8ba0",
+    "campaigns/codex-compress-lib-2026-11-10/ledger/session-closeout.json": "7a7b8cf8d297f0f04a6bfa3db14f72a6ff0d6375c427c497c577d85a4b5b6114",
+    "campaigns/codex-compress-lib-2026-11-10/patches/c1-shared-store-v1.patch": "69e085f0b3703ae2929c0cc8e863b6f606fce1b15e8a4d3ab3fd378ef785f704",
+    "campaigns/codex-compress-lib-2026-11-10/policy.json": "56a0bdd0afc689127fcd21ab7a1e489e5daa9438321249dedf9d1afb3d58d2c9",
+    "campaigns/codex-compress-lib-2026-11-10/protocol.json": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+    "campaigns/codex-compress-lib-2026-11-10/research.json": "6acd0b47a8485afe2639efbd40e54eccb495d53f4e97efed889c5700590f3ae9",
+    "campaigns/codex-compress-lib-2026-11-10/reviews/k2-c1-shared-store-7d5a3cf.json": "07255b4de839af32b3e72e53925dd7c5d18fa98670ed448774c1c11eec7b565d"
+  },
+  "evidence_sha256": "b38eac31fdd29ae0ef949df8ab0afff75ec51ce2e83bb0862609d9bfcbfc80c9"
+}
