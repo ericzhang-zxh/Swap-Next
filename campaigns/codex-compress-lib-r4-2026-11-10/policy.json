@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "project": "swap-next",
+  "phase": "C1 shared page/object compression library, explicit NUMA socket continuation",
+  "runtime_enabled": false,
+  "thresholds_calibrated": false,
+  "upstream_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "seed_ref": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "allowed_modify": [
+    "mm/zswap.c",
+    "mm/Kconfig",
+    "mm/Makefile",
+    "include/linux/cpuhotplug.h",
+    "tools/testing/selftests/mm/Makefile"
+  ],
+  "allowed_add": [
+    "mm/page_compress.c",
+    "include/linux/page_compress.h",
+    "mm/page_compress_test.c",
+    "tools/testing/selftests/mm/swap_next_compression.c"
+  ],
+  "max_changed_files": 10,
+  "max_changed_lines": 2500,
+  "budget": {
+    "max_candidates": 1,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 4,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 900,
+    "max_total_campaign_seconds": 56284,
+    "max_build_attempts": 6
+  },
+  "measurement": {
+    "min_pairs": 10,
+    "min_operations": 1000,
+    "min_swapout_pages": 1,
+    "min_swapin_pages": 1,
+    "bootstrap_resamples": 64000,
+    "confidence": 0.95,
+    "required_workloads": [
+      "anon_disk",
+      "anon_zswap",
+      "fragmented_swap",
+      "mixed_file_anon"
+    ],
+    "required_partitions": [
+      "discovery",
+      "confirmation"
+    ],
+    "holdout_required_for_promotion": true,
+    "min_bootstrap_tail_samples": 30
+  },
+  "metrics": {
+    "throughput_ops_s": {
+      "direction": "higher",
+      "role": "primary",
+      "min_gain": null,
+      "max_regression": null
+    },
+    "latency_p99_us": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "cpu_ns_per_op": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "io_bytes_per_op": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    },
+    "metadata_bytes_per_slot_peak": {
+      "direction": "lower",
+      "role": "guardrail",
+      "max_regression": null
+    }
+  },
+  "required_gates": [
+    "gcc_swap_on",
+    "gcc_swap_off",
+    "gcc_zswap_on",
+    "sparse_no_new_diagnostics",
+    "checkpatch",
+    "guest_boot_identity",
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "allocation_failure",
+    "io_failure",
+    "memcg_limits",
+    "large_folio",
+    "lockdep",
+    "kasan",
+    "kcsan",
+    "no_new_kernel_warnings"
+  ],
+  "promotion": "human_review_only",
+  "checkout_ref": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+  "scope_note": "Owner-approved C1 shared compression extraction only. Preserve frontend policy, entry lifetime and accounting; no independence or tier migration claim.",
+  "primary_metric": "swapin_seq.mean_ns",
+  "discovery_contract": {
+    "architecture_candidates": 1,
+    "guest_attempts": 112,
+    "build_attempts": 6,
+    "wall_seconds": 56284,
+    "standard_suite": true,
+    "formal_runtime_enabled": false,
+    "publication": true,
+    "publication_rule": "Upload and publish the campaign report, then hand it to the owner for review. This is not candidate promotion.",
+    "auto_promotion": false
+  }
+}
