@@ -5,6 +5,7 @@ import argparse
 from contextlib import contextmanager
 import fcntl
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -69,15 +70,60 @@ def _deadline(budget, p):
         raise store.CampaignError("campaign deadline")
 
 
-def reserve_guest(campaign, run_id, build, backend, mode, workload, pool="fast"):
+def configuration_module():
+    path = store.PROJECT / "benchmark/swap-standard/configurations.py"
+    spec = importlib.util.spec_from_file_location("guest_budget_configurations", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def reservation_identity(p, build, backend, mode, workload, config_id="standard",
+                         correctness_case=None, topology_id="single"):
+    """Bind revision 8 auxiliary cases to the same counted reservation."""
+    if (not isinstance(build, str) or not re.fullmatch(r"[a-z0-9-]{1,48}", build)
+            or mode not in ("plain", "xswap")
+            or not isinstance(workload, str) or not workload):
+        raise store.CampaignError("invalid guest reservation identity")
+    identity = dict(zip(IDENTITY_KEYS, (build, backend, mode, workload)))
+    if p.get("protocol_revision") != 8:
+        if (backend not in ("disk", "zswap", "zram", "zram-64k", "brd")
+                or config_id != "standard" or correctness_case is not None or topology_id != "single"):
+            raise store.CampaignError("invalid legacy guest reservation identity")
+        return identity
+    try:
+        catalog = configuration_module()
+        if correctness_case is not None:
+            case = catalog.correctness_case(p, correctness_case)
+            expected = {key: case[key] for key in ("backend", "mode", "workload", "config_id", "topology_id")}
+            actual = dict(backend=backend, mode=mode, workload=workload,
+                          config_id=config_id, topology_id=topology_id)
+            if actual != expected:
+                raise ValueError("reservation differs from frozen correctness case")
+            catalog.pinned_config(p, config_id, store.PROJECT, "correctness")
+        else:
+            if workload in ("correctness", "compression"):
+                raise ValueError("revision 8 correctness requires a frozen case ID")
+            catalog.pinned_config(p, config_id, store.PROJECT, "timing")
+            if config_id != "c1-common" or topology_id != "single":
+                raise ValueError("timing reservation requires c1-common/single identity")
+            if not any(case.get("backend") == backend and case.get("mode", "plain") == mode
+                       and case.get("workload") == workload
+                       for case in p.get("cases", {}).values()):
+                raise ValueError("performance reservation is outside frozen cases")
+    except (ValueError, KeyError, TypeError, OSError) as exc:
+        raise store.CampaignError(str(exc)) from exc
+    identity.update(config_id=config_id, correctness_case=correctness_case, topology_id=topology_id)
+    return identity
+
+
+def reserve_guest(campaign, run_id, build, backend, mode, workload, pool="fast",
+                  config_id="standard", correctness_case=None, topology_id="single"):
     """Return a tracked ticket. Failures after reservation keep the spent attempt."""
     p = protocol(campaign)
     path = ticket_path(campaign, run_id)
-    identity = dict(zip(IDENTITY_KEYS, (build, backend, mode, workload)))
-    if (not isinstance(build, str) or not re.fullmatch(r"[a-z0-9-]{1,48}", build)
-            or backend not in ("disk", "zswap", "zram", "zram-64k", "brd")
-            or mode not in ("plain", "xswap") or not isinstance(workload, str) or not workload):
-        raise store.CampaignError("invalid guest reservation identity")
+    identity = reservation_identity(p, build, backend, mode, workload,
+                                    config_id, correctness_case, topology_id)
     if pool not in ("fast", "probe"):
         raise store.CampaignError("reservation pool must be fast or probe")
     with budget_lock(campaign):
@@ -102,6 +148,9 @@ def reserve_guest(campaign, run_id, build, backend, mode, workload, pool="fast")
 def consume_guest(campaign, run_id, reservation, identity):
     """A runner consumes one matching ticket before any runtime files or launch."""
     p = protocol(campaign)
+    expected = reservation_identity(p, **identity)
+    if expected != identity:
+        raise store.CampaignError("guest reservation identity fields mismatch")
     path = ticket_path(campaign, run_id)
     supplied = Path(reservation)
     if not supplied.is_absolute():
@@ -132,6 +181,9 @@ def main():
     for key in IDENTITY_KEYS:
         parser.add_argument("--" + key, required=True)
     parser.add_argument("--pool", choices=("fast", "probe"), default="fast")
+    parser.add_argument("--config-id", default="standard")
+    parser.add_argument("--correctness-case")
+    parser.add_argument("--topology-id", default="single")
     args = parser.parse_args()
     try:
         print(json.dumps(reserve_guest(**vars(args)), indent=2))

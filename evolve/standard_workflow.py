@@ -100,6 +100,25 @@ def probe_module():
     return module
 
 
+def configuration_module():
+    return correctness_proof.configurations(ROOT)
+
+
+def validate_result_configuration(protocol, result, case):
+    if protocol.get("protocol_revision") != 8:
+        return
+    config_id = case.get("config_id", "c1-common")
+    for key, expected in (("config_id", config_id), ("topology_id", case.get("topology_id", "single")),
+                          ("correctness_case", None)):
+        if result.get(key) != expected:
+            raise RuntimeError("timing result " + key + " differs from frozen case")
+    catalog = configuration_module()
+    catalog.validate_topology_record(protocol, result, "timing")
+    config = catalog.pinned_config(protocol, config_id, ROOT, "timing")
+    if result.get("input_config_sha256") != config["input_config_sha256"]:
+        raise RuntimeError("timing result input configuration mismatch")
+
+
 def child_env(protocol):
     """Force the protocol accelerator. A TCG protocol sets SWAP_NEXT_ACCEL=tcg
     and the protocol's vCPU and memory size, whatever the parent environment says."""
@@ -117,10 +136,14 @@ def child_env(protocol):
     return env
 
 
-def runner_extra(protocol):
+def runner_extra(protocol, case=None):
     extra = ["--protocol-revision", str(protocol.get("protocol_revision", 1))]
     if protocol.get("preallocate_swap"):
         extra.append("--preallocate-swap")
+    if protocol.get("protocol_revision") == 8:
+        case = case or {}
+        extra += ["--config-id", case.get("config_id", "c1-common"),
+                  "--topology-id", case.get("topology_id", "single")]
     return extra
 
 
@@ -134,6 +157,11 @@ METADATA_METRIC = "metadata_delta_bytes_per_capacity_slot"
 def contract_errors(p):
     """Every new campaign scores swap-in latency and screens metadata bytes per slot."""
     errors = []
+    if p.get("protocol_revision") == 8:
+        try:
+            configuration_module().validate_protocol(p, ROOT)
+        except (ValueError, OSError, KeyError, TypeError) as exc:
+            errors.append(str(exc))
     evidence_types = p.get("mechanism_evidence_types", ["counter_shift"])
     if (not isinstance(evidence_types, list) or not evidence_types or
             any(not isinstance(kind, str) for kind in evidence_types) or
@@ -197,6 +225,13 @@ def fingerprint(p):
     paths += [BENCH / name for name in ["guest-init", "tools.json", "swapin.c", "correctness.c", "console-drain.c"]]
     paths += [ROOT / "benchmark/kernel" / name for name in ["build.py", "lifetime.py", "build_namespace.sh"]]
     paths += [ROOT / "benchmark/kernel/builds" / p["baseline_build"] / "result.json"]
+    if p.get("protocol_revision") == 8:
+        catalog = configuration_module()
+        catalog.validate_protocol(p, ROOT)
+        paths += [ROOT / catalog.pinned_config(p, config_id, ROOT)["path"]
+                  for config_id in p["configurations"]]
+        paths += [BENCH / "compression.c",
+                  ROOT / "benchmark/kernel/builds" / p["baseline_build"] / "configured-build.json"]
     return hashlib.sha256(json.dumps({str(f.relative_to(ROOT)): sha(f) for f in paths}, sort_keys=True).encode()).hexdigest()
 
 
@@ -287,8 +322,12 @@ class Workflow:
         if getattr(self, "slow_permit", None):
             permissions.consume(ROOT, self.slow_permit)
         try:
+            extra = ({"config_id": case.get("config_id", "c1-common"),
+                      "correctness_case": case.get("id") if "group" in case else None,
+                      "topology_id": case.get("topology_id", "single")}
+                     if self.p.get("protocol_revision") == 8 else {})
             ticket = guest_budget.reserve_guest(self.p["campaign"], run_id, build, case["backend"],
-                                                case.get("mode", "plain"), case["workload"], pool)
+                                                case.get("mode", "plain"), case["workload"], pool, **extra)
         except campaign_store.CampaignError as exc:
             raise RuntimeError("BLOCKED: " + str(exc))
         self.budget = guest_budget.read_budget(self.p["campaign"])
@@ -364,7 +403,7 @@ class Workflow:
             result = {"status": "registration-failed", "reason": str(exc)}
         save(dest / "cache-registration.json", result)
 
-    def candidate(self, name, correctness):
+    def candidate_source(self, name):
         # Historical identities are explicitly held even if supplied as commit IDs.
         if name in campaign_store.candidates("xswap-structure-2026-10-22"):
             raise RuntimeError("BLOCKED: historical xswap candidate; unresolved descriptor lifetime")
@@ -383,6 +422,10 @@ class Workflow:
         if vetoes:
             raise RuntimeError("BLOCKED: unresolved correctness review: " + json.dumps(vetoes))
         mechanisms.validate(ROOT, self.p, record, commit, tree)
+        return commit, record
+
+    def candidate(self, name, correctness):
+        commit, record = self.candidate_source(name)
         proof = read(correctness) if correctness else {}
         if self.p["campaign"] not in CONTRACT_EXEMPT:
             try:
@@ -398,6 +441,20 @@ class Workflow:
         # A guest result.json names its kernel as source_commit.
         if proof.get("candidate_commit", proof.get("source_commit")) != commit or not all(proof.get("gates", {}).get(k) is True for k in self.p["required_correctness_gates"]):
             raise RuntimeError("missing exact-commit correctness evidence")
+        return commit, record, proof
+
+    def timing_correctness(self, candidate, correctness, row):
+        if self.p.get("protocol_revision") != 8:
+            return None
+        if not candidate or not correctness:
+            raise RuntimeError("BLOCKED: revision 8 timing requires --candidate and a complete --correctness matrix")
+        path = Path(correctness)
+        if not path.is_absolute():
+            path = ROOT / path
+        commit, record, proof = self.candidate(candidate, path)
+        row.update(correctness=proof, correctness_candidate_commit=commit,
+                   correctness_manifest=path.resolve().relative_to(ROOT.resolve()).as_posix(),
+                   correctness_manifest_sha256=sha(path))
         return commit, record, proof
 
     def campaign_errors(self):
@@ -463,6 +520,8 @@ class Workflow:
         if checked.get("status") != "SCOPE_PASS" or checked.get("candidate_commit") != commit or checked.get("parent") != self.p["baseline_commit"]:
             raise RuntimeError("controller scope check missing")
         row["controller_check"] = checked
+        if self.p.get("protocol_revision") == 8:
+            return self.timing_build(self.configuration_build_name(commit, "c1-common", candidate), commit)
         build = self.p.get("candidate_builds", {}).get(candidate, "std-" + commit[:12])
         if not re.fullmatch(r"[a-z0-9-]{1,48}", build):
             raise RuntimeError("invalid protocol candidate build name")
@@ -479,6 +538,146 @@ class Workflow:
                 built.get("instrument_sha256", "missing") is not None):
             raise RuntimeError("candidate build provenance mismatch")
         return build
+
+    def configuration_build_name(self, commit, config_id, candidate=None):
+        if config_id == "c1-common":
+            build = (self.p["baseline_build"] if commit == self.p["baseline_commit"] else
+                     self.p.get("candidate_builds", {}).get(candidate, "c1-" + commit[:12] + "-common"))
+        else:
+            build = "c1-" + commit[:12] + "-" + config_id.removeprefix("c1-")
+        if not re.fullmatch(r"[a-z0-9-]{1,48}", build):
+            raise RuntimeError("invalid configured build name")
+        return build
+
+    def timing_build(self, build, commit):
+        if self.p.get("protocol_revision") == 8:
+            reference = "benchmark/kernel/builds/" + build + "/result.json"
+            correctness_proof._configured_build(ROOT, reference, sha(ROOT / reference),
+                commit, self.p, "c1-common", "timing")
+        return build
+
+    def configured_build_reference(self, row, register=False):
+        import reference_cache
+        path = ROOT / row["build_manifest"]
+        manifest = read(path)
+        binding = read(path.with_name("configured-build.json"))
+        config = configuration_module().get_config(row["config_id"], ROOT)
+        identity = {"source_commit": row["commit"], "source_tree": binding["source_tree"],
+                    "config_id": row["config_id"], "config_path": config["path"],
+                    "configured_build_sha256": sha(path.with_name("configured-build.json")),
+                    "build_manifest_sha256": sha(path),
+                    **{key: manifest[key] for key in ("image_sha256", "config_sha256", "input_config_sha256")}}
+        if register:
+            original = read(ROOT / "campaigns" / binding["campaign"] / "ledger/ledger.json")
+            source = next(item for item in original if item["id"] == binding["evaluation_id"])
+            result = reference_cache.register(ROOT, "build", identity,
+                {"artifact": row["build_manifest"], "artifact_sha256": sha(path),
+                 "observed_unix": source["finished"]})
+            if result["verification"]["passed"] is not True:
+                raise RuntimeError("native configured build cache rejected evidence: " +
+                                   "; ".join(result["verification"]["reasons"]))
+        result = reference_cache.lookup(ROOT, "build", identity)
+        if result["status"] != "reusable":
+            raise RuntimeError("native configured build cache no longer matches")
+        return {key: result[key] for key in ("status", "identity_key", "record_sha256")}
+
+    def build_coverage(self, candidate, case_id):
+        """One counted config build or a verified reuse; never a guest launch."""
+        self.check()
+        if self.p.get("protocol_revision") != 8 or self.p.get("template_only"):
+            raise RuntimeError("BLOCKED: configured coverage requires executable revision 8")
+        catalog = configuration_module()
+        matrix = catalog.validate_protocol(self.p, ROOT)
+        case = next((item for item in matrix["cases"] + matrix["build_only"]
+                     if item["id"] == case_id), None)
+        if case is None:
+            raise RuntimeError("BLOCKED: unknown frozen coverage case")
+        record = None
+        if case["role"] == "baseline":
+            commit = self.p["baseline_commit"]
+        else:
+            if not candidate:
+                raise RuntimeError("BLOCKED: candidate coverage requires --candidate")
+            commit, record = self.candidate_source(candidate)
+        purpose = "build-only" if case in matrix["build_only"] else "correctness"
+        config = catalog.pinned_config(self.p, case["config_id"], ROOT, purpose)
+        build = self.configuration_build_name(commit, case["config_id"], candidate)
+        reference = "benchmark/kernel/builds/" + build + "/result.json"
+        path = ROOT / reference
+        prior = [item for item in self.ledger if item.get("action") == "build-coverage"
+                 and item.get("commit") == commit and item.get("config_id") == case["config_id"]]
+        if any(item.get("build_reserved") and item.get("status") != "BUILD_VERIFIED" for item in prior):
+            raise RuntimeError("BLOCKED: failed or interrupted configured build remains spent")
+        same = [item for item in prior if item.get("case_id") == case_id]
+        if same:
+            if len(same) != 1 or same[0].get("status") != "BUILD_VERIFIED":
+                raise RuntimeError("BLOCKED: retained coverage case requires reconciliation")
+            correctness_proof._configured_build(ROOT, reference, same[0]["build_manifest_sha256"],
+                commit, self.p, case["config_id"], purpose)
+            self.configured_build_reference(same[0])
+            return same[0]
+        ident = uuid.uuid4().hex
+        row = {"id": ident, "action": "build-coverage", "tier": "correctness",
+               "candidate": candidate, "case_id": case_id, "config_id": case["config_id"],
+               "commit": commit, "role": case["role"], "build": build,
+               "status": "RUNNING", "started": time.time(), "build_reserved": False}
+        dest = EVALUATIONS / ident
+        dest.mkdir(parents=True)
+        self.ledger.append(row)
+        save(self.ledger_path, self.ledger)
+        save(dest / "report.json", row)
+        try:
+            if record is not None:
+                checklog = dest / "controller-check.log"
+                self.command([sys.executable, "evolve/control/controller.py", "--campaign",
+                    self.p["campaign"], "check", candidate], checklog, 180)
+                checked = read(checklog)
+                if (checked.get("status") != "SCOPE_PASS" or checked.get("candidate_commit") != commit
+                        or checked.get("parent") != self.p["baseline_commit"]):
+                    raise RuntimeError("controller scope check missing")
+                row["controller_check"] = checked
+            if path.exists():
+                correctness_proof._configured_build(ROOT, reference, sha(path),
+                    commit, self.p, case["config_id"], purpose)
+                row["build_reused"] = True
+            else:
+                if path.parent.exists():
+                    raise RuntimeError("BLOCKED: partial build directory requires reconciliation")
+                environment = catalog.build_environment(ROOT)
+                tree = subprocess.check_output(["git", "-C", str(ROOT / "linux"),
+                    "rev-parse", commit + "^{tree}"], text=True).strip()
+                self.reserve("build")
+                row.update(build_reserved=True, execution_started=True)
+                save(self.ledger_path, self.ledger)
+                save(dest / "report.json", row)
+                self.command([sys.executable, "benchmark/kernel/build.py", "--commit", commit,
+                    "--name", build, "--config", config["path"], "--no-instrumentation"],
+                    dest / "build.log", 1200)
+                if catalog.build_environment(ROOT) != environment:
+                    raise RuntimeError("configured build environment changed during compilation")
+                binding = {"schema_version": 1, "source_commit": commit, "source_tree": tree,
+                           "config_id": case["config_id"], "input_config_sha256": config["input_config_sha256"],
+                           "build_manifest_sha256": sha(path), "environment": environment,
+                           "campaign": self.p["campaign"], "evaluation_id": ident,
+                           "protocol_sha256": sha(PROTOCOL)}
+                save(path.with_name("configured-build.json"), binding)
+                correctness_proof._configured_build(ROOT, reference, sha(path), commit,
+                    self.p, case["config_id"], purpose, require_counted=False)
+                row["build_reused"] = False
+            row.update(status="BUILD_VERIFIED", build_manifest=reference, build_manifest_sha256=sha(path),
+                       build_provenance=str(path.with_name("configured-build.json").relative_to(ROOT)),
+                       build_provenance_sha256=sha(path.with_name("configured-build.json")),
+                       finished=time.time())
+            save(dest / "report.json", row)
+            save(self.ledger_path, self.ledger)
+            row["build_cache"] = self.configured_build_reference(row, register=True)
+        except (Exception, KeyboardInterrupt) as exc:
+            row.update(status="BUILD_FAILED" if row["build_reserved"] else "BLOCKED",
+                       reason=failure_reason(exc), finished=time.time())
+        finally:
+            save(dest / "report.json", row)
+            save(self.ledger_path, self.ledger)
+        return row
 
     def run_probe(self, action, candidate=None, correctness=None):
         ident = uuid.uuid4().hex
@@ -501,6 +700,7 @@ class Workflow:
                 raise RuntimeError("BLOCKED: probe supports calibration and candidate evaluation only")
             if contract_errors(self.p):
                 raise RuntimeError("BLOCKED: protocol contract: " + "; ".join(contract_errors(self.p)))
+            matrix_admission = self.timing_correctness(candidate, correctness, row)
             rules, module = validity_module().protocol_rules(self.p), probe_module()
             fp = fingerprint(self.p)
             row.update(fingerprint=fp, protocol_revision=rules["protocol_revision"],
@@ -518,7 +718,7 @@ class Workflow:
                 if self.reuse_calibration(row, fp, dest):
                     return row
             else:
-                commit, record, proof = self.candidate(candidate, correctness)
+                commit, record, proof = matrix_admission or self.candidate(candidate, correctness)
                 tree = self.candidate_tree(commit, record)
                 row.update(candidate_commit=commit, candidate_tree=tree, correctness=proof, mechanism=record.get("mechanism"),
                            parent_comparison={"parent_candidate": record.get("parent_candidate"), "parent_commit": record.get("parent_commit", record.get("parent")), "baseline_commit": self.p["baseline_commit"], "role": "descriptive_only"})
@@ -527,6 +727,7 @@ class Workflow:
                 calibration = self.calibration("probe", fp)
                 build = self.probe_build(candidate, commit, row, dest)
                 row["calibration_id"] = calibration["id"]
+            self.timing_build(build, commit)
             if self.budget.get("probe_guests", 0) + needed > self.p["budget"].get("probe_guest_attempts", 0):
                 raise RuntimeError("insufficient probe guest budget for the complete tier")
             row["candidate_commit"] = commit
@@ -553,10 +754,11 @@ class Workflow:
                                       "--workload", case["workload"], "--run-id", run_id, "--campaign", self.p["campaign"],
                                       "--reservation", ticket["reservation"], "--run-root", str(RUNS),
                                       "--stop-file", str(self.stop), "--timeout", str(self.p["budget"]["guest_timeout"]),
-                                      *runner_extra(self.p)], dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60,
+                                      *runner_extra(self.p, case)], dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60,
                                      accept_failure=True, env=child_env(self.p))
                         result_path = RUNS / run_id / "result.json"
                         result = read(result_path)
+                        validate_result_configuration(self.p, result, case)
                         attempt.update(result=str(result_path.relative_to(ROOT)), result_sha256=sha(result_path))
                         json.dumps(result, allow_nan=False)
                         if result.get("run_id") != run_id or result.get("source_commit") != commit or result.get("integration_pass") is not True:
@@ -634,6 +836,7 @@ class Workflow:
                 raise RuntimeError("BLOCKED: protocol template cannot execute")
             if self.p["campaign"] not in CONTRACT_EXEMPT and contract_errors(self.p):
                 raise RuntimeError("BLOCKED: protocol contract: " + "; ".join(contract_errors(self.p)))
+            matrix_admission = self.timing_correctness(candidate, correctness, row)
             fp = fingerprint(self.p)
             row["fingerprint"] = fp
             row["protocol_sha256"] = sha(PROTOCOL)
@@ -686,7 +889,7 @@ class Workflow:
                                                             authorized_tree, fp, row["id"])
                 calibration = None
                 if action == "evaluate":
-                    commit, record, proof = self.candidate(candidate, correctness)
+                    commit, record, proof = matrix_admission or self.candidate(candidate, correctness)
                     row.update(candidate_commit=commit, correctness=proof)
                     if self.p["campaign"] not in CONTRACT_EXEMPT:
                         tree = self.candidate_tree(commit, record)
@@ -717,20 +920,25 @@ class Workflow:
                         raise RuntimeError("controller scope check missing")
                     row["controller_check"] = checked
                     calibration = self.calibration(tier, fp)
-                    build = self.p.get("candidate_builds", {}).get(candidate, "std-" + commit[:12])
-                    if not re.fullmatch(r"[a-z0-9-]{1,48}", build):
-                        raise RuntimeError("invalid protocol candidate build name")
-                    path = ROOT / "benchmark/kernel/builds" / build / "result.json"
-                    if not path.exists():
-                        self.reserve("build")
-                        row["execution_started"] = True
-                        save(dest / "report.json", row)
-                        self.command([sys.executable, "benchmark/kernel/build.py", "--commit", commit, "--name", build, "--config", "benchmark/config/swap-standard.config", "--no-instrumentation"], dest / "build.log", 1200)
-                    built = read(path)
-                    if (built.get("commit") != commit or built.get("input_config_sha256") != sha(ROOT / "benchmark/config/swap-standard.config") or built.get("passed") is not True or built.get("instrument_sha256", "missing") is not None):
-                        raise RuntimeError("candidate build provenance mismatch")
+                    if self.p.get("protocol_revision") == 8:
+                        build = self.timing_build(self.configuration_build_name(commit, "c1-common", candidate), commit)
+                    else:
+                        build = self.p.get("candidate_builds", {}).get(candidate, "std-" + commit[:12])
+                        if not re.fullmatch(r"[a-z0-9-]{1,48}", build):
+                            raise RuntimeError("invalid protocol candidate build name")
+                        path = ROOT / "benchmark/kernel/builds" / build / "result.json"
+                        if not path.exists():
+                            self.reserve("build")
+                            row["execution_started"] = True
+                            save(dest / "report.json", row)
+                            self.command([sys.executable, "benchmark/kernel/build.py", "--commit", commit, "--name", build, "--config", "benchmark/config/swap-standard.config", "--no-instrumentation"], dest / "build.log", 1200)
+                        built = read(path)
+                        if (built.get("commit") != commit or built.get("input_config_sha256") != sha(ROOT / "benchmark/config/swap-standard.config") or built.get("passed") is not True or built.get("instrument_sha256", "missing") is not None):
+                            raise RuntimeError("candidate build provenance mismatch")
                 elif action == "reference-check":
                     calibration = self.calibration(tier, fp)
+            self.timing_build(control_build, control_commit)
+            self.timing_build(build, commit)
             rules = validity_module().protocol_rules(self.p)
             row["protocol_revision"] = rules["protocol_revision"]
             try:
@@ -742,7 +950,6 @@ class Workflow:
                 row["candidate_tree"] = subprocess.check_output(
                     ["git", "-C", str(ROOT / "linux"), "rev-parse", commit + "^{tree}"], text=True).strip()
             env = child_env(self.p)
-            extra = runner_extra(self.p)
             for pair_index in range(count):
                 pair = {"a": {}, "b": {}, "order": "AB" if pair_index % 2 == 0 else "BA"}
                 row["pairs"].append(pair)
@@ -771,13 +978,14 @@ class Workflow:
                                           "--workload", case["workload"], "--run-id", run_id,
                                           "--stop-file", str(self.stop), "--run-root", str(RUNS),
                                           "--campaign", self.p["campaign"], "--reservation", ticket["reservation"],
-                                          "--timeout", str(self.p["budget"]["guest_timeout"]), *extra],
+                                          "--timeout", str(self.p["budget"]["guest_timeout"]), *runner_extra(self.p, case)],
                                          dest / (run_id + ".log"), self.p["budget"]["guest_timeout"] + 60,
                                          accept_failure=True, env=env)
                             result_path = RUNS / run_id / "result.json"
                             if not result_path.is_file():
                                 raise RuntimeError("missing run result")
                             result = read(result_path)
+                            validate_result_configuration(self.p, result, case)
                             attempt.update(result=str(result_path.relative_to(ROOT)), result_sha256=sha(result_path))
                             json.dumps(result, allow_nan=False)
                             expected = control_commit if arm == "a" else commit
@@ -905,10 +1113,11 @@ def state_lock():
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["status", "plan", "next", "calibrate", "evaluate", "reference-check"])
+    parser.add_argument("action", choices=["status", "plan", "next", "calibrate", "evaluate", "reference-check", "build-coverage"])
     parser.add_argument("--tier", choices=["probe", "fast", "slow", "auto"], default="fast",
                         help="slow (and auto, which continues into slow) needs explicit owner approval; see AGENTS.md")
     parser.add_argument("--candidate")
+    parser.add_argument("--case", help="frozen correctness or build-only case ID for build-coverage")
     parser.add_argument("--comparison", help="frozen comparison plan ID")
     parser.add_argument("--contrast", help="contrast in the frozen comparison plan")
     parser.add_argument("--selection-reason", help="agent rationale for admitting an exact probe pass to the fast screen")
@@ -965,6 +1174,14 @@ def main(argv=None):
                     if not closed:
                         save(TASKS / ("task-" + uuid.uuid4().hex + ".json"), output)
             print(json.dumps(output, indent=2))
+            return
+        if args.action == "build-coverage":
+            if not args.case:
+                parser.error("build-coverage requires --case")
+            row = workflow.build_coverage(args.candidate, args.case)
+            print(json.dumps(row, indent=2))
+            if row["status"] != "BUILD_VERIFIED":
+                raise SystemExit(1)
             return
         if bool(args.comparison) != bool(args.contrast):
             parser.error("--comparison and --contrast must be supplied together")

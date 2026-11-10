@@ -2,6 +2,7 @@
 """Reuse complete verified A/A observations without extending their validity."""
 import copy
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import platform
@@ -27,6 +28,22 @@ def identity(root, protocol, tier):
     manifest = read(root / "benchmark/kernel/builds" / protocol["baseline_build"] / "result.json")
     build = {key: manifest[key] for key in ("image_sha256", "config_sha256", "input_config_sha256")}
     build["tree"] = tree
+    configured_files = []
+    if protocol.get("protocol_revision") == 8:
+        spec = importlib.util.spec_from_file_location("calibration_configurations",
+            root / "benchmark/swap-standard/configurations.py")
+        catalog = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(catalog)
+        catalog.validate_protocol(protocol, root)
+        config = catalog.pinned_config(protocol, "c1-common", root, "timing")
+        manifest_path = root / "benchmark/kernel/builds" / protocol["baseline_build"] / "result.json"
+        catalog.verify_build_binding(root, manifest_path, commit, "c1-common")
+        if build["input_config_sha256"] != config["input_config_sha256"]:
+            raise ValueError("calibration build does not use c1-common")
+        build.update(config_id="c1-common", config_path=config["path"],
+                     configured_build_sha256=sha(manifest_path.with_name("configured-build.json")))
+        configured_files = [root / catalog.pinned_config(protocol, name, root)["path"]
+                            for name in protocol["configurations"]]
     bench = root / "benchmark/swap-standard"
     files = list(bench.glob("*.py")) + list(bench.glob("*.sh")) + list(bench.glob("*.c"))
     files += [bench / name for name in ("guest-init", "tools.json")]
@@ -36,6 +53,7 @@ def identity(root, protocol, tier):
         "evolve/control/guest_budget.py", "evolve/control/correctness_proof.py",
         "benchmark/kernel/build.py", "benchmark/kernel/lifetime.py", "benchmark/kernel/build_namespace.sh",
         "benchmark/config/swap-standard.config")]
+    files += configured_files
     environment = {"kernel": platform.release(), "architecture": platform.machine(),
                    "qemu": subprocess.check_output(["qemu-system-x86_64", "--version"], text=True, timeout=15).strip()}
     return {"source_commit": commit, "source_tree": tree, "protocol": protocol,

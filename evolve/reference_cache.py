@@ -129,6 +129,12 @@ def semantic_identity(kind, identity):
     if kind == "build":
         for key in ("input_config_sha256", "config_sha256", "image_sha256", "build_manifest_sha256"):
             need(isinstance(identity.get(key), str) and HEX64.fullmatch(identity[key]), key + " required")
+    if kind == "build" and "config_id" in identity:
+        need(isinstance(identity.get("config_id"), str) and NAME.fullmatch(identity["config_id"]),
+             "named build configuration required")
+        relative(identity.get("config_path"))
+        need(isinstance(identity.get("configured_build_sha256"), str)
+             and HEX64.fullmatch(identity["configured_build_sha256"]), "configured build hash required")
     if kind == "review":
         need(isinstance(identity.get("review_policy_sha256"), str) and HEX64.fullmatch(identity["review_policy_sha256"]), "review policy hash required")
     if kind in RUNTIME:
@@ -141,11 +147,36 @@ def semantic_identity(kind, identity):
             need(type(guest.get(key)) is int and guest[key] > 0, "guest " + key + " required")
         builds = identity.get("builds")
         need(isinstance(builds, dict) and identity["source_commit"] in builds, "exact runtime builds required")
+        revision8 = identity["protocol"].get("protocol_revision") == 8
+        matrix_builds = revision8 and kind == "correctness"
+        expected_configs = {}
+        if matrix_builds:
+            matrix = identity["protocol"].get("correctness_matrix", {})
+            for case in matrix.get("cases", []) + matrix.get("build_only", []):
+                commit = (identity["protocol"]["baseline_commit"] if case["role"] == "baseline"
+                          else identity["source_commit"])
+                expected_configs.setdefault(commit, set()).add(case["config_id"])
+            need(set(builds) == set(expected_configs), "matrix runtime source set mismatch")
         for commit, build in builds.items():
             need(isinstance(commit, str) and HEX40.fullmatch(commit) and isinstance(build, dict), "runtime build identity")
             need(isinstance(build.get("tree"), str) and HEX40.fullmatch(build["tree"]), "runtime build tree")
-            for key in ("image_sha256", "config_sha256", "input_config_sha256"):
-                need(isinstance(build.get(key), str) and HEX64.fullmatch(build[key]), "runtime " + key)
+            variants = build.get("configurations") if matrix_builds else {build.get("config_id", "standard"): build}
+            need(isinstance(variants, dict) and variants, "runtime configuration builds missing")
+            if matrix_builds:
+                need(set(variants) == expected_configs[commit], "matrix runtime configuration set mismatch")
+            for config_id, variant in variants.items():
+                need(isinstance(variant, dict), "runtime configuration build malformed")
+                for key in ("image_sha256", "config_sha256", "input_config_sha256"):
+                    need(isinstance(variant.get(key), str) and HEX64.fullmatch(variant[key]), "runtime " + key)
+                if revision8:
+                    need(variant.get("config_id") == config_id
+                         and config_id in identity["protocol"].get("configurations", {}),
+                         "runtime named configuration mismatch")
+                    if not matrix_builds:
+                        need(config_id == "c1-common", "timing cache requires c1-common")
+                    relative(variant.get("config_path"))
+                    need(isinstance(variant.get("configured_build_sha256"), str)
+                         and HEX64.fullmatch(variant["configured_build_sha256"]), "runtime configured build hash required")
         need(builds[identity["source_commit"]]["tree"] == identity["source_tree"], "runtime source tree mismatch")
         guest_image = identity.get("guest_image")
         need(isinstance(guest_image, dict), "guest image provenance required")
@@ -154,6 +185,9 @@ def semantic_identity(kind, identity):
         need(isinstance(guest_image.get("sources"), dict) and guest_image["sources"], "guest source hashes required")
         harness = identity.get("harness")
         required = set(RUNTIME_HARNESS)
+        if revision8:
+            required.update({"benchmark/swap-standard/configurations.py",
+                             "benchmark/swap-standard/compression.c", "evolve/control/correctness_proof.py"})
         required.add("evolve/control/correctness_proof.py" if kind == "correctness" else "benchmark/swap-standard/analysis.py")
         if identity.get("evaluation_format") == "comparison-runtime-v1":
             required.update({"evolve/comparison_runtime.py", "evolve/comparisons.py"})
@@ -247,7 +281,17 @@ class Verifier:
             need(manifest.get(key) == expected[key], "build manifest " + key + " mismatch")
             self.file(directory + suffix, expected[key])
         need(manifest.get("input_config_sha256") == expected["input_config_sha256"], "input config identity mismatch")
-        self.file("benchmark/config/swap-standard.config", expected["input_config_sha256"])
+        config_id = expected.get("config_id", "standard")
+        if config_id == "standard":
+            self.file("benchmark/config/swap-standard.config", expected["input_config_sha256"])
+        else:
+            catalog = self.native("benchmark/swap-standard/configurations.py")
+            config = catalog.get_config(config_id, self.root)
+            need(expected.get("config_path") == config["path"], "configured build path mismatch")
+            self.file(config["path"], expected["input_config_sha256"])
+            catalog.validate_final(config_id, self.root / directory / "output/.config")
+            self.file(directory + "/configured-build.json", expected.get("configured_build_sha256"))
+            catalog.verify_build_binding(self.root, self.root / manifest_path, expected_commit, config_id)
         self.file(directory + "/build.log")
         return manifest
 
@@ -267,6 +311,14 @@ class Verifier:
         for key in ("backend", "workload"):
             need(result.get(key) == case[key], "raw run " + key + " mismatch")
         need(result.get("mode") == case.get("mode", "plain"), "raw run mode mismatch")
+        revision8 = protocol.get("protocol_revision") == 8
+        if revision8:
+            need(result.get("config_id") == case.get("config_id") == "c1-common"
+                 and result.get("topology_id") == case.get("topology_id", "single") == "single"
+                 and result.get("correctness_case") is None,
+                 "raw timing configuration/case/topology mismatch")
+            self.native("benchmark/swap-standard/configurations.py").validate_topology_record(
+                protocol, result, "timing")
         need(result.get("accelerator") == identity["accelerator"] and
              result.get("guest_vcpus") == identity["guest"]["vcpus"] and
              result.get("guest_mem_mib") == identity["guest"]["mem_mib"], "raw environment mismatch")
@@ -281,14 +333,16 @@ class Verifier:
         serial = self.file(result.get("serial_log"), result.get("serial_sha256"))
         parser = self.native("benchmark/swap-standard/evidence.py")
         revision = result.get("protocol_revision", protocol.get("protocol_revision", 1))
+        kwargs = ({"config_id": result["config_id"], "correctness_case": None,
+                   "topology_id": result["topology_id"]} if revision8 else {})
         parsed = parser.parse(serial.read_text(errors="replace"), result["image_sha256"],
                               result["backend"], result["mode"], result["workload"],
-                              revision)
+                              revision, **kwargs)
         expected_gates = dict(parsed["gates"], qemu_exit=result.get("exit_code") == 0 and result.get("stop_reason") is None)
         need(result.get("gates") == expected_gates and result.get("metrics") == parsed["metrics"],
              "raw serial differs from result gates/metrics")
         need(result.get("integration_pass") is True and all(expected_gates.values()), "raw correctness failed")
-        for name in ("run.py", "evidence.py"):
+        for name in (("run.py", "evidence.py", "configurations.py") if revision8 else ("run.py", "evidence.py")):
             self.file("benchmark/swap-standard/" + name, result.get("harness_sha256", {}).get(name))
         ticket = self.json(result.get("reservation"), result.get("reservation_sha256"))
         need(ticket.get("id") == run_id and ticket.get("campaign") == protocol["campaign"] and
@@ -327,6 +381,12 @@ def _extract(metrics, path):
 def _report(verifier, kind, identity, provenance):
     protocol, rules = verifier.protocol(identity, provenance)
     report = verifier.json(provenance["artifact"])
+    if protocol.get("protocol_revision") == 8:
+        proof = verifier.json(report.get("correctness_manifest"), report.get("correctness_manifest_sha256"))
+        summary = verifier.native("evolve/control/correctness_proof.py").validate(proof, protocol, verifier.root)
+        need(summary.get("passed") is True
+             and summary.get("candidate_commit") == report.get("correctness_candidate_commit"),
+             "timing admission lacks a complete counted correctness matrix")
     need(report.get("tier") == identity["tier"], "report tier mismatch")
     need(report.get("fingerprint") == provenance.get("fingerprint") and
          isinstance(provenance.get("fingerprint"), str) and HEX64.fullmatch(provenance["fingerprint"]),
@@ -416,7 +476,9 @@ def _report(verifier, kind, identity, provenance):
     need(report["status"] in {"CALIBRATED", "FAST_PASS", "NEEDS_REVIEW"}, "original result is not a passing reusable observation")
     return {"checks": ["raw-results", "serial-reparse", "counted-reservations", "native-analysis-replay"],
             "coverage": {"cases": cases, "backends": sorted({protocol["cases"][c]["backend"] for c in cases}),
-                         "gates": []}, "status": report["status"]}
+                         "gates": [], **({"configurations": ["c1-common"], "topologies": ["single"]}
+                                        if protocol.get("protocol_revision") == 8 else {})},
+            "status": report["status"]}
 
 
 def _verify(root, kind, identity, provenance):
@@ -437,7 +499,9 @@ def _verify(root, kind, identity, provenance):
             need(provenance["artifact_sha256"] == identity["build_manifest_sha256"], "build manifest identity mismatch")
             verifier.build(provenance["artifact"], identity["source_commit"], identity)
             result = {"checks": ["git-tree", "build-pass", "config-hash", "image-hash"],
-                      "coverage": {"gates": ["build"], "cases": [], "backends": []}, "status": "BUILD_VERIFIED"}
+                      "coverage": {"gates": ["build"], "cases": [], "backends": [],
+                                   **({"configurations": [identity["config_id"]]}
+                                      if "config_id" in identity else {})}, "status": "BUILD_VERIFIED"}
         elif kind == "review":
             policy = provenance.get("review_policy")
             verifier.file(policy, identity["review_policy_sha256"])
@@ -461,15 +525,33 @@ def _verify(root, kind, identity, provenance):
             proof = read(artifact)
             need(proof.get("source_commit") == identity["source_commit"], "proof source mismatch")
             summary = verifier.native("evolve/control/correctness_proof.py").validate(proof, protocol, verifier.root)
-            for path_key, hash_key in (("build_manifest", "build_manifest_sha256"), ("reservation", "reservation_sha256"),
-                                       ("serial_log", "serial_sha256")):
-                verifier.file(proof[path_key], proof[hash_key])
-            verifier.file(str(Path(proof["result_path"]).with_name("result.sha256")))
-            verifier.build(proof["build_manifest"], identity["source_commit"], identity["builds"][identity["source_commit"]])
-            need(proof.get("guest_provenance") == identity["guest_image"], "proof guest image provenance mismatch")
+            if protocol.get("protocol_revision") == 8:
+                for entry in proof["runs"]:
+                    raw = verifier.json(entry["result_path"], entry["result_sha256"])
+                    for path_key, hash_key in (("build_manifest", "build_manifest_sha256"),
+                            ("reservation", "reservation_sha256"), ("serial_log", "serial_sha256")):
+                        verifier.file(raw[path_key], raw[hash_key])
+                    verifier.file(str(Path(raw["result_path"]).with_name("result.sha256")))
+                    expected = identity["builds"][raw["source_commit"]]["configurations"][raw["config_id"]]
+                    verifier.build(raw["build_manifest"], raw["source_commit"], expected)
+                    need(raw.get("guest_provenance") == identity["guest_image"], "proof guest image provenance mismatch")
+                for item in summary["builds"]:
+                    expected = identity["builds"][item["source_commit"]]["configurations"][item["config_id"]]
+                    verifier.file(item["build_manifest"], item["build_manifest_sha256"])
+                    verifier.build(item["build_manifest"], item["source_commit"], expected)
+                coverage = dict(summary["coverage"],
+                    gates=sorted(key for key, passed in summary["gates"].items() if passed))
+            else:
+                for path_key, hash_key in (("build_manifest", "build_manifest_sha256"), ("reservation", "reservation_sha256"),
+                                           ("serial_log", "serial_sha256")):
+                    verifier.file(proof[path_key], proof[hash_key])
+                verifier.file(str(Path(proof["result_path"]).with_name("result.sha256")))
+                verifier.build(proof["build_manifest"], identity["source_commit"], identity["builds"][identity["source_commit"]])
+                need(proof.get("guest_provenance") == identity["guest_image"], "proof guest image provenance mismatch")
+                coverage = {"gates": sorted(key for key, passed in summary["gates"].items() if passed),
+                            "cases": ["correctness"], "backends": [summary["backend"]]}
             result = {"checks": ["native-counted-raw-proof", "original-campaign-binding"],
-                      "coverage": {"gates": sorted(key for key, passed in summary["gates"].items() if passed),
-                                   "cases": ["correctness"], "backends": [summary["backend"]]}, "status": "CORRECTNESS_PASS"}
+                      "coverage": coverage, "status": "CORRECTNESS_PASS"}
         elif kind == "performance" and identity.get("evaluation_format") == "comparison-runtime-v1":
             verifier.protocol(identity, provenance)
             bridge = verifier.native("evolve/comparison_runtime.py")
@@ -525,7 +607,7 @@ def register(root, kind, identity, provenance, coverage=None, max_age_seconds=No
     original = _provenance(root, kind, provenance)
     verified, files = _verify(root, kind, identity, original)
     if coverage is not None:
-        need(isinstance(coverage, dict) and set(coverage) <= {"gates", "cases", "backends"}, "coverage fields")
+        need(isinstance(coverage, dict) and set(coverage) <= {"gates", "cases", "backends", "configurations", "topologies"}, "coverage fields")
         for name, required in coverage.items():
             need(isinstance(required, list) and all(isinstance(item, str) for item in required), "coverage values")
             if not set(required) <= set(verified.get("coverage", {}).get(name, [])):
@@ -666,7 +748,7 @@ def lookup(root, kind, identity, context=None, now=None):
         required = context.get("required_coverage", {})
         need(isinstance(required, dict), "required coverage must be an object")
         for field, values in required.items():
-            need(field in {"gates", "cases", "backends"} and isinstance(values, list), "required coverage")
+            need(field in {"gates", "cases", "backends", "configurations", "topologies"} and isinstance(values, list), "required coverage")
             if not set(values) <= set(record["verification"].get("coverage", {}).get(field, [])):
                 status = "new-measurement-needed"
                 reasons.append("missing required coverage: " + field)
