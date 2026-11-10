@@ -1,0 +1,18 @@
+{
+  "id": "c1r5-b-legacy-001",
+  "campaign": "codex-compress-lib-r5-2026-11-10",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794350970.3210185,
+  "identity": {
+    "build": "c1-5e84ca928dee-legacy",
+    "backend": "zswap",
+    "mode": "plain",
+    "workload": "compression",
+    "config_id": "c1-legacy",
+    "correctness_case": "b-legacy",
+    "topology_id": "single"
+  },
+  "protocol_sha256": "e9e282998de6bc59c2563b398f5968c33f1a5ee219a06cca6e15267d9a9511e3",
+  "started_unix": 1794350970.3683784
+}

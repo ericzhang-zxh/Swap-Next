@@ -1,0 +1,54 @@
+{
+  "id": "H22",
+  "status": "admitted",
+  "owner": "/root/final_independent_review",
+  "scope": "Independent read-only admission of R5; source audit already passed in the owned review document. No implementation or runtime.",
+  "output": "docs/research/2026-11-10-xswap-compression-tiering/H22-Nehalem-admission-review.md",
+  "h19_commit": "92b221bcb32b9fad1182547736a97c20d1d560cd",
+  "integrated_commit": "f442a98",
+  "frozen_contract_commit": "1144d83",
+  "campaign": "codex-compress-lib-r5-2026-11-10",
+  "candidate": "c1-shared-store-r5",
+  "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+  "protocol_sha256": "e9e282998de6bc59c2563b398f5968c33f1a5ee219a06cca6e15267d9a9511e3",
+  "policy_sha256": "283245b9ee065feb8b89858127d1dc03ca564e91bc72ce356c74e516d9af5881",
+  "continuation_sha256": "0fde862de9da0c4fabccb8903cda1f5d36515407dc71854424013f4445161765",
+  "actual_budget_created": 1794350186.6756349,
+  "wall_seconds": 52823,
+  "actual_deadline": 1794403009.6756349,
+  "latest_allowed_deadline": 1794403573.5792072,
+  "remaining_caps": {
+    "probe_guests": 24,
+    "fast_guests": 86,
+    "builds": 6
+  },
+  "prior_spent": {
+    "guests": 10,
+    "builds": 4
+  },
+  "resource_reallocation": "Two unused fast slots transferred to probe; all prior costs and frozen files remain.",
+  "static_status": "SCOPE_PASS",
+  "review_record_canonical_sha256": "817c2760536d69a5779de34ee4fb9abd91ba3202e5bde2a2c2d4a3c45c5d44a7",
+  "preparation_correction": "Mechanism initially bound the review file byte hash instead of native canonical record_sha256. Native preflight stopped before runtime; mechanism now corrected and mechanisms.validate passes. No frozen inputs or costs changed.",
+  "reused_builds": [
+    "c1-base-common-20261110",
+    "c1-5e84ca928dee-legacy",
+    "c1-7d5a3cfab2ab-debug-v2"
+  ],
+  "initial_ticket": "c1r5-b-common-001",
+  "initial_ticket_status": "RESERVED; no raw runtime. Known incomplete-ticket close action must not be executed while this review is pending.",
+  "primary_checks": "171 merged standard tests and 269 evolve tests passed. All three native verify_build_binding calls passed.",
+  "remaining_checks": [
+    "Exact frozen protocol/configuration validation and timing invariance",
+    "All four prior budget/protocol hashes and aggregate resource/deadline accounting",
+    "Exact current source/worktree/static/native structural review and no applicable veto",
+    "Native validation of three reusable build artifacts without launching a build",
+    "Initial reservation identity and absence of runtime; final PASS or concrete blocker"
+  ],
+  "forbidden": [
+    "No source edits except the owned review document",
+    "No campaign-state mutation, build, guest, push, publication or delegation"
+  ],
+  "review_sha256": "cd48d05ccfc6bc6cbdecc3c7cbe74dc368c40919410cc6e11da099983c6a9a08"
+}

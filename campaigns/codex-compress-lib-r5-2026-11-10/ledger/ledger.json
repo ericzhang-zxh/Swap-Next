@@ -1,0 +1,649 @@
+[
+  {
+    "id": "07bd9dd43a244a7590f9ca7ea1b8fc77",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": null,
+    "case_id": "b-common",
+    "config_id": "c1-common",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "role": "baseline",
+    "build": "c1-base-common-20261110",
+    "status": "BUILD_VERIFIED",
+    "started": 1794350768.458695,
+    "build_reserved": false,
+    "build_reused": true,
+    "build_manifest": "benchmark/kernel/builds/c1-base-common-20261110/result.json",
+    "build_manifest_sha256": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+    "build_provenance": "benchmark/kernel/builds/c1-base-common-20261110/configured-build.json",
+    "build_provenance_sha256": "9575b9f4422433f8a97d5f32dd314d73bba1d82c72fe486202ffd899f618b407",
+    "finished": 1794350768.5055833,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "7aa5714064c80a9b789c223d59aa831d493f5adc74240719ecd565e549160273",
+      "record_sha256": "fa30737aad1f8aaf233f74c717cb9312779ff1bf2175de684a70790544fcae93"
+    }
+  },
+  {
+    "id": "adf0fccb7e8c4a0dbedc7d7d99af2760",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": "c1-shared-store-r5",
+    "case_id": "c-numa",
+    "config_id": "c1-debug-v2",
+    "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+    "role": "candidate",
+    "build": "c1-7d5a3cfab2ab-debug-v2",
+    "status": "BUILD_VERIFIED",
+    "started": 1794350797.9410877,
+    "build_reserved": false,
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "changed_paths": [
+        "include/linux/cpuhotplug.h",
+        "include/linux/page_compress.h",
+        "mm/Kconfig",
+        "mm/Makefile",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c",
+        "mm/zswap.c"
+      ],
+      "added_paths": [
+        "include/linux/page_compress.h",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c"
+      ],
+      "changed_lines": 1362,
+      "checker_identity": {
+        "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+      },
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794350798166946971-698cdc19297a/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 1,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794350798166946971-698cdc19297a/checkpatch.log",
+        "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+      },
+      "checkpatch-filtered": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794350798166946971-698cdc19297a/checkpatch-filtered.log",
+        "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+      },
+      "checkpatch_advisory": {
+        "type": "FILE_PATH_CHANGES",
+        "classification": "administrative_allowed_add",
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "validated_by": "checkpatch-filtered"
+      }
+    },
+    "build_reused": true,
+    "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/result.json",
+    "build_manifest_sha256": "d27ba832157cc32c334d3ecf9decdf7d18e90c2438dfa857ad61656e0fd1b6ff",
+    "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/configured-build.json",
+    "build_provenance_sha256": "0a59141357fd35607296e8ee52226c29d4b284bb467d5aab18dd6485d3c532a5",
+    "finished": 1794350799.5226035,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "4d6926a3bca691abbc6142660876420bac2f690926417481bf0dc556e4b31ac9",
+      "record_sha256": "d2f262a47225151f83c159e389225e62bc9ff6303dc652394f85382564c7b586"
+    }
+  },
+  {
+    "id": "457baa414e03478ead7089412884a4fb",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": "c1-shared-store-r5",
+    "case_id": "c-debug",
+    "config_id": "c1-debug-v2",
+    "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+    "role": "candidate",
+    "build": "c1-7d5a3cfab2ab-debug-v2",
+    "status": "BUILD_VERIFIED",
+    "started": 1794350865.5398436,
+    "build_reserved": false,
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "changed_paths": [
+        "include/linux/cpuhotplug.h",
+        "include/linux/page_compress.h",
+        "mm/Kconfig",
+        "mm/Makefile",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c",
+        "mm/zswap.c"
+      ],
+      "added_paths": [
+        "include/linux/page_compress.h",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c"
+      ],
+      "changed_lines": 1362,
+      "checker_identity": {
+        "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+      },
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794350865767252991-698cdc19297a/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 1,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794350865767252991-698cdc19297a/checkpatch.log",
+        "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+      },
+      "checkpatch-filtered": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794350865767252991-698cdc19297a/checkpatch-filtered.log",
+        "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+      },
+      "checkpatch_advisory": {
+        "type": "FILE_PATH_CHANGES",
+        "classification": "administrative_allowed_add",
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "validated_by": "checkpatch-filtered"
+      }
+    },
+    "build_reused": true,
+    "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/result.json",
+    "build_manifest_sha256": "d27ba832157cc32c334d3ecf9decdf7d18e90c2438dfa857ad61656e0fd1b6ff",
+    "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/configured-build.json",
+    "build_provenance_sha256": "0a59141357fd35607296e8ee52226c29d4b284bb467d5aab18dd6485d3c532a5",
+    "finished": 1794350867.123466,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "4d6926a3bca691abbc6142660876420bac2f690926417481bf0dc556e4b31ac9",
+      "record_sha256": "d2f262a47225151f83c159e389225e62bc9ff6303dc652394f85382564c7b586"
+    }
+  },
+  {
+    "id": "4977d4969cfc4195aa78d8c0f83f3cd4",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": null,
+    "case_id": "b-legacy",
+    "config_id": "c1-legacy",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "role": "baseline",
+    "build": "c1-5e84ca928dee-legacy",
+    "status": "BUILD_VERIFIED",
+    "started": 1794350970.1390395,
+    "build_reserved": false,
+    "build_reused": true,
+    "build_manifest": "benchmark/kernel/builds/c1-5e84ca928dee-legacy/result.json",
+    "build_manifest_sha256": "ddac55cc53053dae857517e7c3f0dffd0815f61f89c5e5c92051e990ecdcb2cc",
+    "build_provenance": "benchmark/kernel/builds/c1-5e84ca928dee-legacy/configured-build.json",
+    "build_provenance_sha256": "cc4893e70e8135468cddbe6a861555243e8316f879c96d9242293f999414edb6",
+    "finished": 1794350970.1859667,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "5d5c13df8786daf1e13ad2d013b6df74ebc6ab3aa4e1d801d6765535f557123d",
+      "record_sha256": "91c2023aee54e887340a592bf1ac76e1b273a4c86b2e735b3ac463196bce0fc0"
+    }
+  },
+  {
+    "id": "96a631933b224dd98e46e3d0ef2d2a39",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": "c1-shared-store-r5",
+    "case_id": "c-common",
+    "config_id": "c1-common",
+    "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+    "role": "candidate",
+    "build": "c1-7d5a3cfab2ab-common",
+    "status": "BUILD_VERIFIED",
+    "started": 1794350989.2192643,
+    "build_reserved": true,
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "changed_paths": [
+        "include/linux/cpuhotplug.h",
+        "include/linux/page_compress.h",
+        "mm/Kconfig",
+        "mm/Makefile",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c",
+        "mm/zswap.c"
+      ],
+      "added_paths": [
+        "include/linux/page_compress.h",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c"
+      ],
+      "changed_lines": 1362,
+      "checker_identity": {
+        "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+      },
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794350989450307415-698cdc19297a/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 1,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794350989450307415-698cdc19297a/checkpatch.log",
+        "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+      },
+      "checkpatch-filtered": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794350989450307415-698cdc19297a/checkpatch-filtered.log",
+        "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+      },
+      "checkpatch_advisory": {
+        "type": "FILE_PATH_CHANGES",
+        "classification": "administrative_allowed_add",
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "validated_by": "checkpatch-filtered"
+      }
+    },
+    "execution_started": true,
+    "build_reused": false,
+    "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-common/result.json",
+    "build_manifest_sha256": "4e59c3c5dad923edb29027ed555b1fab18f23c8fd0dce86ad80abd1017329216",
+    "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-common/configured-build.json",
+    "build_provenance_sha256": "4f1a5881072d1892fd05eda01a7ac0271c0385618568ed1a0c9eb564428e0160",
+    "finished": 1794351106.1994796,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "6fd3643dec6a7403dd2dd5849502c74dd39f437f647152360bed0fb03d9f2a58",
+      "record_sha256": "51269d927cae0b77d68a148d6113ba6bec61b5a05b43396c5ff689b396abfe17"
+    }
+  },
+  {
+    "id": "cea9eee3891045ad869e90600f7e11c0",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": "c1-shared-store-r5",
+    "case_id": "c-compressed",
+    "config_id": "c1-common",
+    "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+    "role": "candidate",
+    "build": "c1-7d5a3cfab2ab-common",
+    "status": "BUILD_VERIFIED",
+    "started": 1794351145.1947737,
+    "build_reserved": false,
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "changed_paths": [
+        "include/linux/cpuhotplug.h",
+        "include/linux/page_compress.h",
+        "mm/Kconfig",
+        "mm/Makefile",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c",
+        "mm/zswap.c"
+      ],
+      "added_paths": [
+        "include/linux/page_compress.h",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c"
+      ],
+      "changed_lines": 1362,
+      "checker_identity": {
+        "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+      },
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351145426926847-698cdc19297a/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 1,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351145426926847-698cdc19297a/checkpatch.log",
+        "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+      },
+      "checkpatch-filtered": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351145426926847-698cdc19297a/checkpatch-filtered.log",
+        "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+      },
+      "checkpatch_advisory": {
+        "type": "FILE_PATH_CHANGES",
+        "classification": "administrative_allowed_add",
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "validated_by": "checkpatch-filtered"
+      }
+    },
+    "build_reused": true,
+    "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-common/result.json",
+    "build_manifest_sha256": "4e59c3c5dad923edb29027ed555b1fab18f23c8fd0dce86ad80abd1017329216",
+    "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-common/configured-build.json",
+    "build_provenance_sha256": "4f1a5881072d1892fd05eda01a7ac0271c0385618568ed1a0c9eb564428e0160",
+    "finished": 1794351146.7776937,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "6fd3643dec6a7403dd2dd5849502c74dd39f437f647152360bed0fb03d9f2a58",
+      "record_sha256": "51269d927cae0b77d68a148d6113ba6bec61b5a05b43396c5ff689b396abfe17"
+    }
+  },
+  {
+    "id": "c9173cca017042b3a004b7494281ef01",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": "c1-shared-store-r5",
+    "case_id": "c-legacy",
+    "config_id": "c1-legacy",
+    "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+    "role": "candidate",
+    "build": "c1-7d5a3cfab2ab-legacy",
+    "status": "BUILD_VERIFIED",
+    "started": 1794351170.656777,
+    "build_reserved": true,
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "changed_paths": [
+        "include/linux/cpuhotplug.h",
+        "include/linux/page_compress.h",
+        "mm/Kconfig",
+        "mm/Makefile",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c",
+        "mm/zswap.c"
+      ],
+      "added_paths": [
+        "include/linux/page_compress.h",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c"
+      ],
+      "changed_lines": 1362,
+      "checker_identity": {
+        "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+      },
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351170882480730-698cdc19297a/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 1,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351170882480730-698cdc19297a/checkpatch.log",
+        "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+      },
+      "checkpatch-filtered": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351170882480730-698cdc19297a/checkpatch-filtered.log",
+        "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+      },
+      "checkpatch_advisory": {
+        "type": "FILE_PATH_CHANGES",
+        "classification": "administrative_allowed_add",
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "validated_by": "checkpatch-filtered"
+      }
+    },
+    "execution_started": true,
+    "build_reused": false,
+    "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-legacy/result.json",
+    "build_manifest_sha256": "3bb5f7fe6ab35e642ec57667f19c95e61b2c3e814af460c4fc60a3259ffaae1c",
+    "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-legacy/configured-build.json",
+    "build_provenance_sha256": "bf9c97f63b15b7db4cddd20bd68a0f5238b4a618f3995dec9244dbca5c845bac",
+    "finished": 1794351287.1456325,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "0daeb8c42a534213a7f0049df7c8ae3f78943b12b20bb60b0d118c0044e4a737",
+      "record_sha256": "1bc11c800294dfa420d3201cd9409831f8f035cd4bd023bc2086c085d3df3529"
+    }
+  },
+  {
+    "id": "bf0dafb88d744b5192f634e4e1f49580",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": "c1-shared-store-r5",
+    "case_id": "c-race",
+    "config_id": "c1-kcsan",
+    "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+    "role": "candidate",
+    "build": "c1-7d5a3cfab2ab-kcsan",
+    "status": "BUILD_VERIFIED",
+    "started": 1794351319.0140748,
+    "build_reserved": true,
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "changed_paths": [
+        "include/linux/cpuhotplug.h",
+        "include/linux/page_compress.h",
+        "mm/Kconfig",
+        "mm/Makefile",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c",
+        "mm/zswap.c"
+      ],
+      "added_paths": [
+        "include/linux/page_compress.h",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c"
+      ],
+      "changed_lines": 1362,
+      "checker_identity": {
+        "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+      },
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351319241279572-698cdc19297a/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 1,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351319241279572-698cdc19297a/checkpatch.log",
+        "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+      },
+      "checkpatch-filtered": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351319241279572-698cdc19297a/checkpatch-filtered.log",
+        "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+      },
+      "checkpatch_advisory": {
+        "type": "FILE_PATH_CHANGES",
+        "classification": "administrative_allowed_add",
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "validated_by": "checkpatch-filtered"
+      }
+    },
+    "execution_started": true,
+    "build_reused": false,
+    "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-kcsan/result.json",
+    "build_manifest_sha256": "f38a715c8df0424aaef5d3ff609fb825f8e860cba2f3bdd65962cfe66b9cb71a",
+    "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-kcsan/configured-build.json",
+    "build_provenance_sha256": "b13e189e57c16f32fa8b11f59795700efe1e57d764af9ed36cd20f7a60d666ec",
+    "finished": 1794351445.1722667,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "608fe60c313c8396d3cbc0911ffc4cecfc8d11367bb5b17b4be37fe6d1a8bdc4",
+      "record_sha256": "40616dc155504390a1521ff48a46665b0f0eb0d74a2c6096e3211ca8247841d4"
+    }
+  },
+  {
+    "id": "5239a706edc54efaa166e63f9da152b8",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": "c1-shared-store-r5",
+    "case_id": "c-noswap",
+    "config_id": "c1-noswap",
+    "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+    "role": "candidate",
+    "build": "c1-7d5a3cfab2ab-noswap",
+    "status": "BUILD_VERIFIED",
+    "started": 1794351527.8016946,
+    "build_reserved": true,
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "changed_paths": [
+        "include/linux/cpuhotplug.h",
+        "include/linux/page_compress.h",
+        "mm/Kconfig",
+        "mm/Makefile",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c",
+        "mm/zswap.c"
+      ],
+      "added_paths": [
+        "include/linux/page_compress.h",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c"
+      ],
+      "changed_lines": 1362,
+      "checker_identity": {
+        "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+      },
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351528026248248-698cdc19297a/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 1,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351528026248248-698cdc19297a/checkpatch.log",
+        "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+      },
+      "checkpatch-filtered": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351528026248248-698cdc19297a/checkpatch-filtered.log",
+        "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+      },
+      "checkpatch_advisory": {
+        "type": "FILE_PATH_CHANGES",
+        "classification": "administrative_allowed_add",
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "validated_by": "checkpatch-filtered"
+      }
+    },
+    "execution_started": true,
+    "build_reused": false,
+    "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-noswap/result.json",
+    "build_manifest_sha256": "d08d6aaee0576169527a23e38462728a0065430960056447f8260452e7575bf6",
+    "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-noswap/configured-build.json",
+    "build_provenance_sha256": "7494f5dbbf6d01d3bb3d455691517b8fd1a90be2ff822d1a2f060f478548f404",
+    "finished": 1794351635.152182,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "03a02d82f8a0138fac56b809e9a99e1dd52d01a0327f60d1f80dbcb08679ebc6",
+      "record_sha256": "7d87034de1baedece729f25ebbe4ad945dacde33bf476df7884dabc7426e71ca"
+    }
+  },
+  {
+    "id": "b9816127cec74100a6ff7ce7bdaa297e",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": "c1-shared-store-r5",
+    "case_id": "c-no-frontends",
+    "config_id": "c1-no-frontends",
+    "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+    "role": "candidate",
+    "build": "c1-7d5a3cfab2ab-no-frontends",
+    "status": "BUILD_VERIFIED",
+    "started": 1794351657.7731285,
+    "build_reserved": true,
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "changed_paths": [
+        "include/linux/cpuhotplug.h",
+        "include/linux/page_compress.h",
+        "mm/Kconfig",
+        "mm/Makefile",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c",
+        "mm/zswap.c"
+      ],
+      "added_paths": [
+        "include/linux/page_compress.h",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c"
+      ],
+      "changed_lines": 1362,
+      "checker_identity": {
+        "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+      },
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351658001116019-698cdc19297a/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 1,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351658001116019-698cdc19297a/checkpatch.log",
+        "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+      },
+      "checkpatch-filtered": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/static/1794351658001116019-698cdc19297a/checkpatch-filtered.log",
+        "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+      },
+      "checkpatch_advisory": {
+        "type": "FILE_PATH_CHANGES",
+        "classification": "administrative_allowed_add",
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "validated_by": "checkpatch-filtered"
+      }
+    },
+    "execution_started": true,
+    "build_reused": false,
+    "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-no-frontends/result.json",
+    "build_manifest_sha256": "5b5def31917e8673cf19c78ee3a76cf2dc8fa304b2e2c263561f58f76b2f72f4",
+    "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-no-frontends/configured-build.json",
+    "build_provenance_sha256": "c40af0b9f8f3c5bbfd9f6b9d11818ef0b1ba16add0229dd64a3fa6211367487b",
+    "finished": 1794351765.122341,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "798b14dd519e902eac8abf370bb88a94bdde92520dd4e5e1a8d823b6448e45c8",
+      "record_sha256": "4d6be52f71778de5e1b4f827b7265ae9030c4fbc80edebd275fe37c6439d9d44"
+    }
+  }
+]
