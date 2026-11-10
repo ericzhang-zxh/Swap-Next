@@ -277,9 +277,14 @@ def plan(s):
     if not correctness.get("passed"):
         if correctness.get("failed") or correctness.get("attempted"):
             return _finish(s, "Retained correctness attempt is failed or incomplete: " + correctness.get("reason", "inspect raw evidence"))
-        return action("correctness", reason="Run the frozen correctness route with the trusted runner and counted reservation.",
-                      identity=ident, expects=["Validated exact-commit raw correctness result with serial/hash/build/reservation provenance.",
-                                               "Retain failed or ambiguous attempts; no copied PASS summary."])
+        return action("correctness", reason=correctness.get("reason") or
+                      "Run the frozen correctness route with the trusted runner and counted reservation.",
+                      identity={**ident, **({"matrix": {key: correctness.get(key) for key in
+                          ("verified_cases", "next_missing_case", "missing_builds", "matrix_complete")}}
+                          if correctness.get("pending") else {})},
+                      expects=["Validated exact-commit raw correctness result with serial/hash/build/reservation provenance.",
+                               "Retain failed or ambiguous attempts; no copied PASS summary.",
+                               "For a configuration matrix, preserve each counted result and write its canonical manifest only after full validation."])
     probe = candidate.get("probe")
     if probe:
         if not probe.get("attested") or probe.get("status") != "PROBE_PASS":
@@ -806,6 +811,8 @@ class Session:
 
     def _correctness(self, record, identity, protocol):
         commit = identity.get("candidate_commit")
+        if protocol.get("protocol_revision") == 8:
+            return self._matrix_correctness(record, commit, protocol)
         found, invalid = [], []
         paths = sorted(self.directory.glob("runs/guests/*/result.json"))
         alias = self.directory / "candidates" / record["id"] / "correctness.json"
@@ -848,6 +855,26 @@ class Session:
                 return {"passed": False, "attempted": True,
                         "reason": "Counted correctness reservation has no validated result: " + path.stem}
         return {"passed": False}
+
+    def _matrix_correctness(self, record, commit, protocol):
+        alias = self.directory / "candidates" / record["id"] / "correctness.json"
+        relative = str(alias.relative_to(self.root))
+        manifest = self._data(relative)
+        # Bind progress to retained evidence. The validator separately verifies
+        # bytes, source/configuration identities and single-use reservations.
+        paths = set(self.directory.glob("ledger/guest-reservations/*.json"))
+        paths.update(self.directory.glob("runs/guests/*/result.json"))
+        paths.update(self.directory.glob("runs/guests/*/serial.log"))
+        paths.add(self.directory / "ledger/ledger.json")
+        for path in sorted(paths):
+            need(path.resolve().is_relative_to(self.root), "matrix evidence escapes repository")
+            self._observed[str(path.relative_to(self.root))] = sha(path) if path.is_file() else None
+        progress = correctness_proof.matrix_progress(protocol, self.root, commit,
+                         manifest=manifest, manifest_path=relative)
+        if progress.get("passed") and manifest is None:
+            progress.update(passed=False, pending=True, matrix_complete=True,
+                            reason="All matrix rows validated; retain the canonical correctness manifest before timing.")
+        return progress
 
     def _candidate_snapshot(self, record, s, state, frozen, protocol):
         ident = name(record["id"], "candidate")

@@ -8,6 +8,7 @@ backlogs and baseline choices. Readiness is capability, not authorization.
 import argparse
 import copy
 import fcntl
+import fnmatch
 import hashlib
 import importlib.util
 import json
@@ -460,7 +461,12 @@ def select_line(root=ROOT, line_id=None, *, contributor=None):
                 reasons.append("profile is not executable")
             if idea["mechanism_evidence_type"] not in profile["mechanism_evidence"]:
                 reasons.append("missing mechanism evidence capability: " + idea["mechanism_evidence_type"])
-            if not set(idea["affected_paths"]) <= set(profile["allowed_modify"]):
+            # Match additions with the controller's same-directory rule.
+            if any(path not in profile["allowed_modify"] and not any(
+                    PurePosixPath(path).parent == PurePosixPath(pattern).parent and
+                    fnmatch.fnmatchcase(PurePosixPath(path).name, PurePosixPath(pattern).name)
+                    for pattern in profile["allowed_add"])
+                    for path in idea["affected_paths"]):
                 reasons.append("idea needs paths outside approved profile")
             item = {"line": line["line"], "idea": idea["id"], "priority": idea["priority"],
                     "reason": idea["selection_reason"], "budget": budget, "profile": profile["id"]}

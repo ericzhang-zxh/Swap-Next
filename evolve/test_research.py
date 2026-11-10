@@ -235,6 +235,28 @@ class ResearchTest(unittest.TestCase):
         self.assertEqual(selected["blocked"][0]["idea"], "third")
         self.assertFalse(selected["execution_authorized"])
 
+    def test_selection_accepts_only_trusted_addition_paths(self):
+        self.profile["allowed_add"] = [
+            "mm/page_compress.c",
+            "tools/testing/selftests/mm/swap_next_*.c",
+        ]
+        self.put("evolve/profiles/swap-core.json", self.profile)
+        for path, allowed in [
+            ("mm/page_compress.c", True),
+            ("tools/testing/selftests/mm/swap_next_compression.c", True),
+            ("mm/unapproved.c", False),
+            ("tools/testing/selftests/mm/subdir/swap_next_compression.c", False),
+            ("tools/testing/selftests/mm/unapproved.c", False),
+        ]:
+            with self.subTest(path=path):
+                self.line["ideas"][0]["affected_paths"] = [path]
+                self.put("campaigns/lines/research.json", self.line)
+                result = r.select_line(self.root, contributor="fixture-contributor")
+                self.assertEqual(result["selected"] is not None, allowed)
+                if not allowed:
+                    self.assertIn("idea needs paths outside approved profile",
+                                  result["blocked"][0]["reasons"])
+
     def test_value_record_is_bound_to_report_protocol_and_frozen_policy(self):
         self.campaign("c")
         contract = self.contract

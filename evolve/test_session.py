@@ -554,6 +554,41 @@ class SessionTests(unittest.TestCase):
             self.assertIn("source evidence expired", row["evidence_error"])
         self.assertEqual(self.calls, [])
 
+    def test_matrix_partial_coverage_continues_without_repeating_rows(self):
+        self.prepare_candidate()
+        self.review("review-ok")
+        self.correctness = {"passed": False, "pending": True, "attempted": False,
+                            "verified_cases": ["baseline-regression"],
+                            "next_missing_case": {"id": "baseline-legacy"},
+                            "missing_builds": [], "reason": "Complete next frozen case."}
+        item = self.driver.next()
+        self.assertEqual(item["stage"], "correctness")
+        self.assertEqual(item["identity"]["matrix"]["verified_cases"], ["baseline-regression"])
+        self.assertEqual(item["identity"]["matrix"]["next_missing_case"]["id"], "baseline-legacy")
+        self.correctness.update(pending=False, attempted=True, reason="Missing raw result for counted row.")
+        item = self.driver.next()
+        self.assertEqual(item["stage"], "export")
+        self.assertIn("Missing raw result", item["reason"])
+
+    def test_matrix_validation_needs_canonical_manifest_before_timing(self):
+        protocol = dict(self.protocol, protocol_revision=8)
+        proof = {"proof_schema_version": 2, "candidate_commit": self.commit}
+        progress = {"passed": True, "pending": False, "manifest_data": proof,
+                    "verified_cases": ["baseline-regression", "candidate-regression"]}
+        with patch.object(s.correctness_proof, "matrix_progress", return_value=progress, create=True):
+            result = s.Session._correctness(self.driver, {"id": "one"},
+                                          {"candidate_commit": self.commit}, protocol)
+            self.assertFalse(result["passed"])
+            self.assertTrue(result["matrix_complete"])
+            self.assertFalse((self.directory / "candidates/one/correctness.json").exists())
+        s.write(self.directory / "candidates/one/correctness.json", proof)
+        with patch.object(s.correctness_proof, "matrix_progress",
+                          return_value={"passed": True, "pending": False}, create=True) as verify:
+            result = s.Session._correctness(self.driver, {"id": "one"},
+                                          {"candidate_commit": self.commit}, protocol)
+            self.assertTrue(result["passed"])
+            self.assertEqual(verify.call_args.kwargs["manifest"], proof)
+
     def test_no_done_boolean_or_slow_dispatch(self):
         self.prepare_candidate()
         item = self.driver.next()

@@ -43,6 +43,8 @@ def explain(root):
     summary = d.extract(root, "test-line")
     story = d.story_template(summary)
     story["headline"] = "A fast screen needs further review."
+    for item in story.get("patches", []):
+        item["patch"] = (root / item["source"]).read_text()
     ref = "campaigns/test-line/ledger/ledger.json"
     for section in story["sections"]:
         section["evidence"] = [ref]
