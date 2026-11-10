@@ -1,5 +1,9 @@
 # XSwap compression and tiering board
 
+## Current checkpoint: C1 functional coverage complete, timing incomplete
+
+R5 is closed after full C1 correctness (eight guests and two disabled builds) and one failed baseline timing guest. Native correctness source and raw failure are preserved; see runtime-incident-006.md. Total logical C1 costs are nineteen guests and nine builds. No guest or build is running. H24 prepares C2 trusted capability in isolation; K3 reviews exact source feasibility; H25 independently diagnoses the timing observer. C2 has no implementation or runtime result yet. Final family review and delivery remain pending.
+
 ## Current coordinator checkpoint (2026-11-10)
 
 C1 remains incomplete. The unchanged shared-library candidate is `7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad` / tree `8b085adc109e3b5467c3de998f11b04517f052a5`. The original contract and R2-R4 are closed, preserving ten guest attempts and four builds. No calibration or performance result exists. C2/C3 execution still depends on full C1 correctness.

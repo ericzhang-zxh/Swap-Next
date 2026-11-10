@@ -7,7 +7,7 @@
   "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
   "brief_id": "brief-000001-04ef230e0bee",
   "worktree": "worktrees/codex-compress-lib-r5-2026-11-10/c1-shared-store-r5",
-  "status": "active",
+  "status": "closed",
   "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
   "created_unix": 1794350207.580823,
   "protocol_sha256": "b0116802875e4213260f0e2b07a923e8dfd924a247f73f31d24991e3ecd464de",
@@ -15,5 +15,6 @@
     "kind": "reviewed_structure",
     "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
     "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
-  }
+  },
+  "reason": "calibrate failed; inspect campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-a38c3d737d1e3842e1c39e21-0dd8a119.log. Retain all started attempts."
 }

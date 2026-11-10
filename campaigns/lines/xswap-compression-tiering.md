@@ -60,4 +60,16 @@ Baseline origin: upstream or imported reference.
 | --- | --- | --- |
 | [c1-shared-store-r4](../codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4.json) | closed | Infrastructure-incomplete: the explicit two-socket NUMA guest passed all functional and kernel-warning gates, but the frozen validity check rejected boot-time TSC instability and HPET fallback. Preserve its original integration_pass=true and run_valid=false, both counted attempts, and the frozen contract. No timing or full correctness acceptance. |
 
-Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r4-2026-11-10)
+## codex-compress-lib-r5-2026-11-10
+
+Status: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.
+
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Baseline origin: upstream or imported reference.
+
+| Candidate | Status | Reason |
+| --- | --- | --- |
+| [c1-shared-store-r5](../codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5.json) | closed | calibrate failed; inspect campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-a38c3d737d1e3842e1c39e21-0dd8a119.log. Retain all started attempts. |
+
+Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r5-2026-11-10)

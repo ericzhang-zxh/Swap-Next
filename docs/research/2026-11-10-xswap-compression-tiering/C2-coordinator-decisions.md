@@ -33,3 +33,9 @@ C3 source planning may use retained C2 knowledge. Its execution requires complet
 The complete proposed C2 allocation is twelve correctness guests, sixteen probe guests and eighty-four fast guests: 112 planned within 120. Nine candidate configuration builds and one typed expected-negative anchor build consume ten. Native reuse of unchanged A/common and A/legacy builds is required before opening. New inputs or test symbols do not create additional build slots. No failed or interrupted attempt is erased, and no untested subcase is marked complete because it shares a guest.
 
 Confidence is high in these accounting and evidence boundaries, while hook feasibility and the grouped 900-second runtime remain unmeasured. The next acceptance artifact is an exact native capability implementation and independent review, after C1's dependency gate.
+
+## Bounded first-candidate stores
+
+The first C2 implementation uses one nonblocking store token per frontend, held across the complete folio store, per-subpage allocation/cap checks/publication and rollback. Contention returns RETRY with the locked input still authoritative. It never waits for the token or holds a sleepable serialization lock across recursive reclaim. This bounds unpublished store work without relying on the library per-CPU mutex, which protects only a single base-page codec operation.
+
+The implementation review must derive transient backing-page headroom from the actual allocator chain bound and delayed release behavior. A cap check occurs after each real allocation and before publication; a breach rolls back unpublished work. This choice may reduce concurrent write-side throughput and is an explicit prototype cost to measure, not a free simplification. Required race observations may prove intersecting entered operations and refusal, but may not describe serialized stores as simultaneous mutation.

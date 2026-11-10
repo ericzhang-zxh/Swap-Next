@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r5-2026-11-10",
+  "mode": "research",
+  "reason": "calibrate failed; inspect campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-a38c3d737d1e3842e1c39e21-0dd8a119.log. Retain all started attempts.",
+  "frozen_inputs": {
+    "owner.json": "6836c5550adf52d38f382874e3b4918acef9d4b8cf8a577dbbefac8b0315a883",
+    "policy.json": "283245b9ee065feb8b89858127d1dc03ca564e91bc72ce356c74e516d9af5881",
+    "protocol.json": "e9e282998de6bc59c2563b398f5968c33f1a5ee219a06cca6e15267d9a9511e3",
+    "research.json": "0958b23d9b7233a43c25986fbf1885860265bcbfd0eeff94aef0cc4b46c32ca1"
+  },
+  "decisions": [
+    {
+      "id": "decision-17a6759539144dfe788febf9",
+      "action_id": "action-cb46e668057af0d1ab4aa60b",
+      "kind": "propose",
+      "identity": {
+        "brief_id": "brief-000001-04ef230e0bee",
+        "brief_sha256": "4e0a64352ab8e62d15d7a3b891c8a2653457751d51641b2b5f0daf60b6fdb89e",
+        "allowed_parents": [
+          "5e84ca928deeacb4eee656806a003f27d1eca82f"
+        ],
+        "idea": "shared-page-store"
+      },
+      "input_hashes": {
+        "evolve/session.py": "e4067291d7e46e02b6ecdf649dffcbfc8b753ae814e36aed9d5ecb425dae49d6",
+        "evolve/control/controller.py": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "evolve/standard_workflow.py": "f58c77a241f8918181e9ac30020f721d1d5c6ca34a7a748b94a7d8da1ea9053f",
+        "evolve/research.py": "4fd4cbc7b7aeba4398504f41ab7cd2d382286e126a92bb8855baebc04367b76d",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "7061a7b7a97d1f52aa05b416e2eecb93eaf42f5d3a18379ba604c5b5a8a72293",
+        "evolve/calibration_cache.py": "3be207df36ce814c78ba8de89fd8ad9e3ea2a32fcb69270d5ca9e6b0fac0e8f0",
+        "evolve/reference_cache.py": "8fd739eec61e152c179f13819c6384596bca324e389b4f20617874b4f9b9a524",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "linux/scripts/checkpatch.pl": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926",
+        "campaigns/codex-compress-lib-r5-2026-11-10/campaign.json": "053c8d62d97a5c279328904cbeacb05019f55571e43d14b35a0ce196376b3ae2",
+        "campaigns/codex-compress-lib-r5-2026-11-10/protocol.json": "e9e282998de6bc59c2563b398f5968c33f1a5ee219a06cca6e15267d9a9511e3",
+        "campaigns/codex-compress-lib-r5-2026-11-10/policy.json": "283245b9ee065feb8b89858127d1dc03ca564e91bc72ce356c74e516d9af5881",
+        "campaigns/codex-compress-lib-r5-2026-11-10/research.json": "0958b23d9b7233a43c25986fbf1885860265bcbfd0eeff94aef0cc4b46c32ca1",
+        "campaigns/codex-compress-lib-r5-2026-11-10/ledger/ledger.json": null,
+        "campaigns/codex-compress-lib-r5-2026-11-10/ledger/budget.json": "d9c7a61d3d3bfc138cba34a97f7dbe713527ea7945d94c7b5c3077bb2f75ea7d",
+        "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/c1r5-b-common-001.json": "56e2b98a60ca34d2c88e2542c1be4756023e86ddfc2dba0ed67e0a79964b7ecf",
+        "benchmark/kernel/builds/c1-base-common-20261110/result.json": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+        "benchmark/swap-standard/image.json": "05a41c8449135395ea97112233197afbd5ef25eea70d7172e93b32941c870353",
+        "campaigns/codex-compress-lib-r5-2026-11-10/ledger/calibration-probe.json": null,
+        "campaigns/codex-compress-lib-r5-2026-11-10/ledger/calibration-fast.json": null,
+        "campaigns/codex-compress-lib-r5-2026-11-10/archive/population.json": "9a406a5744e0d9a28057c69ce73f42332799ad0ef6e63b1272bd126665843ade",
+        "campaigns/codex-compress-lib-r5-2026-11-10/archive/briefs/brief-000001-04ef230e0bee.json": "4e0a64352ab8e62d15d7a3b891c8a2653457751d51641b2b5f0daf60b6fdb89e"
+      },
+      "payload": {
+        "kind": "propose",
+        "candidate": "c1-shared-store-r5",
+        "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+        "mechanism": {
+          "kind": "reviewed_structure",
+          "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+          "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+        },
+        "reason": "Same exact shared-library source after separately frozen auxiliary Intel CPU correction. Preserve all ten prior attempts, four builds and earlier deadlines; collect fresh full correctness before timing."
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "action-6e94edc142f449cce97c8768",
+      "command": "open",
+      "identity": {
+        "protocol_sha256": "e9e282998de6bc59c2563b398f5968c33f1a5ee219a06cca6e15267d9a9511e3",
+        "policy_sha256": "283245b9ee065feb8b89858127d1dc03ca564e91bc72ce356c74e516d9af5881"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-6e94edc142f449cce97c8768-9fd37c50.log"
+    },
+    {
+      "action_id": "action-7f55179c1a558a2ea67fd178",
+      "command": "brief",
+      "identity": {
+        "fingerprint": "611181bc97cb8f3367ce3cc07bfa9871db8273a4369a8836448bc55ba6f97a5a",
+        "idea": "shared-page-store"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-7f55179c1a558a2ea67fd178-c5621441.log"
+    },
+    {
+      "action_id": "action-ba58e29388a922cbd9bb1e18",
+      "command": "new",
+      "identity": {
+        "brief_id": "brief-000001-04ef230e0bee",
+        "idea": "shared-page-store"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-ba58e29388a922cbd9bb1e18-d6b76a71.log"
+    },
+    {
+      "action_id": "action-1288a742a49f1dc4cfc0365b",
+      "command": "check",
+      "identity": {
+        "candidate": "c1-shared-store-r5",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "checker_identity": {
+          "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+          "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+        }
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-1288a742a49f1dc4cfc0365b-071b637c.log"
+    },
+    {
+      "action_id": "action-a38c3d737d1e3842e1c39e21",
+      "command": "calibrate",
+      "identity": {
+        "candidate": "c1-shared-store-r5",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "fingerprint": "611181bc97cb8f3367ce3cc07bfa9871db8273a4369a8836448bc55ba6f97a5a",
+        "prior_calibration": null
+      },
+      "status": "failed",
+      "returncode": 1,
+      "log": "campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-a38c3d737d1e3842e1c39e21-0dd8a119.log"
+    },
+    {
+      "action_id": "action-607dbad7d15639d195a7a106",
+      "command": "close-candidate",
+      "identity": {
+        "candidate": "c1-shared-store-r5",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-607dbad7d15639d195a7a106-63bdc715.log"
+    },
+    {
+      "action_id": "action-9c46e54b87b1bab5d75cebd1",
+      "command": "close-campaign",
+      "identity": {},
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-9c46e54b87b1bab5d75cebd1-8a1f73a8.log"
+    }
+  ],
+  "candidate_reasons": {
+    "c1-shared-store-r5": "calibrate failed; inspect campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-a38c3d737d1e3842e1c39e21-0dd8a119.log. Retain all started attempts."
+  },
+  "performance_accepted": false,
+  "auto_promote": false
+}
