@@ -1,0 +1,46 @@
+{
+  "artifact_sha256": "4e5aa8ebe342dc1e1a404aa3d83a18b1db9933cc1441adf92616770af57ee258",
+  "reviewer": "Coordinator; real Chrome screenshots and visual inspection",
+  "views": [
+    {
+      "width": 1440,
+      "theme": "light",
+      "screenshot": "campaigns/codex-compress-lib-2026-11-10/runs/visual-qa-20261110/1440-light.png",
+      "sha256": "dfdc7359e6bfd0ed39c28586b708dc71991eb38f2f72d24d5353c713c9fddc26",
+      "readable": true,
+      "no_overflow": true,
+      "collapsed_evidence": true,
+      "charts_visible": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "screenshot": "campaigns/codex-compress-lib-2026-11-10/runs/visual-qa-20261110/1440-dark.png",
+      "sha256": "7c5ed8c01e14848d0b092a586c68f97f3a0fcfc4a76e7949070f62c828a13ca2",
+      "readable": true,
+      "no_overflow": true,
+      "collapsed_evidence": true,
+      "charts_visible": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "screenshot": "campaigns/codex-compress-lib-2026-11-10/runs/visual-qa-20261110/390-light.png",
+      "sha256": "f1ccb4eeab4ce869b0e49b955e09bd2dbd859e97f6612ee10adac13b941d7e21",
+      "readable": true,
+      "no_overflow": true,
+      "collapsed_evidence": true,
+      "charts_visible": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "screenshot": "campaigns/codex-compress-lib-2026-11-10/runs/visual-qa-20261110/390-dark.png",
+      "sha256": "13546a68a6ab52195f00f58bb08b4bba29fa5f20a24f78c749bbc55e3b3041b4",
+      "readable": true,
+      "no_overflow": true,
+      "collapsed_evidence": true,
+      "charts_visible": true
+    }
+  ]
+}

@@ -410,5 +410,6 @@
     "docs/research/2026-11-10-xswap-compression-tiering/K2-review.md"
   ],
   "patches_title": "Core kernel patches",
-  "patches_lead": "Exact excerpts from the pinned full candidate patch. Added-file excerpts retain their source line positions; omitted hunks remain in that patch."
+  "patches_lead": "Exact excerpts from the pinned full candidate patch. Added-file excerpts retain their source line positions; omitted hunks remain in that patch.",
+  "source_commit": "e38880e9363ef3c026028a67d8755df34792ae86"
 }

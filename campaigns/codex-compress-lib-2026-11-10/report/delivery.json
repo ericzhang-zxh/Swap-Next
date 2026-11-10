@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
   "campaign": "codex-compress-lib-2026-11-10",
-  "state": "generated",
+  "state": "visually_checked",
   "evidence_sha256": "b38eac31fdd29ae0ef949df8ab0afff75ec51ce2e83bb0862609d9bfcbfc80c9",
   "artifacts": {
     "summary.json": "b99055846025010b7792da0c4402e1cf33055da25eec2d8d139d0446029dc39e",
     "REPORT.md": "842655175edc4059dee05c9b370928fdd3ae2d457d7ca156e94017bc59509475",
     "explainer.json": "109903477fe5da25228e49d72c8678619b26f7dd126a2beb5b34cd98a0f10341",
-    "explainer.html": "8af96076328d114fd13cf2ea250ca93c0b680d6512ea966e3bb12cf8af9a6e1d",
+    "explainer.html": "4e5aa8ebe342dc1e1a404aa3d83a18b1db9933cc1441adf92616770af57ee258",
     "generate_report.py": "485c80ddc7431bbf5e26fdaa9c435de27721c5bd76d56468d7c97134a065f05d"
   },
-  "story_sha256": "a5db93a3c93cbfb800abe482c682f2f9d68de2a30465e392deb9f825355af9d1",
+  "story_sha256": "86b3fd80e945534b33b745bf84ea9591680914d932f6136e7baa94878062e805",
   "history": [
     {
       "state": "generated",
@@ -27,6 +27,60 @@
     {
       "state": "generated",
       "time": 1794344628.999644
+    },
+    {
+      "state": "generated",
+      "time": 1794344787.9850354
+    },
+    {
+      "state": "visually_checked",
+      "time": 1794344956.6782048
     }
-  ]
+  ],
+  "visual_check": {
+    "artifact_sha256": "4e5aa8ebe342dc1e1a404aa3d83a18b1db9933cc1441adf92616770af57ee258",
+    "reviewer": "Coordinator; real Chrome screenshots and visual inspection",
+    "views": [
+      {
+        "width": 1440,
+        "theme": "light",
+        "screenshot": "campaigns/codex-compress-lib-2026-11-10/runs/visual-qa-20261110/1440-light.png",
+        "sha256": "dfdc7359e6bfd0ed39c28586b708dc71991eb38f2f72d24d5353c713c9fddc26",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-compress-lib-2026-11-10/runs/visual-qa-20261110/1440-dark.png",
+        "sha256": "7c5ed8c01e14848d0b092a586c68f97f3a0fcfc4a76e7949070f62c828a13ca2",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/codex-compress-lib-2026-11-10/runs/visual-qa-20261110/390-light.png",
+        "sha256": "f1ccb4eeab4ce869b0e49b955e09bd2dbd859e97f6612ee10adac13b941d7e21",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-compress-lib-2026-11-10/runs/visual-qa-20261110/390-dark.png",
+        "sha256": "13546a68a6ab52195f00f58bb08b4bba29fa5f20a24f78c749bbc55e3b3041b4",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      }
+    ]
+  }
 }
