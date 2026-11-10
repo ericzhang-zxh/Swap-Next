@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "xswap-compression-library-v1",
+  "version": 1,
+  "description": "C1 shared page/object compression extraction with configuration-bound compressed-path correctness and instrumented swap-in screening.",
+  "executable": true,
+  "allowed_modify": [
+    "mm/zswap.c",
+    "mm/Kconfig",
+    "mm/Makefile",
+    "include/linux/cpuhotplug.h",
+    "tools/testing/selftests/mm/Makefile"
+  ],
+  "allowed_add": [
+    "mm/page_compress.c",
+    "include/linux/page_compress.h",
+    "mm/page_compress_test.c",
+    "tools/testing/selftests/mm/swap_next_compression.c"
+  ],
+  "primary_metrics": [
+    "swapin_seq.mean_ns",
+    "swapin_rand.mean_ns"
+  ],
+  "mechanism_evidence": [
+    "reviewed_structure",
+    "counter_shift"
+  ],
+  "correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings",
+    "compression_evidence",
+    "compression_reset",
+    "compression_roundtrip",
+    "compression_codec_switch",
+    "compression_invalid_codec",
+    "compression_concurrent_fault",
+    "compression_live_destroy",
+    "compression_memcg_balance",
+    "compression_memcg_offline",
+    "compression_memcg_limits",
+    "compression_guest_hotplug",
+    "compression_large_folio",
+    "compression_library_unit",
+    "kasan",
+    "lockdep",
+    "kcsan"
+  ],
+  "correctness_modes": [
+    "plain",
+    "xswap"
+  ],
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ],
+  "resource_cap": {
+    "guest_attempts": 120,
+    "build_attempts": 10,
+    "wall_seconds": 64800
+  },
+  "missing_capabilities": [],
+  "limitations": [
+    "C1 preserves ZSwap semantics and does not claim XSwap independence or tier migration.",
+    "Instrumented compression timing includes probe overhead and is TCG-only exploratory screening.",
+    "Integrated trusted workload and configuration checks gate all timing; real correctness and fresh calibration are still mandatory.",
+    "No automatic acceptance, slow tier or promotion."
+  ],
+  "protocol_revisions": [
+    8
+  ]
+}
