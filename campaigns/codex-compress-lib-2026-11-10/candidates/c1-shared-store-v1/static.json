@@ -1,0 +1,25 @@
+{
+  "status": "STATIC_REJECT",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "changed_paths": [
+    "include/linux/cpuhotplug.h",
+    "include/linux/page_compress.h",
+    "mm/Kconfig",
+    "mm/Makefile",
+    "mm/page_compress.c",
+    "mm/page_compress_test.c",
+    "mm/zswap.c"
+  ],
+  "changed_lines": 1362,
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 1,
+    "evidence": "campaigns/codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1/checkpatch.log",
+    "sha256": "6c4ff056784390e96fc25da7aaca7c28e7aeb06bbc211752b57f07c551f50305"
+  }
+}

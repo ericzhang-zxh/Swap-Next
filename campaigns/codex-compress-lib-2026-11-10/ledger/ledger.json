@@ -1,0 +1,65 @@
+[
+  {
+    "id": "3868cc40b0944c8f9b13b3aa529b5005",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": null,
+    "case_id": "b-common",
+    "config_id": "c1-common",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "role": "baseline",
+    "build": "c1-base-common-20261110",
+    "status": "BUILD_VERIFIED",
+    "started": 1794340417.3399003,
+    "build_reserved": true,
+    "execution_started": true,
+    "build_reused": false,
+    "build_manifest": "benchmark/kernel/builds/c1-base-common-20261110/result.json",
+    "build_manifest_sha256": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+    "build_provenance": "benchmark/kernel/builds/c1-base-common-20261110/configured-build.json",
+    "build_provenance_sha256": "9575b9f4422433f8a97d5f32dd314d73bba1d82c72fe486202ffd899f618b407",
+    "finished": 1794340532.49943,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "7aa5714064c80a9b789c223d59aa831d493f5adc74240719ecd565e549160273",
+      "record_sha256": "1831b8917061672102318f35566dd83c9ff16ed5538b5753d7887b45dec5ee05"
+    }
+  },
+  {
+    "id": "4894c2e365c1463292ae02dd5914fffd",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": null,
+    "case_id": "b-legacy",
+    "config_id": "c1-legacy",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "role": "baseline",
+    "build": "c1-5e84ca928dee-legacy",
+    "status": "BUILD_VERIFIED",
+    "started": 1794340851.4921744,
+    "build_reserved": true,
+    "execution_started": true,
+    "build_reused": false,
+    "build_manifest": "benchmark/kernel/builds/c1-5e84ca928dee-legacy/result.json",
+    "build_manifest_sha256": "ddac55cc53053dae857517e7c3f0dffd0815f61f89c5e5c92051e990ecdcb2cc",
+    "build_provenance": "benchmark/kernel/builds/c1-5e84ca928dee-legacy/configured-build.json",
+    "build_provenance_sha256": "cc4893e70e8135468cddbe6a861555243e8316f879c96d9242293f999414edb6",
+    "finished": 1794340969.2295036,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "5d5c13df8786daf1e13ad2d013b6df74ebc6ab3aa4e1d801d6765535f557123d",
+      "record_sha256": "11f04c1515faaef16b3e168e3690871e5245102de1e848681e1d0e76b21e2d7b"
+    }
+  },
+  {
+    "id": "6e88313ec6184c6a9e46c510e55150e0",
+    "action": "supersede-baseline-infra",
+    "status": "INFRA_RETRY_REQUIRED",
+    "case_id": "b-common",
+    "invalid_run_id": "c1-b-common-001",
+    "replacement_run_id": "c1-b-common-002",
+    "record": "campaigns/codex-compress-lib-2026-11-10/ledger/baseline-infra-supersessions/c1-b-common-001.json",
+    "record_sha256": "8a7a9b4614c0b6336df8d8eda0759747f35f82a17f2bdcd96a73e912e40dd273",
+    "reason": "Retained baseline has the sole blank flat-topology observation defect; retry uses the fixed image."
+  }
+]
