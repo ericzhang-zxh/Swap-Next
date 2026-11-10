@@ -1,0 +1,20 @@
+{
+  "id": "c1-shared-store-r2",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-14db7323de75",
+  "worktree": "worktrees/codex-compress-lib-r2-2026-11-10/c1-shared-store-r2",
+  "status": "closed",
+  "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+  "created_unix": 1794344505.1776578,
+  "protocol_sha256": "956908af8b3d8c29cc7bc1f3fa834a4dd477b486a4bf9748fe84ab7ec6b53a51",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+    "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+  },
+  "reason": "Infrastructure-incomplete: the retained c-debug run completed but strict parsing rejects the expected invalid-codec diagnostic; diagnostic-only replay also identifies false rejection of KUnit zero-skip summaries. Preserve original raw and counted costs (two probe guests, one build). No timing occurred. Continue only under corrected trusted parsing with remaining original logical-phase resources and deadline, unchanged kernel source, and fresh counted correctness evidence."
+}

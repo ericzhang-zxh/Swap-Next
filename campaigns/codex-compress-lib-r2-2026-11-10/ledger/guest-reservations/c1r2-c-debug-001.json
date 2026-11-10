@@ -1,0 +1,18 @@
+{
+  "id": "c1r2-c-debug-001",
+  "campaign": "codex-compress-lib-r2-2026-11-10",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794344992.3016925,
+  "identity": {
+    "build": "c1-7d5a3cfab2ab-debug-v2",
+    "backend": "compressed",
+    "mode": "xswap",
+    "workload": "compression",
+    "config_id": "c1-debug-v2",
+    "correctness_case": "c-debug",
+    "topology_id": "single"
+  },
+  "protocol_sha256": "dd5d28e9b355c0c94cc85750c4393ce8e5f125756013ca82581a2132b1035ed0",
+  "started_unix": 1794344992.3487654
+}

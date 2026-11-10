@@ -1,0 +1,4 @@
+{
+  "kind": "stop",
+  "reason": "Infrastructure-incomplete: the retained c-debug run completed but strict parsing rejects the expected invalid-codec diagnostic; diagnostic-only replay also identifies false rejection of KUnit zero-skip summaries. Preserve original raw and counted costs (two probe guests, one build). No timing occurred. Continue only under corrected trusted parsing with remaining original logical-phase resources and deadline, unchanged kernel source, and fresh counted correctness evidence."
+}

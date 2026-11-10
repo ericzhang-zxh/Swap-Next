@@ -1,0 +1,12 @@
+{
+  "kind": "propose",
+  "candidate": "c1-shared-store-r2",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+    "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+  },
+  "reason": "Continue the same exact source/tree under the separately frozen corrected debug configuration, retaining original phase resource consumption; this is not a new kernel hypothesis or retry of a runtime failure."
+}
