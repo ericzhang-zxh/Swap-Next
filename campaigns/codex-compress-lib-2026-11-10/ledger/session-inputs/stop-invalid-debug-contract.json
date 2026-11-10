@@ -1,0 +1,4 @@
+{
+  "kind": "stop",
+  "reason": "Infrastructure-incomplete: the frozen c1-debug input sets SLUB_TINY=y, which disables the required KASAN. K1 compiled but no candidate guest or timing ran. Preserve this contract, code and spent 3 guests/3 builds; a separately frozen corrected C1 contract must deduct these costs and elapsed time from the original phase caps, with no reset or candidate outcome claim."
+}

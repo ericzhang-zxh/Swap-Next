@@ -7,7 +7,7 @@
   "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
   "brief_id": "brief-000001-cf557787980f",
   "worktree": "worktrees/codex-compress-lib-2026-11-10/c1-shared-store-v1",
-  "status": "active",
+  "status": "closed",
   "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
   "created_unix": 1794340616.313758,
   "protocol_sha256": "f8578dc514993c8e3f6c31e00b914287551837f30ff4b1d39cb1b5ac191e86e6",
@@ -15,5 +15,6 @@
     "kind": "reviewed_structure",
     "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
     "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
-  }
+  },
+  "reason": "Infrastructure-incomplete: the frozen c1-debug input sets SLUB_TINY=y, which disables the required KASAN. K1 compiled but no candidate guest or timing ran. Preserve this contract, code and spent 3 guests/3 builds; a separately frozen corrected C1 contract must deduct these costs and elapsed time from the original phase caps, with no reset or candidate outcome claim."
 }

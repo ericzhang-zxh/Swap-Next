@@ -1,11 +1,11 @@
 {
   "campaign": "codex-compress-lib-2026-11-10",
-  "status": "open",
+  "status": "closed",
   "line": "xswap-compression-tiering",
   "baseline_from": null,
   "machine": "hurricpc",
   "opened": "2026-11-10",
-  "closed": null,
+  "closed": "2026-11-10",
   "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
   "budget": {
     "guest_attempts": 88,

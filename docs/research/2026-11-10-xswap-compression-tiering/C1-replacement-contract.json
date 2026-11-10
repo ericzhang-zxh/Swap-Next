@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "logical_phase": "C1 shared compression library",
+  "superseded_campaign": "codex-compress-lib-2026-11-10",
+  "replacement_campaign": "codex-compress-lib-r2-2026-11-10",
+  "reason": "Frozen debug input conflicts with its required KASAN gate; no candidate guest or timing was executed.",
+  "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+  "old_protocol_sha256": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+  "original_phase_caps": {
+    "probe_guests": 32,
+    "fast_guests": 88,
+    "total_guests": 120,
+    "builds": 10,
+    "wall_seconds": 64800
+  },
+  "spent": {
+    "probe_guests": 3,
+    "fast_guests": 0,
+    "builds": 3
+  },
+  "maximum_replacement_caps": {
+    "probe_guests": 29,
+    "fast_guests": 88,
+    "total_guests": 117,
+    "builds": 7
+  },
+  "original_budget_created": 1794340417.3836553,
+  "original_deadline_unix": 1794405217.3836553,
+  "original_deadline_utc": "2026-11-11T13:53:37.383655+00:00",
+  "clock_authority": "The original enforced budget.created clock; replacement wall_seconds must be shortened so its actual creation cannot extend this deadline. Earlier session preparation start is disclosed separately and is not used to re-anchor execution.",
+  "family_caps_unchanged": {
+    "logical_phases": 3,
+    "total_guests": 360,
+    "builds": 30
+  },
+  "reuse_rule": "Only natively validated unchanged baseline builds may be reused; original costs remain in this phase total, timestamps are retained, and no old raw guest becomes a new independent observation.",
+  "kernel_outcome": "Compilation passed; configured coverage failed. No candidate behavior or speed conclusion."
+}
