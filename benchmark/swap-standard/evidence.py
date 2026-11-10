@@ -191,12 +191,18 @@ COMPRESSED_OBSERVER = 'pid_kretprobe_zswap_load_v1'
 COMPRESSED_TARGET_BYTES = 134217728
 
 
-def configuration_groups():
+def configuration_catalog():
     path = Path(__file__).resolve().with_name('configurations.py')
     spec = importlib.util.spec_from_file_location('swap_standard_bound_configurations', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.GROUPS
+    return module
+
+
+def configuration_groups():
+    return configuration_catalog().GROUPS
+
+
 UNIT_TESTS = ('page_compress_alloc_rollback', 'page_compress_partial_cleanup',
               'page_compress_numa_placement')
 
@@ -541,7 +547,8 @@ def compressed_timing_evidence(text, metrics):
 
 def revision8_identity(text, words, backend, mode, workload, config_id, correctness_case,
                        topology_id, expected_case):
-    GROUPS = configuration_groups()
+    catalog = configuration_catalog()
+    GROUPS = catalog.GROUPS
     identity = {'bench.protocol_revision': '8', 'bench.config_id': config_id,
                 'bench.topology_id': topology_id}
     if correctness_case:
@@ -549,7 +556,7 @@ def revision8_identity(text, words, backend, mode, workload, config_id, correctn
                 'missing frozen correctness identity')
         group = expected_case.get('group')
         require(group in GROUPS, 'unknown correctness group')
-        spec = GROUPS[group]
+        spec = catalog.correctness_group(group, config_id)
         for key, value in {'backend': backend, 'mode': mode, 'workload': workload,
                            'config_id': config_id, 'topology_id': topology_id}.items():
             require(spec[key] == value and expected_case.get(key) == value, 'correctness identity mismatch: ' + key)

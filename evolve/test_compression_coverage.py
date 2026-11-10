@@ -41,8 +41,9 @@ def fixture_protocol(catalog, root, baseline):
     ]
     rows = [dict(id=name, role=role, group=group, **copy.deepcopy(catalog.GROUPS[group]))
             for name, role, group in groups]
+    used_configs = {case["config_id"] for case in rows} | {"c1-noswap", "c1-no-frontends"}
     configs = {name: {"input_config_sha256": catalog.get_config(name, root)["input_config_sha256"]}
-               for name in catalog.CONFIGS if name.startswith("c1-")}
+               for name in used_configs}
     return {
         "campaign": "fixture-c1", "protocol_revision": 8, "baseline_commit": baseline,
         "baseline_build": "c1-baseline-common", "configurations": configs,

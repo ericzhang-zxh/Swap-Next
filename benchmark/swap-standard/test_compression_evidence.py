@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 """Synthetic raw-evidence tests; these never claim executed kernel coverage."""
 import copy
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -309,6 +310,98 @@ class CompressionEvidenceTests(unittest.TestCase):
         self.assertFalse(result['gates']['configuration_identity'])
 
 
+class DebugConfigurationV2Tests(unittest.TestCase):
+    def test_frozen_debug_bytes_are_preserved_and_v2_only_disables_tiny(self):
+        old = (ROOT / 'benchmark/config/compression-debug.config').read_bytes()
+        new = (ROOT / 'benchmark/config/compression-debug-v2.config').read_bytes()
+        self.assertEqual(hashlib.sha256(old).hexdigest(),
+                         'c58461570b79210f9d99c7eb2e3a6e492601960ea73394bb4e4c78b147cd0ba4')
+        self.assertEqual(old.count(b'CONFIG_SLUB_TINY=y\n'), 1)
+        self.assertEqual(new, old.replace(b'CONFIG_SLUB_TINY=y\n',
+                                         b'# CONFIG_SLUB_TINY is not set\n'))
+
+    def test_v2_keeps_all_debug_requirements_and_rejects_tiny(self):
+        import configurations
+        old, new = configurations.CONFIGS['c1-debug'], configurations.CONFIGS['c1-debug-v2']
+        self.assertEqual(new['required'], old['required'])
+        self.assertEqual(new['purposes'], ['correctness'])
+        self.assertEqual(new['forbidden'], old['forbidden'] + ['SLUB_TINY'])
+        self.assertEqual(GROUPS['debug-failures']['config_id'], 'c1-debug')
+        self.assertEqual(GROUPS['numa-lifecycle']['config_id'], 'c1-debug')
+        old_path = ROOT / old['path']
+        new_path = ROOT / new['path']
+        # Input-only fixtures exercise the final-config validator; no Kconfig
+        # resolution or kernel compilation is claimed by this test.
+        configurations.validate_final('c1-debug', old_path, 'correctness')
+        configurations.validate_final('c1-debug-v2', new_path, 'correctness')
+        with self.assertRaisesRegex(ValueError, 'forbidden final CONFIG_SLUB_TINY'):
+            configurations.validate_final('c1-debug-v2', old_path, 'correctness')
+        with self.assertRaisesRegex(ValueError, 'not allowed for timing'):
+            configurations.get_config('c1-debug-v2', purpose='timing')
+
+    def test_v2_final_config_still_requires_kasan_and_real_numa(self):
+        import configurations
+        original = (ROOT / 'benchmark/config/compression-debug-v2.config').read_text()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / '.config'
+            for name in ('KASAN', 'NUMA'):
+                for replacement in ('', '# CONFIG_' + name + ' is not set\n'):
+                    path.write_text(original.replace('CONFIG_' + name + '=y\n', replacement))
+                    with self.subTest(flag=name, replacement=replacement), \
+                            self.assertRaisesRegex(ValueError, 'required final CONFIG_' + name + '=y'):
+                        configurations.validate_final('c1-debug-v2', path, 'correctness')
+
+    def test_versioned_input_is_accepted_only_for_the_two_existing_debug_groups(self):
+        import configurations
+        for group, default in GROUPS.items():
+            self.assertEqual(configurations.correctness_group(group, default['config_id']), default)
+            if group in ('debug-failures', 'numa-lifecycle'):
+                expected = dict(default, config_id='c1-debug-v2')
+                self.assertEqual(configurations.correctness_group(group, 'c1-debug-v2'), expected)
+                for invalid in ('c1-common', 'c1-kcsan', 'c1-debug-v3'):
+                    with self.subTest(group=group, config=invalid), self.assertRaises(ValueError):
+                        configurations.correctness_group(group, invalid)
+            else:
+                with self.subTest(group=group), self.assertRaises(ValueError):
+                    configurations.correctness_group(group, 'c1-debug-v2')
+
+    def parse_debug(self, group, marker=None, expected_config='c1-debug-v2'):
+        body, spec = group_log(group)
+        spec['config_id'] = expected_config
+        text = basic_log(spec['backend'], spec['mode'], 'compression', 'c1-debug-v2',
+                         spec['topology_id'], spec) + body
+        nodes = '0-1' if spec['topology_id'] == 'numa2' else '0'
+        if marker is not None:
+            text = text.replace('ONLINE_NODES ' + nodes + '\n', marker)
+        return evidence.parse(text, 'abc', spec['backend'], spec['mode'], 'compression', 8,
+                              config_id='c1-debug-v2', correctness_case=spec['id'],
+                              topology_id=spec['topology_id'], expected_case=spec)
+
+    def test_v2_parser_accepts_actual_numeric_nodes_for_each_debug_topology(self):
+        for group in ('debug-failures', 'numa-lifecycle'):
+            with self.subTest(group=group):
+                result = self.parse_debug(group)
+                self.assertTrue(all(result['gates'].values()), result)
+
+    def test_v2_parser_rejects_missing_flat_duplicate_or_malformed_nodes(self):
+        common = ('', 'ONLINE_NODES\n', 'ONLINE_NODES \n', 'ONLINE_NODES flat\n',
+                  'ONLINE_NODES 0-2\n', 'ONLINE_NODES 0 extra\n',
+                  'ONLINE_NODES 0\nONLINE_NODES 0-1\n')
+        for group in ('debug-failures', 'numa-lifecycle'):
+            good = '0-1' if group == 'numa-lifecycle' else '0'
+            wrong = '0' if group == 'numa-lifecycle' else '0-1'
+            markers = (*common, 'ONLINE_NODES ' + good + '\n' + 'ONLINE_NODES ' + good + '\n',
+                       'ONLINE_NODES ' + wrong + '\n')
+            for marker in markers:
+                with self.subTest(group=group, marker=marker):
+                    self.assertFalse(self.parse_debug(group, marker)['gates']['configuration_identity'])
+
+    def test_v2_runtime_cannot_claim_the_old_frozen_configuration_id(self):
+        for group in ('debug-failures', 'numa-lifecycle'):
+            with self.subTest(group=group), self.assertRaisesRegex(ValueError, 'config_id'):
+                self.parse_debug(group, expected_config='c1-debug')
+
+
 class TraceObserverTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -391,6 +484,23 @@ class Revision8ProtocolTests(unittest.TestCase):
     def test_complete_new_contract(self):
         from validity import protocol_rules
         self.assertEqual(protocol_rules(self.protocol())['protocol_revision'], 8)
+
+    def test_versioned_debug_contract_requires_its_own_exact_frozen_pin(self):
+        import configurations
+        from validity import protocol_rules
+        original = self.protocol()
+        replacement = copy.deepcopy(original)
+        for case in replacement['correctness_matrix']['cases']:
+            if case['config_id'] == 'c1-debug':
+                case['config_id'] = 'c1-debug-v2'
+        old_pin = replacement['configurations'].pop('c1-debug')
+        replacement['configurations']['c1-debug-v2'] = {
+            'input_config_sha256': configurations.get_config('c1-debug-v2', ROOT)['input_config_sha256']}
+        self.assertEqual(protocol_rules(original)['protocol_revision'], 8)
+        self.assertEqual(protocol_rules(replacement)['protocol_revision'], 8)
+        replacement['configurations']['c1-debug-v2'] = old_pin
+        with self.assertRaisesRegex(ValueError, 'configuration input hash mismatch'):
+            protocol_rules(replacement)
 
     def test_measurement_or_coverage_drift_is_rejected(self):
         from validity import protocol_rules

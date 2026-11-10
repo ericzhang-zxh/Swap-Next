@@ -49,6 +49,12 @@ CONFIGS = {
                         "purposes": ["build-only"], "required": {"SWAP": "y"},
                         "forbidden": ["ZSWAP", "XSWAP"]},
 }
+# Preserve the frozen debug input; the versioned input fixes KASAN's allocator
+# dependency while retaining the same correctness requirements.
+CONFIGS["c1-debug-v2"] = copy.deepcopy(CONFIGS["c1-debug"])
+CONFIGS["c1-debug-v2"].update(path="benchmark/config/compression-debug-v2.config",
+                             forbidden=CONFIGS["c1-debug"]["forbidden"] + ["SLUB_TINY"])
+
 GROUPS = {
     "regression": {"config_id": "c1-common", "mode": "xswap", "backend": "disk",
                    "workload": "correctness", "topology_id": "single", "subcases": []},
@@ -172,13 +178,22 @@ def matrix_cases(protocol):
     return rows
 
 
+def correctness_group(group, config_id):
+    """Resolve an exact trusted group and its explicitly versioned debug input."""
+    _need(group in GROUPS, "unknown trusted correctness group")
+    spec = copy.deepcopy(GROUPS[group])
+    if config_id == "c1-debug-v2" and group in ("debug-failures", "numa-lifecycle"):
+        spec["config_id"] = config_id
+    _need(config_id == spec["config_id"], "correctness group config_id mismatch")
+    return spec
+
+
 def correctness_case(protocol, case_id):
     rows = matrix_cases(protocol)
     row = next((row for row in rows if row["id"] == case_id), None)
     _need(row is not None, "unknown frozen correctness case")
     group = row.get("group")
-    _need(group in GROUPS, "unknown trusted correctness group")
-    spec = copy.deepcopy(GROUPS[group])
+    spec = correctness_group(group, row.get("config_id"))
     _need(row.get("role") in ("baseline", "candidate"), "invalid correctness source role")
     for key in ("config_id", "mode", "backend", "workload", "topology_id"):
         _need(row.get(key) == spec[key], "correctness group " + key + " mismatch")
