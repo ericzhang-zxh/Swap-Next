@@ -73,6 +73,12 @@ def protocol_hash():
     return h.hexdigest()
 
 
+def static_checker_identity():
+    """Bind static admission to the trusted controller and executed checker."""
+    return {"controller_sha256": digest(CONTROL / "controller.py"),
+            "checkpatch_sha256": digest(ROOT / "scripts/checkpatch.pl")}
+
+
 def seed():
     return git(ROOT, "rev-parse", policy()["seed_ref"] + "^{commit}")
 
@@ -259,7 +265,7 @@ def diff_guard(root, base, config, *, head=None):
             "merge commits forbidden in candidate")
     data = git(root, "diff", "--raw", "--no-renames", "-z", base, head, binary=True)
     parts = data.split(b"\0")
-    changes = []
+    changes, added_paths = [], []
     for i in range(0, len(parts) - 1, 2):
         header = parts[i].decode()
         path = parts[i + 1].decode()
@@ -273,6 +279,8 @@ def diff_guard(root, base, config, *, head=None):
         allowed = all(in_scope(path, status, c) for c in (config, base_scope))
         require(allowed, "path outside candidate scope: " + path)
         changes.append(path)
+        if status == "A":
+            added_paths.append(path)
     require(changes and len(changes) <= config["max_changed_files"],
             "candidate file budget exceeded or empty")
     stats = git(root, "diff", "--numstat", "--no-renames", "-z", base, head, binary=True)
@@ -285,7 +293,7 @@ def diff_guard(root, base, config, *, head=None):
         lines += int(added) + int(removed)
     require(lines <= config["max_changed_lines"], "candidate line budget exceeded")
     return {"status": "SCOPE_PASS", "parent": base, "candidate_commit": head,
-            "changed_paths": changes, "changed_lines": lines}
+            "changed_paths": changes, "added_paths": added_paths, "changed_lines": lines}
 
 
 def campaign_fingerprint(protocol, directory):
@@ -505,15 +513,35 @@ def check_candidate(name, static=False):
         return _check_candidate(name, static)
 
 
+def checkpatch_diagnostics(output):
+    return re.findall(rb"^(?:ERROR|WARNING|CHECK):[^\r\n]*", output, re.MULTILINE)
+
+
+def allowed_add_advisory(result, config, output):
+    # diff_guard has already rejected removals, renames and type changes.
+    added = result.get("added_paths", [])
+    return bool(added) and all(path in config["allowed_add"] for path in added) and \
+        checkpatch_diagnostics(output) == [
+            b"WARNING:FILE_PATH_CHANGES: added, moved or deleted file(s), does MAINTAINERS need updating?"]
+
+
 def _check_candidate(name, static=False):
     trusted_control()
     active()
     record, root = get_candidate(name)
     baseline = record.get("baseline_commit", record["parent"])
-    result = diff_guard(root, baseline, policy())
+    config = policy()
+    result = diff_guard(root, baseline, config)
     out = artifacts(name)
     out.mkdir(parents=True, exist_ok=True)
     if static:
+        result["checker_identity"] = static_checker_identity()
+        checked = out / "static" / (str(time.time_ns()) + "-" +
+                                   result["checker_identity"]["controller_sha256"][:12])
+        checked.mkdir(parents=True)
+        previous = out / "static.json"
+        if previous.is_file():
+            (checked / "previous.json").write_bytes(previous.read_bytes())
         patch = git(root, "diff", "--no-ext-diff", "--no-textconv",
                     baseline, result["candidate_commit"], binary=True)
         target = STATE / "patches" / (name + ".patch") if CAMPAIGN else out / "candidate.patch"
@@ -523,17 +551,35 @@ def _check_candidate(name, static=False):
             ("diff-check", ["git", "-C", str(root), "diff", "--check",
                             baseline, result["candidate_commit"]], None),
             ("checkpatch", ["perl", str(ROOT / "scripts/checkpatch.pl"),
-                            "--no-tree", "--no-signoff", "-"], patch),
+                            "--no-tree", "--no-signoff", "--show-types", "-"], patch),
         ]
-        for label, command, input_data in commands:
+        def run_check(label, command, input_data):
             proc = subprocess.run(command, input=input_data, capture_output=True,
                                   timeout=120, cwd=ROOT)
-            log = out / (label + ".log")
+            log = checked / (label + ".log")
             log.write_bytes(proc.stdout + proc.stderr or b"(no diagnostics)\n")
-            result[label] = {"exit_code": proc.returncode, "evidence": str(log.relative_to(PROJECT) if CAMPAIGN else log),
+            result[label] = {"exit_code": proc.returncode,
+                             "evidence": str(log.relative_to(PROJECT) if CAMPAIGN else log),
                              "sha256": digest(log)}
-            if proc.returncode:
+            return proc
+
+        for label, command, input_data in commands:
+            proc = run_check(label, command, input_data)
+            rejected = bool(proc.returncode)
+            if (label == "checkpatch" and proc.returncode == 1 and
+                    allowed_add_advisory(result, config, proc.stdout + proc.stderr)):
+                filtered = run_check("checkpatch-filtered", command[:-1] +
+                                     ["--ignore", "FILE_PATH_CHANGES", "-"], patch)
+                if filtered.returncode == 0 and not checkpatch_diagnostics(filtered.stdout + filtered.stderr):
+                    result["checkpatch_advisory"] = {
+                        "type": "FILE_PATH_CHANGES", "classification": "administrative_allowed_add",
+                        "added_paths": result["added_paths"], "validated_by": "checkpatch-filtered"}
+                    rejected = False
+            if rejected:
                 result["status"] = "STATIC_REJECT"
+        require(result["checker_identity"] == static_checker_identity(),
+                "trusted static checker changed during validation")
+        write_json(checked / "result.json", result)
     write_json(out / ("static.json" if static else "scope.json"), result)
     event("candidate_checked", result)
     return result

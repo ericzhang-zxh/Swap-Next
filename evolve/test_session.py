@@ -24,7 +24,8 @@ class SessionTests(unittest.TestCase):
         self.root = Path(tmp.name)
         self.directory = self.root / "campaigns" / CAMPAIGN
         shutil.copytree(REPO / "evolve/profiles", self.root / "evolve/profiles")
-        for rel in ("evolve/control/campaign_store.py", "benchmark/swap-standard/validity.py",
+        for rel in ("evolve/control/campaign_store.py", "evolve/control/controller.py",
+                    "benchmark/swap-standard/validity.py",
                     ".agents/skills/explaining-campaign-results/scripts/build_page.py"):
             target = self.root / rel
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -35,7 +36,9 @@ class SessionTests(unittest.TestCase):
         self.git(self.linux, "config", "user.name", "Session Fixture")
         self.git(self.linux, "config", "user.email", "fixture@example.invalid")
         (self.linux / "fixture.txt").write_text("parent fixture\n")
-        self.git(self.linux, "add", "fixture.txt")
+        (self.linux / "scripts").mkdir()
+        (self.linux / "scripts/checkpatch.pl").write_text("# Synthetic checker identity fixture.\n")
+        self.git(self.linux, "add", "-A")
         self.git(self.linux, "commit", "-qm", "Synthetic parent")
         self.base = self.git(self.linux, "rev-parse", "HEAD")
         self.worktree = self.root / "worktrees/one"
@@ -106,7 +109,8 @@ class SessionTests(unittest.TestCase):
                 "mechanism": {"case": "meta-disk", "counter": "metadata", "direction": "down"}})
         elif command == "check":
             s.write(self.directory / "candidates/one/static.json",
-                    {"status": "SCOPE_PASS", "candidate_commit": self.commit})
+                    {"status": getattr(self, "static_status", "SCOPE_PASS"), "candidate_commit": self.commit,
+                     "checker_identity": self.checker_identity()})
         elif command in {"calibrate", "evaluate"}:
             self.counter += 1
             tier = params["tier"]
@@ -151,6 +155,10 @@ class SessionTests(unittest.TestCase):
         else:
             self.fail("Unmodeled runtime command: " + command)
         return 0
+
+    def checker_identity(self):
+        return {"controller_sha256": s.sha(self.root / "evolve/control/controller.py"),
+                "checkpatch_sha256": s.sha(self.linux / "scripts/checkpatch.pl")}
 
     def step(self, stage):
         item = self.driver.next()
@@ -326,6 +334,52 @@ class SessionTests(unittest.TestCase):
                         self.assertEqual((case.directory / "STOP").read_text(), "Preserve STOP\n")
                 finally:
                     case.doCleanups()
+
+    def test_current_checker_reject_still_requires_source_repair(self):
+        self.static_status = "STATIC_REJECT"
+        self.prepare_candidate()
+        self.assertEqual(self.driver.next()["stage"], "repair_static")
+        self.assertEqual(self.driver.resume()["stage"], "repair_static")
+        self.assertEqual(self.calls.count("check"), 1)
+
+    def test_changed_checker_revalidates_same_rejected_source(self):
+        self.static_status = "STATIC_REJECT"
+        self.prepare_candidate()
+        before = (self.directory / "ledger/budget.json").read_bytes()
+        self.assertEqual(self.driver.next()["stage"], "repair_static")
+        checker = self.root / "evolve/control/controller.py"
+        checker.write_text(checker.read_text() + "\n# Synthetic checker revision.\n")
+        item = self.driver.next()
+        self.assertEqual(item["stage"], "check")
+        self.assertIn("identity changed", item["reason"])
+        self.assertEqual(item["identity"]["candidate_commit"], self.commit)
+        self.assertEqual(item["identity"]["checker_identity"], self.checker_identity())
+        self.static_status = "SCOPE_PASS"
+        self.assertEqual(self.step("check")["stage"], "review")
+        self.assertEqual(self.git(self.worktree, "rev-parse", "HEAD^{tree}"), self.tree)
+        self.assertEqual(self.calls.count("check"), 2)
+        self.assertEqual((self.directory / "ledger/budget.json").read_bytes(), before)
+        self.assertNotIn("evaluate", self.calls)
+
+    def test_legacy_static_without_checker_identity_requires_check(self):
+        self.prepare_candidate()
+        path = self.directory / "candidates/one/static.json"
+        result = s.read(path)
+        result.pop("checker_identity")
+        s.write(path, result)
+        self.assertEqual(self.driver.next()["stage"], "check")
+
+    def test_checkpatch_change_invalidates_pass_and_pending_check_action(self):
+        self.prepare_candidate()
+        checker = self.linux / "scripts/checkpatch.pl"
+        checker.write_text("# Synthetic checker revision two.\n")
+        item = self.driver.next()
+        self.assertEqual(item["stage"], "check")
+        checker.write_text("# Synthetic checker revision three.\n")
+        with self.assertRaisesRegex(s.SessionError, "stale action"):
+            self.driver.execute(item["id"])
+        self.assertEqual(self.calls.count("check"), 1)
+        self.assertEqual(self.step("check")["stage"], "review")
 
     def test_action_stability_and_stale_source_rejection(self):
         self.to_probe()

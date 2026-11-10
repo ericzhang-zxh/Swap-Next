@@ -267,7 +267,9 @@ def plan(s):
             return action("repair_static", reason="Static checks rejected this exact source revision.",
                           identity=ident, expects=["A substantive committed repair or a reject/stop decision; no repeated check of unchanged code."])
         return action("check", "command", command="check", candidate=ident["candidate"],
-                      identity=ident, expects=["Exact-commit scope/checkpatch result and exported patch."])
+                      reason="Trusted static-check identity changed; revalidate the unchanged source." if candidate.get("static_stale") else "",
+                      identity={**ident, "checker_identity": candidate.get("static_checker_identity")},
+                      expects=["Exact-commit and exact-checker scope/checkpatch result and exported patch."])
     if candidate.get("review_blockers") or not candidate.get("review_clear"):
         return action("review", reason="Resolve exact-tree correctness findings before runtime execution." if candidate.get("review_blockers") else
                       "Record an independent exact-tree review with hashed evidence.",
@@ -642,7 +644,8 @@ class Session:
         for relative in ("evolve/session.py", "evolve/control/controller.py", "evolve/standard_workflow.py",
                          "evolve/research.py", "evolve/reviews.py", "evolve/population.py",
                          "evolve/comparisons.py", "evolve/delivery.py", "evolve/calibration_cache.py",
-                         "evolve/reference_cache.py", "evolve/comparison_runtime.py"):
+                         "evolve/reference_cache.py", "evolve/comparison_runtime.py",
+                         "linux/scripts/checkpatch.pl"):
             self._observed[relative] = sha(self.root / relative) if (self.root / relative).is_file() else None
         record = self._campaign_data("campaign.json")
         s.update(opened=bool(record), closed=bool(record and record.get("status") == "closed"))
@@ -907,7 +910,13 @@ class Session:
                     identity["parent_tree"] = self._git(self.root / "linux", "rev-parse", identity["parent_commit"] + "^{tree}")
             except (ValueError, OSError):
                 pass
-        candidate["static_status"] = static.get("status") if static.get("candidate_commit") == identity.get("candidate_commit") else None
+        checker = {"controller_sha256": self._observed.get("evolve/control/controller.py"),
+                   "checkpatch_sha256": self._observed.get("linux/scripts/checkpatch.pl")}
+        same_commit = static.get("candidate_commit") == identity.get("candidate_commit")
+        same_checker = all(checker.values()) and static.get("checker_identity") == checker
+        candidate["static_checker_identity"] = checker
+        candidate["static_stale"] = bool(static and same_commit and not same_checker)
+        candidate["static_status"] = static.get("status") if same_commit and same_checker else None
         subject = dict(record, candidate_commit=identity.get("candidate_commit"), source_tree=identity.get("source_tree"))
         candidate["review_blockers"] = reviews.blockers(self.root, self.campaign, subject)
         try:

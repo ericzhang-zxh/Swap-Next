@@ -333,6 +333,20 @@ class GuardTests(unittest.TestCase):
         with self.assertRaisesRegex(Invalid, "deletion"):
             self.guard()
 
+    def test_rename_rejected_before_advisory_classification(self):
+        self.git("mv", "mm/swapfile.c", "mm/swapfile_renamed.c")
+        self.commit()
+        with self.assertRaisesRegex(Invalid, "deletion/rename"):
+            self.guard()
+
+    def test_guard_records_only_added_paths(self):
+        self.policy["allowed_add"] = ["mm/page_compress.c"]
+        (self.root / "mm/page_compress.c").write_text("int added_fixture;\n")
+        (self.root / "mm/swapfile.c").write_text("int modified_fixture;\n")
+        self.commit()
+        with patch.object(controller_module, "scope_profile", return_value=self.policy):
+            self.assertEqual(self.guard()["added_paths"], ["mm/page_compress.c"])
+
     def test_campaign_cannot_widen_base_scope(self):
         (self.root / "mm/filemap.c").write_text("int memory_fixture;\n")
         self.commit()
@@ -374,6 +388,7 @@ class LifecycleTests(unittest.TestCase):
                  patch.object(controller_module, "get_candidate", return_value=(record, Path(directory))), \
                  patch.object(controller_module, "diff_guard", return_value=snapshot), \
                  patch.object(controller_module, "STATE", Path(directory)), \
+                 patch.object(controller_module, "static_checker_identity", return_value={"controller_sha256": "c" * 64, "checkpatch_sha256": "d" * 64}), \
                  patch.object(controller_module, "git", return_value=b"synthetic patch") as git_mock, \
                  patch.object(controller_module.subprocess, "run", return_value=process) as run_mock, \
                  patch.object(controller_module, "event"):
@@ -382,6 +397,118 @@ class LifecycleTests(unittest.TestCase):
                 self.assertNotIn("HEAD", git_mock.call_args.args)
                 diff_command = run_mock.call_args_list[0].args[0]
                 self.assertEqual(diff_command[-1], CANDIDATE)
+
+
+class StaticAdvisoryTests(unittest.TestCase):
+    WARNING = (b"WARNING:FILE_PATH_CHANGES: added, moved or deleted file(s), "
+               b"does MAINTAINERS need updating?\n")
+    CHECKER = {"controller_sha256": "c" * 64, "checkpatch_sha256": "d" * 64}
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(prefix="swap-next-static-advisory-")
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.policy = {"allowed_add": ["mm/page_compress.c"]}
+        self.snapshot = {"status": "SCOPE_PASS", "parent": BASE,
+                         "candidate_commit": CANDIDATE,
+                         "added_paths": ["mm/page_compress.c"]}
+
+    @staticmethod
+    def process(code=0, output=b""):
+        return subprocess.CompletedProcess([], code, output, b"")
+
+    def check(self, processes):
+        with patch.object(controller_module, "trusted_control"), \
+             patch.object(controller_module, "active"), \
+             patch.object(controller_module, "policy", return_value=self.policy), \
+             patch.object(controller_module, "get_candidate", return_value=({"parent": BASE}, self.root)), \
+             patch.object(controller_module, "diff_guard", return_value=copy.deepcopy(self.snapshot)), \
+             patch.object(controller_module, "STATE", self.root), \
+             patch.object(controller_module, "CAMPAIGN", None), \
+             patch.object(controller_module, "static_checker_identity", return_value=self.CHECKER), \
+             patch.object(controller_module, "git", return_value=b"synthetic patch"), \
+             patch.object(controller_module.subprocess, "run", side_effect=processes) as run, \
+             patch.object(controller_module, "event"):
+            result = controller_module.check_candidate("trial", static=True)
+            self.commands = [call.args[0] for call in run.call_args_list]
+            return result
+
+    def test_allowed_add_advisory_preserves_raw_reject_and_history(self):
+        out = self.root / "trial"
+        out.mkdir()
+        prior = b'{"status":"STATIC_REJECT","candidate_commit":"' + CANDIDATE.encode() + b'"}\n'
+        (out / "static.json").write_bytes(prior)
+        (out / "checkpatch.log").write_bytes(b"original untyped diagnostic\n")
+        raw = self.WARNING + b"total: 0 errors, 1 warnings, 20 lines checked\n"
+        clean = b"total: 0 errors, 0 warnings, 20 lines checked\n"
+        result = self.check([self.process(), self.process(1, raw), self.process(0, clean)])
+        self.assertEqual(result["status"], "SCOPE_PASS")
+        self.assertEqual(result["checkpatch"]["exit_code"], 1)
+        self.assertEqual(result["checkpatch-filtered"]["exit_code"], 0)
+        self.assertEqual(result["checker_identity"], self.CHECKER)
+        self.assertEqual(result["checkpatch_advisory"]["added_paths"], ["mm/page_compress.c"])
+        log = Path(result["checkpatch"]["evidence"])
+        self.assertEqual(log.read_bytes(), raw)
+        self.assertEqual(digest(log), result["checkpatch"]["sha256"])
+        self.assertEqual(Path(result["checkpatch-filtered"]["evidence"]).read_bytes(), clean)
+        self.assertEqual((log.parent / "previous.json").read_bytes(), prior)
+        self.assertEqual((out / "checkpatch.log").read_bytes(), b"original untyped diagnostic\n")
+        self.assertEqual(load_json(log.parent / "result.json"), load_json(out / "static.json"))
+        self.assertEqual(self.commands[-1][-3:], ["--ignore", "FILE_PATH_CHANGES", "-"])
+        self.assertIn("--show-types", self.commands[-2])
+
+    def test_other_original_diagnostics_and_process_errors_reject(self):
+        for code, output in ((1, self.WARNING + b"WARNING:LONG_LINE: too long\n"),
+                             (1, self.WARNING + b"ERROR:TRAILING_WHITESPACE: space\n"),
+                             (1, self.WARNING + b"WARNING: untyped additional warning\n"),
+                             (1, b"WARNING:FILE_PATH_CHANGES: unexpected wording\n"),
+                             (2, self.WARNING)):
+            with self.subTest(code=code, output=output):
+                result = self.check([self.process(), self.process(code, output)])
+                self.assertEqual(result["status"], "STATIC_REJECT")
+                self.assertNotIn("checkpatch-filtered", result)
+                self.assertNotIn("checkpatch_advisory", result)
+
+    def test_no_additions_or_not_exactly_allowed_additions_reject(self):
+        for added, allowed in (([], ["mm/page_compress.c"]),
+                               (["mm/unlisted.c"], ["mm/page_compress.c"]),
+                               (["mm/page_compress.c"], ["mm/*.c"])):
+            with self.subTest(added=added, allowed=allowed):
+                self.snapshot["added_paths"] = added
+                self.policy["allowed_add"] = allowed
+                result = self.check([self.process(), self.process(1, self.WARNING)])
+                self.assertEqual(result["status"], "STATIC_REJECT")
+                self.assertEqual(len(self.commands), 2)
+
+    def test_filtered_failure_or_remaining_diagnostic_rejects(self):
+        for code, output in ((1, b"WARNING:LONG_LINE: too long\n"),
+                             (0, b"WARNING:LONG_LINE: too long\n"), (2, b"checker failed\n")):
+            with self.subTest(code=code):
+                result = self.check([self.process(), self.process(1, self.WARNING),
+                                     self.process(code, output)])
+                self.assertEqual(result["status"], "STATIC_REJECT")
+                self.assertNotIn("checkpatch_advisory", result)
+
+    def test_diff_check_failure_survives_advisory_classification(self):
+        result = self.check([self.process(2, b"bad diff\n"), self.process(1, self.WARNING), self.process()])
+        self.assertEqual(result["status"], "STATIC_REJECT")
+        self.assertEqual(result["diff-check"]["exit_code"], 2)
+
+    def test_checker_identity_binds_both_executed_sources(self):
+        control, linux = self.root / "control", self.root / "linux"
+        control.mkdir()
+        (linux / "scripts").mkdir(parents=True)
+        (control / "controller.py").write_text("controller version one\n")
+        (linux / "scripts/checkpatch.pl").write_text("checker version one\n")
+        with patch.object(controller_module, "CONTROL", control), patch.object(controller_module, "ROOT", linux):
+            first = controller_module.static_checker_identity()
+            (control / "controller.py").write_text("controller version two\n")
+            second = controller_module.static_checker_identity()
+            self.assertNotEqual(first["controller_sha256"], second["controller_sha256"])
+            self.assertEqual(first["checkpatch_sha256"], second["checkpatch_sha256"])
+            (linux / "scripts/checkpatch.pl").write_text("checker version two\n")
+            third = controller_module.static_checker_identity()
+            self.assertNotEqual(second["checkpatch_sha256"], third["checkpatch_sha256"])
 
 
 if __name__ == "__main__":
