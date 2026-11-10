@@ -29,6 +29,13 @@ arg() {
 backend=$(arg bench.backend)
 mode=$(arg bench.mode)
 workload=$(arg bench.workload)
+revision=$(arg bench.protocol_revision)
+config_id=$(arg bench.config_id)
+correctness_case=$(arg bench.correctness_case)
+correctness_group=$(arg bench.correctness_group)
+compression_cases=$(arg bench.compression_cases)
+topology_id=$(arg bench.topology_id)
+compression_target_bytes=$(arg bench.compression_target_bytes)
 [ -n "$backend" ] && [ -n "$mode" ] && [ -n "$workload" ] || fail cmdline
 mkdir -p /bench
 mount -t ext4 -o ro /dev/vdb /bench || fail benchroot
@@ -38,7 +45,16 @@ done
 mount -t tmpfs -o mode=1777,size=24G tmpfs /bench/tmp || fail tmp
 mount -t cgroup2 none /bench/sys/fs/cgroup || fail cgroup
 mount -t debugfs debugfs /bench/sys/kernel/debug || fail debugfs
-chroot /bench /bin/bash /opt/bench/bench.sh "$backend" "$mode" "$workload" || fail workload
+if [ "${revision:-0}" = 8 ]; then
+    mount -t tracefs tracefs /bench/sys/kernel/tracing || fail tracefs
+    mount -t tmpfs -o mode=0755,size=1M tmpfs /bench/run || fail guest_marker_mount
+    printf 'swap-next-guest-v1\n' > /bench/run/swap-next-guest
+    echo "GUEST_TOPOLOGY ${topology_id:-single}"
+    echo "ONLINE_NODES $(cat /sys/devices/system/node/online)"
+    chroot /bench /bin/bash /opt/bench/bench.sh "$backend" "$mode" "$workload" "$revision" "$config_id" "$correctness_case" "$correctness_group" "$compression_cases" "${topology_id:-single}" "${compression_target_bytes:-0}" || fail workload
+else
+    chroot /bench /bin/bash /opt/bench/bench.sh "$backend" "$mode" "$workload" || fail workload
+fi
 echo KERNEL_LOG_BEGIN
 dmesg
 echo KERNEL_LOG_END

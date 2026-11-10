@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: GPL-2.0-only
 """Parse one swap-standard guest serial log into metrics and fail-closed gates."""
 import re
+import math
+import importlib.util
+from pathlib import Path
 
 DIAGNOSTIC = re.compile(
     r"WARNING:|BUG:|Oops:|Kernel panic|page allocation failure:|Out of memory:|Killed process|UBSAN:|"
     r"KASAN:|KCSAN:|kernel BUG|possible circular locking|INFO: task .*blocked")
 # Physical swap devices per backend; the first one must carry the workload.
 PHYSICAL = {'zram': ('/dev/zram0', '/dev/zram1'), 'zram-64k': ('/dev/zram0',),
-            'zswap': ('/dev/zram1',), 'disk': ('/dev/vda',), 'brd': ('/dev/ram0',)}
+            'zswap': ('/dev/zram1',), 'disk': ('/dev/vda',), 'brd': ('/dev/ram0',), 'compressed': ()}
 SWAP_EVENTS = ('pswpout', 'zswpout')
 
 
@@ -166,7 +169,7 @@ def correctness_evidence(text, backend, mode):
                        for edge in ('BEGIN', 'END') for phase in ('start', 'end'))
     activity = delta(counters[1], counters[0])
     counters_ok &= bool(activity) and all(v >= 0 for v in activity.values())
-    route = ('zswpin', 'zswpout') if backend == 'zswap' else ('pswpin', 'pswpout')
+    route = ('zswpin', 'zswpout') if backend in ('zswap', 'compressed') else ('pswpin', 'pswpout')
     backend_ok = mode == 'xswap' and backend in ('disk', 'zswap') and bool(activity) and all(activity.get(k, 0) > 0 for k in route)
     common = valid_samples and snapshots_ok and counters_ok and backend_ok and 'CORRECTNESS_FAIL' not in text
     gates = {
@@ -183,7 +186,399 @@ def correctness_evidence(text, backend, mode):
                    'physical_swapoff_used_kib': int(physical[0][1]) if len(physical) == 1 else None}
 
 
-def parse(text, image_sha, backend, mode, workload, protocol_revision=1):
+
+COMPRESSED_OBSERVER = 'pid_kretprobe_zswap_load_v1'
+COMPRESSED_TARGET_BYTES = 134217728
+
+
+def configuration_groups():
+    path = Path(__file__).resolve().with_name('configurations.py')
+    spec = importlib.util.spec_from_file_location('swap_standard_bound_configurations', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.GROUPS
+UNIT_TESTS = ('page_compress_alloc_rollback', 'page_compress_partial_cleanup',
+              'page_compress_numa_placement')
+
+
+def require(condition, reason):
+    if not condition:
+        raise ValueError(reason)
+
+
+def exactly(text, pattern):
+    matches = re.findall(pattern, text, re.M)
+    require(len(matches) == 1, 'missing or duplicate evidence: ' + pattern)
+    return matches[0]
+
+
+def _valid_ktap(raw):
+    lines = [line.strip() for line in raw.splitlines() if line.strip()]
+    require(not any(re.search(r'\b(?:SKIP|TODO)\b', line, re.I) for line in lines),
+            'KUnit skip or TODO is incomplete coverage')
+    lines = [line for line in lines if not line.startswith('#') or line.startswith('# Subtest:')]
+    expected = ['KTAP version 1', '1..1', 'KTAP version 1', '# Subtest: page_compress', '1..3',
+                *[f'ok {i + 1} {name}' for i, name in enumerate(UNIT_TESTS)], 'ok 1 page_compress']
+    return lines == expected
+
+
+
+def numa_ktap_observations(raw, topology_id):
+    """Read only the fixed diagnostic comments inside the already validated KTAP."""
+    placements, totals = [], []
+    for line in raw.splitlines():
+        if 'PAGE_COMPRESS_NUMA' not in line:
+            continue
+        placement = re.fullmatch(r'\s*#\s*(?:.*?\s)?PAGE_COMPRESS_NUMA requested=(\d+) actual=(\d+) pages=(\d+)\s*', line)
+        total = re.fullmatch(r'\s*#\s*(?:.*?\s)?PAGE_COMPRESS_NUMA_TOTAL nodes=(\d+) placements=(\d+) mismatches=(\d+)\s*', line)
+        require(bool(placement or total), 'malformed KUnit NUMA observation')
+        if placement:
+            requested, actual, pages = map(int, placement.groups())
+            require(requested == actual and pages > 0, 'KUnit NUMA placement mismatch or empty allocation')
+            placements.append({'requested': requested, 'actual': actual, 'pages': pages})
+        else:
+            totals.append(tuple(map(int, total.groups())))
+    expected_nodes = {0, 1} if topology_id == 'numa2' else {0}
+    observed_nodes = {entry['requested'] for entry in placements}
+    require(observed_nodes == expected_nodes and len(totals) == 1, 'missing required per-node KUnit observations')
+    require(totals[0] == (len(expected_nodes), len(placements), 0) and len(placements) >= len(expected_nodes),
+            'KUnit NUMA totals differ from observed placements')
+    return {'placements': placements, 'nodes': totals[0][0], 'placement_count': totals[0][1], 'mismatches': 0}
+
+def _compression_case_observations(record, mode, target_type, topology_id):
+    """Derive a PASS from raw state; marker assertions alone never suffice."""
+    name, obs, size = record['id'], record['observations'], record['bytes']
+    pages = size // 4096
+
+    def value(phase, key):
+        result = obs.get(phase, {}).get(key)
+        require(type(result) is int and result >= 0, f'{name}: missing {phase}.{key}')
+        return result
+
+    def equals(phase, key, expected):
+        require(value(phase, key) == expected, f'{name}: inconsistent {phase}.{key}')
+
+    def topology(phase):
+        for key, expected in {'swap_devices': 1, 'virtual_devices': int(mode == 'xswap'),
+                              'physical_devices': int(mode == 'plain'), 'no_backing': int(mode == 'xswap'),
+                              'intended_device_matches': 1}.items():
+            equals(phase, key, expected)
+        if mode == 'xswap':
+            equals(phase, 'xswap_priority', 32767)
+
+    def snapshot(phase, memcg):
+        for key in ('stored_pages', 'pool_bytes', 'incompressible_pages', 'zswpin',
+                    'zswpout', 'pswpin', 'pswpout'):
+            value(phase, key)
+        equals(phase, 'memcg_present', int(memcg))
+        if memcg:
+            value(phase, 'memcg_zswap_bytes')
+            value(phase, 'memcg_zswapped_bytes')
+        else:
+            require(not any(k in obs.get(phase, {}) for k in ('memcg_zswap_bytes', 'memcg_zswapped_bytes')),
+                    name + ': removed memcg evidence fabricated')
+
+    def residency(phase, compressed=True):
+        equals(phase, 'target_pages', pages)
+        swapped, absent = value(phase, 'swapped_pages'), value(phase, 'absent_swapcache_pages')
+        require(0 <= absent <= swapped <= pages, name + ': invalid residency')
+        if compressed:
+            require(absent * 10 >= pages * 9, name + ': compressed residency below required coverage')
+            kind = value(phase, 'target_type')
+            require(kind < 32 and (mode != 'xswap' or kind == target_type), name + ': wrong target type')
+
+    topology('before')
+    if name == 'library_unit':
+        require(record['untouched'] and _valid_ktap(record['ktap']), 'invalid complete KUnit result')
+        record['numa_observations'] = numa_ktap_observations(record['ktap'], topology_id)
+        for key, expected in {'kunit_expected': 3, 'kunit_observed': 3,
+                              'kunit_failed': 0, 'kunit_skipped': 0,
+                              **{test: 1 for test in UNIT_TESTS}}.items():
+            equals('case', key, expected)
+        return
+    require(not record['untouched'] and not record['ktap'], name + ': invalid untouched or KUnit record')
+    require(record['codec'] is not None, name + ': runtime codec absent')
+    equals('configuration', 'zswap_enabled', 1)
+    equals('configuration', 'shrinker_enabled', 0)
+    equals('fixture', 'isolated_memcg', 1)
+    snapshot('before', True)
+    equals('before', 'memcg_zswap_bytes', 0)
+    equals('before', 'memcg_zswapped_bytes', 0)
+    topology('reset')
+    equals('reset', 'objects_and_charges_drained', 1)
+    equals('reset', 'temporary_memcg_removed', 1)
+    offline = name == 'memcg_offline'
+    snapshot('decoded', not offline)
+    snapshot('cleanup', not offline)
+    equals('cleanup', 'stored_pages', value('before', 'stored_pages'))
+    require(value('cleanup', 'pool_bytes') <= value('before', 'pool_bytes'), name + ': backing pages retained')
+    if not offline:
+        equals('cleanup', 'memcg_zswap_bytes', 0)
+        equals('cleanup', 'memcg_zswapped_bytes', 0)
+    copies = 2 if name in ('codec_switch', 'guest_hotplug') else 1
+    equals('decoded', 'verified_words', copies * size // 8)
+    equals('mapping_a', 'nonzero_pages', pages)
+    if copies == 2:
+        equals('mapping_b', 'nonzero_pages', pages)
+
+    if name == 'memcg_limits':
+        equals('case', 'zswap_quota_bytes', 0)
+        equals('case', 'quota_pageout_attempts', 4)
+        equals('case', 'quota_data_verified', 1)
+        snapshot('quota', True)
+        residency('quota', compressed=False)
+        for phase in ('quota', 'decoded'):
+            equals(phase, 'memcg_zswap_bytes', 0)
+            equals(phase, 'memcg_zswapped_bytes', 0)
+        for key in ('zswpout', 'stored_pages'):
+            equals('quota', key, value('before', key))
+        if mode == 'xswap':
+            equals('quota', 'swapped_pages', 0)
+            equals('quota', 'pswpout', value('before', 'pswpout'))
+        return
+
+    phases = ('stored_old', 'stored_new') if copies == 2 else ('stored_a',)
+    for phase in phases:
+        residency(phase)
+    snapshot('stored', True)
+    require(value('stored', 'stored_pages') > value('before', 'stored_pages') and
+            value('stored', 'zswpout') > value('before', 'zswpout') and
+            value('stored', 'memcg_zswap_bytes') > 0 and value('stored', 'memcg_zswapped_bytes') > 0,
+            name + ': compressed store or charge unobserved')
+    require(value('decoded', 'zswpin') > value('before', 'zswpin'), name + ': decoder traffic unobserved')
+    for phase in ('stored', 'decoded'):
+        equals(phase, 'incompressible_pages', value('before', 'incompressible_pages'))
+        equals(phase, 'pswpin', value('before', 'pswpin'))
+        equals(phase, 'pswpout', value('before', 'pswpout'))
+    one = {
+        'codec_switch': ('codec_switched', 'old_and_new_data_verified'),
+        'invalid_codec': ('codec_unchanged',),
+        'concurrent_fault': ('cow_parent_verified',),
+        'live_destroy': ('destroy_observed', 'concurrent_destroy_reader_verified', 'original_type_recreated'),
+        'memcg_offline': ('live_memcg_removed',),
+        'guest_hotplug': ('cpu_offline_observed', 'cpu_online_observed'),
+    }
+    for key in one.get(name, ()):
+        equals('case', key, 1)
+    if name == 'codec_switch':
+        residency('old_after_switch')
+        snapshot('old_pool', True)
+    if name in ('codec_switch', 'invalid_codec'):
+        equals('reset', 'codec_restored', 1)
+    if name == 'invalid_codec':
+        require(value('case', 'invalid_codec_errno') in (2, 22), 'invalid codec was not semantically rejected')
+    if name == 'concurrent_fault':
+        for key, expected in {'workers': 8, 'concurrent_target_pages': 32, 'concurrent_absent_swapcache_pages': 32}.items():
+            equals('case', key, expected)
+    if name == 'live_destroy':
+        require(value('case', 'destroy_live_swapped_pages') > 0, 'live destroy had no live targets')
+    if offline:
+        require(value('case', 'offline_live_compressed_bytes') > 0, 'memcg offlined without live charges')
+    if name == 'guest_hotplug':
+        require(0 < value('case', 'target_cpu') < 4, 'invalid guest hotplug target')
+        equals('reset', 'cpu_restored', 1)
+    if name == 'large_folio':
+        equals('case', 'huge_input_bytes', size)
+        require(value('case', 'large_zswpout_after') > value('case', 'large_zswpout_before'),
+                'no observed large-folio store')
+
+
+def compression_evidence(text, mode, expected_case):
+    """Strict ordered records. Enclosed KTAP is opaque to control-record parsing."""
+    GROUPS = configuration_groups()
+    group = expected_case.get('group') if isinstance(expected_case, dict) else None
+    require(group in GROUPS and GROUPS[group]['workload'] == 'compression', 'unknown compression group')
+    expected = GROUPS[group]['subcases']
+    require(expected_case.get('subcases') == expected, 'compression subcases differ from trusted catalog')
+    begin, end = 'COMPRESSION_GROUP_BEGIN ' + group, 'COMPRESSION_GROUP_END ' + group
+    require(text.splitlines().count(begin) == text.splitlines().count(end) == 1, 'incomplete compression group')
+    prefix, rest = text.split(begin + '\n', 1)
+    body, suffix = rest.split('\n' + end, 1)
+    require(not re.search(r'^COMPRESS(?:ION)?_', prefix + suffix, re.M), 'compression record outside group')
+    records, current, state, raw, in_ktap = [], None, 'begin', [], False
+    for line in body.splitlines():
+        if in_ktap:
+            if line == 'COMPRESS_KTAP_END suite=page_compress':
+                current['ktap'] = '\n'.join(raw) + '\n'
+                in_ktap = False
+            else:
+                raw.append(line)
+            continue
+        m = re.fullmatch(r'COMPRESS_BEGIN schema=1 mode=(xswap|plain) case=([a-z][a-z0-9_]*) bytes=(\d+)', line)
+        if m:
+            require(state == 'begin' and len(records) < len(expected), 'duplicate or misplaced compression begin')
+            require(m[1] == mode and m[2] == expected[len(records)] and int(m[3]) == 33554432,
+                    'compression invocation differs from frozen case')
+            current = {'id': m[2], 'bytes': int(m[3]), 'observations': {}, 'codec': None,
+                       'ktap': '', 'untouched': False}
+            state = 'observations'
+            continue
+        require(current is not None, 'compression record before begin')
+        m = re.fullmatch(r'COMPRESS_OBS case=([a-z][a-z0-9_]*) phase=([a-z][a-z0-9_]*) key=([a-z][a-z0-9_]*) value=(\d+)', line)
+        if m:
+            require(state == 'observations' and m[1] == current['id'], 'observation case or order mismatch')
+            phase = current['observations'].setdefault(m[2], {})
+            require(m[3] not in phase, 'duplicate compression observation')
+            phase[m[3]] = int(m[4])
+            continue
+        m = re.fullmatch(r'COMPRESS_CONFIG case=([a-z][a-z0-9_]*) codec=([A-Za-z0-9_-]+)', line)
+        if m:
+            require(state == 'observations' and m[1] == current['id'] and current['codec'] is None,
+                    'duplicate or misplaced runtime codec')
+            current['codec'] = m[2]
+            continue
+        if line == 'COMPRESS_KTAP_BEGIN suite=page_compress':
+            require(state == 'observations' and current['id'] == 'library_unit' and not current['ktap'],
+                    'duplicate or misplaced KUnit body')
+            in_ktap, raw = True, []
+            continue
+        m = re.fullmatch(r'COMPRESS_RESET case=([a-z][a-z0-9_]*) status=(PASS|FAIL)( untouched=1)?', line)
+        if m:
+            require(state == 'observations' and m[1] == current['id'], 'reset order or case mismatch')
+            current.update(reset=m[2] == 'PASS', untouched=bool(m[3]))
+            state = 'case'
+            continue
+        m = re.fullmatch(r'COMPRESS_CASE case=([a-z][a-z0-9_]*) status=(PASS|FAIL|INCOMPLETE) reason=([a-z][a-z0-9_]*)', line)
+        if m:
+            require(state == 'case' and m[1] == current['id'], 'case outcome order or identity mismatch')
+            require(m[2] != 'PASS' or (current['reset'] and m[3] == 'ok'), 'contradictory case pass')
+            current.update(status=m[2], reason=m[3])
+            state = 'end'
+            continue
+        m = re.fullmatch(r'COMPRESS_END schema=1 status=(PASS|FAIL|INCOMPLETE) cases=1', line)
+        if m:
+            require(state == 'end' and m[1] == current['status'], 'inconsistent compression end')
+            records.append(current)
+            current, state = None, 'begin'
+            continue
+        raise ValueError('unknown compression record: ' + line[:120])
+    require(not in_ktap and state == 'begin' and len(records) == len(expected), 'truncated compression records')
+    kind = int(exactly(text, r'^XSWAP_TYPE (\d+)$')) if mode == 'xswap' else None
+    gates, results = {}, {}
+    for record in records:
+        valid = record['status'] == 'PASS' and record['reset']
+        if valid:
+            try:
+                _compression_case_observations(record, mode, kind, expected_case["topology_id"])
+            except ValueError as exc:
+                valid = False
+                record['evidence_error'] = str(exc)
+        name = record.pop('id')
+        record['evidence_valid'] = valid
+        gates['compression_' + name] = valid
+        results[name] = record
+    gates['compression_evidence'] = all(gates.values())
+    gates['compression_reset'] = all(record['reset'] for record in records)
+    return gates, results
+
+
+
+def complete_counter_block(text, kind, tag, required):
+    begin, end = f'{kind}_BEGIN {tag}', f'{kind}_END {tag}'
+    if text.splitlines().count(begin) != 1 or text.splitlines().count(end) != 1:
+        return False
+    body = block(text, begin, end)
+    if body is None:
+        return False
+    entries = re.findall(r'^(\w+) (\d+)$', body, re.M)
+    return (len(entries) == len(body.splitlines()) == len({key for key, value in entries})
+            and set(required) <= {key for key, value in entries})
+
+def compressed_timing_evidence(text, metrics):
+    observer = exactly(text, r'^COMPRESSED_OBSERVER id=(\S+) instrumented=(\d+) clock=(\S+) maxactive=(\d+)$')
+    observer_ok = observer == (COMPRESSED_OBSERVER, '1', 'monotonic_raw', '64')
+    types = re.findall(r'^XSWAP_TYPE (\d+)$', text, re.M)
+    topology = re.findall(r'^COMPRESSED_TOPOLOGY phase=(before|after) devices=(\d+) physical=(\d+) type=(\d+)$', text, re.M)
+    topology_ok = len(types) == 1 and topology == [('before', '1', '0', types[0]), ('after', '1', '0', types[0])]
+    raw = exactly(text, r'^COMPRESSED_SAMPLES seq=(\d+) rand=(\d+) target_checks=(\d+) decoded=(\d+) trace_lost=(\d+) probe_missed=(\d+) probe_hits=(\d+)$')
+    seq, rand, checks, decoded, lost, missed, hits = map(int, raw)
+    counts_ok = (seq > 0 and rand > 0 and checks == decoded == seq + rand and lost == missed == 0 and hits >= decoded
+                 and seq == (metrics.get('swapin_seq') or {}).get('samples')
+                 and rand == (metrics.get('swapin_rand') or {}).get('samples'))
+    swapped = metrics.get('swapin_swapped') or {}
+    half = COMPRESSED_TARGET_BYTES // 4096 // 2
+    counts_ok &= (swapped.get('pages') == half * 2 and swapped.get('swapped') == checks
+                  and seq * 10 >= half * 9 and rand * 10 >= half * 9
+                  and seq <= half and rand <= half)
+    counts_ok &= all(len(re.findall(r'^' + marker + r' ', text, re.M)) == 1
+                     for marker in ('SWAPIN_SEQ', 'SWAPIN_RAND', 'SWAPIN_SWAPPED'))
+    snapshots = re.findall(r'^COMPRESSED_STATE phase=(before|stored) stored_pages=(\d+) pool_bytes=(\d+) incompressible_pages=(\d+)$', text, re.M)
+    states = {phase: dict(zip(('stored_pages', 'pool_bytes', 'incompressible_pages'), map(int, values)))
+              for phase, *values in snapshots}
+    storage_ok = len(snapshots) == 2 and [s[0] for s in snapshots] == ['before', 'stored']
+    if storage_ok:
+        before, stored = states['before'], states['stored']
+        storage_ok = (stored['stored_pages'] - before['stored_pages'] >= checks
+                      and stored['pool_bytes'] > before['pool_bytes']
+                      and stored['incompressible_pages'] == before['incompressible_pages'])
+    phase = metrics.get('swapin_vmstat_delta') or {}
+    total_activity = metrics.get('vmstat_delta') or {}
+    route_ok = (bool(total_activity) and all(value >= 0 for value in total_activity.values())
+                and all(value >= 0 for value in phase.values())
+                and phase.get('zswpin', 0) >= decoded and phase.get('zswpout', 0) >= checks
+                and all(phase.get(key) == 0 for key in ('pswpin', 'pswpout', 'zswpwb')))
+    swaps = (block(text, 'SWAPS_BEGIN', 'SWAPS_END') or '').splitlines()
+    topology_ok &= (len(swaps) == 2 and bool(types) and swaps[1].split()[0] == 'xswap' + types[0]
+                    and text.splitlines().count('BACKEND_DEVICE none') == 1)
+    # Global zero-page counts can include calloc/observer pages. Per-target
+    # eviction, successful zswap_load and full pattern verification bind origin.
+    data_ok = text.splitlines().count('SWAPIN_DATA_PASS') == 1 and not re.search(r'^SWAPIN_FAIL', text, re.M)
+    metrics_ok = all(isinstance((metrics.get(order) or {}).get(key), (int, float))
+                     and math.isfinite(metrics[order][key]) and (metrics[order][key] > 0)
+                     for order in ('swapin_seq', 'swapin_rand') for key in ('mean_ns', 'p99_ns'))
+    counters_ok = all(complete_counter_block(text, 'VMSTAT', tag,
+                      ('pswpin', 'pswpout', 'zswpin', 'zswpout', 'zswpwb', 'swpin_zero', 'swpout_zero', 'swap_ra', 'swap_ra_hit'))
+                      for tag in ('before', 'end', 'swapin_start', 'swapin_end'))
+    metrics.update(compressed_observer={'id': observer[0], 'instrumented': True, 'clock': observer[2]},
+                   compressed_samples={'seq': seq, 'rand': rand, 'target_checks': checks, 'decoded': decoded,
+                                       'trace_lost': lost, 'probe_missed': missed, 'probe_hits': hits},
+                   compressed_states=states)
+    return {'compressed_observer': observer_ok, 'compressed_no_backing': topology_ok,
+            'compressed_target_decode': counts_ok, 'compressed_storage': bool(storage_ok),
+            'compressed_no_fallback': route_ok, 'compressed_counter_integrity': counters_ok,
+            'compressed_data': bool(data_ok), 'compressed_latency_metrics': metrics_ok}
+
+
+def revision8_identity(text, words, backend, mode, workload, config_id, correctness_case,
+                       topology_id, expected_case):
+    GROUPS = configuration_groups()
+    identity = {'bench.protocol_revision': '8', 'bench.config_id': config_id,
+                'bench.topology_id': topology_id}
+    if correctness_case:
+        require(isinstance(expected_case, dict) and expected_case.get('id') == correctness_case,
+                'missing frozen correctness identity')
+        group = expected_case.get('group')
+        require(group in GROUPS, 'unknown correctness group')
+        spec = GROUPS[group]
+        for key, value in {'backend': backend, 'mode': mode, 'workload': workload,
+                           'config_id': config_id, 'topology_id': topology_id}.items():
+            require(spec[key] == value and expected_case.get(key) == value, 'correctness identity mismatch: ' + key)
+        identity.update({'bench.correctness_case': correctness_case, 'bench.correctness_group': group})
+        if spec['subcases']:
+            identity['bench.compression_cases'] = ','.join(spec['subcases'])
+    else:
+        require(workload not in ('compression', 'correctness') and config_id == 'c1-common'
+                and topology_id == 'single', 'revision 8 timing identity')
+    if backend == 'compressed' and workload == 'swapin':
+        identity['bench.compression_target_bytes'] = str(COMPRESSED_TARGET_BYTES)
+    tokens = (block(text, 'CMDLINE_BEGIN', 'CMDLINE_END') or '').split()
+    expected_keys = set(identity)
+    relevant_keys = {'bench.protocol_revision', 'bench.config_id', 'bench.topology_id',
+                     'bench.correctness_case', 'bench.correctness_group', 'bench.compression_cases',
+                     'bench.compression_target_bytes'}
+    got = [token for token in tokens if token.split('=', 1)[0] in relevant_keys]
+    good = len(got) == len(identity) and all(tokens.count(key + '=' + str(value)) == 1 for key, value in identity.items())
+    good &= {token.split('=', 1)[0] for token in got} == expected_keys
+    good &= all(text.splitlines().count(marker) == 1 for marker in
+                ('CMDLINE_BEGIN', 'CMDLINE_END', 'BENCH_BOOT', 'BENCH_WORKLOAD_PASS', 'BENCH_PASS'))
+    good &= text.splitlines().count('GUEST_TOPOLOGY ' + topology_id) == 1
+    nodes = '0-1' if topology_id == 'numa2' else '0'
+    good &= text.splitlines().count('ONLINE_NODES ' + nodes) == 1
+    return bool(good)
+
+
+def parse(text, image_sha, backend, mode, workload, protocol_revision=1, *,
+          config_id="standard", correctness_case=None, topology_id="single", expected_case=None):
     text = text.replace('\r', '')
     log = block(text, 'KERNEL_LOG_BEGIN', 'KERNEL_LOG_END') or ''
     cmdline = block(text, 'CMDLINE_BEGIN', 'CMDLINE_END') or ''
@@ -200,6 +595,9 @@ def parse(text, image_sha, backend, mode, workload, protocol_revision=1):
         'no_kernel_warnings': bool(log) and not diagnostics,
         'thp_policy': thp_policy(text),
     }
+    if protocol_revision == 8:
+        gates['configuration_identity'] = revision8_identity(text, words, backend, mode, workload, config_id,
+                                                            correctness_case, topology_id, expected_case)
     metrics['kernel_diagnostics'] = diagnostics[:20]
     metrics['swapin_latency_hist'] = swapin_latency(text)
 
@@ -240,7 +638,7 @@ def parse(text, image_sha, backend, mode, workload, protocol_revision=1):
     gates['swap_activity'] = bool(swapped and swapped > 0)
     activity = metrics['vmstat_delta'] or {}
     gates['backend_exercised'] = (activity.get('zswpout', 0) > 0 and 'ZSWAP_ENABLED Y' in text
-                                 if backend == 'zswap' else
+                                 if backend in ('zswap', 'compressed') else
                                  activity.get('zswpout', 0) == 0 and 'ZSWAP_ENABLED N' in text)
 
     peaks = {}
@@ -252,6 +650,8 @@ def parse(text, image_sha, backend, mode, workload, protocol_revision=1):
     if mode == 'xswap':
         virtual = [v for k, v in peaks.items() if k not in physical]
         gates['swap_routing'] = len(virtual) == 1 and virtual[0] > 0
+        if backend == 'compressed':
+            gates['swap_routing'] &= len(peaks) == 1 and all(re.fullmatch(r'xswap\d+', name) for name in peaks)
     else:
         gates['swap_routing'] = peaks.get(physical[0], 0) > 0 and set(peaks) == set(physical)
 
@@ -293,7 +693,19 @@ def parse(text, image_sha, backend, mode, workload, protocol_revision=1):
             metrics['swapin_xswap_snapshots'] = snapshots
             gates['swapin_xswap_counters'] = all(v and {'clusters_mapped', 'usage_pages', 'grows', 'shrinks'} <= v.keys() for v in snapshots.values())
 
+        if protocol_revision == 8 and backend == 'compressed':
+            gates.update(compressed_timing_evidence(text, metrics))
+
+    elif workload == 'compression':
+        extra_gates, subcases = compression_evidence(text, mode, expected_case)
+        gates.update(extra_gates)
+        gates['no_new_kernel_warnings'] = gates['no_kernel_warnings']
+        return dict(metrics=metrics, gates=gates, correctness_subcases=subcases)
     elif workload == 'correctness':
+        if protocol_revision == 8:
+            device = PHYSICAL[backend][0]
+            gates['correctness_backend_device'] = all(text.splitlines().count(marker + device) == 1 for marker in
+                ('BACKEND_DEVICE ', 'CORRECTNESS_BACKEND_DEVICE ', 'PHYSICAL_SWAPOFF_DEVICE '))
         extra_gates, extra_metrics = correctness_evidence(text, backend, mode)
         gates.update(extra_gates)
         gates['no_new_kernel_warnings'] = gates['no_kernel_warnings']

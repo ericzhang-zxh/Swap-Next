@@ -172,6 +172,7 @@ _APPROVED_SHAPE = {
     4: {"vcpus": 8, "mem_mib": 8192, "accel": "kvm"},
     6: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
     7: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
+    8: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
 }
 _TCG_QEMU = ["-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc", "-cpu", "max"]
 
@@ -209,20 +210,33 @@ def _kbench_screen(protocol, rules, validity, accelerator, revision):
         raise ValueError(label + " baseline commit")
     if protocol.get("page_cluster", {}).get("value") != 3:
         raise ValueError(label + " page-cluster is the kernel default 3")
-    if tiers.get("fast", {}).get("cases") != ["swapin-disk", "swapin-zram-64k"]:
+    timing_cases = (["swapin-compressed"] if revision == 8 else []) + ["swapin-disk", "swapin-zram-64k"]
+    if tiers.get("fast", {}).get("cases") != timing_cases:
         raise ValueError(label + " fast cases")
-    if tiers.get("probe", {}).get("cases") != ["swapin-disk", "swapin-zram-64k", "metadata-brd"]:
+    if tiers.get("probe", {}).get("cases") != timing_cases + ["metadata-brd"]:
         raise ValueError(label + " probe cases")
     cases = protocol.get("cases", {})
-    if set(cases) != {"swapin-disk", "swapin-zram-64k", "metadata-brd"}:
+    if set(cases) != set(timing_cases + ["metadata-brd"]):
         raise ValueError(label + " case set")
-    for name, backend in (("swapin-disk", "disk"), ("swapin-zram-64k", "zram-64k")):
+    timing_backends = [("swapin-disk", "disk"), ("swapin-zram-64k", "zram-64k")]
+    if revision == 8:
+        timing_backends.insert(0, ("swapin-compressed", "compressed"))
+    for name, backend in timing_backends:
         spec = cases[name]
+        expected_primary = None if revision == 8 and backend != "compressed" else "swapin_seq.mean_ns"
         if (spec.get("workload") != "swapin" or spec.get("mode") != "xswap" or
-                spec.get("backend") != backend or spec.get("primary") != "swapin_seq.mean_ns"):
+                spec.get("backend") != backend or spec.get("primary") != expected_primary):
             raise ValueError(label + " swap-in cases are xswap")
         if spec.get("metrics", {}).get("swapin_rand.mean_ns") != "lower":
             raise ValueError(label + " keeps swapin_rand as a guard")
+        if revision == 8:
+            expected_metrics = {"swapin_seq.mean_ns": "lower", "swapin_rand.mean_ns": "lower",
+                                "swapin_seq.p99_ns": "lower", "swapin_rand.p99_ns": "lower"}
+            if spec.get("metrics") != expected_metrics:
+                raise ValueError(label + " retains mean and advisory p99 metrics")
+            expected_guard = ["swapin_seq.mean_ns", "swapin_rand.mean_ns"] if backend != "compressed" else ["swapin_rand.mean_ns"]
+            if spec.get("guard") != expected_guard:
+                raise ValueError(label + " regression guard identities")
     firing = {"swapin_vmstat_delta.swap_ra", "swapin_vmstat_delta.swap_ra_hit",
               "swapin_vmstat_delta.pgmajfault"}
     if not firing <= set(cases["swapin-zram-64k"].get("probe_signals", [])):
@@ -264,6 +278,44 @@ def _revision7_metadata(protocol):
             rescore.get("fresh_probe_calibration_required") is not False or
             rescore.get("eval") != "469ee19c2a064c7393cbd5e9fea3687c"):
         raise ValueError("revision 7 records the stored-delta rescore")
+
+
+COMPRESSION_OBSERVER = {
+    'id': 'pid_kretprobe_zswap_load_v1', 'instrumented_latency': True,
+    'clock': 'monotonic_raw', 'maxactive': 64, 'per_target_decode': True,
+    'target_residency': 'pagemap_and_mincore', 'loss_policy': 'fail',
+}
+
+
+def _revision8_compression(protocol):
+    """The new C1 contract keeps historical configurations and evidence frozen."""
+    fast = protocol.get('tiers', {}).get('fast', {})
+    if fast.get('calibration_pairs') != 10 or fast.get('comparison_pairs') != 4:
+        raise ValueError('revision 8 uses ten A/A and four AB/BA pairs')
+    budget = protocol.get('budget', {})
+    expected_budget = {'probe_guest_attempts': 32, 'guest_attempts': 88,
+                       'build_attempts': 10, 'wall_seconds': 64800, 'guest_timeout': 900}
+    if any(budget.get(key) != value for key, value in expected_budget.items()):
+        raise ValueError('revision 8 retains the reviewed 120-guest, 10-build, 18-hour allocation')
+    if protocol.get('compression_observer') != COMPRESSION_OBSERVER:
+        raise ValueError('revision 8 requires exact per-target compression observer identity')
+    if protocol.get('compression_workload') != {'target_bytes': 134217728}:
+        raise ValueError('revision 8 compressed timing target is 128 MiB')
+    expected = {
+        'numerator': 'attributable_meminfo', 'fields': list(ATTRIBUTABLE_FIELDS),
+        'excluded_fields': ['MemFree', 'MemAvailable', 'Slab'],
+        'on_missing': 'fail', 'on_vmalloc_decrease': 'fail', 'on_negative_sum': 'fail',
+        'signed_fields': ['SUnreclaim', 'PageTables', 'Percpu'],
+    }
+    if protocol.get('cases', {}).get('metadata-brd', {}).get('metadata_accounting') != expected:
+        raise ValueError('revision 8 metadata uses attributable meminfo counters')
+    if protocol.get('metadata_rescore') is not None:
+        raise ValueError('revision 8 requires fresh probe calibration, not a historical metadata rescore')
+    path = Path(__file__).resolve().with_name('configurations.py')
+    spec = importlib.util.spec_from_file_location('swap_standard_revision8_configurations', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.validate_protocol(protocol, Path(__file__).resolve().parents[2])
 
 
 def protocol_rules(protocol):
@@ -326,10 +378,12 @@ def protocol_rules(protocol):
         if revision == 4 and (protocol.get("preallocate_swap") is not True or
                               any(c.get("mode", "plain") != "plain" for c in protocol.get("cases", {}).values())):
             raise ValueError("revision 4 requires plain mode and preallocated swap")
-        if revision in (6, 7):
+        if revision in (6, 7, 8):
             _kbench_screen(protocol, rules, validity, accelerator, revision)
         if revision == 7:
             _revision7_metadata(protocol)
+        if revision == 8:
+            _revision8_compression(protocol)
         for name, spec in protocol.get("tiers", {}).items():
             if spec.get("kind") == "probe":
                 if name != "probe":

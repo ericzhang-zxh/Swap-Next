@@ -293,3 +293,63 @@ class RunnerValidationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CompressionRunnerTests(unittest.TestCase):
+    def args(self, **updates):
+        values = dict(backend='compressed', mode='xswap', workload='swapin', config_id='c1-common',
+                      topology_id='single', correctness_case=None, protocol_revision=8)
+        values.update(updates)
+        return SimpleNamespace(**values)
+
+    def test_revision8_timing_binds_target_and_commandline(self):
+        args = self.args()
+        frozen = {'protocol_revision': 8, 'input_config_sha256': 'a' * 64,
+                  'compression_workload': {'target_bytes': 134217728},
+                  'cases': {'swapin-compressed': {'backend': 'compressed', 'mode': 'xswap', 'workload': 'swapin'}}}
+        config = SimpleNamespace(correctness_case=lambda p, name: None,
+                                 pinned_config=lambda *a, **kw: {'input_config_sha256': 'a' * 64})
+        with patch.dict(sys.modules, {'configurations': config}):
+            runner.revision8_context(args, frozen)
+            self.assertEqual(args.compression_target_bytes, 134217728)
+            commandline = runner.guest_commandline(args, 'image')
+            self.assertIn('bench.config_id=c1-common', commandline)
+            self.assertIn('bench.compression_target_bytes=134217728', commandline)
+            self.assertNotIn('bench.correctness_case', commandline)
+            for changes in ({'compression_workload': {'target_bytes': 1073741824}}, {'cases': {}}):
+                with self.assertRaises(ValueError):
+                    runner.revision8_context(self.args(), dict(frozen, **changes))
+            with self.assertRaises(ValueError):
+                runner.revision8_context(self.args(config_id='standard'), frozen)
+
+    def test_revision8_correctness_requires_exact_catalog_identity(self):
+        case = dict(id='c-compressed', backend='compressed', mode='xswap', workload='compression',
+                    config_id='c1-common', topology_id='single', group='compressed-roundtrip', subcases=['roundtrip'])
+        config = SimpleNamespace(correctness_case=lambda p, name: dict(case),
+                                 pinned_config=lambda *a, **kw: {'input_config_sha256': 'a' * 64})
+        with patch.dict(sys.modules, {'configurations': config}):
+            args = self.args(workload='compression', correctness_case='c-compressed')
+            runner.revision8_context(args, {'protocol_revision': 8})
+            commandline = runner.guest_commandline(args, 'image')
+            self.assertIn('bench.correctness_case=c-compressed', commandline)
+            self.assertIn('bench.compression_cases=roundtrip', commandline)
+            self.assertEqual(args.expected_case, case)
+            with self.assertRaises(ValueError):
+                runner.revision8_context(self.args(workload='compression', correctness_case='c-compressed', mode='plain'),
+                                         {'protocol_revision': 8})
+
+    def test_topology_is_auxiliary_and_resource_bound(self):
+        self.assertEqual(runner.topology_options('single', '4', 4096), [])
+        numa = runner.topology_options('numa2', '4', 4096)
+        self.assertEqual(numa.count('-numa'), 2)
+        self.assertIn('node,nodeid=1,memdev=c1-node1,cpus=2-3', numa)
+        for cpus, ram in ((8, 4096), (4, 8192)):
+            with self.assertRaises(ValueError):
+                runner.topology_options('numa2', cpus, ram)
+
+    def test_compressed_route_cannot_escape_revision8(self):
+        for revision, mode, workload in ((7, 'xswap', 'swapin'), (8, 'plain', 'swapin'), (8, 'xswap', 'metadata')):
+            with self.assertRaises(ValueError):
+                runner.validate_workload('compressed', mode, workload, revision)
+        runner.validate_workload('compressed', 'xswap', 'swapin', 8)
+        runner.validate_workload('compressed', 'xswap', 'compression', 8)

@@ -200,7 +200,7 @@ def write_attested_result(dest, result):
     (dest / "result.sha256").write_text(sha(path) + "\n")
 
 
-def validate(build, backend, mode, workload):
+def validate(build, backend, mode, workload, protocol_revision=1, config_id='standard', correctness_case=None):
     manifest = json.loads((build / "result.json").read_text())
     image = build / "output/arch/x86/boot/bzImage"
     config = build / "output/.config"
@@ -214,7 +214,17 @@ def validate(build, backend, mode, workload):
         required += ["ZRAM"]
     if backend == "brd":
         required += ["BLK_DEV_RAM"]
-    required += ["ZSWAP", "TRANSPARENT_HUGEPAGE", "THP_SWAP"]
+    if protocol_revision == 8:
+        from configurations import get_config, validate_final
+        purpose = "correctness" if correctness_case else "timing"
+        definition = get_config(config_id, PROJECT, purpose=purpose)
+        if manifest.get("input_config_sha256") != definition["input_config_sha256"]:
+            raise ValueError("build input config does not match config_id")
+        validate_final(config_id, config, purpose=purpose)
+        if mode == "xswap":
+            required += ["XSWAP"]
+    else:
+        required += ["ZSWAP", "TRANSPARENT_HUGEPAGE", "THP_SWAP"]
     if needs_lifetime_fix(mode, workload) and not has_lifetime_fix(manifest["commit"]):
         raise ValueError("xswap performance runs need the descriptor lifetime fix")
     lines = set(config.read_text().splitlines())
@@ -232,9 +242,89 @@ def validate(build, backend, mode, workload):
     return manifest, provenance, image, config
 
 
-def validate_workload(backend, mode, workload):
+def validate_workload(backend, mode, workload, protocol_revision=1):
     if workload == "correctness" and (mode != "xswap" or backend not in ("disk", "zswap")):
         raise ValueError("correctness requires xswap with disk or zswap")
+    if backend == "compressed":
+        if protocol_revision != 8 or mode != "xswap" or workload not in ("swapin", "compression"):
+            raise ValueError("compressed backend requires revision 8 xswap swapin or compression")
+    if workload == "compression":
+        if protocol_revision != 8 or (mode, backend) not in (("xswap", "compressed"), ("plain", "zswap")):
+            raise ValueError("compression correctness requires revision 8 compressed XSwap or legacy ZSwap")
+
+
+def revision8_context(args, frozen):
+    """Bind a new runner invocation to the trusted config and matrix catalog."""
+    from configurations import correctness_case as resolve_case, pinned_config
+
+    if not isinstance(frozen, dict) or frozen.get("protocol_revision") != 8:
+        raise ValueError("revision 8 requires its frozen protocol")
+    args.compression_target_bytes = 0
+    args.expected_case = None
+    args.correctness_group = ""
+    args.compression_cases = []
+    if args.correctness_case:
+        row = resolve_case(frozen, args.correctness_case)
+        for key in ("backend", "mode", "workload"):
+            if getattr(args, key) != row[key]:
+                raise ValueError("correctness case does not match " + key)
+        if args.config_id != row["config_id"]:
+            raise ValueError("correctness case does not match config_id")
+        if args.topology_id != row["topology_id"]:
+            raise ValueError("correctness case does not match topology_id")
+        args.expected_case = row
+        args.correctness_group = row["group"]
+        args.compression_cases = list(row.get("subcases", []))
+        definition = pinned_config(frozen, args.config_id, PROJECT, purpose="correctness")
+    else:
+        if args.workload in ("correctness", "compression"):
+            raise ValueError("revision 8 correctness requires a frozen matrix row")
+        if args.config_id != "c1-common" or args.topology_id != "single":
+            raise ValueError("timing uses c1-common config and single topology")
+        matches = [case for case in frozen.get("cases", {}).values()
+                   if all(case.get(key) == getattr(args, key)
+                          for key in ("backend", "mode", "workload"))]
+        if len(matches) != 1:
+            raise ValueError("timing request must match one frozen case")
+        definition = pinned_config(frozen, args.config_id, PROJECT, purpose="timing")
+        if definition["input_config_sha256"] != frozen.get("input_config_sha256"):
+            raise ValueError("timing config hash differs from frozen protocol")
+    if args.backend == "compressed" and args.workload == "swapin":
+        if frozen.get("compression_workload") != {"target_bytes": 134217728}:
+            raise ValueError("compressed target bytes differ from trusted revision 8 workload")
+        args.compression_target_bytes = 134217728
+    return definition
+
+
+def topology_options(topology_id, cpus, memory):
+    """Auxiliary NUMA correctness uses the same total resources as timing."""
+    if topology_id == "single":
+        return []
+    if topology_id != "numa2" or int(cpus) != 4 or int(memory) != 4096:
+        raise ValueError("numa2 requires 4 vCPU and 4096 MiB")
+    return ["-object", "memory-backend-ram,id=c1-node0,size=2048M",
+            "-object", "memory-backend-ram,id=c1-node1,size=2048M",
+            "-numa", "node,nodeid=0,memdev=c1-node0,cpus=0-1",
+            "-numa", "node,nodeid=1,memdev=c1-node1,cpus=2-3"]
+
+
+def guest_commandline(args, image_sha):
+    """Record all new configuration/topology identities in the guest log."""
+    words = ["console=ttyS0", "rdinit=/init", "panic=-1", "loglevel=4",
+             "zswap.enabled=1", "zswap.compressor=lzo", "brd.rd_size=1073741824",
+             f"bench.backend={args.backend}", f"bench.mode={args.mode}",
+             f"bench.workload={args.workload}", f"bench.image_sha={image_sha}"]
+    if args.protocol_revision == 8:
+        words += [f"bench.protocol_revision=8", f"bench.config_id={args.config_id}",
+                  f"bench.topology_id={args.topology_id}"]
+        if args.correctness_case:
+            words += [f"bench.correctness_case={args.correctness_case}",
+                      f"bench.correctness_group={args.correctness_group}"]
+        if args.compression_target_bytes:
+            words.append("bench.compression_target_bytes=" + str(args.compression_target_bytes))
+        if args.compression_cases:
+            words.append("bench.compression_cases=" + ",".join(args.compression_cases))
+    return " ".join(words)
 
 
 def main():
@@ -245,9 +335,12 @@ def main():
     parser.add_argument("--campaign", help="explicit campaign for guest execution")
     parser.add_argument("--reservation", type=Path, help="counted guest reservation from guest_budget.py")
     parser.add_argument("--build", required=True)
-    parser.add_argument("--backend", choices=["disk", "zswap", "zram", "zram-64k", "brd"], required=True)
+    parser.add_argument("--backend", choices=["disk", "zswap", "zram", "zram-64k", "brd", "compressed"], required=True)
     parser.add_argument("--mode", choices=["plain", "xswap"], default="plain")
-    parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime", "correctness"], required=True)
+    parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime", "correctness", "compression"], required=True)
+    parser.add_argument("--config-id", default="standard")
+    parser.add_argument("--correctness-case")
+    parser.add_argument("--topology-id", choices=["single", "numa2"], default="single")
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--run-id", type=run_id, help="explicit unique run directory name")
@@ -266,7 +359,16 @@ def main():
         parser.error("protocol revision must be 1..9")
     if (args.workload == "metadata") != (args.backend == "brd"):
         parser.error("metadata uses brd exclusively; brd is reserved for metadata")
-    validate_workload(args.backend, args.mode, args.workload)
+    validate_workload(args.backend, args.mode, args.workload, args.protocol_revision)
+    if args.protocol_revision != 8 and (args.config_id != "standard" or args.correctness_case or args.topology_id != "single"):
+        parser.error("config, correctness and topology identities require revision 8")
+    for value in (args.config_id, args.correctness_case):
+        if value is not None and not re.fullmatch(r"[a-z][a-z0-9-]{0,63}", value):
+            parser.error("unsafe configuration or correctness case identity")
+    args.compression_target_bytes = 0
+    args.expected_case = None
+    args.correctness_group = ""
+    args.compression_cases = []
     if needs_lifetime_fix(args.mode, args.workload):
         require_linux_checkout()
     try:
@@ -295,6 +397,9 @@ def main():
             guest = frozen.get("guest", {})
             if guest and (guest.get("mem_mib") != memory or guest.get("vcpus") != int(cpus)):
                 raise campaign_store.CampaignError("runner guest size does not match protocol")
+            if args.protocol_revision == 8:
+                revision8_context(args, frozen)
+                topology_options(args.topology_id, cpus, memory)
             reason = excluded_workload_reason(frozen, args.workload)
             if reason:
                 raise campaign_store.CampaignError(
@@ -303,12 +408,16 @@ def main():
                                        {key: getattr(args, key) for key in guest_budget.IDENTITY_KEYS})
         except (campaign_store.CampaignError, OSError, ValueError) as exc:
             raise SystemExit("BLOCKED: " + str(exc))
+    if args.check_only and args.protocol_revision == 8:
+        if not args.campaign:
+            parser.error("revision 8 check-only requires --campaign for its frozen contract")
+        revision8_context(args, guest_budget.protocol(args.campaign))
     if stop_requested(args.stop_file, args.campaign_stop):
         raise SystemExit("STOP")
     with (PROJECT / "benchmark/kernel/.runtime.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         build = PROJECT / "benchmark/kernel/builds" / args.build
-        manifest, provenance, image, config = validate(build, args.backend, args.mode, args.workload)
+        manifest, provenance, image, config = validate(build, args.backend, args.mode, args.workload, args.protocol_revision, args.config_id, args.correctness_case)
         if args.check_only:
             print("INPUTS_VERIFIED; no guest started")
             return
@@ -328,12 +437,9 @@ def main():
         setup_started = time.monotonic()
         create_swap_image(disk, args.preallocate_swap)
         image_sha = manifest["image_sha256"]
-        append = ("console=ttyS0 rdinit=/init panic=-1 loglevel=4 "
-                  "zswap.enabled=1 zswap.compressor=lzo brd.rd_size=1073741824 "
-                  f"bench.backend={args.backend} bench.mode={args.mode} "
-                  f"bench.workload={args.workload} bench.image_sha={image_sha}")
+        append = guest_commandline(args, image_sha)
         command = ["qemu-system-x86_64", *accel,
-                   "-smp", guest_cpus, "-m", str(guest_mib), "-nodefaults", "-display", "none", "-serial", "stdio",
+                   "-smp", guest_cpus, "-m", str(guest_mib), *topology_options(args.topology_id, guest_cpus, guest_mib), "-nodefaults", "-display", "none", "-serial", "stdio",
                    "-monitor", "none", "-nic", "none", "-no-reboot",
                    "-sandbox", "on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny",
                    "-kernel", str(image), "-initrd", str(BASE / "initramfs.cpio.gz"), "-append", append,
@@ -349,6 +455,12 @@ def main():
                       config_sha256=sha(config), guest_provenance=provenance, command=command,
                       performance_accepted=False, calibrated=False, auto_promote=False,
                       harness_sha256={x.name: sha(x) for x in BASE.iterdir() if x.is_file() and x.suffix in (".py", ".sh", ".json", ".c") and x.name != "image.json"})
+        if args.protocol_revision == 8:
+            result.update(config_id=args.config_id, correctness_case=args.correctness_case,
+                          topology_id=args.topology_id, correctness_group=args.correctness_group,
+                          expected_subcases=args.compression_cases,
+                          compression_target_bytes=args.compression_target_bytes,
+                          topology_arguments=topology_options(args.topology_id, guest_cpus, guest_mib))
         result.update(attestation_fields(args, dest, build, manifest))
         snapshot = dest / "harness"
         snapshot.mkdir()
@@ -423,7 +535,9 @@ def main():
         # also rejects wall times above 1.5x the running median.
         result["run_valid"] = not reasons
         try:
-            result.update(parse(serial, image_sha, args.backend, args.mode, args.workload, args.protocol_revision))
+            result.update(parse(serial, image_sha, args.backend, args.mode, args.workload, args.protocol_revision,
+                                config_id=args.config_id, correctness_case=args.correctness_case,
+                                topology_id=args.topology_id, expected_case=args.expected_case))
         except (ValueError, KeyError, TypeError) as exc:
             result.update(gates={"parse_complete": False}, parse_error=str(exc))
         result["gates"]["qemu_exit"] = proc.returncode == 0 and reason is None

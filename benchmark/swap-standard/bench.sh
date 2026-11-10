@@ -4,6 +4,9 @@
 # workload per boot; parameters come from params.sh, which is part of the image.
 set -euo pipefail
 backend=$1 mode=$2 workload=$3
+revision=${4:-1} config_id=${5:-standard} correctness_case=${6:-}
+correctness_group=${7:-} compression_cases=${8:-} topology_id=${9:-single}
+compression_target_bytes=${10:-0}
 export PATH=/opt/bench/bin:/usr/bin:/usr/sbin LC_ALL=C HOME=/tmp
 . /opt/bench/params.sh
 
@@ -65,12 +68,20 @@ setup_swap() {
 		zram_dev 0 "$ZRAM64K_SIZE"
 		swapon -p 0 /dev/zram0 ;;
 	zswap)
-		echo Y > /sys/module/zswap/parameters/shrinker_enabled
+		if [ "$revision" = 8 ] && [ "$workload" = compression ]; then
+			echo N > /sys/module/zswap/parameters/shrinker_enabled
+		else
+			echo Y > /sys/module/zswap/parameters/shrinker_enabled
+		fi
 		zram_dev 1 "$ZRAM1_SIZE"
 		swapon -p 0 /dev/zram1 ;;
 	disk)
 		mkswap /dev/vda >/dev/null
 		swapon -p 0 /dev/vda ;;
+	compressed)
+		[ "$revision" = 8 ] && [ "$mode" = xswap ] || fail compressed_mode
+		# No lower swap is activated: all nonresident targets must stay in ZSwap.
+		echo N > /sys/module/zswap/parameters/shrinker_enabled ;;
 	brd)
 		mkswap /dev/ram0 >/dev/null
 		swapon -p 0 /dev/ram0 ;;
@@ -85,7 +96,16 @@ setup_swap() {
 	elif [ "$mode" != plain ]; then
 		fail mode
 	fi
-	[ "$backend" = zswap ] || zswap_enable N
+	case $backend in zswap|compressed) ;; *) zswap_enable N ;; esac
+	if [ "$revision" = 8 ]; then
+		case $backend in
+		disk) echo "BACKEND_DEVICE /dev/vda" ;;
+		zswap) echo "BACKEND_DEVICE /dev/zram1" ;;
+		compressed)
+			[ "$(wc -l < /proc/swaps)" -eq 2 ] || fail compressed_lower_swap
+			echo "BACKEND_DEVICE none" ;;
+		esac
+	fi
 	echo "ZSWAP_ENABLED $(cat /sys/module/zswap/parameters/enabled)"
 	echo SWAPS_BEGIN
 	cat /proc/swaps
@@ -220,7 +240,13 @@ run_correctness() {
 	[ "$#" -eq 1 ] && [ -f "$1" ] || fail correctness_type
 	path=$1 type=${1##*/type}
 	vmstat correctness_start
-	correctness "$type" "$cg/memory.reclaim" || { local status=$?; echo "CORRECTNESS_EXIT $status"; return "$status"; }
+	if [ "$revision" = 8 ]; then
+		local device=/dev/vda
+		[ "$backend" != zswap ] || device=/dev/zram1
+		correctness "$type" "$cg/memory.reclaim" "$device" || { local status=$?; echo "CORRECTNESS_EXIT $status"; return "$status"; }
+	else
+		correctness "$type" "$cg/memory.reclaim" || { local status=$?; echo "CORRECTNESS_EXIT $status"; return "$status"; }
+	fi
 	vmstat correctness_end
 	[ ! -e "$path" ] || fail correctness_destroy
 	[ "$(wc -l < /proc/swaps)" -eq 1 ] || fail correctness_swapoff
@@ -231,9 +257,43 @@ run_swapin() {
 	enter_cgroup max
 	vmstat swapin_start
 	[ "$mode" != xswap ] || xswap_counters swapin_start
-	swapin "$SWAPIN_SIZE" "$cg/memory.reclaim"
+	if [ "$backend" = compressed ]; then
+		local type
+		set -- /sys/kernel/debug/xswap/type*
+		[ "$#" -eq 1 ] && [ -f "$1" ] || fail compressed_type
+		type=${1##*/type}
+		[ "$compression_target_bytes" = 134217728 ] || fail compressed_target_bytes
+		swapin "$compression_target_bytes" "$cg/memory.reclaim" compressed "$type" "$cg"
+	else
+		swapin "$SWAPIN_SIZE" "$cg/memory.reclaim"
+	fi
 	vmstat swapin_end
 	[ "$mode" != xswap ] || xswap_counters swapin_end
+}
+
+run_compression() {
+	[ "$revision" = 8 ] && [ -n "$correctness_case" ] && [ -n "$compression_cases" ] || fail compression_identity
+	case "$mode:$backend" in xswap:compressed|plain:zswap) ;; *) fail compression_mode ;; esac
+	enter_cgroup max
+	local id type=0 device=none
+	if [ "$mode" = xswap ]; then
+		set -- /sys/kernel/debug/xswap/type*
+		[ "$#" -eq 1 ] && [ -f "$1" ] || fail compression_type
+		type=${1##*/type}
+	else
+		device=/dev/zram1
+	fi
+	echo "COMPRESSION_GROUP_BEGIN $correctness_group"
+	local -a cases args
+	IFS=, read -r -a cases <<< "$compression_cases"
+	for id in "${cases[@]}"; do
+		[[ "$id" =~ ^[a-z][a-z0-9_]*$ ]] || fail compression_case
+		args=(--mode "$mode" --case "$id" --bytes 33554432 --reclaim "$cg/memory.reclaim" --cgroup "$cg")
+		[ "$mode" != xswap ] || args+=(--type "$type")
+		[ "$device" = none ] || args+=(--swap-device "$device")
+		compression "${args[@]}" || { local status=$?; echo "COMPRESSION_EXIT case=$id status=$status"; return "$status"; }
+	done
+	echo "COMPRESSION_GROUP_END $correctness_group"
 }
 
 echo "BENCH_PARAMS backend=$backend mode=$mode workload=$workload ncpu=$(nproc)"
@@ -291,6 +351,7 @@ redis)       run_redis ;;
 swapin)      run_swapin ;;
 lifetime)    run_lifetime ;;
 correctness) run_correctness ;;
+compression) run_compression ;;
 *)           fail workload ;;
 esac
 sleep 1

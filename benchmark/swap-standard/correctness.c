@@ -17,6 +17,7 @@ static uint64_t samples[PAGES], order[PAGES], types[PAGES];
 static int xswap_type;
 static char debugpath[128];
 static const char *reclaim_path;
+static const char *backend_device = "/dev/vda";
 static uint64_t pattern(size_t i) { return ((i/512)*8+i%8)*UINT64_C(0x9e3779b97f4a7c15)^UINT64_C(0xa5a5a5a5a5a5a5a5); }
 /* Explicit pageout works without relying on host-sized global pressure. */
 static size_t swapped_pages(uint64_t *data, int require_targets) {
@@ -58,8 +59,13 @@ static void metadata(const char *phase) {
 }
 int main(int argc, char **argv) {
  uint64_t workload_start=clock_ns();
- if(argc!=3)return 20;
+ if(argc!=3 && argc!=4)return 20;
  reclaim_path=argv[2];
+ if(argc==4){
+  if(strcmp(argv[3],"/dev/vda") && strcmp(argv[3],"/dev/zram1"))return 44;
+  backend_device=argv[3];
+  printf("CORRECTNESS_BACKEND_DEVICE %s\n",backend_device);
+ }
  char *end;long type=strtol(argv[1],&end,10);if(*end||type<0||type>31)return 21;
  xswap_type=(int)type;
  snprintf(debugpath,sizeof debugpath,"/sys/kernel/debug/xswap/type%d",xswap_type);
@@ -129,16 +135,17 @@ int main(int argc, char **argv) {
  char swapline[512],device[128],kind[32];unsigned long size_kib,used_kib=0;int priority,found=0;
  while(fgets(swapline,sizeof swapline,swaps)){
   unsigned long used;
-  if(sscanf(swapline,"%127s %31s %lu %lu %d",device,kind,&size_kib,&used,&priority)==5&&!strcmp(device,"/dev/vda")){
+  if(sscanf(swapline,"%127s %31s %lu %lu %d",device,kind,&size_kib,&used,&priority)==5&&!strcmp(device,backend_device)){
    used_kib=used;found++;
   }
  }
  fclose(swaps);if(found!=1)return 38;
  printf("PHYSICAL_SWAPOFF_LIVE_XSWAP_PTES %zu BACKEND_USED_KIB %lu\n",backend_live,used_kib);
- if(access(debugpath,F_OK)||swapoff("/dev/vda"))return 39;
+ if(argc==4)printf("PHYSICAL_SWAPOFF_DEVICE %s\n",backend_device);
+ if(access(debugpath,F_OK)||swapoff(backend_device))return 39;
  for(size_t i=0;i<bytes/8;i++)if(data[i]!=pattern(i))return 40;
  puts("PHYSICAL_SWAPOFF_LIVE_PASS");
- if(swapon("/dev/vda",SWAP_FLAG_PREFER))return 41;
+ if(swapon(backend_device,SWAP_FLAG_PREFER))return 41;
  pageout_verified(data,bytes,0);
  int livefd=open("/proc/self/pagemap",O_RDONLY);if(livefd<0)return 27;
  size_t live=0;
@@ -159,7 +166,7 @@ int main(int argc, char **argv) {
  for(size_t i=0;i<bytes/8;i++)if(data[i]!=pattern(i))return 25;
  puts("DESTROY_LIVE_PASS");
  if(access(debugpath,F_OK)==0)return 26;
- if(swapoff("/dev/vda"))return 17;
+ if(swapoff(backend_device))return 17;
  for(size_t i=0;i<bytes/8;i++)if(data[i]!=pattern(i))return 18;
  puts("SWAPOFF_LIVE_PASS");
  if(munmap(data,bytes))return 19;
