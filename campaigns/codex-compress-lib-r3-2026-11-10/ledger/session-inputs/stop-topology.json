@@ -1,0 +1,4 @@
+{
+  "kind": "stop",
+  "reason": "Infrastructure-incomplete: the two-node correctness guest triggered topology_sane during boot because the trusted implicit single-package CPU topology conflicts with the two NUMA nodes. Preserve the failed warning gates and all three counted attempts; stop this frozen protocol before a separately reviewed topology correction."
+}

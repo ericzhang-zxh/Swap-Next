@@ -1,0 +1,53 @@
+{
+  "id": "c1-shared-store-r3",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-0d5ba110f172",
+  "worktree": "worktrees/codex-compress-lib-r3-2026-11-10/c1-shared-store-r3",
+  "status": "active",
+  "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+  "created_unix": 1794345832.2026794,
+  "protocol_sha256": "6a0d97fe5b945857fc00e909325d8cb2297718680c6444282b496e1cb1cc363c",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+    "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+  },
+  "allowed_modify": [
+    "mm/zswap.c",
+    "mm/Kconfig",
+    "mm/Makefile",
+    "include/linux/cpuhotplug.h",
+    "tools/testing/selftests/mm/Makefile"
+  ],
+  "allowed_add": [
+    "mm/page_compress.c",
+    "include/linux/page_compress.h",
+    "mm/page_compress_test.c",
+    "tools/testing/selftests/mm/swap_next_compression.c"
+  ],
+  "budget": {
+    "max_candidates": 1,
+    "max_active_candidates": 1,
+    "worker_wall_seconds": 2400,
+    "build_jobs": 4,
+    "guest_vcpus": 4,
+    "guest_memory_mib": 4096,
+    "guest_disk_gib": 16,
+    "run_wall_seconds": 900,
+    "max_total_campaign_seconds": 58398,
+    "max_build_attempts": 6
+  },
+  "primary_metric": "swapin_seq.mean_ns",
+  "required_reading": [
+    "AGENTS.md",
+    "evolve/control/CODE_PATTERNS.md",
+    "evolve/control/PRINCIPLES.md",
+    "evolve/control/METRICS.md"
+  ],
+  "boundaries": "Execution-only. No delegation, host execution, evaluator edits, credentials, publication, or DCO signing.",
+  "execution_status": "PREPARED_ONLY; no worker or kernel was launched"
+}

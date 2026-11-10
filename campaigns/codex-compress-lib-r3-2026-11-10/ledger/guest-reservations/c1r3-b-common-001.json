@@ -1,0 +1,18 @@
+{
+  "id": "c1r3-b-common-001",
+  "campaign": "codex-compress-lib-r3-2026-11-10",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794345695.3210573,
+  "identity": {
+    "build": "c1-base-common-20261110",
+    "backend": "disk",
+    "mode": "xswap",
+    "workload": "correctness",
+    "config_id": "c1-common",
+    "correctness_case": "b-common",
+    "topology_id": "single"
+  },
+  "protocol_sha256": "d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf",
+  "started_unix": 1794346102.7844357
+}

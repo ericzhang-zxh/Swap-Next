@@ -1,0 +1,20 @@
+{
+  "id": "c1-shared-store-r3",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "parent_candidate": null,
+  "generation": 1,
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "brief_id": "brief-000001-0d5ba110f172",
+  "worktree": "worktrees/codex-compress-lib-r3-2026-11-10/c1-shared-store-r3",
+  "status": "closed",
+  "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+  "created_unix": 1794345832.2026794,
+  "protocol_sha256": "6a0d97fe5b945857fc00e909325d8cb2297718680c6444282b496e1cb1cc363c",
+  "mechanism": {
+    "kind": "reviewed_structure",
+    "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+    "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+  },
+  "reason": "Infrastructure-incomplete: the two-node correctness guest triggered topology_sane during boot because the trusted implicit single-package CPU topology conflicts with the two NUMA nodes. Preserve the failed warning gates and all three counted attempts; stop this frozen protocol before a separately reviewed topology correction."
+}

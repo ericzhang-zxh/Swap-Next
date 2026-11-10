@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r3-2026-11-10",
+  "mode": "research",
+  "reason": "Infrastructure-incomplete: the two-node correctness guest triggered topology_sane during boot because the trusted implicit single-package CPU topology conflicts with the two NUMA nodes. Preserve the failed warning gates and all three counted attempts; stop this frozen protocol before a separately reviewed topology correction.",
+  "frozen_inputs": {
+    "owner.json": "b817626b5ac3374ca0613de647a0030e4e5ced9b54fb99592996185fbd900e33",
+    "policy.json": "156a05b7f9d29ba0aa5cf88938d033e1bb69a5cb72577cff04e2656f4cb53557",
+    "protocol.json": "d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf",
+    "research.json": "f3be04307e7e7ba7af6d2f95daf63e8fb0c2c291d7b4014dc6f898f9d9cc7e49"
+  },
+  "decisions": [
+    {
+      "id": "decision-3688f2cd3d0899976ff7dfbf",
+      "action_id": "action-5866f5da95b78def1d5ec34b",
+      "kind": "propose",
+      "identity": {
+        "brief_id": "brief-000001-0d5ba110f172",
+        "brief_sha256": "517eb63c42d474cd6a6f1b91ea7c41f3475560cb366f2139a6f6c00dc202b99d",
+        "allowed_parents": [
+          "5e84ca928deeacb4eee656806a003f27d1eca82f"
+        ],
+        "idea": "shared-page-store"
+      },
+      "input_hashes": {
+        "evolve/session.py": "e4067291d7e46e02b6ecdf649dffcbfc8b753ae814e36aed9d5ecb425dae49d6",
+        "evolve/control/controller.py": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "evolve/standard_workflow.py": "f58c77a241f8918181e9ac30020f721d1d5c6ca34a7a748b94a7d8da1ea9053f",
+        "evolve/research.py": "4fd4cbc7b7aeba4398504f41ab7cd2d382286e126a92bb8855baebc04367b76d",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "7061a7b7a97d1f52aa05b416e2eecb93eaf42f5d3a18379ba604c5b5a8a72293",
+        "evolve/calibration_cache.py": "3be207df36ce814c78ba8de89fd8ad9e3ea2a32fcb69270d5ca9e6b0fac0e8f0",
+        "evolve/reference_cache.py": "8fd739eec61e152c179f13819c6384596bca324e389b4f20617874b4f9b9a524",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "linux/scripts/checkpatch.pl": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926",
+        "campaigns/codex-compress-lib-r3-2026-11-10/campaign.json": "a69f466f0557ecccd22186d934e372f59f45db3a3be4e7504f9969dfd91f235a",
+        "campaigns/codex-compress-lib-r3-2026-11-10/protocol.json": "d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf",
+        "campaigns/codex-compress-lib-r3-2026-11-10/policy.json": "156a05b7f9d29ba0aa5cf88938d033e1bb69a5cb72577cff04e2656f4cb53557",
+        "campaigns/codex-compress-lib-r3-2026-11-10/research.json": "f3be04307e7e7ba7af6d2f95daf63e8fb0c2c291d7b4014dc6f898f9d9cc7e49",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/ledger.json": null,
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/budget.json": "a1746e355d2386dbbfa636e156c1da4964f84a15d421ec25ad0da55e916e39d1",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/guest-reservations/c1r3-b-common-001.json": "4276f50ed111af54d33dbc35ab8ef4bfd5fb4e8526e8498de88d8b66ca38586e",
+        "benchmark/kernel/builds/c1-base-common-20261110/result.json": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+        "benchmark/swap-standard/image.json": "05a41c8449135395ea97112233197afbd5ef25eea70d7172e93b32941c870353",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/calibration-probe.json": null,
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/calibration-fast.json": null,
+        "campaigns/codex-compress-lib-r3-2026-11-10/archive/population.json": "52f615c5097ee81054bad605fdb8ce5cb9a6c58e52fd1b921cea4ebd6018a77a",
+        "campaigns/codex-compress-lib-r3-2026-11-10/archive/briefs/brief-000001-0d5ba110f172.json": "517eb63c42d474cd6a6f1b91ea7c41f3475560cb366f2139a6f6c00dc202b99d"
+      },
+      "payload": {
+        "kind": "propose",
+        "candidate": "c1-shared-store-r3",
+        "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+        "mechanism": {
+          "kind": "reviewed_structure",
+          "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+          "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+        },
+        "reason": "Continue unchanged exact source/tree after trusted parser framing correction, retaining cumulative original logical-phase resource costs and collecting fresh correctness. No new kernel hypothesis or candidate-outcome retry is claimed."
+      }
+    },
+    {
+      "id": "decision-b50c487a8d2ee17456d7a939",
+      "action_id": "action-e3effa431bb18f027c59b2a4",
+      "kind": "stop",
+      "identity": {
+        "candidate": "c1-shared-store-r3",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "input_hashes": {
+        "evolve/session.py": "e4067291d7e46e02b6ecdf649dffcbfc8b753ae814e36aed9d5ecb425dae49d6",
+        "evolve/control/controller.py": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "evolve/standard_workflow.py": "f58c77a241f8918181e9ac30020f721d1d5c6ca34a7a748b94a7d8da1ea9053f",
+        "evolve/research.py": "4fd4cbc7b7aeba4398504f41ab7cd2d382286e126a92bb8855baebc04367b76d",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "7061a7b7a97d1f52aa05b416e2eecb93eaf42f5d3a18379ba604c5b5a8a72293",
+        "evolve/calibration_cache.py": "3be207df36ce814c78ba8de89fd8ad9e3ea2a32fcb69270d5ca9e6b0fac0e8f0",
+        "evolve/reference_cache.py": "8fd739eec61e152c179f13819c6384596bca324e389b4f20617874b4f9b9a524",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "linux/scripts/checkpatch.pl": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926",
+        "campaigns/codex-compress-lib-r3-2026-11-10/campaign.json": "a69f466f0557ecccd22186d934e372f59f45db3a3be4e7504f9969dfd91f235a",
+        "campaigns/codex-compress-lib-r3-2026-11-10/protocol.json": "d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf",
+        "campaigns/codex-compress-lib-r3-2026-11-10/policy.json": "156a05b7f9d29ba0aa5cf88938d033e1bb69a5cb72577cff04e2656f4cb53557",
+        "campaigns/codex-compress-lib-r3-2026-11-10/research.json": "f3be04307e7e7ba7af6d2f95daf63e8fb0c2c291d7b4014dc6f898f9d9cc7e49",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/ledger.json": "8580601187e18bd6827698d43f77ed23a4fe4cfdd413087af99b52c02b6d8f53",
+        "campaigns/codex-compress-lib-r3-2026-11-10/runs/evaluations/91345b54260646f08085ebf30ac1f80a/report.json": "d23089be894f5aa76a8705570b2bfff6f980eea51a2840a49aca637c933ebb5d",
+        "campaigns/codex-compress-lib-r3-2026-11-10/runs/evaluations/35a0cbd3f5b7415d99bd4c140eab3bc9/report.json": "67a0cc8a3f25c29b2baae6fc4bf8bd9af71b6aefcc8de194b530332b8e410161",
+        "campaigns/codex-compress-lib-r3-2026-11-10/runs/evaluations/e01123bd58c44c31977862326be05785/report.json": "96161a523b5f710b4332c510f4b6b316a357f4f173e05a736b9054fb03646223",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/budget.json": "cc2aa3e137730bf12f1fc8a0615cb347fd83de7087e8a86d33eccd8faa570b1f",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/guest-reservations/c1r3-b-common-001.json": "9582883fcf9c58244e3d91eb8f5e4547710186a7cb3301e6a71ac905760f4cfb",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/guest-reservations/c1r3-c-debug-001.json": "df6184f5f8ae806bc5686b243291dfe9339b23d0e8c200aae5ec86fd9a10474c",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/guest-reservations/c1r3-c-numa-001.json": "a2e28256196b9ef9ce5a0c8229912236b8fc27135ae08b89581e1551a88b360b",
+        "benchmark/kernel/builds/c1-base-common-20261110/result.json": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+        "benchmark/swap-standard/image.json": "05a41c8449135395ea97112233197afbd5ef25eea70d7172e93b32941c870353",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/calibration-probe.json": null,
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/calibration-fast.json": null,
+        "campaigns/codex-compress-lib-r3-2026-11-10/candidates/c1-shared-store-r3.json": "1981fc1faa84c360aeb2168af611a19c95da7037bbaf392ba1d8de6f1d9d7132",
+        "campaigns/codex-compress-lib-r3-2026-11-10/candidates/c1-shared-store-r3/static.json": "0cc6fcd8796aa81f1350d6a3b2d1a61467446b12475ff49ce48c6bfc3440cdce",
+        "campaigns/codex-compress-lib-r3-2026-11-10/archive/population.json": "66f5c34154dcdb0e0639084694ceb103353dfe030f43af694d2bf76130bac3d7",
+        "campaigns/codex-compress-lib-r3-2026-11-10/candidates/c1-shared-store-r3/mechanism.json": "47f2a0cae37b99c0ac6b3dbe741c7d2ee8001d157304d3b0af4e4ee875dbb93c",
+        "campaigns/codex-compress-lib-r3-2026-11-10/candidates/c1-shared-store-r3/correctness.json": null,
+        "campaigns/codex-compress-lib-r3-2026-11-10/runs/guests/c1r3-b-common-001/result.json": "1dad49f82bfb57e15793463d925f25ae45ce4f943b9fb18699b1d4a5dc8208b5",
+        "campaigns/codex-compress-lib-r3-2026-11-10/runs/guests/c1r3-b-common-001/serial.log": "790289543bf79e5f4b8aa29eae29d326dc5bd1398f6d2dc7425fa93da4176fd7",
+        "campaigns/codex-compress-lib-r3-2026-11-10/runs/guests/c1r3-c-debug-001/result.json": "9d1a8fbfd4de6e110640815412504163d8702fe33205c8f53ad17826cd3acfd2",
+        "campaigns/codex-compress-lib-r3-2026-11-10/runs/guests/c1r3-c-debug-001/serial.log": "a8d20c74c68371edacb11ea83a52e7912198e8bd2bb93523d1ac6ddc9442c450",
+        "campaigns/codex-compress-lib-r3-2026-11-10/runs/guests/c1r3-c-numa-001/result.json": "2767157a386326880422a1939f90a6ae807c6434ee22736f96a2c72f15a8fe83",
+        "campaigns/codex-compress-lib-r3-2026-11-10/runs/guests/c1r3-c-numa-001/serial.log": "a2720fdfe500355593421ab2770bb6710aca481ccaabc58b04a94e881ba44f57"
+      },
+      "payload": {
+        "kind": "stop",
+        "reason": "Infrastructure-incomplete: the two-node correctness guest triggered topology_sane during boot because the trusted implicit single-package CPU topology conflicts with the two NUMA nodes. Preserve the failed warning gates and all three counted attempts; stop this frozen protocol before a separately reviewed topology correction."
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "action-2eef1ae25890b9cf1fb6cdbf",
+      "command": "open",
+      "identity": {
+        "protocol_sha256": "d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf",
+        "policy_sha256": "156a05b7f9d29ba0aa5cf88938d033e1bb69a5cb72577cff04e2656f4cb53557"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r3-2026-11-10/runs/session/action-2eef1ae25890b9cf1fb6cdbf-7e10d004.log"
+    },
+    {
+      "action_id": "action-5946fdcae1017eebe81addf5",
+      "command": "brief",
+      "identity": {
+        "fingerprint": "adb3fb7830b0a300c0edb686342ad45b529b9203d1f7a72b2e015783999f38bb",
+        "idea": "shared-page-store"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r3-2026-11-10/runs/session/action-5946fdcae1017eebe81addf5-9ddea21d.log"
+    },
+    {
+      "action_id": "action-ba5ad0519dccfb0fb894dd07",
+      "command": "new",
+      "identity": {
+        "brief_id": "brief-000001-0d5ba110f172",
+        "idea": "shared-page-store"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r3-2026-11-10/runs/session/action-ba5ad0519dccfb0fb894dd07-b53d1f01.log"
+    },
+    {
+      "action_id": "action-16bae2f84ad7b3cab1f0caf9",
+      "command": "check",
+      "identity": {
+        "candidate": "c1-shared-store-r3",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "checker_identity": {
+          "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+          "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+        }
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r3-2026-11-10/runs/session/action-16bae2f84ad7b3cab1f0caf9-3eb20e9e.log"
+    },
+    {
+      "action_id": "action-ead93aa9697138a9a68539d6",
+      "command": "close-candidate",
+      "identity": {
+        "candidate": "c1-shared-store-r3",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r3-2026-11-10/runs/session/action-ead93aa9697138a9a68539d6-92fc4209.log"
+    },
+    {
+      "action_id": "action-f02e8a3731d00d853cb12473",
+      "command": "close-campaign",
+      "identity": {},
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r3-2026-11-10/runs/session/action-f02e8a3731d00d853cb12473-6aad5112.log"
+    }
+  ],
+  "candidate_reasons": {
+    "c1-shared-store-r3": "Infrastructure-incomplete: the two-node correctness guest triggered topology_sane during boot because the trusted implicit single-package CPU topology conflicts with the two NUMA nodes. Preserve the failed warning gates and all three counted attempts; stop this frozen protocol before a separately reviewed topology correction."
+  },
+  "performance_accepted": false,
+  "auto_promote": false
+}
