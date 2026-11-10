@@ -302,6 +302,42 @@ class CompressionRunnerTests(unittest.TestCase):
         values.update(updates)
         return SimpleNamespace(**values)
 
+    def test_revision8_main_consumes_complete_reservation_identity(self):
+        import configurations
+        from evolve.test_compression_coverage import fixture_protocol
+
+        frozen = fixture_protocol(configurations, runner.PROJECT, runner.LIFETIME_FIX)
+        frozen.update(input_config_sha256=frozen["configurations"]["c1-common"]["input_config_sha256"],
+                      compression_workload={"target_bytes": 134217728}, preallocate_swap=True)
+        cases = [dict(build="b", backend="compressed", mode="xswap", workload="swapin",
+                      config_id="c1-common", correctness_case=None, topology_id="single"),
+                 dict(build="b", backend="compressed", mode="xswap", workload="compression",
+                      config_id="c1-debug", correctness_case="c-numa", topology_id="numa2")]
+        for identity in cases:
+            argv = ["run.py", "--campaign", "demo", "--run-id", "run-1",
+                    "--reservation", "/tmp/ticket.json", "--preallocate-swap", "--protocol-revision", "8"]
+            for key, value in identity.items():
+                if value is not None:
+                    argv += ["--" + key.replace("_", "-"), value]
+            observed = []
+            def consume(campaign, run_id, reservation, supplied):
+                self.assertEqual(supplied, identity)
+                self.assertEqual(runner.guest_budget.reservation_identity(frozen, **supplied), supplied)
+                observed.append(supplied)
+                raise runner.campaign_store.CampaignError("verified-consume-boundary")
+            with self.subTest(identity=identity), patch.object(sys, "argv", argv), \
+                 patch.object(runner.os, "geteuid", return_value=1000), \
+                 patch.dict(runner.os.environ, {"SWAP_NEXT_ACCEL": "tcg"}), \
+                 patch.object(runner, "require_linux_checkout"), \
+                 patch.object(runner, "execution_campaign", return_value="demo"), \
+                 patch.object(runner.guest_budget, "protocol", return_value=frozen), \
+                 patch.object(runner.guest_budget, "consume_guest", side_effect=consume), \
+                 patch.object(runner.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(SystemExit, "verified-consume-boundary"):
+                    runner.main()
+                self.assertEqual(observed, [identity])
+                launch.assert_not_called()
+
     def test_revision8_timing_binds_target_and_commandline(self):
         args = self.args()
         frozen = {'protocol_revision': 8, 'input_config_sha256': 'a' * 64,

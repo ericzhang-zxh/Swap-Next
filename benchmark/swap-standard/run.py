@@ -404,8 +404,11 @@ def main():
             if reason:
                 raise campaign_store.CampaignError(
                     "workload excluded by protocol: " + args.workload + ": " + reason)
-            guest_budget.consume_guest(args.campaign, args.run_id, args.reservation,
-                                       {key: getattr(args, key) for key in guest_budget.IDENTITY_KEYS})
+            identity = {key: getattr(args, key) for key in guest_budget.IDENTITY_KEYS}
+            if args.protocol_revision == 8:
+                identity.update(config_id=args.config_id, correctness_case=args.correctness_case,
+                                topology_id=args.topology_id)
+            guest_budget.consume_guest(args.campaign, args.run_id, args.reservation, identity)
         except (campaign_store.CampaignError, OSError, ValueError) as exc:
             raise SystemExit("BLOCKED: " + str(exc))
     if args.check_only and args.protocol_revision == 8:
