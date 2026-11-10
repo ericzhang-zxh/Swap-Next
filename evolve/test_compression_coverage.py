@@ -282,6 +282,42 @@ class CompressionCoverageTests(unittest.TestCase):
         self.assertEqual(progress["next_missing_case"]["id"], "c-numa")
         self.assertEqual(len(progress["verified_cases"]), 7)
 
+    def test_guest_config_build_failure_stops_partial_matrix_without_runtime_blame(self):
+        for case in self.fx.protocol["correctness_matrix"]["cases"]:
+            if case["role"] == "candidate":
+                (self.fx.root / self.fx.raw[case["id"]]["reservation"]).unlink()
+        row = next(item for item in self.fx.ledger if item["config_id"] == "c1-debug")
+        for status in ("BUILD_FAILED", "RUNNING", "BLOCKED"):
+            with self.subTest(status=status):
+                row["status"] = status
+                self.fx.put("campaigns/fixture-c1/ledger/ledger.json", self.fx.ledger)
+                progress = proofs.matrix_progress(self.fx.protocol, self.fx.root, self.fx.commits["candidate"])
+                self.assertFalse(progress["passed"])
+                self.assertFalse(progress["pending"])
+                self.assertFalse(progress["failed"])
+                self.assertTrue(progress["attempted"])
+                self.assertIn("required configured build failed or incomplete", progress["reason"])
+
+    def test_extra_failed_required_build_cannot_be_hidden_by_complete_matrix(self):
+        row = copy.deepcopy(next(item for item in self.fx.ledger if item["config_id"] == "c1-debug"))
+        row.update(id="e" * 32, status="BUILD_FAILED")
+        self.fx.ledger.append(row)
+        self.fx.put("campaigns/fixture-c1/ledger/ledger.json", self.fx.ledger)
+        self.fx.put("campaigns/fixture-c1/ledger/budget.json", {"guests": 0, "probe_guests": 8, "builds": 9})
+        with self.assertRaisesRegex(ValueError, "required configured build failed or incomplete"):
+            self.validate()
+        progress = proofs.matrix_progress(self.fx.protocol, self.fx.root, self.fx.commits["candidate"])
+        self.assertFalse(progress["pending"])
+        self.assertFalse(progress["failed"])
+
+    def test_failed_build_for_another_source_does_not_veto_this_matrix(self):
+        row = copy.deepcopy(next(item for item in self.fx.ledger if item["config_id"] == "c1-debug"))
+        row.update(id="e" * 32, commit="f" * 40, status="BUILD_FAILED")
+        self.fx.ledger.append(row)
+        self.fx.put("campaigns/fixture-c1/ledger/ledger.json", self.fx.ledger)
+        self.fx.put("campaigns/fixture-c1/ledger/budget.json", {"guests": 0, "probe_guests": 8, "builds": 9})
+        self.assertTrue(self.validate()["passed"])
+
     def test_extra_counted_attempt_cannot_be_hidden_by_successful_matrix(self):
         case = self.fx.catalog.correctness_case(self.fx.protocol, "c-compressed")
         self.fx.add_run(case, "-extra")

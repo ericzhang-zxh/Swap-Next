@@ -490,6 +490,23 @@ def _infra_supersessions(protocol, root, relevant):
     return records
 
 
+def _check_configured_attempts(protocol, root, candidate_commit, matrix):
+    reference = "campaigns/" + protocol["campaign"] + "/ledger/ledger.json"
+    if not (root / reference).exists():
+        return
+    ledger = json.loads(file_at(root, reference).read_bytes())
+    if not isinstance(ledger, list) or not all(isinstance(row, dict) for row in ledger):
+        raise ValueError("malformed configured-build ledger")
+    required = {(_expected_commit(case, protocol, candidate_commit), case["config_id"])
+                for case in matrix["cases"] + matrix["build_only"]}
+    for row in ledger:
+        if (row.get("action") == "build-coverage"
+                and (row.get("commit"), row.get("config_id")) in required
+                and row.get("status") != "BUILD_VERIFIED"):
+            raise ValueError("required configured build failed or incomplete: "
+                             + str(row.get("case_id")) + " (" + str(row.get("status")) + ")")
+
+
 def _validate_matrix(proof, protocol, root):
     catalog, matrix = _matrix_specs(protocol, root)
     commit = proof.get("candidate_commit")
@@ -501,6 +518,7 @@ def _validate_matrix(proof, protocol, root):
     protocol_file = file_at(root, "campaigns/" + protocol["campaign"] + "/protocol.json")
     if json.loads(protocol_file.read_bytes()) != protocol or proof.get("protocol_sha256") != sha(protocol_file):
         raise ValueError("correctness matrix protocol mismatch")
+    _check_configured_attempts(protocol, root, commit, matrix)
     runs = proof.get("runs")
     builds = proof.get("builds", [])
     if not isinstance(runs, list) or not isinstance(builds, list):
@@ -602,6 +620,7 @@ def matrix_progress(protocol, root, candidate_commit, manifest=None, manifest_pa
         catalog, matrix = _matrix_specs(protocol, root)
         if not re.fullmatch(r"[0-9a-f]{40}", candidate_commit or ""):
             raise ValueError("invalid matrix candidate identity")
+        _check_configured_attempts(protocol, root, candidate_commit, matrix)
         if manifest_path is not None:
             path = Path(manifest_path)
             if path.is_absolute():
