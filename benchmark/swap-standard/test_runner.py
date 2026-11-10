@@ -314,11 +314,13 @@ class CompressionRunnerTests(unittest.TestCase):
                  dict(build="b", backend="compressed", mode="xswap", workload="compression",
                       config_id="c1-debug", correctness_case="c-numa", topology_id="numa2"),
                  dict(build="b", backend="compressed", mode="xswap", workload="compression",
-                      config_id="c1-debug-v2", correctness_case="c-numa", topology_id="numa2-sockets-v2")]
+                      config_id="c1-debug-v2", correctness_case="c-numa", topology_id="numa2-sockets-v2"),
+                 dict(build="b", backend="compressed", mode="xswap", workload="compression",
+                      config_id="c1-debug-v2", correctness_case="c-numa", topology_id="numa2-nehalem-v3")]
         for identity in cases:
-            if identity['topology_id'] == 'numa2-sockets-v2':
+            if identity['topology_id'] in ('numa2-sockets-v2', 'numa2-nehalem-v3'):
                 case = next(row for row in frozen['correctness_matrix']['cases'] if row['id'] == 'c-numa')
-                case.update(config_id='c1-debug-v2', topology_id='numa2-sockets-v2')
+                case.update(config_id='c1-debug-v2', topology_id=identity['topology_id'])
                 frozen['configurations']['c1-debug-v2'] = {
                     'input_config_sha256': configurations.get_config('c1-debug-v2')['input_config_sha256']}
             argv = ["run.py", "--campaign", "demo", "--run-id", "run-1",
@@ -344,6 +346,65 @@ class CompressionRunnerTests(unittest.TestCase):
                     runner.main()
                 self.assertEqual(observed, [identity])
                 launch.assert_not_called()
+
+    def test_nehalem_main_records_effective_cpu_before_any_guest_launch(self):
+        import configurations
+        from evolve.test_compression_coverage import fixture_protocol
+
+        source_root = runner.PROJECT
+        frozen = fixture_protocol(configurations, source_root, runner.LIFETIME_FIX)
+        frozen["preallocate_swap"] = True
+        row = next(item for item in frozen["correctness_matrix"]["cases"] if item["id"] == "c-numa")
+        row.update(config_id="c1-debug-v2", topology_id="numa2-nehalem-v3")
+        frozen["configurations"]["c1-debug-v2"] = {
+            "input_config_sha256": configurations.get_config("c1-debug-v2")["input_config_sha256"]}
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            bench = project / "benchmark/swap-standard"
+            bench.mkdir(parents=True)
+            build = project / "benchmark/kernel/builds/b"
+            build.mkdir(parents=True)
+            config = build / ".config"
+            config.write_text("synthetic final config; no compiler launched\n")
+            input_path = configurations.CONFIGS["c1-debug-v2"]["path"]
+            (project / input_path).parent.mkdir(parents=True)
+            (project / input_path).write_bytes((source_root / input_path).read_bytes())
+            root = project / "campaigns/demo/runs/guests"
+            argv = ["run.py", "--campaign", "demo", "--run-id", "run-1",
+                    "--reservation", "/tmp/synthetic-ticket.json", "--preallocate-swap",
+                    "--protocol-revision", "8", "--build", "b", "--backend", "compressed",
+                    "--mode", "xswap", "--workload", "compression", "--config-id", "c1-debug-v2",
+                    "--correctness-case", "c-numa", "--topology-id", "numa2-nehalem-v3",
+                    "--run-root", str(root)]
+            with patch.object(sys, "argv", argv), patch.object(runner.os, "geteuid", return_value=1000), \
+                 patch.dict(runner.os.environ, {"SWAP_NEXT_ACCEL": "tcg", "SWAP_NEXT_TCG_SMP": "4",
+                                                "SWAP_NEXT_TCG_MEM_MIB": "4096"}), \
+                 patch.object(runner, "PROJECT", project), patch.object(runner, "BASE", bench), \
+                 patch.object(runner, "require_linux_checkout"), \
+                 patch.object(runner, "execution_campaign", return_value="demo"), \
+                 patch.object(runner.guest_budget, "protocol", return_value=frozen), \
+                 patch.object(runner.guest_budget, "consume_guest"), \
+                 patch.object(runner.campaign_store, "require_execution"), \
+                 patch.object(runner, "stop_requested", return_value=False), \
+                 patch.object(runner, "validate", return_value=(
+                     {"commit": "a" * 40, "image_sha256": "b" * 64}, {}, build / "bzImage", config)), \
+                 patch.object(runner, "create_swap_image", side_effect=lambda path, _: path.touch()), \
+                 patch.object(runner.shutil, "disk_usage", return_value=SimpleNamespace(free=100 * 1024**3)), \
+                 patch.object(runner, "attestation_fields", return_value={}), \
+                 patch.object(runner, "snapshot_host_load", return_value={}), \
+                 patch.object(runner, "launch_blocked", return_value=False), \
+                 patch.object(runner.subprocess, "Popen", side_effect=RuntimeError("captured-before-qemu")) as launch:
+                with self.assertRaisesRegex(RuntimeError, "captured-before-qemu"):
+                    runner.main()
+            recorded = json.loads((root / "run-1/started.json").read_text())
+            expected = ["-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc",
+                        "-cpu", "Nehalem-v1,vme=off,enforce=on"]
+            self.assertEqual(recorded["qemu_accel"], expected)
+            self.assertEqual(recorded["command"], launch.call_args.args[0])
+            self.assertEqual(recorded["command"].count("-cpu"), 1)
+            self.assertEqual(recorded["command"].count("-smp"), 1)
+            frozen["accelerator"]["qemu"] = [*expected[:-1], "max"]
+            configurations.validate_topology_record(frozen, recorded)
 
     def test_revision8_timing_binds_target_and_commandline(self):
         args = self.args()
@@ -388,7 +449,9 @@ class CompressionRunnerTests(unittest.TestCase):
                  ('missing-online', 'single', None), ('', 'single', None),
                  ('0\n', 'single', 'ONLINE_NODES 0\n'), ('0-1\n', 'numa2', 'ONLINE_NODES 0-1\n'),
                  ('absent', 'numa2-sockets-v2', None),
-                 ('0-1\n', 'numa2-sockets-v2', 'ONLINE_NODES 0-1\n')]
+                 ('0-1\n', 'numa2-sockets-v2', 'ONLINE_NODES 0-1\n'),
+                 ('absent', 'numa2-nehalem-v3', None),
+                 ('0-1\n', 'numa2-nehalem-v3', 'ONLINE_NODES 0-1\n')]
         for state, topology, expected in cases:
             with self.subTest(state=state, topology=topology), tempfile.TemporaryDirectory() as directory:
                 node = Path(directory) / 'node'
@@ -433,6 +496,20 @@ class CompressionRunnerTests(unittest.TestCase):
         frozen = {'protocol_revision': 8}
         with self.assertRaisesRegex(ValueError, 'timing uses'):
             runner.revision8_context(self.args(topology_id='numa2-sockets-v2'), frozen)
+
+    def test_nehalem_topology_uses_one_cpu_and_socket_mapping_only_for_correctness(self):
+        import configurations
+        _, memory, cpus, original = runner.guest_shape({'SWAP_NEXT_ACCEL': 'tcg'})
+        accelerator = configurations.effective_accelerator('numa2-nehalem-v3', original)
+        options = runner.guest_resource_options('numa2-nehalem-v3', cpus, memory)
+        command = ['qemu-system-x86_64', *accelerator, *options]
+        self.assertEqual(command.count('-cpu'), 1)
+        self.assertEqual(command.count('-smp'), 1)
+        self.assertEqual(command[command.index('-cpu') + 1], 'Nehalem-v1,vme=off,enforce=on')
+        self.assertEqual(command[command.index('-smp') + 1], '4,sockets=2,cores=2,threads=1')
+        self.assertEqual(original[-1], 'max')
+        with self.assertRaisesRegex(ValueError, 'timing uses'):
+            runner.revision8_context(self.args(topology_id='numa2-nehalem-v3'), {'protocol_revision': 8})
 
     def test_compressed_route_cannot_escape_revision8(self):
         for revision, mode, workload in ((7, 'xswap', 'swapin'), (8, 'plain', 'swapin'), (8, 'xswap', 'metadata')):

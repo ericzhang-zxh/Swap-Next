@@ -80,6 +80,7 @@ GROUPS = {
                        "subcases": ["library_unit", "guest_hotplug", "memcg_balance"]},
 }
 NUMA2_SOCKETS_V2_SMP = "4,sockets=2,cores=2,threads=1"
+NUMA2_NEHALEM_V3_CPU = "Nehalem-v1,vme=off,enforce=on"
 NUMA2_ARGS = ["-object", "memory-backend-ram,id=c1-node0,size=2048M",
               "-object", "memory-backend-ram,id=c1-node1,size=2048M",
               "-numa", "node,nodeid=0,memdev=c1-node0,cpus=0-1",
@@ -142,7 +143,7 @@ def pinned_config(protocol, config_id, root=ROOT, purpose=None):
 
 
 def topology_args(topology_id, protocol, purpose="correctness"):
-    _need(topology_id in ("single", "numa2", "numa2-sockets-v2"), "unknown trusted topology")
+    _need(topology_id in ("single", "numa2", "numa2-sockets-v2", "numa2-nehalem-v3"), "unknown trusted topology")
     if topology_id == "single":
         return []
     _need(purpose == "correctness", "NUMA topology is correctness-only")
@@ -156,9 +157,19 @@ def topology_args(topology_id, protocol, purpose="correctness"):
 def smp_argument(topology_id, protocol):
     """Keep legacy CPU defaults; align the versioned NUMA layout by socket."""
     topology_args(topology_id, protocol)
-    if topology_id == "numa2-sockets-v2":
+    if topology_id in ("numa2-sockets-v2", "numa2-nehalem-v3"):
         return NUMA2_SOCKETS_V2_SMP
     return str(protocol["guest"]["vcpus"])
+
+
+def effective_accelerator(topology_id, accelerator):
+    """Version only the auxiliary CPU; frozen single-topology timing stays max."""
+    if topology_id != "numa2-nehalem-v3":
+        return list(accelerator)
+    _need(accelerator == ["-accel", "tcg,thread=multi,tb-size=256",
+                          "-machine", "pc", "-cpu", "max"],
+          "Nehalem topology requires the frozen TCG accelerator")
+    return [*accelerator[:-1], NUMA2_NEHALEM_V3_CPU]
 
 
 def validate_topology_record(protocol, result, purpose="correctness"):
@@ -172,14 +183,37 @@ def validate_topology_record(protocol, result, purpose="correctness"):
         matches = sum(command[index:index + len(expected)] == expected
                       for index in range(len(command) - len(expected) + 1))
         _need(matches == 1, "guest command omits or duplicates frozen topology arguments")
-    if result.get("topology_id") == "numa2-sockets-v2":
+    if result.get("topology_id") in ("numa2-sockets-v2", "numa2-nehalem-v3"):
+        nehalem = result["topology_id"] == "numa2-nehalem-v3"
         _need(not any(item.startswith(("-M", "--M")) for item in command),
               "guest command uses a noncanonical machine alias")
         _need(result.get("config_id") == "c1-debug-v2"
               and result.get("correctness_group") == "numa-lifecycle",
               "socket topology requires the versioned NUMA correctness group")
 
+        if nehalem:
+            _need(result.get("workload") == "compression"
+                  and result.get("backend") == "compressed" and result.get("mode") == "xswap",
+                  "Nehalem topology is compression correctness-only")
+            _need(protocol.get("accelerator", {}).get("require") == "tcg"
+                  and result.get("accelerator") == "tcg",
+                  "Nehalem topology requires TCG")
+            # These alternative configuration channels could override the CPU
+            # or memory layout without changing the canonical option values.
+            _need(not any(item.startswith(("-global", "--global", "-set", "--set",
+                                          "-readconfig", "--readconfig", "-device", "--device",
+                                          "-enable-kvm", "--enable-kvm"))
+                          for item in command), "guest command has a topology override")
+
         def option_values(arguments, option):
+            if nehalem:
+                for item in arguments:
+                    normalized = item[1:] if item.startswith("--") else item
+                    # -machine and -monitor are distinct from the short -m.
+                    if option == "-m" and normalized.startswith(("-machine", "-monitor")):
+                        continue
+                    _need(not normalized.startswith(option) or item == option,
+                          "noncanonical guest topology option: " + option)
             _need(not any(item.startswith(option + "=") or item == "-" + option
                           or item.startswith("-" + option + "=") for item in arguments),
                   "noncanonical guest topology option: " + option)
@@ -197,7 +231,13 @@ def validate_topology_record(protocol, result, purpose="correctness"):
         accelerator = protocol.get("accelerator", {}).get("qemu")
         _need(isinstance(accelerator, list) and all(isinstance(item, str) for item in accelerator),
               "missing frozen CPU and machine arguments")
-        for option in ("-cpu", "-machine"):
+        if nehalem:
+            accelerator = effective_accelerator(result["topology_id"], accelerator)
+            _need(result.get("qemu_accel") == accelerator,
+                  "recorded effective accelerator mismatch")
+            _need(command[1:1 + len(accelerator)] == accelerator,
+                  "guest command effective accelerator mismatch")
+        for option in (("-accel", "-cpu", "-machine") if nehalem else ("-cpu", "-machine")):
             frozen = option_values(accelerator, option)
             _need(len(frozen) == 1 and option_values(command, option) == frozen,
                   "guest command differs from frozen " + option)
@@ -223,7 +263,7 @@ def correctness_group(group, config_id, topology_id=None):
     if config_id == "c1-debug-v2" and group in ("debug-failures", "numa-lifecycle"):
         spec["config_id"] = config_id
     _need(config_id == spec["config_id"], "correctness group config_id mismatch")
-    if topology_id == "numa2-sockets-v2":
+    if topology_id in ("numa2-sockets-v2", "numa2-nehalem-v3"):
         _need(group == "numa-lifecycle" and config_id == "c1-debug-v2",
               "socket topology requires the versioned NUMA correctness group")
         spec["topology_id"] = topology_id

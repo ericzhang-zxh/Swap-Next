@@ -252,7 +252,7 @@ def numa_ktap_observations(raw, topology_id):
             placements.append({'requested': requested, 'actual': actual, 'pages': pages})
         else:
             totals.append(tuple(map(int, total.groups())))
-    expected_nodes = {0, 1} if topology_id in ('numa2', 'numa2-sockets-v2') else {0}
+    expected_nodes = {0, 1} if topology_id in ('numa2', 'numa2-sockets-v2', 'numa2-nehalem-v3') else {0}
     observed_nodes = {entry['requested'] for entry in placements}
     require(observed_nodes == expected_nodes and len(totals) == 1, 'missing required per-node KUnit observations')
     require(totals[0] == (len(expected_nodes), len(placements), 0) and len(placements) >= len(expected_nodes),
@@ -559,6 +559,22 @@ def compressed_timing_evidence(text, metrics):
             'compressed_data': bool(data_ok), 'compressed_latency_metrics': metrics_ok}
 
 
+def nehalem_cpu_identity(text):
+    """Bind the new auxiliary topology to numeric CPU0 identity in dmesg."""
+    lines = text.splitlines()
+    if any(lines.count(marker) != 1 for marker in ('KERNEL_LOG_BEGIN', 'KERNEL_LOG_END')):
+        return False
+    log = block(text, 'KERNEL_LOG_BEGIN', 'KERNEL_LOG_END') or ''
+    cpu0 = [line for line in log.splitlines() if 'smpboot: CPU0:' in line]
+    if len(cpu0) != 1:
+        return False
+    match = re.fullmatch(
+        r'(?:\[\s*\d+(?:\.\d+)?\]\s*)?smpboot: CPU0: Intel(?:\(R\))?\s+[^\n]+'
+        r' \(family: 0x([0-9a-fA-F]+), model: 0x([0-9a-fA-F]+), stepping: 0x([0-9a-fA-F]+)\)',
+        cpu0[0])
+    return bool(match and tuple(int(value, 16) for value in match.groups()) == (6, 26, 3))
+
+
 def revision8_identity(text, words, backend, mode, workload, config_id, correctness_case,
                        topology_id, expected_case):
     catalog = configuration_catalog()
@@ -593,11 +609,13 @@ def revision8_identity(text, words, backend, mode, workload, config_id, correctn
     good &= all(text.splitlines().count(marker) == 1 for marker in
                 ('CMDLINE_BEGIN', 'CMDLINE_END', 'BENCH_BOOT', 'BENCH_WORKLOAD_PASS', 'BENCH_PASS'))
     good &= text.splitlines().count('GUEST_TOPOLOGY ' + topology_id) == 1
-    nodes = {'0-1'} if topology_id in ('numa2', 'numa2-sockets-v2') else {'0'}
+    nodes = {'0-1'} if topology_id in ('numa2', 'numa2-sockets-v2', 'numa2-nehalem-v3') else {'0'}
     if topology_id == 'single' and config_id in {'c1-common', 'c1-legacy', 'c1-kcsan'}:
         nodes.add('flat')
     observed_nodes = [line for line in text.splitlines() if line.startswith('ONLINE_NODES')]
     good &= len(observed_nodes) == 1 and observed_nodes[0] in {'ONLINE_NODES ' + value for value in nodes}
+    if topology_id == 'numa2-nehalem-v3':
+        good &= nehalem_cpu_identity(text)
     return bool(good)
 
 

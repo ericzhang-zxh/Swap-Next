@@ -64,12 +64,12 @@ def fixture_protocol(catalog, root, baseline):
 
 
 class CoverageFixture:
-    def __init__(self, root, populate=True):
+    def __init__(self, root, populate=True, numa_topology=None):
         self.root = root
         for relative in ["benchmark/swap-standard/configurations.py", *(
                 "benchmark/config/" + name for name in (
                     "swap-standard.config", "compression-common.config", "compression-legacy.config",
-                    "compression-debug.config", "compression-kcsan.config", "compression-noswap.config",
+                    "compression-debug.config", "compression-debug-v2.config", "compression-kcsan.config", "compression-noswap.config",
                     "compression-no-frontends.config")), "benchmark/kernel/build.py",
                 "benchmark/kernel/build_namespace.sh", "benchmark/kernel/lifetime.py",
                 "evolve/control/correctness_proof.py", "benchmark/swap-standard/validity.py"]:
@@ -89,6 +89,17 @@ class CoverageFixture:
             self.trees[role] = subprocess.check_output(
                 ["git", "-C", str(linux), "rev-parse", "HEAD^{tree}"], text=True).strip()
         self.protocol = fixture_protocol(self.catalog, root, self.commits["baseline"])
+        if numa_topology is not None:
+            for case in self.protocol["correctness_matrix"]["cases"]:
+                if case["group"] in ("debug-failures", "numa-lifecycle"):
+                    case["config_id"] = "c1-debug-v2"
+                if case["group"] == "numa-lifecycle":
+                    case["topology_id"] = numa_topology
+            self.protocol["configurations"].pop("c1-debug")
+            self.protocol["configurations"]["c1-debug-v2"] = {
+                "input_config_sha256": self.catalog.get_config("c1-debug-v2", root)["input_config_sha256"]}
+            self.protocol["accelerator"]["qemu"] = [
+                "-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc", "-cpu", "max"]
         self.put("campaigns/fixture-c1/protocol.json", self.protocol)
         self.put("campaigns/fixture-c1/campaign.json", {"machine": "fixture"})
         self.put("benchmark/swap-standard/run.py", b"# Synthetic runner identity only.\n")
@@ -196,6 +207,12 @@ class CoverageFixture:
                "integration_pass": True, "run_valid": True, "invalid_reasons": [], "exit_code": 0,
                "stop_reason": None, "metrics": parsed["metrics"], "gates": dict(parsed["gates"], qemu_exit=True),
                "topology_arguments": topology, "command": ["synthetic-qemu", *topology]}
+        if case["topology_id"] == "numa2-nehalem-v3":
+            accelerator = self.catalog.effective_accelerator(
+                case["topology_id"], self.protocol["accelerator"]["qemu"])
+            raw.update(qemu_accel=accelerator, correctness_group=case["group"],
+                       command=["synthetic-qemu", *accelerator, "-smp", "4,sockets=2,cores=2,threads=1",
+                                "-m", "4096", *topology])
         if "correctness_subcases" in parsed:
             raw["correctness_subcases"] = parsed["correctness_subcases"]
         self.raw[run_id] = raw
@@ -594,6 +611,51 @@ class CompressionCoverageTests(unittest.TestCase):
             result["config_id"] = "standard"
             with self.assertRaises(RuntimeError):
                 workflow.validate_result_configuration(self.fx.protocol, result, case)
+
+
+class NehalemCoverageTests(unittest.TestCase):
+    """Exercise the real catalog through native full-matrix proof validation."""
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.fx = CoverageFixture(Path(self.temporary.name), numa_topology="numa2-nehalem-v3")
+
+    def validate(self):
+        return proofs.validate(self.fx.matrix(), self.fx.protocol, self.fx.root)
+
+    def test_complete_matrix_resolves_versioned_cpu_through_native_proof(self):
+        result = self.validate()
+        self.assertTrue(result["passed"])
+        self.assertEqual(len(result["cases"]), 8)
+        self.assertEqual(len(result["builds"]), 2)
+        progress = proofs.matrix_progress(self.fx.protocol, self.fx.root, self.fx.commits["candidate"])
+        self.assertTrue(progress["passed"], progress)
+        raw = self.fx.raw["c-numa"]
+        self.assertEqual(raw["qemu_accel"][-1], "Nehalem-v1,vme=off,enforce=on")
+
+    def test_native_matrix_rejects_effective_cpu_and_topology_record_mismatch(self):
+        original = self.fx.raw["c-numa"]
+        changes = []
+        wrong_command = copy.deepcopy(original)
+        wrong_command["command"][wrong_command["command"].index("-cpu") + 1] = "max"
+        changes.append(wrong_command)
+        wrong_record = copy.deepcopy(original)
+        wrong_record["qemu_accel"][-1] = "max"
+        changes.append(wrong_record)
+        for extra in (["-cpu", "max"], ["--cpu", "max"], ["-M", "q35"],
+                      ["-smp", "4"], ["-m=4096"],
+                      ["-numa", "node,nodeid=1,memdev=c1-node1,cpus=2-3"]):
+            changes.append(dict(original, command=original["command"] + extra))
+        changes += [dict(original, correctness_group="debug-failures"),
+                    dict(original, qemu_accel=None)]
+        for changed in changes:
+            with self.subTest(command=changed.get("command"), accelerator=changed.get("qemu_accel")):
+                self.fx.save_raw(changed)
+                with self.assertRaises(ValueError):
+                    self.validate()
+                self.fx.save_raw(original)
+        self.assertTrue(self.validate()["passed"])
 
 
 

@@ -23,7 +23,7 @@ KTAP = ('KTAP version 1\n1..1\n    KTAP version 1\n    # Subtest: page_compress\
 
 
 def unit_ktap(topology='single'):
-    nodes = [0, 1] if topology in ('numa2', 'numa2-sockets-v2') else [0]
+    nodes = [0, 1] if topology in ('numa2', 'numa2-sockets-v2', 'numa2-nehalem-v3') else [0]
     comments = ''.join(f'    # page_compress_numa_placement: PAGE_COMPRESS_NUMA requested={node} actual={node} pages=1\n' for node in nodes)
     comments += f'    # page_compress_numa_placement: PAGE_COMPRESS_NUMA_TOTAL nodes={len(nodes)} placements={len(nodes)} mismatches=0\n'
     return KTAP.replace('    ok 3 page_compress_numa_placement', comments + '    ok 3 page_compress_numa_placement')
@@ -129,11 +129,13 @@ def basic_log(backend, mode, workload, config='c1-common', topology='single', sp
                     f" bench.compression_cases={','.join(spec['subcases'])}")
     elif backend == 'compressed':
         command += ' bench.compression_target_bytes=134217728'
+    cpu = ('smpboot: CPU0: Intel fixture CPU (family: 0x6, model: 0x1a, stepping: 0x3)\n'
+           if topology == 'numa2-nehalem-v3' else '')
     device = 'xswap1' if mode == 'xswap' else '/dev/zram1'
     vm0 = 'pswpin 0\npswpout 0\nzswpin 0\nzswpout 0\nzswpwb 0\nswpin_zero 0\nswpout_zero 0\nswap_ra 0\nswap_ra_hit 0'
     vm1 = vm0.replace('zswpin 0', 'zswpin 32768').replace('zswpout 0', 'zswpout 32768')
     return ('BENCH_BOOT\nCMDLINE_BEGIN\n' + command + '\nCMDLINE_END\n'
-            f'GUEST_TOPOLOGY {topology}\nONLINE_NODES ' + ('0-1' if topology in ('numa2', 'numa2-sockets-v2') else '0') + '\n'
+            f'GUEST_TOPOLOGY {topology}\nONLINE_NODES ' + ('0-1' if topology in ('numa2', 'numa2-sockets-v2', 'numa2-nehalem-v3') else '0') + '\n'
             'ZSWAP_ENABLED Y\n' + ('XSWAP_TYPE 1\n' if mode == 'xswap' else '')
             + 'BACKEND_DEVICE ' + ('none' if backend == 'compressed' else '/dev/zram1') + '\n'
             + f'SWAPS_BEGIN\nFilename Type Size Used Priority\n{device} partition 16384 0 32767\nSWAPS_END\n'
@@ -142,7 +144,8 @@ def basic_log(backend, mode, workload, config='c1-common', topology='single', sp
             + block('VMSTAT', 'swapin_start', vm0) + block('VMSTAT', 'swapin_end', vm1)
             + block('XSWAP', 'swapin_start', 'clusters_mapped 10\nusage_pages 0\ngrows 0\nshrinks 0')
             + block('XSWAP', 'swapin_end', 'clusters_mapped 10\nusage_pages 0\ngrows 1\nshrinks 0')
-            + thp() + 'KERNEL_LOG_BEGIN\nLinux version fixture\nKERNEL_LOG_END\nBENCH_WORKLOAD_PASS\nBENCH_PASS\n')
+            + thp() + 'KERNEL_LOG_BEGIN\nLinux version fixture\n' + cpu
+            + 'KERNEL_LOG_END\nBENCH_WORKLOAD_PASS\nBENCH_PASS\n')
 
 
 def timing_log():
@@ -699,6 +702,101 @@ class SocketNumaTopologyTests(unittest.TestCase):
         result = self.parse_log(lambda text: text.replace('Linux version fixture',
                                'WARNING: CPU: 2 PID: 0 at arch/x86/kernel/smpboot.c:329 topology_sane'))
         self.assertFalse(result['gates']['no_new_kernel_warnings'])
+
+
+class NehalemNumaTopologyTests(SocketNumaTopologyTests):
+    topology = 'numa2-nehalem-v3'
+    cpu = 'Nehalem-v1,vme=off,enforce=on'
+    cpu0 = 'smpboot: CPU0: Intel fixture CPU (family: 0x6, model: 0x1a, stepping: 0x3)'
+
+    def protocol(self):
+        value = super().protocol()
+        value['accelerator']['require'] = 'tcg'
+        return value
+
+    def record(self):
+        value = super().record()
+        accelerator = [*self.protocol()['accelerator']['qemu'][:-1], self.cpu]
+        value.update(qemu_accel=accelerator, accelerator='tcg', workload='compression',
+                     backend='compressed', mode='xswap')
+        value['command'][value['command'].index('-cpu') + 1] = self.cpu
+        return value
+
+    def test_effective_cpu_record_is_required_and_only_auxiliary_changes(self):
+        import configurations
+        original = self.protocol()['accelerator']['qemu']
+        for topology in ('single', 'numa2', 'numa2-sockets-v2'):
+            self.assertEqual(configurations.effective_accelerator(topology, original), original)
+        expected = [*original[:-1], self.cpu]
+        self.assertEqual(configurations.effective_accelerator(self.topology, original), expected)
+        self.assertEqual(original[-1], 'max')
+        for wrong in (original + ['-cpu', 'max'], original[:-1] + ['host'],
+                      ['-enable-kvm', '-cpu', 'host'], original + ['--cpu=max']):
+            with self.subTest(wrong=wrong), self.assertRaises(ValueError):
+                configurations.effective_accelerator(self.topology, wrong)
+        record = self.record()
+        for changes in ({'qemu_accel': original}, {'qemu_accel': None},
+                        {'qemu_accel': expected + ['-cpu', self.cpu]},
+                        {'accelerator': 'kvm'}, {'workload': 'swapin'},
+                        {'backend': 'disk'}, {'mode': 'plain'}):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                configurations.validate_topology_record(self.protocol(), dict(record, **changes))
+        for cpu in ('max', 'Nehalem', 'Nehalem-v1', 'Nehalem-v1,enforce=on',
+                    'Nehalem-v1,vme=off', self.cpu + ',invtsc=on'):
+            changed = copy.deepcopy(record)
+            changed['command'][changed['command'].index('-cpu') + 1] = cpu
+            changed['qemu_accel'][-1] = cpu
+            with self.subTest(cpu=cpu), self.assertRaises(ValueError):
+                configurations.validate_topology_record(self.protocol(), changed)
+
+    def test_new_topology_rejects_all_option_spellings_and_override_channels(self):
+        import configurations
+        record = self.record()
+        for option, value in (('-cpu', self.cpu), ('-smp', self.smp), ('-m', '4096'),
+                              ('-machine', 'pc'), ('-accel', 'tcg'),
+                              ('-object', self.numa[1]), ('-numa', self.numa[-1])):
+            variants = ([option, value], ['-' + option, value], [option + '=' + value],
+                        ['-' + option + '=' + value], [option + value], ['-' + option + value])
+            for extra in variants:
+                with self.subTest(extra=extra), self.assertRaises(ValueError):
+                    configurations.validate_topology_record(
+                        self.protocol(), dict(record, command=record['command'] + extra))
+        for extra in (['-global', 'Nehalem-v1-x86_64-cpu.vendor=AuthenticAMD'],
+                      ['-set', 'cpu.0.vendor=AuthenticAMD'], ['-readconfig', 'other.ini'],
+                      ['-device', 'Nehalem-v1-x86_64-cpu'], ['-enable-kvm']):
+            with self.subTest(extra=extra), self.assertRaises(ValueError):
+                configurations.validate_topology_record(
+                    self.protocol(), dict(record, command=record['command'] + extra))
+
+    def test_cpu_identity_is_numeric_unique_and_inside_kernel_log(self):
+        for cpu0 in (self.cpu0, self.cpu0.replace('Intel fixture CPU', 'Intel(R) arbitrary brand'),
+                     '[    0.123456] ' + self.cpu0,
+                     self.cpu0.replace('0x1a', '0x1A')):
+            result = self.parse_log(lambda text: text.replace(self.cpu0, cpu0))
+            self.assertTrue(result['gates']['configuration_identity'], cpu0)
+        for cpu0 in ('', self.cpu0.replace('Intel', 'AMD'), self.cpu0.replace('CPU0:', 'CPU1:'),
+                     self.cpu0.replace('family: 0x6', 'family: 0x7'),
+                     self.cpu0.replace('model: 0x1a', 'model: 0x6'),
+                     self.cpu0.replace('stepping: 0x3', 'stepping: 0x2'),
+                     self.cpu0 + '\n' + self.cpu0,
+                     self.cpu0.replace('model: 0x1a', 'model: unknown')):
+            result = self.parse_log(lambda text: text.replace(self.cpu0, cpu0))
+            self.assertFalse(result['gates']['configuration_identity'], cpu0)
+        result = self.parse_log(lambda text: text.replace(self.cpu0 + '\n', '') + self.cpu0 + '\n')
+        self.assertFalse(result['gates']['configuration_identity'])
+        result = self.parse_log(lambda text: text + 'KERNEL_LOG_BEGIN\n' + self.cpu0 + '\nKERNEL_LOG_END\n')
+        self.assertFalse(result['gates']['configuration_identity'])
+
+    def test_new_cpu_keeps_clocksource_and_sanitizer_rejections(self):
+        from validity import clocksource_invalid
+        for diagnostic in ('WARNING: fixture', 'BUG: KASAN: fixture', 'BUG: KCSAN: fixture'):
+            result = self.parse_log(lambda text: text.replace('Linux version fixture', diagnostic))
+            self.assertFalse(result['gates']['no_new_kernel_warnings'], diagnostic)
+        for marker in ("Marking TSC unstable due to TSCs unsynchronized",
+                       "clocksource: Switched to clocksource hpet"):
+            serial = []
+            self.parse_log(lambda text: serial.append(text.replace('Linux version fixture', marker)) or serial[-1])
+            self.assertTrue(clocksource_invalid(serial[0]), marker)
 
 
 class Revision8ProtocolTests(unittest.TestCase):

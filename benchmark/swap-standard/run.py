@@ -344,7 +344,7 @@ def main():
     parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime", "correctness", "compression"], required=True)
     parser.add_argument("--config-id", default="standard")
     parser.add_argument("--correctness-case")
-    parser.add_argument("--topology-id", choices=["single", "numa2", "numa2-sockets-v2"], default="single")
+    parser.add_argument("--topology-id", choices=["single", "numa2", "numa2-sockets-v2", "numa2-nehalem-v3"], default="single")
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--run-id", type=run_id, help="explicit unique run directory name")
@@ -394,7 +394,7 @@ def main():
                 raise campaign_store.CampaignError("runner revision does not match protocol")
             if args.preallocate_swap != bool(frozen.get("preallocate_swap")):
                 raise campaign_store.CampaignError("swap allocation does not match protocol")
-            tcg, memory, cpus, _ = guest_shape(os.environ)
+            tcg, memory, cpus, accelerator = guest_shape(os.environ)
             expected_accel = frozen.get("accelerator", {}).get("require")
             if expected_accel and expected_accel != ("tcg" if tcg else "kvm"):
                 raise campaign_store.CampaignError("runner accelerator does not match protocol")
@@ -404,6 +404,8 @@ def main():
             if args.protocol_revision == 8:
                 revision8_context(args, frozen)
                 topology_options(args.topology_id, cpus, memory)
+                from configurations import effective_accelerator
+                effective_accelerator(args.topology_id, accelerator)
             reason = excluded_workload_reason(frozen, args.workload)
             if reason:
                 raise campaign_store.CampaignError(
@@ -434,6 +436,8 @@ def main():
         # KVM unless SWAP_NEXT_ACCEL=tcg; TCG guests default to 4 vCPU and
         # 4096 MiB unless the size env vars override them.
         tcg, guest_mib, guest_cpus, accel = guest_shape(os.environ)
+        from configurations import effective_accelerator
+        accel = effective_accelerator(args.topology_id, accel)
         need_kib = (guest_mib + 1024) * 1024 if tcg else 10 * 1024**2
         if available < need_kib:
             raise SystemExit(f"need {need_kib // 1024} MiB available host RAM")
