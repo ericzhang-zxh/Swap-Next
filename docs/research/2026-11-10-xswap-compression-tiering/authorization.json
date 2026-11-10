@@ -1,0 +1,16 @@
+{
+  "approved_at_utc": "2026-11-10T18:58:37Z",
+  "owner_message": "去吧",
+  "authorized_scope": "Prepare and integrate scoped trusted profiles, configuration coverage, runners, evidence validation and new frozen protocol, then run the three bounded campaigns in the reviewed plan.",
+  "limits": {
+    "campaigns": 3,
+    "guests_per_campaign": 120,
+    "builds_per_campaign": 10,
+    "hours_per_campaign": 18,
+    "slow_tier": false,
+    "candidate_promotion": false,
+    "host_mutation": false
+  },
+  "contributor": "codex-tiering-01a1c6b6",
+  "method": "board-based built-in agents; no AGY"
+}

@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
   "campaign": "codex-compress-lib-r4-2026-11-10",
-  "state": "generated",
+  "state": "visually_checked",
   "evidence_sha256": "9bade8bc8cd476d69f04677bdcd0b3f8ee2719da348968bb67e82af3078aab84",
   "artifacts": {
     "summary.json": "65adfc73e8e45d3983f72192c4c3dc8e2f479a44ea48651a4789024cda5a18a9",
     "REPORT.md": "0febd2e7fccfebfa3bd024ecffd93488faeb893e07a52c59c0c1bbc4afa21e48",
     "explainer.json": "b2d59423706320bf8724a09b5d0fa8b7801e8be058d2972313599215cdeea81f",
-    "explainer.html": "1b9dec16c3395e1f39b37bc882abbc580ef9e1ad9fc063a1e33dbc2cb0fc0d88",
+    "explainer.html": "e73771b4fe2943d8f30923810102b454ddd266b502224ca55280bb87ece3013a",
     "generate_report.py": "a22273e1891c6d56f6b04abd20f6aca3302aae482a3d4143907ff3f93ed5458e"
   },
-  "story_sha256": "275f3afd4cec9d57fa7a6e4230cf9290852a458f2b5a692a19f89b36604158a3",
+  "story_sha256": "d247ddfb97282db5b33b26d2422a338d3e1144c642dc04816cec3656e2481134",
   "history": [
     {
       "state": "generated",
@@ -23,6 +23,60 @@
     {
       "state": "generated",
       "time": 1794348936.1008778
+    },
+    {
+      "state": "generated",
+      "time": 1794349052.5555322
+    },
+    {
+      "state": "visually_checked",
+      "time": 1794349190.1953042
     }
-  ]
+  ],
+  "visual_check": {
+    "artifact_sha256": "e73771b4fe2943d8f30923810102b454ddd266b502224ca55280bb87ece3013a",
+    "reviewer": "Coordinator; real Chrome screenshots and visual inspection",
+    "views": [
+      {
+        "width": 1440,
+        "theme": "light",
+        "screenshot": "campaigns/codex-compress-lib-r4-2026-11-10/runs/visual-qa-20261110/1440-light.png",
+        "sha256": "5fa8144034f3ddc55fe1863107f5df6c420d933678ab9659178f4e298f53505d",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-compress-lib-r4-2026-11-10/runs/visual-qa-20261110/1440-dark.png",
+        "sha256": "d48465fa6d338f2fd6bde4ca2bd65100b0942082701185ab50a53fc1f1c4024c",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/codex-compress-lib-r4-2026-11-10/runs/visual-qa-20261110/390-light.png",
+        "sha256": "447d2fd51c42ed25301647399325008b0c7b0e280d633c1293b4837ecdfcd794",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-compress-lib-r4-2026-11-10/runs/visual-qa-20261110/390-dark.png",
+        "sha256": "24ebf650787fa2c878ac3bf53ae081cd00645f4cce5a75e0922444e03998e019",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      }
+    ]
+  }
 }

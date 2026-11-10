@@ -12,8 +12,6 @@ Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
 
 Baseline origin: upstream or imported reference.
 
-[Campaign report](../xswap-fast-in-2026-11-06/report/REPORT.md)
-
 | Candidate | Status | Reason |
 | --- | --- | --- |
 | [xswap-fast-in-v1](../xswap-fast-in-2026-11-06/candidates/xswap-fast-in-v1.json) | closed | Research disposition: rejected |
