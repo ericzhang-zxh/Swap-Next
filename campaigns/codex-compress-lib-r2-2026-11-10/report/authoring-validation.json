@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r2-2026-11-10",
+  "scope": "Isolated authoring snapshot; regenerate and visually verify after coordinator integration and source pinning.",
+  "framework_commit": "522705a451cc2ec9988227a1bde7e70bd32c8cda",
+  "native_evidence_sha256": "4b306f11804d960957b5f3367aef72963b4319aff787dc0256675bf53bb382ed",
+  "observations_sha256": "dd37c813fcb6ca9236faadbd058bb8b3014270f3606d735b098afc237f03f7c5",
+  "html_sha256": "62ceb9410af0ba2f6ea882f3a869db362aa1a295dbd9a04a0ef8de7c247ab55e",
+  "checks": {
+    "native_story_schema": true,
+    "native_render_text_budget": true,
+    "identical_input_artifact_reproduction": true,
+    "native_delivery_receipt": true,
+    "raw_guest_hashes_and_original_states": true,
+    "runtime_archive_hash_and_file_count": true,
+    "cumulative_phase_costs": true,
+    "closed_evidence_tables": true,
+    "three_explanation_levels": true,
+    "same_kernel_patch_hash": true,
+    "canonical_original_C1_link": true,
+    "no_absolute_host_paths": true,
+    "clean_card_metadata": true,
+    "single_dated_explainer": true,
+    "prose_whitespace": true
+  },
+  "prose_words": 643,
+  "diff_whitespace_note": "REPORT.md preserves space-prefixed context lines inside exact unified-diff excerpts.",
+  "visual_qa": "pending; no browser screenshots or visual-check receipt produced",
+  "publication": "not attempted"
+}

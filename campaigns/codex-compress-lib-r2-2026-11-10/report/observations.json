@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r2-2026-11-10",
+  "native_evidence_sha256": "4b306f11804d960957b5f3367aef72963b4319aff787dc0256675bf53bb382ed",
+  "kernel_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "kernel_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+  "configured_build": {
+    "status": "BUILD_VERIFIED",
+    "config_id": "c1-debug-v2",
+    "manifest_sha256": "d27ba832157cc32c334d3ecf9decdf7d18e90c2438dfa857ad61656e0fd1b6ff",
+    "provenance_sha256": "0a59141357fd35607296e8ee52226c29d4b284bb467d5aab18dd6485d3c532a5",
+    "final_config_sha256": "8a3a8a5cc861fd0e4c4d5d5b2974d3b54e016e7d5593caeb0b949f07ae22d436",
+    "CONFIG_KASAN": "y"
+  },
+  "attempts": [
+    {
+      "run_id": "c1r2-b-common-001",
+      "role": "baseline",
+      "result_source": "campaigns/codex-compress-lib-r2-2026-11-10/runs/guests/c1r2-b-common-001/result.json",
+      "result_sha256": "56763f5f085f0160ce9f6f479af52d8dddf985c961ad9a0dcd750ba9d523cc1c",
+      "serial_sha256": "4ed8c65b34cefc84417ef7203911082f89809cfa4de6d86d925a898281198228",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "config_id": "c1-common",
+      "exit_code": 0,
+      "run_valid": true,
+      "integration_pass": true,
+      "parse_complete": null,
+      "parse_error": null
+    },
+    {
+      "run_id": "c1r2-c-debug-001",
+      "role": "candidate",
+      "result_source": "campaigns/codex-compress-lib-r2-2026-11-10/runs/guests/c1r2-c-debug-001/result.json",
+      "result_sha256": "2c8ac864d761e796c0d439f4f069502fed3d8f26e8031bd0da4d4651966b9d6e",
+      "serial_sha256": "87c7ebe30f51fd8ce45a14b188a7140bef043fc806cac95011f9b8793b788280",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "config_id": "c1-debug-v2",
+      "exit_code": 0,
+      "run_valid": true,
+      "integration_pass": false,
+      "parse_complete": false,
+      "parse_error": "unknown compression record: zswap: compressor swap_next_invalid_codec_7d83 not available"
+    }
+  ],
+  "debug_raw_observations": {
+    "interpretation": "Retained log observations only; the original integration result remains failed and the full correctness matrix is incomplete.",
+    "subcases_reporting_PASS": [
+      "invalid_codec",
+      "library_unit",
+      "large_folio",
+      "memcg_balance",
+      "memcg_offline",
+      "memcg_limits"
+    ],
+    "kunit_cases_reporting_ok": [
+      "page_compress_alloc_rollback",
+      "page_compress_partial_cleanup",
+      "page_compress_numa_placement"
+    ],
+    "kunit_summary": "pass:3 fail:0 skip:0 total:3",
+    "matched_kernel_diagnostics": []
+  },
+  "diagnostic_replay": {
+    "interpretation": "Diagnostic only; no saved result, raw byte or budget entry is rewritten.",
+    "source": "campaigns/codex-compress-lib-r2-2026-11-10/ledger/session-closeout.json",
+    "sha256": "ad41cadc70b686b30a35981474fc4ce880f4943ec4c8298cc8a0c2c5a38f52f5"
+  },
+  "runtime_archive": {
+    "source": "campaigns/codex-compress-lib-r2-2026-11-10/runs/closeout-runtime/archive.json",
+    "sha256": "3f841eec2857834246ddf1681010bba2cf1362c2677c3c92263cfac8623a5e1d",
+    "pinned_files": 28
+  },
+  "resources": {
+    "original_C1": {
+      "guests": 3,
+      "builds": 3,
+      "source": "campaigns/codex-compress-lib-2026-11-10/ledger/budget.json",
+      "sha256": "2e03ba0eee0c337bc1ee57e4729b5dd912f7e78d0d4ce30d23091173fe5dac0b"
+    },
+    "R2": {
+      "guests": 2,
+      "builds": 1,
+      "source": "campaigns/codex-compress-lib-r2-2026-11-10/ledger/budget.json",
+      "sha256": "b529da364b87c259df26d92cb83e01a60752c6e96fd3a1bc04bc3bb4990e511e"
+    },
+    "cumulative_C1": {
+      "guests": 5,
+      "builds": 4
+    }
+  },
+  "performance_or_equivalence_result": false
+}

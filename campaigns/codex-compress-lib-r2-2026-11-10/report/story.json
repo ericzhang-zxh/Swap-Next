@@ -1,0 +1,423 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r2-2026-11-10",
+  "evidence_sha256": "4b306f11804d960957b5f3367aef72963b4319aff787dc0256675bf53bb382ed",
+  "title": "Shared compression library: debug run reached, validation blocked",
+  "headline": "The debug guest completed, but parser defects blocked validated coverage.",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Same candidate, further debug evidence",
+      "lead": "R2 continues the original shared-library hypothesis on unchanged kernel source. A corrected debug setup reached the guest; the complete correctness matrix still gates every performance measurement.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r2-2026-11-10/research.json",
+        "campaigns/codex-compress-lib-r2-2026-11-10/ledger/session-closeout.json",
+        "campaigns/codex-compress-lib-r2-2026-11-10/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The fresh baseline guest passed. The candidate debug build enabled KASAN and its guest completed. The saved integration result remains failed because strict parsing rejected an expected diagnostic."
+        },
+        {
+          "type": "note",
+          "text": "R2 consumed 2 guests and 1 build. With the original contract, C1 has spent 5 guests and 4 builds. No calibration or performance comparison ran."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "1. Whole system: restore the application page",
+      "lead": "An application needs its full page in physical RAM. Stored contents may be compressed inside RAM or reside on a backing device. Compression trades CPU work for less storage traffic.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r2-2026-11-10/research.json",
+        "campaigns/codex-compress-lib-r2-2026-11-10/patches/c1-shared-store-r2.patch"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The changed engine serves compressed contents inside RAM",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "sub": "Needs page A",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "fault",
+              "label": "Kernel swap path",
+              "sub": "Find stored contents",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "page",
+              "label": "Full page A",
+              "sub": "Physical RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "compressed",
+              "label": "Compressed A",
+              "sub": "Inside physical RAM",
+              "col": 1,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "disk",
+              "label": "Backing device",
+              "sub": "Outside RAM",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "fault"
+            },
+            {
+              "from": "fault",
+              "to": "page",
+              "label": "already resident"
+            },
+            {
+              "from": "fault",
+              "to": "compressed",
+              "label": "decode"
+            },
+            {
+              "from": "compressed",
+              "to": "page"
+            },
+            {
+              "from": "disk",
+              "to": "page",
+              "label": "read"
+            },
+            {
+              "from": "fault",
+              "to": "disk"
+            }
+          ],
+          "note": "Schematic path, with no illustrative size or timing used as a measurement."
+        },
+        {
+          "type": "note",
+          "text": "The candidate changes the compressed-storage implementation. The existing frontend still decides admission, accounting and writeback. No new RAM-to-disk migration policy is implemented here."
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "2. Subsystem: policy keeps the object identity",
+      "lead": "ZSwap retains the entry index, memory-group charge, ordering and lifetime pins. A shared page library owns per-CPU codec contexts, scratch buffers and compressed-object storage.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r2-2026-11-10/patches/c1-shared-store-r2.patch",
+        "campaigns/codex-compress-lib-r2-2026-11-10/reviews/k2-c1-shared-store-r2-7d5a3cf.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Data moves through the engine; policy stays with the frontend",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "ZSwap entry",
+              "sub": "Handle + length",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "library",
+              "label": "Page library",
+              "sub": "Codec + CPU context",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "object",
+              "label": "Object A",
+              "sub": "Compressed RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "policy",
+              "label": "ZSwap policy",
+              "sub": "Index, charge, LRU",
+              "col": 0,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "release",
+              "label": "Release boundary",
+              "sub": "Drain users, then free",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "library",
+              "label": "store / load"
+            },
+            {
+              "from": "library",
+              "to": "object",
+              "label": "allocate / copy"
+            },
+            {
+              "from": "policy",
+              "to": "entry",
+              "label": "pin"
+            },
+            {
+              "from": "entry",
+              "to": "release"
+            },
+            {
+              "from": "release",
+              "to": "object",
+              "label": "free"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "High-confidence source review supports this ownership boundary. Each successful store returns a caller-owned handle; publication, charging and release stay with ZSwap. The retained debug log adds observations, while the full matrix remains incomplete."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "3. Concrete change: the same kernel reached the debug guest",
+      "lead": "The candidate source is unchanged. R2 repaired the debug configuration, advancing from a build gate to recorded guest output; evidence parsing then stopped formal coverage.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r2-2026-11-10/patches/c1-shared-store-r2.patch",
+        "campaigns/codex-compress-lib-r2-2026-11-10/ledger/ledger.json",
+        "campaigns/codex-compress-lib-r2-2026-11-10/ledger/session-closeout.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Original contract: configuration stopped execution",
+          "nodes": [
+            {
+              "id": "source",
+              "label": "Same K1 source",
+              "sub": "Shared page library",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "config",
+              "label": "Debug configuration",
+              "sub": "KASAN absent",
+              "col": 1,
+              "row": 0,
+              "tone": "bad"
+            },
+            {
+              "id": "guest",
+              "label": "Candidate guest",
+              "sub": "Not run",
+              "col": 2,
+              "row": 0,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "source",
+              "to": "config"
+            },
+            {
+              "from": "config",
+              "to": "guest"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "R2: guest output reached a rejecting parser",
+          "nodes": [
+            {
+              "id": "source",
+              "label": "Same K1 source",
+              "sub": "Shared page library",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "build",
+              "label": "Verified build",
+              "sub": "KASAN enabled",
+              "col": 1,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "guest",
+              "label": "Debug guest",
+              "sub": "Raw success records",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "parser",
+              "label": "Parser gate",
+              "sub": "Coverage blocked",
+              "col": 3,
+              "row": 0,
+              "tone": "bad"
+            }
+          ],
+          "edges": [
+            {
+              "from": "source",
+              "to": "build"
+            },
+            {
+              "from": "build",
+              "to": "guest"
+            },
+            {
+              "from": "guest",
+              "to": "parser"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "The retained log reports PASS for 6 subcases and ok for 3 named KUnit cases, with no kernel warning found. These are raw observations; the original integration result remains failed."
+        },
+        {
+          "type": "note",
+          "text": "The parser rejected the deliberate invalid-codec message. Diagnostic replay also exposed a false rejection of the standard skip:0 summary. Corrected replay diagnoses those rules; it creates no new successful guest observation."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Repair parsing, then collect fresh counted evidence",
+      "lead": "Keep the failed result and archive intact. A separately frozen correction must validate fresh correctness evidence on the same source before calibration or dependent architecture phases.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r2-2026-11-10/ledger/session-closeout.json",
+        "campaigns/codex-compress-lib-r2-2026-11-10/protocol.json",
+        "campaigns/codex-compress-lib-r2-2026-11-10/research.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Required validation still separates observations from a result",
+          "nodes": [
+            {
+              "id": "retain",
+              "label": "Retain R2 failure",
+              "sub": "Raw hashes unchanged",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "fix",
+              "label": "Narrow parser fix",
+              "sub": "Known framing only",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "fresh",
+              "label": "Fresh correctness",
+              "sub": "Complete required rows",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "timing",
+              "label": "Calibrate / compare",
+              "sub": "After matrix completion",
+              "col": 3,
+              "row": 0,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "retain",
+              "to": "fix"
+            },
+            {
+              "from": "fix",
+              "to": "fresh"
+            },
+            {
+              "from": "fresh",
+              "to": "timing"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Confidence is high in the two observed parser defects. A kernel diagnostic, failed raw subcase or unexplained replay mismatch would stop continuation. Remaining resources and the earlier enforced deadline stay binding."
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "takeaway": "Same K1: the API keeps publication, accounting and handle lifetime with its caller",
+      "source": "campaigns/codex-compress-lib-r2-2026-11-10/patches/c1-shared-store-r2.patch",
+      "patch": "--- /dev/null\n+++ b/include/linux/page_compress.h\n@@ -0,0 +8,43 @@\n+struct folio;\n+struct page_compress_pool;\n+\n+enum page_compress_failure {\n+\tPAGE_COMPRESS_NONE,\n+\tPAGE_COMPRESS_CODEC,\n+\tPAGE_COMPRESS_ALLOC,\n+};\n+\n+struct page_compress_result {\n+\tunsigned long handle;\n+\tunsigned int length;\n+\tenum page_compress_failure failure;\n+};\n+\n+/*\n+ * Pools own their codec contexts and object storage, but no frontend references.\n+ * The caller pins the pool and handle across each operation, and drains all\n+ * handles and users before destroy. Creation requires initialized crypto.\n+ */\n+struct page_compress_pool *page_compress_create(const char *codec,\n+\t\t\t\t\t\tconst char *name);\n+void page_compress_destroy(struct page_compress_pool *pool);\n+/* The returned name remains valid while the caller pins the pool. */\n+const char *page_compress_codec(struct page_compress_pool *pool);\n+\n+/*\n+ * Store/load operate on one base page and may sleep for codec completion even\n+ * with a nonblocking allocation mask. A successful store transfers one handle;\n+ * a failed store leaves handle/length zero. PAGE_SIZE length denotes raw data.\n+ * Load does not consume the handle, including on error. The caller owns folio\n+ * locking, index publication, accounting and the decision to store raw data.\n+ */\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result);\n+int page_compress_store_raw(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\t    long index, gfp_t gfp, int nid,\n+\t\t\t    struct page_compress_result *result);\n+int page_compress_load(struct page_compress_pool *pool, unsigned long handle,\n+\t\t       unsigned int length, struct folio *folio, long index);\n+void page_compress_free(struct page_compress_pool *pool, unsigned long handle);\n+unsigned long page_compress_backing_pages(struct page_compress_pool *pool);\n"
+    },
+    {
+      "takeaway": "Same K1: the library compresses and allocates before returning a usable handle",
+      "source": "campaigns/codex-compress-lib-r2-2026-11-10/patches/c1-shared-store-r2.patch",
+      "patch": "--- /dev/null\n+++ b/mm/page_compress.c\n@@ -0,0 +257,50 @@\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result)\n+{\n+\tstruct page_compress_ctx *ctx;\n+\tstruct scatterlist input, output;\n+\tunsigned int dlen;\n+\tunsigned long handle;\n+\tu8 *dst;\n+\tint ret;\n+\n+\t*result = (struct page_compress_result) {\n+\t\t.failure = PAGE_COMPRESS_CODEC,\n+\t};\n+\tif (index < 0 || index >= folio_nr_pages(folio))\n+\t\treturn -EINVAL;\n+\n+\tctx = raw_cpu_ptr(pool->ctx);\n+\tmutex_lock(&ctx->mutex);\n+\n+\tdst = ctx->buffer;\n+\tsg_init_table(&input, 1);\n+\tsg_set_folio(&input, folio, PAGE_SIZE, index * PAGE_SIZE);\n+\tsg_init_one(&output, dst, PAGE_SIZE);\n+\tacomp_request_set_params(ctx->req, &input, &output, PAGE_SIZE, PAGE_SIZE);\n+\n+\t/* The frontend is synchronous even when the codec completes async. */\n+\tret = crypto_wait_req(crypto_acomp_compress(ctx->req), &ctx->wait);\n+\tdlen = ctx->req->dlen;\n+\tif (ret || !dlen || dlen >= PAGE_SIZE) {\n+\t\tret = ret ? ret : -EINVAL;\n+\t\tgoto unlock;\n+\t}\n+\n+\thandle = pc_object_alloc(pool->zs_pool, dlen, gfp, nid);\n+\tif (IS_ERR_VALUE(handle)) {\n+\t\tresult->failure = PAGE_COMPRESS_ALLOC;\n+\t\tret = PTR_ERR((void *)handle);\n+\t\tgoto unlock;\n+\t}\n+\n+\tzs_obj_write(pool->zs_pool, handle, dst, dlen);\n+\tresult->handle = handle;\n+\tresult->length = dlen;\n+\tresult->failure = PAGE_COMPRESS_NONE;\n+\tret = 0;\n+unlock:\n+\tmutex_unlock(&ctx->mutex);\n+\treturn ret;\n+}\n"
+    },
+    {
+      "takeaway": "Same K1: frontend pool creation delegates the engine and preserves its reference lifetime",
+      "source": "campaigns/codex-compress-lib-r2-2026-11-10/patches/c1-shared-store-r2.patch",
+      "patch": "--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -152,13 +140,10 @@ struct crypto_acomp_ctx {\n  * needs to be verified that it's still valid in the tree.\n  */\n struct zswap_pool {\n-\tstruct zs_pool *zs_pool;\n-\tstruct crypto_acomp_ctx __percpu *acomp_ctx;\n+\tstruct page_compress_pool *compress;\n \tstruct percpu_ref ref;\n \tstruct rcu_work release_rwork;\n-\tstruct hlist_node node;\n \tu8 idx;\n-\tchar tfm_name[CRYPTO_MAX_ALG_NAME];\n };\n \n /*\n@@ -309,33 +266,9 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \n \t/* unique name for each pool specifically required by zsmalloc */\n \tsnprintf(name, 38, \"zswap%x\", atomic_inc_return(&zswap_pools_count));\n-\tpool->zs_pool = zs_create_pool(name);\n-\tif (!pool->zs_pool)\n-\t\tgoto error;\n-\n-\tstrscpy(pool->tfm_name, compressor, sizeof(pool->tfm_name));\n-\n-\t/* Many things rely on the zero-initialization. */\n-\tpool->acomp_ctx = alloc_percpu_gfp(*pool->acomp_ctx,\n-\t\t\t\t\t   GFP_KERNEL | __GFP_ZERO);\n-\tif (!pool->acomp_ctx) {\n-\t\tpr_err(\"percpu alloc failed\\n\");\n-\t\tgoto error;\n-\t}\n-\n-\t/*\n-\t * This is serialized against CPU hotplug operations. Hence, cores\n-\t * cannot be offlined until this finishes.\n-\t */\n-\tret = cpuhp_state_add_instance(CPUHP_MM_ZSWP_POOL_PREPARE,\n-\t\t\t\t       &pool->node);\n-\n-\t/*\n-\t * cpuhp_state_add_instance() will not cleanup on failure since\n-\t * we don't register a hotunplug callback.\n-\t */\n-\tif (ret)\n-\t\tgoto cpuhp_add_fail;\n+\tpool->compress = page_compress_create(compressor, name);\n+\tif (IS_ERR(pool->compress))\n+\t\tgoto free_pool;\n \n \t/* being the current pool takes 1 ref; this func expects the\n \t * caller to always add the new pool as the current pool\n@@ -343,7 +276,7 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \tret = percpu_ref_init(&pool->ref, __zswap_pool_empty,\n \t\t\t      PERCPU_REF_ALLOW_REINIT, GFP_KERNEL);\n \tif (ret)\n-\t\tgoto ref_fail;\n+\t\tgoto destroy_compress;\n \n \t/*\n \t * Publish only after the pool is fully built, so lockless walkers\n"
+    }
+  ],
+  "date": "2026-11-10",
+  "harness": "codex",
+  "model": "gpt-6",
+  "reading": [
+    "docs/research/2026-11-10-xswap-compression-tiering/runtime-incident-003.md",
+    "campaigns/codex-compress-lib-2026-11-10/ledger/budget.json",
+    "campaigns/codex-compress-lib-2026-11-10/ledger/session-closeout.json",
+    "campaigns/codex-compress-lib-r2-2026-11-10/report/observations.json",
+    "docs/research/2026-11-10-xswap-compression-tiering/K2-review.md"
+  ],
+  "patches_title": "Core kernel patches",
+  "patches_lead": "The unchanged K1 patch is retained in R2. These exact code excerpts explain the shared-library mechanism; they introduce no new scientific hypothesis.",
+  "observations_sha256": "dd37c813fcb6ca9236faadbd058bb8b3014270f3606d735b098afc237f03f7c5",
+  "related_reports": [
+    {
+      "title": "Original C1 contract",
+      "url": "https://ericzhang-zxh.github.io/Swap-Next/codex-compress-lib-2026-11-10/"
+    }
+  ]
+}
