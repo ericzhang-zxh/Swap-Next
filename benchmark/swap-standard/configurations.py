@@ -173,6 +173,8 @@ def validate_topology_record(protocol, result, purpose="correctness"):
                       for index in range(len(command) - len(expected) + 1))
         _need(matches == 1, "guest command omits or duplicates frozen topology arguments")
     if result.get("topology_id") == "numa2-sockets-v2":
+        _need(not any(item.startswith(("-M", "--M")) for item in command),
+              "guest command uses a noncanonical machine alias")
         _need(result.get("config_id") == "c1-debug-v2"
               and result.get("correctness_group") == "numa-lifecycle",
               "socket topology requires the versioned NUMA correctness group")

@@ -643,6 +643,22 @@ class SocketNumaTopologyTests(unittest.TestCase):
             with self.subTest(mutation=index), self.assertRaises(ValueError):
                 configurations.validate_topology_record(self.protocol(), dict(original, command=command))
 
+    def test_machine_alias_cannot_override_the_new_topology_proof(self):
+        import configurations
+        original = self.record()
+        configurations.validate_topology_record(self.protocol(), original)
+        for alias in (['-M', 'q35'], ['--M', 'q35'], ['-M=q35'], ['--M=q35'],
+                      ['-Mq35'], ['--Mq35']):
+            changed = dict(original, command=original['command'] + alias)
+            with self.subTest(alias=alias), self.assertRaisesRegex(ValueError, 'machine alias'):
+                configurations.validate_topology_record(self.protocol(), changed)
+        legacy = self.record()
+        legacy.update(topology_id='numa2', config_id='c1-debug')
+        legacy['command'][legacy['command'].index('-smp') + 1] = '4'
+        configurations.validate_topology_record(self.protocol(), legacy)
+        configurations.validate_topology_record(
+            self.protocol(), dict(legacy, command=legacy['command'] + ['-M', 'q35']))
+
     def test_proof_requires_exact_numa_arguments_and_identity(self):
         import configurations
         original = self.record()
