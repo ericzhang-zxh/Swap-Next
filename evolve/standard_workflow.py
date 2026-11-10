@@ -292,6 +292,51 @@ class Workflow:
         if time.time() > self.budget["created"] + self.p["budget"]["wall_seconds"]:
             raise RuntimeError("campaign deadline")
 
+    def supersede_baseline_infra(self, invalid_run_id, replacement_run_id, reason, bugfix_evidence):
+        """Declare one audited baseline retry without changing the consumed budget."""
+        self.check()
+        record = correctness_proof.baseline_infra_record(
+            self.p, ROOT, invalid_run_id, replacement_run_id, reason, bugfix_evidence)
+        relevant = correctness_proof._relevant_reservations(self.p, ROOT, self.p["baseline_commit"])
+        existing = correctness_proof._infra_supersessions(self.p, ROOT, relevant)
+        if any(record["case_id"] == previous["case_id"]
+               or invalid_run_id == previous["replacement_run_id"]
+               or replacement_run_id == previous["invalid_run_id"]
+               for previous, _, _ in existing):
+            raise RuntimeError("infrastructure supersession chains or duplicate cases are forbidden")
+        for relative in ("ledger/guest-reservations/" + replacement_run_id + ".json",
+                         "runs/guests/" + replacement_run_id):
+            path = CAMPAIGN / relative
+            if path.exists() or path.is_symlink():
+                raise RuntimeError("replacement run ID already has an attempt or artifacts")
+        if [ticket["id"] for ticket, case in relevant if case["id"] == record["case_id"]] != [invalid_run_id]:
+            raise RuntimeError("baseline case already has another unresolved attempt")
+        path = STATE / "baseline-infra-supersessions" / (invalid_run_id + ".json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        parent = ROOT
+        for part in path.relative_to(ROOT).parts[:-1]:
+            parent = parent / part
+            if parent.is_symlink():
+                raise RuntimeError("infrastructure supersession directory uses a symlink")
+        record["declared_unix"] = time.time()
+        with path.open("x") as stream:
+            stream.write(json.dumps(record, indent=2, allow_nan=False) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        digest = sha(path)
+        with Path(str(path) + ".sha256").open("x") as stream:
+            stream.write(digest + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        row = {"id": uuid.uuid4().hex, "action": "supersede-baseline-infra",
+               "status": "INFRA_RETRY_REQUIRED", "case_id": record["case_id"],
+               "invalid_run_id": invalid_run_id, "replacement_run_id": replacement_run_id,
+               "record": path.relative_to(ROOT).as_posix(), "record_sha256": digest,
+               "reason": reason}
+        self.ledger.append(row)
+        save(self.ledger_path, self.ledger)
+        return row
+
     def budget_pools(self):
         pools = {}
         for name, key, limit in (("fast", "guests", "guest_attempts"), ("probe", "probe_guests", "probe_guest_attempts")):
@@ -1113,11 +1158,15 @@ def state_lock():
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["status", "plan", "next", "calibrate", "evaluate", "reference-check", "build-coverage"])
+    parser.add_argument("action", choices=["status", "plan", "next", "calibrate", "evaluate", "reference-check", "build-coverage", "supersede-baseline-infra"])
     parser.add_argument("--tier", choices=["probe", "fast", "slow", "auto"], default="fast",
                         help="slow (and auto, which continues into slow) needs explicit owner approval; see AGENTS.md")
     parser.add_argument("--candidate")
     parser.add_argument("--case", help="frozen correctness or build-only case ID for build-coverage")
+    parser.add_argument("--invalid-run-id", help="retained invalid baseline run for infrastructure recovery")
+    parser.add_argument("--replacement-run-id", help="unused exact run ID required for the counted retry")
+    parser.add_argument("--reason", help="explicit infrastructure recovery rationale")
+    parser.add_argument("--bugfix-evidence", help="repository-relative evidence for the observer correction")
     parser.add_argument("--comparison", help="frozen comparison plan ID")
     parser.add_argument("--contrast", help="contrast in the frozen comparison plan")
     parser.add_argument("--selection-reason", help="agent rationale for admitting an exact probe pass to the fast screen")
@@ -1174,6 +1223,15 @@ def main(argv=None):
                     if not closed:
                         save(TASKS / ("task-" + uuid.uuid4().hex + ".json"), output)
             print(json.dumps(output, indent=2))
+            return
+        if args.action == "supersede-baseline-infra":
+            if not all((args.invalid_run_id, args.replacement_run_id, args.reason, args.bugfix_evidence)):
+                parser.error("supersede-baseline-infra requires --invalid-run-id, --replacement-run-id, --reason and --bugfix-evidence")
+            if args.candidate or args.comparison or args.contrast:
+                parser.error("baseline infrastructure recovery cannot name a candidate or comparison")
+            row = workflow.supersede_baseline_infra(
+                args.invalid_run_id, args.replacement_run_id, args.reason, args.bugfix_evidence)
+            print(json.dumps(row, indent=2))
             return
         if args.action == "build-coverage":
             if not args.case:

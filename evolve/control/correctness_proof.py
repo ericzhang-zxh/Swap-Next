@@ -62,13 +62,14 @@ def finite(value):
     return isinstance(value, (float, int)) and not isinstance(value, bool) and math.isfinite(value)
 
 
-def _validate(proof, protocol, root, case_spec=None):
+def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
     if not isinstance(proof, dict) or not isinstance(protocol, dict):
         raise ValueError("proof and protocol must be objects")
     cases = protocol.get("cases", {})
     if not isinstance(cases, dict) or not all(isinstance(case, dict) for case in cases.values()):
         raise ValueError("malformed protocol cases")
     revision8 = protocol.get("protocol_revision") == 8
+    bench = historical_bench or "benchmark/swap-standard"
     if revision8:
         if case_spec is None:
             raise ValueError("revision 8 requires a complete correctness matrix")
@@ -178,16 +179,16 @@ def _validate(proof, protocol, root, case_spec=None):
     harness = proof.get("harness_sha256", {})
     if not isinstance(harness, dict): raise ValueError("missing runner/parser harness hashes")
     for name in (("run.py", "evidence.py", "configurations.py") if revision8 else ("run.py", "evidence.py")):
-        hashed(root, "benchmark/swap-standard/" + name, harness.get(name))
+        hashed(root, bench + "/" + name, harness.get(name))
     if revision8:
-        guest_manifest = json.loads(file_at(root, "benchmark/swap-standard/image.json").read_bytes())
+        guest_manifest = json.loads(file_at(root, bench + "/image.json").read_bytes())
         if proof.get("guest_provenance") != guest_manifest:
             raise ValueError("correctness guest image provenance mismatch")
-        hashed(root, "benchmark/swap-standard/bench.img", guest_manifest.get("image_sha256"))
-        hashed(root, "benchmark/swap-standard/initramfs.cpio.gz", guest_manifest.get("initrd_sha256"))
+        hashed(root, bench + "/bench.img", guest_manifest.get("image_sha256"))
+        hashed(root, bench + "/initramfs.cpio.gz", guest_manifest.get("initrd_sha256"))
         for name, digest in guest_manifest.get("sources", {}).items():
-            hashed(root, "benchmark/swap-standard/" + name, digest)
-    spec = importlib.util.spec_from_file_location("correctness_evidence_parser", root / "benchmark/swap-standard/evidence.py")
+            hashed(root, bench + "/" + name, digest)
+    spec = importlib.util.spec_from_file_location("correctness_evidence_parser", root / bench / "evidence.py")
     parser = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(parser)
     subcases_failed = False
@@ -207,7 +208,7 @@ def _validate(proof, protocol, root, case_spec=None):
     parsed_gates = reparsed["gates"]
     if parsed_gates.get("cmdline_identity") is not True:
         raise ValueError("serial parser cannot bind the executed guest identity")
-    if revision8 and parsed_gates.get("configuration_identity") is not True:
+    if revision8 and not historical_bench and parsed_gates.get("configuration_identity") is not True:
         raise ValueError("serial parser cannot bind the executed configuration/case/topology")
     expected_gates = dict(parsed_gates, qemu_exit=proof["exit_code"] == 0 and proof.get("stop_reason") is None)
     if gates != expected_gates or proof.get("metrics") != reparsed["metrics"]:
@@ -231,6 +232,16 @@ def _validate(proof, protocol, root, case_spec=None):
                        workload=proof["workload"])
     if proof.get("stop_reason") == "STOP":
         raise ValueError("correctness run was externally stopped; no candidate failure established")
+    if historical_bench is not None:
+        # This internal replay only classifies the retained invalid baseline.
+        # It never returns a correctness pass or relaxes current guest validation.
+        failed = {key for key, value in expected_gates.items() if value is not True}
+        if (not revision8 or failed != {"configuration_identity"} or subcases_failed
+                or proof["run_valid"] is not True or proof["invalid_reasons"]
+                or reparsed["metrics"].get("kernel_diagnostics") != []):
+            raise ValueError("baseline infrastructure replay has additional failures or invalid conditions")
+        summary.update(status="BASELINE_INFRA_INVALID", passed=False)
+        return summary
     if subcases_failed or not expected_integration or not all(expected_gates[k] is True for k in required):
         summary.update(status="CORRECTNESS_FAIL", passed=False)
         reason = ("required compression subcase failed, incomplete or not reset" if subcases_failed
@@ -299,6 +310,186 @@ def _expected_commit(case, protocol, candidate_commit):
     return protocol["baseline_commit"] if case["role"] == "baseline" else candidate_commit
 
 
+def _runtime_snapshot(root, bench, harness_names, expected_guest=None):
+    """Pin replay inputs, including the actual image bytes and all image sources."""
+    manifest_path = file_at(root, bench + "/image.json")
+    guest = json.loads(manifest_path.read_bytes())
+    if expected_guest is not None and guest != expected_guest:
+        raise ValueError("archived guest image provenance mismatch")
+    sources = guest.get("sources")
+    if not isinstance(sources, dict) or "guest-init" not in sources:
+        raise ValueError("guest image lacks the topology observer source")
+    names = set(harness_names) | {"run.py", "evidence.py", "configurations.py"}
+    files = {bench + "/image.json": sha(manifest_path)}
+    for name, digest in {**sources, "bench.img": guest.get("image_sha256"),
+                         "initramfs.cpio.gz": guest.get("initrd_sha256")}.items():
+        reference = bench + "/" + name
+        files[reference] = sha(hashed(root, reference, digest))
+    harness = {}
+    for name in sorted(names):
+        path = file_at(root, bench + "/" + name)
+        harness[name] = sha(path)
+        files[bench + "/" + name] = harness[name]
+    return {"guest_provenance": guest, "harness_sha256": harness, "files": files}
+
+
+def _invalid_baseline_infra(protocol, root, invalid_run_id):
+    campaign = protocol.get("campaign")
+    if protocol.get("protocol_revision") != 8 or not isinstance(campaign, str) or not NAME.fullmatch(campaign):
+        raise ValueError("baseline infrastructure recovery requires revision 8")
+    if not isinstance(invalid_run_id, str) or not RUN.fullmatch(invalid_run_id):
+        raise ValueError("invalid infrastructure run ID")
+    prefix = "campaigns/" + campaign
+    run = prefix + "/runs/guests/" + invalid_run_id
+    raw_path = file_at(root, run + "/result.json")
+    raw = json.loads(raw_path.read_bytes())
+    catalog = configurations(root)
+    case = catalog.correctness_case(protocol, raw.get("correctness_case"))
+    if (case["role"] != "baseline" or raw.get("source_commit") != protocol["baseline_commit"]
+            or raw.get("run_id") != invalid_run_id or case["topology_id"] != "single"
+            or case["config_id"] not in ("c1-common", "c1-legacy")
+            or raw.get("topology_arguments") != []):
+        raise ValueError("infrastructure supersession is restricted to flat baseline cases")
+    archive = prefix + "/runs/infra-evidence/" + invalid_run_id + "/benchmark/swap-standard"
+    snapshot = _runtime_snapshot(root, archive, raw.get("harness_sha256", {}),
+                                 expected_guest=raw.get("guest_provenance"))
+    if snapshot["harness_sha256"] != raw.get("harness_sha256"):
+        raise ValueError("archived original harness hash mismatch")
+    summary = _validate(raw, protocol, root, case_spec=case, historical_bench=archive)
+    config_ref = "benchmark/kernel/builds/" + raw["build"] + "/output/.config"
+    if catalog.final_values(file_at(root, config_ref)).get("NUMA") != "n":
+        raise ValueError("baseline infrastructure recovery requires explicit final CONFIG_NUMA=n")
+    started_ref = run + "/started.json"
+    started = json.loads(file_at(root, started_ref).read_bytes())
+    required_started = {"run_id", "source_commit", "command", "guest_provenance", "harness_sha256",
+                        "reservation", "reservation_sha256", "protocol_sha256", "build_manifest_sha256",
+                        "config_id", "correctness_case", "topology_id"}
+    if (not isinstance(started, dict) or not required_started <= set(started)
+            or any(key not in raw or raw[key] != value for key, value in started.items())):
+        raise ValueError("started evidence differs from completed invalid baseline")
+    text = file_at(root, raw["serial_log"]).read_text(errors="replace").replace("\r", "")
+    nodes = re.findall(r"^ONLINE_NODES(?:[ 	].*)?$", text, re.M)
+    if len(nodes) != 1 or not re.fullmatch(r"ONLINE_NODES[ 	]*", nodes[0]):
+        raise ValueError("old baseline must contain exactly one blank ONLINE_NODES observation")
+    command = raw.get("command", [])
+    cmdlines = re.findall(r"^CMDLINE_BEGIN\n(.*?)\nCMDLINE_END$", text, re.M | re.S)
+    if (command.count("-append") != 1 or len(cmdlines) != 1
+            or command.index("-append") + 1 >= len(command)
+            or command[command.index("-append") + 1].split() != cmdlines[0].split()):
+        raise ValueError("recorded command and observed baseline command line differ")
+    spec = importlib.util.spec_from_file_location("historical_infra_parser", root / archive / "evidence.py")
+    parser = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parser)
+    # Diagnostic only: prove that the missing node observation is the whole
+    # identity failure. Never save the altered text or admit it as a passed run.
+    diagnostic = re.sub(r"^ONLINE_NODES[ 	]*$", "ONLINE_NODES 0", text, count=1, flags=re.M)
+    replay = parser.parse(diagnostic, raw["image_sha256"], raw["backend"], raw["mode"],
+                          raw["workload"], protocol_revision=8, config_id=case["config_id"],
+                          correctness_case=case["id"], topology_id="single", expected_case=case)
+    if (not replay.get("gates") or not all(value is True for value in replay["gates"].values())
+            or replay.get("metrics") != raw.get("metrics")
+            or replay.get("correctness_subcases") != raw.get("correctness_subcases")):
+        raise ValueError("blank topology is not the sole archived parser identity defect")
+    references = {raw["result_path"], run + "/result.sha256", raw["serial_log"],
+                  raw["reservation"], started_ref, prefix + "/protocol.json", raw["build_manifest"],
+                  str(Path(raw["build_manifest"]).with_name("configured-build.json")), config_ref,
+                  "benchmark/kernel/builds/" + raw["build"] + "/output/arch/x86/boot/bzImage"}
+    evidence = {reference: sha(file_at(root, reference)) for reference in sorted(references)}
+    return raw, case, summary, snapshot, evidence
+
+
+def baseline_infra_record(protocol, root, invalid_run_id, replacement_run_id, reason, bugfix_evidence):
+    """Build a verifiable declaration; the workflow owns its exclusive creation."""
+    root = Path(root).resolve()
+    if (not isinstance(replacement_run_id, str) or not RUN.fullmatch(replacement_run_id)
+            or replacement_run_id == invalid_run_id):
+        raise ValueError("replacement must name a distinct valid run ID")
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValueError("infrastructure supersession requires a reason")
+    bugfix = file_at(root, bugfix_evidence)
+    if not bugfix.stat().st_size:
+        raise ValueError("bugfix evidence is empty")
+    raw, case, summary, archived, evidence = _invalid_baseline_infra(protocol, root, invalid_run_id)
+    current = _runtime_snapshot(root, "benchmark/swap-standard", raw["harness_sha256"])
+    old_guest, new_guest = archived["guest_provenance"], current["guest_provenance"]
+    if (old_guest["sources"]["guest-init"] == new_guest["sources"]["guest-init"]
+            or archived["harness_sha256"]["evidence.py"] == current["harness_sha256"]["evidence.py"]
+            or all(old_guest[key] == new_guest[key] for key in ("image_sha256", "initrd_sha256"))):
+        raise ValueError("fixed observer, parser and newly prepared guest image are required")
+    return {"schema_version": 1, "record_type": "baseline-flat-topology-infrastructure-v1",
+            "campaign": protocol["campaign"], "baseline_commit": protocol["baseline_commit"],
+            "protocol_sha256": raw["protocol_sha256"], "case_id": case["id"],
+            "config_id": case["config_id"], "topology_id": "single",
+            "invalid_run_id": invalid_run_id, "replacement_run_id": replacement_run_id,
+            "reason": reason, "bugfix_evidence": bugfix_evidence, "bugfix_sha256": sha(bugfix),
+            "invalid_evidence": evidence, "archived_runtime": archived, "replacement_runtime": current,
+            "replacement_identity": {key: raw[key] for key in (
+                "build", "source_commit", "build_manifest", "build_manifest_sha256", "image_sha256",
+                "input_config_sha256", "config_sha256", "config_id", "correctness_case",
+                "topology_id", "backend", "mode", "workload")},
+            "replacement_cmdline": raw["command"][raw["command"].index("-append") + 1],
+            "invalid_status": summary["status"]}
+
+
+def _infra_supersessions(protocol, root, relevant):
+    """Verify explicit exceptions and the exact replacements without erasing attempts."""
+    directory = root / "campaigns" / protocol["campaign"] / "ledger/baseline-infra-supersessions"
+    records = []
+    for path in sorted(directory.glob("*.json")):
+        reference = path.relative_to(root).as_posix()
+        record = json.loads(file_at(root, reference).read_bytes())
+        sidecar = file_at(root, reference + ".sha256")
+        if sidecar.read_text().strip() != sha(path):
+            raise ValueError("infrastructure supersession record hash mismatch")
+        invalid = record.get("invalid_run_id")
+        if not isinstance(invalid, str) or path.name != invalid + ".json":
+            raise ValueError("noncanonical infrastructure supersession record")
+        expected = baseline_infra_record(protocol, root, invalid, record.get("replacement_run_id"),
+                                         record.get("reason"), record.get("bugfix_evidence"))
+        declared = record.get("declared_unix")
+        if not finite(declared) or declared <= 0 or record != dict(expected, declared_unix=declared):
+            raise ValueError("infrastructure supersession evidence changed")
+        records.append((record, reference, sha(path)))
+    invalid_ids = {record["invalid_run_id"] for record, _, _ in records}
+    new_ids = [record["replacement_run_id"] for record, _, _ in records]
+    case_ids = [record["case_id"] for record, _, _ in records]
+    if len(new_ids) != len(set(new_ids)) or len(case_ids) != len(set(case_ids)) or invalid_ids & set(new_ids):
+        raise ValueError("infrastructure supersession chains or duplicates are forbidden")
+    ticket_ids = [ticket["id"] for ticket, _ in relevant]
+    if len(ticket_ids) != len(set(ticket_ids)):
+        raise ValueError("duplicate counted correctness reservation identities")
+    tickets = {ticket["id"]: (ticket, case) for ticket, case in relevant}
+    for record, _, _ in records:
+        invalid, replacement = record["invalid_run_id"], record["replacement_run_id"]
+        if invalid not in tickets:
+            raise ValueError("superseded invalid attempt has no retained counted reservation")
+        if record["declared_unix"] < tickets[invalid][0]["started_unix"]:
+            raise ValueError("infrastructure declaration predates the invalid baseline")
+        matches = [ticket["id"] for ticket, case in relevant
+                   if case["id"] == record["case_id"] and ticket["id"] != invalid]
+        if matches and matches != [replacement]:
+            raise ValueError("baseline infrastructure replacement run ID differs from declaration")
+        if replacement in tickets:
+            ticket, case = tickets[replacement]
+            raw_ref = "campaigns/" + protocol["campaign"] + "/runs/guests/" + replacement + "/result.json"
+            raw = json.loads(file_at(root, raw_ref).read_bytes())
+            command = raw.get("command", [])
+            if (ticket.get("status") != "STARTED" or case["role"] != "baseline"
+                    or any(raw.get(key) != value for key, value in record["replacement_identity"].items())
+                    or command.count("-append") != 1 or command.index("-append") + 1 >= len(command)
+                    or command[command.index("-append") + 1] != record["replacement_cmdline"]
+                    or not finite(ticket.get("reserved_unix"))
+                    or ticket["reserved_unix"] < record["declared_unix"]
+                    or raw.get("source_commit") != protocol["baseline_commit"]
+                    or raw.get("guest_provenance") != record["replacement_runtime"]["guest_provenance"]
+                    or raw.get("harness_sha256") != record["replacement_runtime"]["harness_sha256"]):
+                raise ValueError("replacement run differs from its fixed counted runtime")
+            _validate(raw, protocol, root, case_spec=case)
+        elif (root / "campaigns" / protocol["campaign"] / "runs/guests" / replacement).exists():
+            raise ValueError("replacement artifacts have no counted reservation")
+    return records
+
+
 def _validate_matrix(proof, protocol, root):
     catalog, matrix = _matrix_specs(protocol, root)
     commit = proof.get("candidate_commit")
@@ -347,12 +538,13 @@ def _validate_matrix(proof, protocol, root):
     required = protocol.get("required_correctness_gates", [])
     if not required or not all(gates.get(name) is True for name in required):
         raise ValueError("candidate matrix lacks required scientific gates")
-    _check_matrix_reservations(protocol, root, commit, seen_runs)
+    supersessions = _check_matrix_reservations(protocol, root, commit, seen_runs)
     return {"proof_schema_version": 2, "workload": "correctness",
             "campaign": protocol["campaign"], "candidate_commit": commit, "source_commit": commit,
             "baseline_commit": protocol["baseline_commit"], "protocol_sha256": sha(protocol_file),
             "status": "CORRECTNESS_PASS", "passed": True, "integration_pass": True,
             "gates": gates, "cases": summaries, "builds": build_summaries,
+            "infrastructure_supersessions": supersessions,
             "backend": "matrix", "mode": "matrix", "run_id": None,
             "coverage": {"cases": [item["case_id"] for item in summaries],
                          "configurations": sorted({item["config_id"] for item in summaries + build_summaries}),
@@ -386,9 +578,15 @@ def _relevant_reservations(protocol, root, candidate_commit):
 
 def _check_matrix_reservations(protocol, root, candidate_commit, run_ids):
     relevant = _relevant_reservations(protocol, root, candidate_commit)
-    retained = [ticket["id"] for ticket, _ in relevant]
+    records = _infra_supersessions(protocol, root, relevant)
+    excluded = {record["invalid_run_id"] for record, _, _ in records}
+    retained = [ticket["id"] for ticket, _ in relevant if ticket["id"] not in excluded]
     if len(retained) != len(set(retained)) or set(retained) != set(run_ids):
         raise ValueError("matrix selectively omits or duplicates counted correctness attempts")
+    if any(record["replacement_run_id"] not in run_ids for record, _, _ in records):
+        raise ValueError("matrix lacks its explicitly named infrastructure replacement")
+    return [{"path": reference, "sha256": digest, "invalid_run_id": record["invalid_run_id"],
+             "replacement_run_id": record["replacement_run_id"]} for record, reference, digest in records]
 
 
 def matrix_progress(protocol, root, candidate_commit, manifest=None, manifest_path=None):
@@ -421,16 +619,26 @@ def matrix_progress(protocol, root, candidate_commit, manifest=None, manifest_pa
             return result
         relevant = _relevant_reservations(protocol, root, candidate_commit)
         result["attempted"] = bool(relevant)
+        records = _infra_supersessions(protocol, root, relevant)
+        excluded = {record["invalid_run_id"] for record, _, _ in records}
+        replacements = {record["case_id"]: record["replacement_run_id"] for record, _, _ in records}
+        result["infrastructure_supersessions"] = [
+            {"path": reference, "sha256": digest, "invalid_run_id": record["invalid_run_id"],
+             "replacement_run_id": record["replacement_run_id"]} for record, reference, digest in records]
         by_case = {}
         for ticket, case in relevant:
-            by_case.setdefault(case["id"], []).append(ticket)
+            if ticket["id"] not in excluded:
+                by_case.setdefault(case["id"], []).append(ticket)
         rows = []
         for case in matrix["cases"]:
             tickets = by_case.get(case["id"], [])
             if len(tickets) > 1:
                 raise ValueError("multiple counted attempts for correctness case " + case["id"])
             if not tickets:
-                result.setdefault("next_missing_case", case)
+                pending_case = dict(case)
+                if case["id"] in replacements:
+                    pending_case["required_run_id"] = replacements[case["id"]]
+                result.setdefault("next_missing_case", pending_case)
                 continue
             ticket = tickets[0]
             raw_path = "campaigns/" + protocol["campaign"] + "/runs/guests/" + ticket["id"] + "/result.json"

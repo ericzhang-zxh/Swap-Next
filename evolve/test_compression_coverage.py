@@ -132,6 +132,8 @@ class CoverageFixture:
         spec = self.catalog.CONFIGS[config_id]
         config = "\n".join("CONFIG_" + key + "=" + value for key, value in spec["required"].items())
         config += "\n" + "\n".join("# CONFIG_" + key + " is not set" for key in spec["forbidden"]) + "\n"
+        if config_id in ("c1-common", "c1-legacy", "c1-kcsan") and "NUMA" not in spec["required"]:
+            config += "# CONFIG_NUMA is not set\n"
         prefix = "benchmark/kernel/builds/" + build
         self.put(prefix + "/output/.config", config.encode())
         self.put(prefix + "/output/arch/x86/boot/bzImage", (commit + config_id).encode())
@@ -555,6 +557,274 @@ class CompressionCoverageTests(unittest.TestCase):
             result["config_id"] = "standard"
             with self.assertRaises(RuntimeError):
                 workflow.validate_result_configuration(self.fx.protocol, result, case)
+
+
+
+class BaselineInfrastructureRecoveryTests(unittest.TestCase):
+    """Synthetic recovery state; all prior and replacement samples are fixtures."""
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.fx = CoverageFixture(Path(self.temporary.name))
+        self.campaign = self.fx.root / "campaigns/fixture-c1"
+        self.invalid_id, self.replacement_id = "b-common", "b-common-retry"
+        self.bugfix = "docs/fixture-observer-fix.md"
+        self.fx.put(self.bugfix, b"Synthetic fixed observer evidence; no guest was launched.\n")
+        self.fx.put("benchmark/swap-standard/guest-init", b"synthetic old observer\n")
+        self.fx.image = copy.deepcopy(self.fx.image)
+        self.fx.image["sources"]["guest-init"] = self.fx.digest("benchmark/swap-standard/guest-init")
+        self.fx.put("benchmark/swap-standard/image.json", self.fx.image)
+        self.parser = (
+            "import json\nATTRIBUTABLE_FIELDS = frozenset()\n"
+            "def parse(serial, *args, **kwargs):\n"
+            "    parts = serial.split('\\n--serial--\\n', 1)\n"
+            "    value = json.loads(parts[0])\n"
+            "    if len(parts) > 1:\n"
+            "        value['gates']['configuration_identity'] = "
+            "'ONLINE_NODES 0' in parts[1].splitlines()\n"
+            "    return value\n")
+        self.fx.put("benchmark/swap-standard/evidence.py", self.parser.encode())
+        for raw in self.fx.raw.values():
+            raw["guest_provenance"] = copy.deepcopy(self.fx.image)
+            raw["harness_sha256"]["evidence.py"] = self.fx.digest("benchmark/swap-standard/evidence.py")
+            self.fx.save_raw(raw)
+        old = self.fx.raw[self.invalid_id]
+        parsed = json.loads((self.fx.root / old["serial_log"]).read_text())
+        parsed["metrics"]["kernel_diagnostics"] = []
+        parsed["gates"]["configuration_identity"] = False
+        cmdline = ("bench.image_sha=" + old["image_sha256"]
+                   + " bench.backend=disk bench.mode=xswap bench.workload=correctness"
+                   + " bench.protocol_revision=8 bench.config_id=c1-common"
+                   + " bench.topology_id=single bench.correctness_case=b-common"
+                   + " bench.correctness_group=regression")
+        self.tail = "--serial--\nCMDLINE_BEGIN\n" + cmdline + "\nCMDLINE_END\nONLINE_NODES \n"
+        self.fx.put(old["serial_log"], (json.dumps(parsed) + "\n" + self.tail).encode())
+        old.update(command=["synthetic-qemu", "-append", cmdline], integration_pass=False,
+                   metrics=parsed["metrics"], gates=dict(parsed["gates"], qemu_exit=True),
+                   serial_sha256=self.fx.digest(old["serial_log"]))
+        self.fx.save_raw(old)
+        started_keys = ("run_id", "source_commit", "command", "guest_provenance", "harness_sha256",
+                        "reservation", "reservation_sha256", "protocol_sha256", "build_manifest_sha256",
+                        "config_id", "correctness_case", "topology_id")
+        self.fx.put(str(Path(old["result_path"]).with_name("started.json")),
+                    {key: copy.deepcopy(old[key]) for key in started_keys})
+        archive = self.campaign / "runs/infra-evidence/b-common/benchmark/swap-standard"
+        archive.mkdir(parents=True)
+        names = set(old["harness_sha256"]) | set(self.fx.image["sources"]) | {
+            "image.json", "bench.img", "initramfs.cpio.gz"}
+        for name in names:
+            shutil.copyfile(self.fx.root / "benchmark/swap-standard" / name, archive / name)
+        self.fx.put("benchmark/swap-standard/guest-init", b"synthetic explicit flat observer\n")
+        self.fx.put("benchmark/swap-standard/evidence.py",
+                    (self.parser + "# Synthetic fixed parser identity.\n").encode())
+        self.fx.put("benchmark/swap-standard/bench.img", b"Synthetic fixed image; never booted.\n")
+        self.fx.image = copy.deepcopy(self.fx.image)
+        self.fx.image["image_sha256"] = self.fx.digest("benchmark/swap-standard/bench.img")
+        self.fx.image["sources"]["guest-init"] = self.fx.digest("benchmark/swap-standard/guest-init")
+        self.fx.put("benchmark/swap-standard/image.json", self.fx.image)
+        for run_id, raw in self.fx.raw.items():
+            if run_id != self.invalid_id:
+                raw["guest_provenance"] = copy.deepcopy(self.fx.image)
+                raw["harness_sha256"]["evidence.py"] = self.fx.digest("benchmark/swap-standard/evidence.py")
+                self.fx.save_raw(raw)
+        self.stack = ExitStack()
+        self.addCleanup(self.stack.close)
+        for key, value in {"ROOT": self.fx.root, "CAMPAIGN": self.campaign,
+                           "STATE": self.campaign / "ledger"}.items():
+            self.stack.enter_context(mock.patch.object(workflow, key, value))
+        self.flow = workflow.Workflow.__new__(workflow.Workflow)
+        self.flow.p, self.flow.ledger = self.fx.protocol, copy.deepcopy(self.fx.ledger)
+        self.flow.ledger_path = self.campaign / "ledger/ledger.json"
+        self.flow.check = lambda: None
+
+    def declare(self):
+        return self.flow.supersede_baseline_infra(
+            self.invalid_id, self.replacement_id, "Synthetic observer defect.", self.bugfix)
+
+    def progress(self):
+        return proofs.matrix_progress(self.fx.protocol, self.fx.root, self.fx.commits["candidate"])
+
+    def replacement(self, suffix="-retry", counted=True):
+        case = self.fx.catalog.correctness_case(self.fx.protocol, "b-common")
+        raw = self.fx.add_run(case, suffix)
+        raw["command"] = copy.deepcopy(self.fx.raw[self.invalid_id]["command"])
+        self.fx.save_raw(raw)
+        record_path = self.campaign / "ledger/baseline-infra-supersessions/b-common.json"
+        if record_path.is_file():
+            declared = json.loads(record_path.read_text())["declared_unix"]
+            ticket = json.loads((self.fx.root / raw["reservation"]).read_text())
+            ticket.update(reserved_unix=declared + 1, started_unix=declared + 2)
+            self.fx.put(raw["reservation"], ticket)
+            raw["reservation_sha256"] = self.fx.digest(raw["reservation"])
+            self.fx.save_raw(raw)
+        if counted:
+            self.fx.put("campaigns/fixture-c1/ledger/budget.json",
+                        {"guests": 0, "probe_guests": 9, "builds": 8})
+        return raw
+
+    def change_old_gate(self, name, passed):
+        raw = self.fx.raw[self.invalid_id]
+        body, tail = (self.fx.root / raw["serial_log"]).read_text().split("\n--serial--\n", 1)
+        parsed = json.loads(body)
+        parsed["gates"][name] = passed
+        self.fx.put(raw["serial_log"], (json.dumps(parsed) + "\n--serial--\n" + tail).encode())
+        raw.update(serial_sha256=self.fx.digest(raw["serial_log"]),
+                   gates=dict(parsed["gates"], qemu_exit=True))
+        self.fx.save_raw(raw)
+
+    def test_declaration_preserves_original_budget_and_evidence_and_requires_named_retry(self):
+        old = self.fx.raw[self.invalid_id]
+        watched = [old["result_path"], old["serial_log"], old["reservation"],
+                   "campaigns/fixture-c1/ledger/budget.json"]
+        before = {name: self.fx.digest(name) for name in watched}
+        row = self.declare()
+        self.assertEqual(row["status"], "INFRA_RETRY_REQUIRED")
+        self.assertEqual(before, {name: self.fx.digest(name) for name in watched})
+        record = json.loads((self.fx.root / row["record"]).read_text())
+        self.assertEqual(record["invalid_status"], "BASELINE_INFRA_INVALID")
+        self.assertNotIn("passed", record)
+        progress = self.progress()
+        self.assertFalse(progress["passed"], progress)
+        self.assertTrue(progress["pending"], progress)
+        self.assertEqual(progress["next_missing_case"]["required_run_id"], self.replacement_id)
+        self.assertNotIn("b-common", progress["verified_cases"])
+        with self.assertRaises((RuntimeError, FileExistsError)):
+            self.declare()
+
+    def test_exact_counted_replacement_completes_matrix_with_retained_exception(self):
+        self.declare()
+        replacement = self.replacement()
+        progress = self.progress()
+        self.assertTrue(progress["passed"], progress)
+        self.assertEqual(len(progress["summary"]["infrastructure_supersessions"]), 1)
+        rows = progress["manifest_data"]["runs"]
+        self.assertEqual(next(row["result_path"] for row in rows if row["case_id"] == "b-common"),
+                         replacement["result_path"])
+        self.assertEqual(json.loads((self.campaign / "ledger/budget.json").read_text())["probe_guests"], 9)
+        self.assertTrue(proofs.validate(progress["manifest_data"], self.fx.protocol, self.fx.root)["passed"])
+        with self.assertRaises(ValueError):
+            proofs.validate(self.fx.matrix(), self.fx.protocol, self.fx.root)
+
+    def test_candidate_run_cannot_receive_baseline_exemption(self):
+        with self.assertRaisesRegex(ValueError, "flat baseline"):
+            proofs.baseline_infra_record(self.fx.protocol, self.fx.root, "c-common",
+                                         "c-common-retry", "not permitted", self.bugfix)
+
+    def test_additional_scientific_failure_cannot_be_superseded(self):
+        self.change_old_gate("data_roundtrip", False)
+        with self.assertRaisesRegex(ValueError, "additional failures"):
+            self.declare()
+
+    def test_blank_observation_cannot_hide_other_identity_failure(self):
+        raw = self.fx.raw[self.invalid_id]
+        serial = (self.fx.root / raw["serial_log"]).read_text().replace("ONLINE_NODES ", "ONLINE_NODES 7")
+        self.fx.put(raw["serial_log"], serial.encode())
+        raw["serial_sha256"] = self.fx.digest(raw["serial_log"])
+        self.fx.save_raw(raw)
+        with self.assertRaisesRegex(ValueError, "blank ONLINE_NODES"):
+            self.declare()
+
+    def test_started_and_command_identity_must_match(self):
+        raw = self.fx.raw[self.invalid_id]
+        started = Path(raw["result_path"]).with_name("started.json").as_posix()
+        self.fx.put(started, {})
+        with self.assertRaisesRegex(ValueError, "started evidence"):
+            self.declare()
+
+    def test_fixed_runtime_must_exist_before_declaration(self):
+        old = self.fx.raw[self.invalid_id]["guest_provenance"]
+        archive = self.campaign / "runs/infra-evidence/b-common/benchmark/swap-standard"
+        for name in ("guest-init", "bench.img", "image.json"):
+            shutil.copyfile(archive / name, self.fx.root / "benchmark/swap-standard" / name)
+        with self.assertRaisesRegex(ValueError, "newly prepared guest image"):
+            self.declare()
+
+    def test_preexisting_replacement_cannot_be_reclassified_after_measurement(self):
+        self.replacement()
+        with self.assertRaisesRegex(RuntimeError, "already has an attempt"):
+            self.declare()
+
+    def test_wrong_replacement_or_uncounted_replacement_blocks(self):
+        self.declare()
+        self.replacement("-other")
+        progress = self.progress()
+        self.assertFalse(progress["passed"])
+        self.assertFalse(progress["pending"])
+        self.assertIn("run ID differs", progress["reason"])
+
+    def test_unbudgeted_replacement_remains_blocked(self):
+        self.declare()
+        self.replacement(counted=False)
+        progress = self.progress()
+        self.assertFalse(progress["passed"])
+        self.assertIn("no counted guest budget", progress["reason"])
+
+    def test_failed_replacement_stays_a_correctness_failure(self):
+        self.declare()
+        raw = self.replacement()
+        parsed = json.loads((self.fx.root / raw["serial_log"]).read_text())
+        parsed["gates"]["data_roundtrip"] = False
+        self.fx.put(raw["serial_log"], parsed)
+        raw.update(integration_pass=False, serial_sha256=self.fx.digest(raw["serial_log"]),
+                   gates=dict(parsed["gates"], qemu_exit=True))
+        self.fx.save_raw(raw)
+        progress = self.progress()
+        self.assertTrue(progress["failed"], progress)
+        self.assertFalse(progress["pending"], progress)
+
+    def test_original_serial_drift_invalidates_declaration(self):
+        row = self.declare()
+        raw = self.fx.raw[self.invalid_id]
+        path = self.fx.root / raw["serial_log"]
+        path.write_text(path.read_text() + "\nmodified\n")
+        progress = self.progress()
+        self.assertFalse(progress["passed"])
+        self.assertFalse(progress["pending"])
+        self.assertIn("hash mismatch", progress["reason"])
+
+    def test_duplicate_invalid_ticket_is_not_excluded_twice(self):
+        self.declare()
+        old = self.fx.raw[self.invalid_id]
+        ticket = json.loads((self.fx.root / old["reservation"]).read_text())
+        self.fx.put("campaigns/fixture-c1/ledger/guest-reservations/duplicate.json", ticket)
+        self.fx.put("campaigns/fixture-c1/ledger/budget.json",
+                    {"guests": 0, "probe_guests": 9, "builds": 8})
+        progress = self.progress()
+        self.assertFalse(progress["pending"], progress)
+        self.assertIn("duplicate counted", progress["reason"])
+
+    def test_replacement_command_must_preserve_the_baseline_case(self):
+        self.declare()
+        raw = self.replacement()
+        raw["command"][-1] += " bench.config_id=c1-debug"
+        self.fx.save_raw(raw)
+        progress = self.progress()
+        self.assertFalse(progress["pending"], progress)
+        self.assertIn("fixed counted runtime", progress["reason"])
+
+    def test_replacement_timestamp_cannot_predate_explicit_declaration(self):
+        self.declare()
+        raw = self.replacement()
+        ticket = json.loads((self.fx.root / raw["reservation"]).read_text())
+        ticket.update(reserved_unix=1, started_unix=2)
+        self.fx.put(raw["reservation"], ticket)
+        raw["reservation_sha256"] = self.fx.digest(raw["reservation"])
+        self.fx.save_raw(raw)
+        progress = self.progress()
+        self.assertFalse(progress["pending"], progress)
+        self.assertIn("fixed counted runtime", progress["reason"])
+
+    def test_record_drift_and_new_image_drift_fail_closed(self):
+        row = self.declare()
+        path = self.fx.root / row["record"]
+        original = path.read_bytes()
+        path.write_bytes(original + b" ")
+        progress = self.progress()
+        self.assertIn("record hash mismatch", progress["reason"])
+        path.write_bytes(original)
+        self.fx.put("benchmark/swap-standard/bench.img", b"Changed after declaration")
+        progress = self.progress()
+        self.assertIn("hash mismatch", progress["reason"])
 
 
 class ConfiguredBuildWorkflowTests(unittest.TestCase):
