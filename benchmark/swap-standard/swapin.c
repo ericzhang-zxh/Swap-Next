@@ -27,7 +27,9 @@ static long page;
 static clockid_t timing_clock = CLOCK_MONOTONIC;
 static bool compressed_mode;
 static int compressed_type = -1;
+#ifndef TRACE_ROOT
 #define TRACE_ROOT "/sys/kernel/tracing"
+#endif
 #define TRACE_INSTANCE TRACE_ROOT "/instances/swap_next_timing"
 #define TRACE_EVENT "swap_next_timing/decode_return"
 static bool probe_installed, instance_created;
@@ -116,35 +118,206 @@ static int target_ready(char *address)
 	return text_write(TRACE_INSTANCE "/trace", "\n", false);
 }
 
-static int parse_decode_trace(char *raw)
+struct trace_read_info {
+	size_t bytes;
+	int error;
+	bool truncated;
+	const char *stage;
+};
+
+struct trace_parse_info {
+	unsigned long entries, written;
+	int headers, records;
+	bool attempted, scan_complete, bad_record, return_present;
+	size_t bad_offset, bad_length;
+	long return_value;
+	const char *reason;
+};
+
+/* Match text_read's limit and rejection; retain partial bytes on an error. */
+static int trace_read_file(const char *path, char *raw, size_t cap,
+			   struct trace_read_info *info)
 {
-	char *line, *save;
-	unsigned long entries = 0, written = 0;
-	int headers = 0, records = 0;
-	for (line = strtok_r(raw, "\n", &save); line; line = strtok_r(NULL, "\n", &save)) {
-		if (sscanf(line, "# entries-in-buffer/entries-written: %lu/%lu", &entries, &written) == 2)
-			headers++;
-		if (line[0] == '#')
-			continue;
-		char *event = strstr(line, " decode_return: ");
-		char *ret = event ? strstr(event, " ret=") : NULL;
-		char tail;
-		long value;
-		if (!ret || sscanf(ret, " ret=%ld %c", &value, &tail) != 1 || value != 0)
-			return -1;
-		records++;
-	}
-	/* A missing entry, duplicate decode or ring-buffer loss is invalid. */
-	if (headers != 1 || entries != 1 || written != 1 || records != 1)
+	int fd;
+
+	*info = (struct trace_read_info){ .stage = "open" };
+	fd = open(path, O_RDONLY | O_CLOEXEC);
+	if (fd < 0) {
+		info->error = errno;
+		raw[0] = 0;
 		return -1;
-	return 0;
+	}
+	info->stage = "read";
+	for (;;) {
+		ssize_t n = read(fd, raw + info->bytes, cap - info->bytes - 1);
+
+		if (n < 0) {
+			info->error = errno;
+			raw[info->bytes] = 0;
+			close(fd);
+			return -1;
+		}
+		if (!n) {
+			raw[info->bytes] = 0;
+			info->stage = "complete";
+			close(fd);
+			return 0;
+		}
+		info->bytes += n;
+		if (info->bytes == cap - 1) {
+			raw[info->bytes] = 0;
+			info->stage = "limit";
+			info->truncated = true;
+			info->error = EOVERFLOW;
+			close(fd);
+			return -1;
+		}
+	}
 }
 
-static int decode_observed(void)
+static int parse_decode_trace(char *raw, struct trace_parse_info *info)
+{
+	char *line = raw;
+
+	*info = (struct trace_parse_info){ .attempted = true, .reason = "ok" };
+	while (*(line += strspn(line, "\n"))) {
+		char *end = line + strcspn(line, "\n");
+		char saved = *end;
+
+		/* Restore each separator so a failure keeps the first read intact. */
+		*end = 0;
+		if (sscanf(line, "# entries-in-buffer/entries-written: %lu/%lu",
+			   &info->entries, &info->written) == 2)
+			info->headers++;
+		if (line[0] != '#') {
+			char *event = strstr(line, " decode_return: ");
+			char *ret = event ? strstr(event, " ret=") : NULL;
+			char tail;
+			long value = 0;
+			int fields = ret ? sscanf(ret, " ret=%ld %c", &value, &tail) : 0;
+
+			if (!ret || fields != 1 || value != 0) {
+				info->bad_record = true;
+				info->bad_offset = line - raw;
+				info->bad_length = end - line;
+				info->return_present = fields >= 1;
+				info->return_value = value;
+				info->reason = !event ? "event_missing" :
+					!ret ? "return_missing" : fields != 1 ?
+					"return_format" : "return_nonzero";
+				*end = saved;
+				return -1;
+			}
+			info->records++;
+		}
+		*end = saved;
+		line = end;
+	}
+	info->scan_complete = true;
+	/* A missing entry, duplicate decode or ring-buffer loss is invalid. */
+	if (info->headers != 1)
+		info->reason = "header_count";
+	else if (info->entries != 1)
+		info->reason = "entry_count";
+	else if (info->written != 1)
+		info->reason = "written_count";
+	else if (info->records != 1)
+		info->reason = "record_count";
+	return strcmp(info->reason, "ok") ? -1 : 0;
+}
+
+static void trace_hex(FILE *out, const char *raw, size_t bytes)
+{
+	for (size_t i = 0; i < bytes; i++) {
+		fprintf(out, "%02x", (unsigned char)raw[i]);
+		if ((i + 1) % 64 == 0)
+			fputc('\n', out);
+	}
+	if (bytes % 64)
+		fputc('\n', out);
+}
+
+static void trace_readback(FILE *out, const char *name, const char *path)
+{
+	char raw[4096];
+	struct trace_read_info read_info;
+	int result = trace_read_file(path, raw, sizeof(raw), &read_info);
+
+	fprintf(out, "COMPRESSED_TRACE_READBACK_BEGIN phase=post_failure name=%s result=%d stage=%s errno=%d bytes=%zu truncated=%d encoding=hex\n",
+		name, result, read_info.stage, read_info.error, read_info.bytes,
+		read_info.truncated);
+	trace_hex(out, raw, read_info.bytes);
+	fprintf(out, "COMPRESSED_TRACE_READBACK_END name=%s\n", name);
+}
+
+static void trace_failure_dump(FILE *out, const char *order, size_t target,
+			       const char *raw, int read_result,
+			       const struct trace_read_info *read_info,
+			       const struct trace_parse_info *parse_info)
+{
+	static bool emitted;
+	const struct {
+		const char *name, *path;
+	} readbacks[] = {
+		{ "tracing_on", TRACE_INSTANCE "/tracing_on" },
+		{ "current_tracer", TRACE_INSTANCE "/current_tracer" },
+		{ "trace_options", TRACE_INSTANCE "/trace_options" },
+		{ "event_enable", TRACE_INSTANCE "/events/" TRACE_EVENT "/enable" },
+		{ "event_filter", TRACE_INSTANCE "/events/" TRACE_EVENT "/filter" },
+		{ "event_format", TRACE_INSTANCE "/events/" TRACE_EVENT "/format" },
+		{ "kprobe_events", TRACE_ROOT "/kprobe_events" },
+		{ "kprobe_profile", TRACE_ROOT "/kprobe_profile" },
+	};
+	long cpus;
+	int disabled, disable_error;
+
+	if (emitted)
+		return;
+	emitted = true;
+	errno = 0;
+	disabled = text_write(TRACE_INSTANCE "/tracing_on", "0", false);
+	disable_error = disabled ? errno : 0;
+	fprintf(out, "COMPRESSED_TRACE_DIAGNOSTIC schema=1 order=%s target_index=%zu read_result=%d read_stage=%s read_errno=%d bytes=%zu truncated=%d parse_attempted=%d parse_reason=%s scan_complete=%d headers=%d entries=%lu written=%lu records=%d bad_record=%d bad_offset=%zu bad_length=%zu return_present=%d return_value=%ld disable_result=%d disable_errno=%d\n",
+		order, target, read_result, read_info->stage, read_info->error,
+		read_info->bytes, read_info->truncated, parse_info->attempted,
+		parse_info->reason, parse_info->scan_complete, parse_info->headers,
+		parse_info->entries, parse_info->written, parse_info->records,
+		parse_info->bad_record,
+		parse_info->bad_offset, parse_info->bad_length,
+		parse_info->return_present, parse_info->return_value, disabled,
+		disable_error);
+	fprintf(out, "COMPRESSED_TRACE_FIRST_READ_BEGIN bytes=%zu encoding=hex\n",
+		read_info->bytes);
+	trace_hex(out, raw, read_info->bytes);
+	fputs("COMPRESSED_TRACE_FIRST_READ_END\n", out);
+	for (size_t i = 0; i < sizeof(readbacks) / sizeof(readbacks[0]); i++)
+		trace_readback(out, readbacks[i].name, readbacks[i].path);
+
+	/* Bound post-failure output even with an unexpected CPU enumeration. */
+	cpus = sysconf(_SC_NPROCESSORS_CONF);
+	fprintf(out, "COMPRESSED_TRACE_CPUS phase=post_failure configured=%ld limit=64 truncated=%d\n",
+		cpus, cpus < 1 || cpus > 64);
+	for (long cpu = 0; cpu < cpus && cpu < 64; cpu++) {
+		char name[48], path[256];
+
+		snprintf(name, sizeof(name), "cpu%ld_stats", cpu);
+		snprintf(path, sizeof(path), TRACE_INSTANCE "/per_cpu/cpu%ld/stats", cpu);
+		trace_readback(out, name, path);
+	}
+}
+
+static int decode_observed(const char *order, size_t target)
 {
 	char raw[32768];
-	if (text_read(TRACE_INSTANCE "/trace", raw, sizeof(raw)) || parse_decode_trace(raw))
+	struct trace_read_info read_info;
+	struct trace_parse_info parse_info = { .reason = "not_run" };
+	int result = trace_read_file(TRACE_INSTANCE "/trace", raw, sizeof(raw), &read_info);
+
+	if (result || parse_decode_trace(raw, &parse_info)) {
+		trace_failure_dump(stdout, order, target, raw, result, &read_info,
+				   &parse_info);
 		return -1;
+	}
 	verified_decode_samples++;
 	return 0;
 }
@@ -430,7 +603,7 @@ int main(int argc, char **argv)
 		t0 = now_ns();
 		sink += *(volatile uint64_t *)(buf + pg * page);
 		d = now_ns() - t0;
-		if (compressed_mode && decode_observed()) {
+		if (compressed_mode && decode_observed("seq", pg)) {
 			puts("SWAPIN_FAIL compressed_decode_unproven");
 			return 1;
 		}
@@ -460,7 +633,7 @@ int main(int argc, char **argv)
 		t0 = now_ns();
 		sink += *(volatile uint64_t *)(buf + pg * page);
 		d = now_ns() - t0;
-		if (compressed_mode && decode_observed()) {
+		if (compressed_mode && decode_observed("rand", pg)) {
 			puts("SWAPIN_FAIL compressed_decode_unproven");
 			return 1;
 		}

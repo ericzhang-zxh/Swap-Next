@@ -4,6 +4,10 @@ import copy
 import hashlib
 import importlib.util
 import json
+import os
+import random
+import threading
+import time
 from pathlib import Path
 import subprocess
 import tempfile
@@ -541,7 +545,7 @@ class TraceObserverTests(unittest.TestCase):
         cls.binary = Path(cls.temp.name) / 'trace-parser'
         wrapper = Path(cls.temp.name) / 'trace-parser.c'
         wrapper.write_text('#define main swapin_guest_main\n#include ' + json.dumps(str(BASE / 'swapin.c'))
-                           + '\n#undef main\nint main(void) { char raw[32768]; size_t n=fread(raw,1,sizeof(raw)-1,stdin); raw[n]=0; return parse_decode_trace(raw) ? 1 : 0; }\n')
+                           + '\n#undef main\nint main(void) { char raw[32768]; size_t n=fread(raw,1,sizeof(raw)-1,stdin); raw[n]=0; struct trace_parse_info info; return parse_decode_trace(raw, &info) ? 1 : 0; }\n')
         subprocess.run(['gcc', '-O2', '-Wall', '-Wextra', '-Werror', str(wrapper), '-o', str(cls.binary)], check=True)
 
     @classmethod
@@ -566,6 +570,271 @@ class TraceObserverTests(unittest.TestCase):
                    '# entries-in-buffer/entries-written: 0/0\n']
         for raw in invalid:
             self.assertNotEqual(subprocess.run([str(self.binary)], input=raw, text=True).returncode, 0)
+
+
+class TraceFailureDiagnosticTests(unittest.TestCase):
+    valid = (b'# tracer: nop\n# entries-in-buffer/entries-written: 1/1   #P:4\n'
+             b' swapin-12 [000] ... 1.000: decode_return: (func <- ret) ret=0\n')
+
+    @classmethod
+    def setUpClass(cls):
+        cls.temp = tempfile.TemporaryDirectory(prefix='swap-next-trace-diagnostic-')
+        cls.root = Path(cls.temp.name)
+        cls.tracing = cls.root / 'tracing'
+        cls.instance = cls.tracing / 'instances/swap_next_timing'
+        cls.binary = cls.root / 'diagnostic-test'
+        wrapper = cls.root / 'diagnostic-test.c'
+        # Frozen pre-H26 predicate, used to verify decision equivalence.
+        reference = r"""
+static int legacy_parse(char *raw)
+{
+    char *line, *save;
+    unsigned long entries = 0, written = 0;
+    int headers = 0, records = 0;
+    for (line = strtok_r(raw, "\n", &save); line; line = strtok_r(NULL, "\n", &save)) {
+        if (sscanf(line, "# entries-in-buffer/entries-written: %lu/%lu", &entries, &written) == 2)
+            headers++;
+        if (line[0] == '#')
+            continue;
+        char *event = strstr(line, " decode_return: ");
+        char *ret = event ? strstr(event, " ret=") : NULL;
+        char tail;
+        long value;
+        if (!ret || sscanf(ret, " ret=%ld %c", &value, &tail) != 1 || value != 0)
+            return -1;
+        records++;
+    }
+    return headers != 1 || entries != 1 || written != 1 || records != 1 ? -1 : 0;
+}
+static void alarm_handler(int sig) { (void)sig; }
+int main(int argc, char **argv)
+{
+    char raw[32768], original[32768], legacy[32768];
+    struct trace_read_info read_info;
+    struct trace_parse_info info = { .reason = "not_run" };
+    int result;
+    size_t n;
+    if (argc < 2)
+        return 2;
+    if (!strcmp(argv[1], "observe") || !strcmp(argv[1], "interrupt")) {
+        if (!strcmp(argv[1], "interrupt")) {
+            struct sigaction action = { .sa_handler = alarm_handler };
+            sigemptyset(&action.sa_mask);
+            if (sigaction(SIGALRM, &action, NULL))
+                return 2;
+            alarm(1);
+        }
+        result = decode_observed("rand", 17);
+        printf("OBSERVED_RESULT result=%d verified=%" PRIu64 "\n", result, verified_decode_samples);
+        return 0;
+    }
+    if (!strcmp(argv[1], "read")) {
+        if (argc != 3)
+            return 2;
+        result = trace_read_file(argv[2], raw, sizeof(raw), &read_info);
+        printf("{\"result\":%d,\"bytes\":%zu,\"errno\":%d,\"truncated\":%d,\"stage\":\"%s\"}\n",
+               result, read_info.bytes, read_info.error, read_info.truncated, read_info.stage);
+        trace_hex(stdout, raw, read_info.bytes);
+        return 0;
+    }
+    n = fread(raw, 1, sizeof(raw) - 1, stdin);
+    raw[n] = 0;
+    memcpy(original, raw, n + 1);
+    memcpy(legacy, raw, n + 1);
+    result = parse_decode_trace(raw, &info);
+    if (!strcmp(argv[1], "dump_twice")) {
+        read_info = (struct trace_read_info){ .bytes = n, .stage = "complete" };
+        trace_failure_dump(stdout, "seq", 3, raw, 0, &read_info, &info);
+        trace_failure_dump(stdout, "rand", 99, "replaced", -1, &read_info, &info);
+        return 0;
+    }
+    printf("{\"result\":%d,\"legacy\":%d,\"unchanged\":%d,\"reason\":\"%s\",\"headers\":%d,\"entries\":%lu,\"written\":%lu,\"records\":%d,\"bad_record\":%d,\"bad_offset\":%zu,\"bad_length\":%zu,\"return_present\":%d,\"return_value\":%ld}\n",
+           result, legacy_parse(legacy), !memcmp(raw, original, n + 1), info.reason,
+           info.headers, info.entries, info.written, info.records, info.bad_record,
+           info.bad_offset, info.bad_length, info.return_present, info.return_value);
+    return 0;
+}
+"""
+        wrapper.write_text('#define TRACE_ROOT ' + json.dumps(str(cls.tracing))
+                           + '\n#define main swapin_guest_main\n#include '
+                           + json.dumps(str(BASE / 'swapin.c'))
+                           + '\n#undef main\n#include <signal.h>\n' + reference)
+        subprocess.run(['gcc', '-O2', '-Wall', '-Wextra', '-Werror', str(wrapper),
+                        '-o', str(cls.binary)], check=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.temp.cleanup()
+
+    def setUp(self):
+        self.instance.mkdir(parents=True, exist_ok=True)
+        trace = self.instance / 'trace'
+        if trace.exists():
+            trace.unlink()
+        trace.write_bytes(self.valid.replace(b'ret=0', b'ret=-5'))
+        fixtures = {'tracing_on': b'1', 'current_tracer': b'nop\n',
+                    'trace_options': b'context-info\n',
+                    'events/swap_next_timing/decode_return/enable': b'1\n',
+                    'events/swap_next_timing/decode_return/filter': b'common_pid == 123\n',
+                    'events/swap_next_timing/decode_return/format': b'field:long ret;\n',
+                    'per_cpu/cpu0/stats': b'overrun: 7\n'}
+        for name, content in fixtures.items():
+            p = self.instance / name
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_bytes(content)
+        (self.tracing / 'kprobe_events').write_bytes(b'r64:swap_next_timing/decode_return zswap_load ret=$retval:s64\n')
+        (self.tracing / 'kprobe_profile').write_bytes(b'decode_return 2 0\n')
+
+    def invoke(self, mode, data=b'', *args):
+        return subprocess.run([str(self.binary), mode, *map(str, args)], input=data,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              check=True, timeout=5).stdout.decode('ascii')
+
+    def parse(self, data):
+        return json.loads(self.invoke('parse', data))
+
+    def first_bytes(self, output):
+        first = output.split('COMPRESSED_TRACE_FIRST_READ_BEGIN ', 1)[1]
+        header, body = first.split('\n', 1)
+        body = body.split('COMPRESSED_TRACE_FIRST_READ_END', 1)[0]
+        data = bytes.fromhex(body)
+        self.assertIn(f'bytes={len(data)} ', header)
+        return data
+
+    def test_precise_parser_reasons_and_original_bytes(self):
+        head, event = self.valid.split(b' swapin-', 1)
+        event = b' swapin-' + event
+        cases = [(self.valid, 'ok'), (event, 'header_count'),
+                 (self.valid.replace(b'1/1', b'0/1'), 'entry_count'),
+                 (self.valid.replace(b'1/1', b'1/2'), 'written_count'),
+                 (self.valid + event, 'record_count'),
+                 (head, 'record_count'),
+                 (self.valid.replace(b'decode_return:', b'other:'), 'event_missing'),
+                 (self.valid.replace(b' ret=0', b''), 'return_missing'),
+                 (self.valid.replace(b'ret=0', b'ret=zero'), 'return_format'),
+                 (self.valid.replace(b'ret=0', b'ret=0 extra'), 'return_format'),
+                 (self.valid.replace(b'ret=0', b'ret=-5'), 'return_nonzero')]
+        for raw, reason in cases:
+            with self.subTest(reason=reason):
+                result = self.parse(raw)
+                self.assertEqual(result['reason'], reason)
+                self.assertEqual(result['result'], result['legacy'])
+                self.assertEqual(result['unchanged'], 1)
+                if result['bad_record']:
+                    actual = raw[result['bad_offset']:result['bad_offset'] + result['bad_length']]
+                    self.assertEqual(actual, raw.splitlines()[-1])
+        negative = self.parse(cases[-1][0])
+        self.assertEqual((negative['return_present'], negative['return_value']), (1, -5))
+
+    def test_acceptance_matches_frozen_predicate_on_mutated_traces(self):
+        rng = random.Random(26)
+        seeds = [self.valid, b'', b'\n\n' + self.valid + b'\n',
+                 self.valid + b'\0unparsed suffix\xff',
+                 self.valid.replace(b'1/1', b'1/1\n# entries-in-buffer/entries-written: 1/x'),
+                 self.valid.replace(b'1/1', b'99999999999999999999999999999999/1')]
+        samples = list(seeds)
+        alphabet = b'\n\r\t #0129/ret=decode_return:x\0\xff'
+        for _ in range(300):
+            sample = bytearray(rng.choice(seeds))
+            for _ in range(rng.randrange(1, 5)):
+                at = rng.randrange(len(sample) + 1)
+                if rng.randrange(2) and at < len(sample):
+                    del sample[at:at + rng.randrange(1, 5)]
+                else:
+                    sample[at:at] = bytes([rng.choice(alphabet)])
+            samples.append(bytes(sample))
+        for raw in samples:
+            with self.subTest(raw=raw):
+                result = self.parse(raw)
+                self.assertEqual(result['result'], result['legacy'])
+                self.assertEqual(result['unchanged'], 1)
+
+    def test_read_limit_and_error_keep_exact_partial_bytes(self):
+        path = self.root / 'read-fixture'
+        for size in (0, 1, 32766, 32767, 32768, 40000):
+            raw = bytes(range(256)) * (size // 256) + bytes(range(size % 256))
+            path.write_bytes(raw)
+            output = self.invoke('read', b'', path)
+            header, payload = output.split('\n', 1)
+            result = json.loads(header)
+            self.assertEqual(bytes.fromhex(payload), raw[:32767])
+            self.assertEqual(result['bytes'], min(size, 32767))
+            self.assertEqual(result['truncated'], int(size >= 32767))
+            self.assertEqual(result['result'], -1 if size >= 32767 else 0)
+            self.assertEqual(result['stage'], 'limit' if size >= 32767 else 'complete')
+        for bad, stage in ((self.root / 'missing', 'open'), (self.root, 'read')):
+            header, payload = self.invoke('read', b'', bad).split('\n', 1)
+            result = json.loads(header)
+            self.assertEqual((result['result'], result['stage'], result['bytes']), (-1, stage, 0))
+            self.assertGreater(result['errno'], 0)
+            self.assertEqual(payload, '')
+
+    def test_failed_observation_emits_one_exact_read_and_post_failure_state(self):
+        raw = self.valid.replace(b'ret=0', b'ret=-5') + b'\0\xff\r\n'
+        (self.instance / 'trace').write_bytes(raw)
+        output = self.invoke('observe')
+        self.assertEqual(self.first_bytes(output), raw)
+        self.assertIn('order=rand target_index=17 ', output)
+        self.assertIn('parse_reason=return_nonzero ', output)
+        self.assertIn('disable_result=0 disable_errno=0', output)
+        self.assertEqual((self.instance / 'tracing_on').read_bytes(), b'0')
+        self.assertIn('phase=post_failure name=tracing_on result=0', output)
+        self.assertIn('phase=post_failure name=cpu0_stats result=0', output)
+        self.assertIn('phase=post_failure name=kprobe_profile result=0', output)
+        self.assertIn('OBSERVED_RESULT result=-1 verified=0', output)
+        once = self.invoke('dump_twice', raw)
+        self.assertEqual(once.count('COMPRESSED_TRACE_DIAGNOSTIC '), 1)
+        self.assertEqual(self.first_bytes(once), raw)
+        self.assertNotIn('target_index=99', once)
+
+    def test_failure_readback_limits_do_not_replace_first_capture(self):
+        raw = b'x' * 40000
+        (self.instance / 'trace').write_bytes(raw)
+        (self.instance / 'trace_options').write_bytes(b'y' * 5000)
+        (self.tracing / 'kprobe_profile').unlink()
+        output = self.invoke('observe')
+        self.assertEqual(self.first_bytes(output), raw[:32767])
+        self.assertIn('read_stage=limit', output)
+        self.assertIn('bytes=32767 truncated=1 parse_attempted=0 parse_reason=not_run', output)
+        self.assertIn('name=trace_options result=-1 stage=limit', output)
+        self.assertIn('bytes=4095 truncated=1 encoding=hex', output)
+        self.assertIn('name=kprobe_profile result=-1 stage=open', output)
+        self.assertLess(len(output), 700000)
+        self.assertLessEqual(output.count('COMPRESSED_TRACE_READBACK_BEGIN'), 72)
+
+    def test_interrupted_first_read_retains_partial_data_and_never_rereads_trace(self):
+        trace = self.instance / 'trace'
+        trace.unlink()
+        os.mkfifo(trace)
+        raw = b'partial\0raw\xff\n'
+        def writer():
+            with trace.open('wb', buffering=0) as stream:
+                stream.write(raw)
+                time.sleep(1.5)
+        thread = threading.Thread(target=writer, daemon=True)
+        thread.start()
+        output = self.invoke('interrupt')
+        thread.join(timeout=2)
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(self.first_bytes(output), raw)
+        self.assertIn('read_stage=read read_errno=4', output)
+        self.assertIn('parse_attempted=0 parse_reason=not_run', output)
+        self.assertIn('OBSERVED_RESULT result=-1 verified=0', output)
+
+    def test_failed_disable_is_visible_and_preserves_original_capture(self):
+        raw = (self.instance / 'trace').read_bytes()
+        (self.instance / 'tracing_on').unlink()
+        output = self.invoke('observe')
+        self.assertEqual(self.first_bytes(output), raw)
+        self.assertIn('disable_result=-1 disable_errno=2', output)
+        self.assertIn('name=tracing_on result=-1 stage=open', output)
+        self.assertIn('scan_complete=0', output)
+        self.assertIn('OBSERVED_RESULT result=-1 verified=0', output)
+
+    def test_success_emits_no_diagnostic_and_leaves_tracing_enabled(self):
+        (self.instance / 'trace').write_bytes(self.valid)
+        self.assertEqual(self.invoke('observe'), 'OBSERVED_RESULT result=0 verified=1\n')
+        self.assertEqual((self.instance / 'tracing_on').read_bytes(), b'1')
 
 
 class SocketNumaTopologyTests(unittest.TestCase):
