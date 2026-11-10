@@ -220,12 +220,20 @@ def exactly(text, pattern):
 
 def _valid_ktap(raw):
     lines = [line.strip() for line in raw.splitlines() if line.strip()]
-    require(not any(re.search(r'\b(?:SKIP|TODO)\b', line, re.I) for line in lines),
+    summaries = ['# page_compress: pass:3 fail:0 skip:0 total:3',
+                 '# Totals: pass:3 fail:0 skip:0 total:3']
+    for line in lines:
+        if (line.startswith(('# page_compress:', '# Totals:'))
+                or re.search(r'\b(?:pass|fail|skip|total):', line, re.I)):
+            require(line in summaries, 'invalid or contradictory KUnit summary')
+    require(not any(re.search(r'\b(?:SKIP|TODO)\b', line, re.I)
+                    for line in lines if line not in summaries),
             'KUnit skip or TODO is incomplete coverage')
-    lines = [line for line in lines if not line.startswith('#') or line.startswith('# Subtest:')]
+    lines = [line for line in lines
+             if not line.startswith('#') or line.startswith('# Subtest:') or line in summaries]
     expected = ['KTAP version 1', '1..1', 'KTAP version 1', '# Subtest: page_compress', '1..3',
                 *[f'ok {i + 1} {name}' for i, name in enumerate(UNIT_TESTS)], 'ok 1 page_compress']
-    return lines == expected
+    return lines == expected or lines == expected[:-1] + summaries + expected[-1:]
 
 
 
@@ -420,6 +428,12 @@ def compression_evidence(text, mode, expected_case):
             state = 'observations'
             continue
         require(current is not None, 'compression record before begin')
+        if line == 'zswap: compressor swap_next_invalid_codec_7d83 not available':
+            require(state == 'observations' and current['id'] == 'invalid_codec'
+                    and 'expected_diagnostics' not in current,
+                    'duplicate or misplaced invalid-codec diagnostic')
+            current['expected_diagnostics'] = [{'kind': 'invalid_codec_rejected', 'message': line}]
+            continue
         m = re.fullmatch(r'COMPRESS_OBS case=([a-z][a-z0-9_]*) phase=([a-z][a-z0-9_]*) key=([a-z][a-z0-9_]*) value=(\d+)', line)
         if m:
             require(state == 'observations' and m[1] == current['id'], 'observation case or order mismatch')

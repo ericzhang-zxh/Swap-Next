@@ -310,6 +310,131 @@ class CompressionEvidenceTests(unittest.TestCase):
         self.assertFalse(result['gates']['configuration_identity'])
 
 
+class CompressionFramingTests(unittest.TestCase):
+    printk = 'zswap: compressor swap_next_invalid_codec_7d83 not available'
+    summaries = ('# page_compress: pass:3 fail:0 skip:0 total:3\n'
+                 '# Totals: pass:3 fail:0 skip:0 total:3\n')
+
+    def summarized_ktap(self, topology='single'):
+        return unit_ktap(topology).replace('ok 1 page_compress\n',
+            '    # module: page_compress\n' + self.summaries + 'ok 1 page_compress\n')
+
+    def observed_debug_log(self):
+        body, spec = group_log('debug-failures')
+        spec['config_id'] = 'c1-debug-v2'
+        anchor = 'COMPRESS_OBS case=invalid_codec phase=case key=codec_unchanged value=1\n'
+        self.assertEqual(body.count(anchor), 1)
+        body = body.replace(anchor, anchor + self.printk + '\n')
+        body = body.replace(unit_ktap(), self.summarized_ktap())
+        header = basic_log('compressed', 'xswap', 'compression', 'c1-debug-v2', 'single', spec)
+        # The observed printk is also retained by the final dmesg capture.
+        header = header.replace('Linux version fixture\n', 'Linux version fixture\n' + self.printk + '\n')
+        return header + body, spec
+
+    def parse_debug(self, text, spec):
+        return evidence.parse(text, 'abc', 'compressed', 'xswap', 'compression', 8,
+            config_id='c1-debug-v2', correctness_case=spec['id'], topology_id='single', expected_case=spec)
+
+    def unit_result(self, ktap):
+        text, expected = group_log('numa-lifecycle')
+        text = 'XSWAP_TYPE 1\n' + text.replace(unit_ktap('numa2'), ktap)
+        return evidence.compression_evidence(text, 'xswap', expected)
+
+    def test_observed_printk_and_zero_skip_summaries_preserve_six_valid_subcases(self):
+        text, spec = self.observed_debug_log()
+        result = self.parse_debug(text, spec)
+        self.assertTrue(all(result['gates'].values()), result)
+        self.assertEqual(result['metrics']['kernel_diagnostics'], [])
+        self.assertEqual(len(result['correctness_subcases']), 6)
+        invalid = result['correctness_subcases']['invalid_codec']
+        self.assertEqual(invalid['expected_diagnostics'],
+                         [{'kind': 'invalid_codec_rejected', 'message': self.printk}])
+        self.assertTrue(all(case['status'] == 'PASS' and case['evidence_valid']
+                            for case in result['correctness_subcases'].values()))
+
+    def test_printk_is_exact_single_and_bound_to_invalid_codec_observations(self):
+        body, expected = group_log('debug-failures')
+        anchor = 'COMPRESS_OBS case=invalid_codec phase=case key=codec_unchanged value=1\n'
+        reset = 'COMPRESS_RESET case=invalid_codec status=PASS\n'
+        wrong_case = 'COMPRESS_BEGIN schema=1 mode=xswap case=library_unit bytes=33554432\n'
+        begin = 'COMPRESS_BEGIN schema=1 mode=xswap case=invalid_codec bytes=33554432\n'
+        broken = [
+            body.replace(anchor, anchor + (self.printk + '\n') * 2),
+            body.replace(reset, reset + self.printk + '\n'),
+            body.replace(wrong_case, wrong_case + self.printk + '\n'),
+            body.replace(begin, self.printk + '\n' + begin),
+        ]
+        for unknown in (self.printk.replace('7d83', '7d84'), self.printk + ' extra',
+                        'zswap: compressor lzo not available', 'WARNING: synthetic fault',
+                        'unrecognized observation'):
+            broken.append(body.replace(anchor, anchor + unknown + '\n'))
+        for text in broken:
+            with self.subTest(tail=text[-120:]), self.assertRaises(ValueError):
+                evidence.compression_evidence('XSWAP_TYPE 1\n' + text, 'xswap', expected)
+
+    def test_expected_printk_never_replaces_semantic_failure_evidence(self):
+        text, spec = self.observed_debug_log()
+        text = text.replace('COMPRESS_OBS case=invalid_codec phase=case key=invalid_codec_errno value=22\n', '')
+        result = self.parse_debug(text, spec)
+        self.assertFalse(result['gates']['compression_invalid_codec'])
+        self.assertFalse(result['gates']['compression_evidence'])
+
+    def test_expected_printk_does_not_suppress_kernel_warnings(self):
+        text, spec = self.observed_debug_log()
+        text = text.replace('Linux version fixture\n', 'Linux version fixture\nWARNING: synthetic fault\n')
+        result = self.parse_debug(text, spec)
+        self.assertFalse(result['gates']['no_kernel_warnings'])
+        self.assertFalse(result['gates']['no_new_kernel_warnings'])
+
+    def test_ktap_accepts_exact_zero_skip_summary_pair_or_original_strict_fixture(self):
+        for ktap in (unit_ktap('numa2'), self.summarized_ktap('numa2')):
+            gates, result = self.unit_result(ktap)
+            self.assertTrue(gates['compression_library_unit'], result)
+
+    def test_ktap_rejects_nonzero_contradictory_partial_or_reordered_summaries(self):
+        valid = self.summarized_ktap('numa2')
+        first, second = self.summaries.splitlines(keepends=True)
+        broken = [
+            valid.replace('skip:0', 'skip:1', 1),
+            valid.replace('pass:3', 'pass:2', 1),
+            valid.replace('fail:0', 'fail:1', 1),
+            valid.replace('total:3', 'total:4', 1),
+            valid.replace(' skip:0', '', 1),
+            valid.replace(first, ''),
+            valid.replace(second, ''),
+            valid.replace(first, first * 2),
+            valid.replace(self.summaries, second + first),
+            valid.replace(self.summaries, '').replace('    ok 2 page_compress_partial_cleanup\n',
+                self.summaries + '    ok 2 page_compress_partial_cleanup\n'),
+            valid.replace(self.summaries, '') + self.summaries,
+            valid.replace('# page_compress: pass:', '# unrelated: pass:', 1),
+            valid.replace('# Totals: pass:3 fail:0 skip:0 total:3', '# Totals: pass=3 fail=0 skip=0 total=3'),
+        ]
+        for ktap in broken:
+            with self.subTest(ktap=ktap[-180:]):
+                gates, result = self.unit_result(ktap)
+                self.assertFalse(gates['compression_library_unit'], result)
+
+    def test_ktap_rejects_directives_missing_duplicate_and_out_of_order_cases(self):
+        valid = self.summarized_ktap('numa2')
+        first = '    ok 1 page_compress_alloc_rollback\n'
+        second = '    ok 2 page_compress_partial_cleanup\n'
+        third = '    ok 3 page_compress_numa_placement\n'
+        swapped = valid.replace(second, 'ORDER_SWAP\n').replace(third, second).replace('ORDER_SWAP\n', third)
+        broken = [
+            valid.replace(first, first.rstrip() + ' # SKIP unavailable\n'),
+            valid.replace(second, second.rstrip() + ' # TODO later\n'),
+            valid.replace(second, ''),
+            valid.replace(first, first * 2),
+            swapped,
+            valid.replace('    ok 2 ', '    not ok 2 '),
+        ]
+        for ktap in broken:
+            with self.subTest(ktap=ktap[-240:]):
+                gates, result = self.unit_result(ktap)
+                self.assertFalse(gates['compression_library_unit'], result)
+
+
 class DebugConfigurationV2Tests(unittest.TestCase):
     def test_frozen_debug_bytes_are_preserved_and_v2_only_disables_tiny(self):
         old = (ROOT / 'benchmark/config/compression-debug.config').read_bytes()
