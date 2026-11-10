@@ -1,0 +1,729 @@
+{
+  "title": "Shared compression library: a NUMA boot warning stopped validation",
+  "subtitle": "codex (gpt-6) \u00b7 line: xswap-compression-tiering \u00b7 base 5e84ca92 \u00b7 1 candidate \u00b7 3 guests / 0 builds",
+  "verdict": {
+    "status": "inconclusive",
+    "headline": "Baseline and debug runs passed; a NUMA boot warning kept correctness incomplete.",
+    "tiles": [
+      {
+        "label": "Baseline and debug",
+        "value": "Passed",
+        "note": "Complete gates for those two runs."
+      },
+      {
+        "label": "NUMA case",
+        "value": "Failed",
+        "note": "Boot warning; functional subcases passed."
+      },
+      {
+        "label": "Correctness matrix",
+        "value": "Incomplete",
+        "note": "No timing or equivalence result."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "One hypothesis across retained infrastructure contracts",
+      "lead": "R3 tested the same shared compression library. Fresh baseline and candidate debug runs passed their per-run gates. The two-node NUMA guest failed on a genuine boot warning, closing this infrastructure contract.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The unchanged kernel reached validated debug coverage. The full required matrix remains incomplete, so calibration, performance and dependent architecture phases remain pending."
+        },
+        {
+          "type": "note",
+          "text": "R3 used 3 probe guests and no new builds; existing builds were revalidated and reused. Through this closeout, original C1 plus R2 and R3 consumed 8 guests and 4 builds."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "1. Whole system: restore the application page",
+      "lead": "An application needs its full page in physical RAM. Stored contents may be compressed inside RAM or reside on a backing device. Compression trades CPU work for less storage traffic.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The changed engine serves compressed contents inside RAM",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "sub": "Needs page A",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "fault",
+              "label": "Kernel swap path",
+              "sub": "Find stored contents",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "page",
+              "label": "Full page A",
+              "sub": "Physical RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "compressed",
+              "label": "Compressed A",
+              "sub": "Inside physical RAM",
+              "col": 1,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "disk",
+              "label": "Backing device",
+              "sub": "Outside RAM",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "fault"
+            },
+            {
+              "from": "fault",
+              "to": "page",
+              "label": "already resident"
+            },
+            {
+              "from": "fault",
+              "to": "compressed",
+              "label": "decode"
+            },
+            {
+              "from": "compressed",
+              "to": "page"
+            },
+            {
+              "from": "disk",
+              "to": "page",
+              "label": "read"
+            },
+            {
+              "from": "fault",
+              "to": "disk"
+            }
+          ],
+          "note": "Schematic path, with no illustrative size or timing used as a measurement."
+        },
+        {
+          "type": "note",
+          "text": "The candidate changes the compressed-storage implementation. The existing frontend still decides admission, accounting and writeback. No new RAM-to-disk migration policy is implemented here."
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "2. Subsystem: policy keeps the object identity",
+      "lead": "ZSwap retains the entry index, memory-group charge, ordering and lifetime pins. A shared page library owns per-CPU codec contexts, scratch buffers and compressed-object storage.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Data moves through the engine; policy stays with the frontend",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "ZSwap entry",
+              "sub": "Handle + length",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "library",
+              "label": "Page library",
+              "sub": "Codec + CPU context",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "object",
+              "label": "Object A",
+              "sub": "Compressed RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "policy",
+              "label": "ZSwap policy",
+              "sub": "Index, charge, LRU",
+              "col": 0,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "release",
+              "label": "Release boundary",
+              "sub": "Drain users, then free",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "library",
+              "label": "store / load"
+            },
+            {
+              "from": "library",
+              "to": "object",
+              "label": "allocate / copy"
+            },
+            {
+              "from": "policy",
+              "to": "entry",
+              "label": "pin"
+            },
+            {
+              "from": "entry",
+              "to": "release"
+            },
+            {
+              "from": "release",
+              "to": "object",
+              "label": "free"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "High-confidence source review supports this ownership boundary. CPU-local codec contexts and requested memory placement require runtime coverage. The single-node debug case passed; the NUMA warning preserves an unresolved validation boundary."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "3. Concrete test: split memory nodes exposed a boot warning",
+      "lead": "The same candidate image passed its single-node debug case. The auxiliary NUMA guest split four virtual CPUs across two memory nodes while retaining an implicit package topology.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Single-node debug: the complete per-run check passed",
+          "nodes": [
+            {
+              "id": "cpus",
+              "label": "Four virtual CPUs",
+              "sub": "One memory node",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "library",
+              "label": "Shared library",
+              "sub": "Same kernel image",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "pass",
+              "label": "Debug case",
+              "sub": "All per-run gates pass",
+              "col": 2,
+              "row": 0,
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "cpus",
+              "to": "library"
+            },
+            {
+              "from": "library",
+              "to": "pass"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "NUMA guest: a reported cache-sibling pair crossed memory nodes",
+          "nodes": [
+            {
+              "id": "package",
+              "label": "Implicit package",
+              "sub": "QEMU -smp 4",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "node0",
+              "label": "Memory node 0",
+              "sub": "CPUs 0 and 1",
+              "col": 0,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "node1",
+              "label": "Memory node 1",
+              "sub": "CPUs 2 and 3",
+              "col": 2,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "warning",
+              "label": "CPU 2 and CPU 0",
+              "sub": "Cache-sibling warning",
+              "col": 1,
+              "row": 2,
+              "tone": "bad"
+            }
+          ],
+          "edges": [
+            {
+              "from": "package",
+              "to": "node0"
+            },
+            {
+              "from": "package",
+              "to": "node1"
+            },
+            {
+              "from": "node0",
+              "to": "warning"
+            },
+            {
+              "from": "node1",
+              "to": "warning"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "The NUMA library, hotplug and memory-accounting subcases passed, including matching requested and actual memory nodes. The boot warning failed both kernel-warning gates, keeping the overall run failed."
+        },
+        {
+          "type": "note",
+          "text": "High-confidence diagnosis: the virtual CPU and memory-node mapping conflict. The warning appears during CPU boot. No candidate-source defect is established by this run; complete coverage remains required."
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "No complete paired performance result is available."
+        }
+      ],
+      "lead": "Per-run successes are retained alongside the failed NUMA case. The warning keeps the full matrix incomplete."
+    },
+    {
+      "id": "next",
+      "title": "Review the topology correction, then gather fresh evidence",
+      "lead": "This frozen contract is closed with its warning intact. A separately reviewed topology correction and new remaining-budget contract must collect fresh correctness evidence before calibration.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The next contract still has to prove its topology",
+          "nodes": [
+            {
+              "id": "retain",
+              "label": "Retain failure",
+              "sub": "Raw hashes unchanged",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "review",
+              "label": "Review topology",
+              "sub": "Explicit CPU mapping",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "fresh",
+              "label": "Fresh correctness",
+              "sub": "Warning gates mandatory",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "timing",
+              "label": "Calibrate / compare",
+              "sub": "After full matrix",
+              "col": 3,
+              "row": 0,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "retain",
+              "to": "review"
+            },
+            {
+              "from": "review",
+              "to": "fresh"
+            },
+            {
+              "from": "fresh",
+              "to": "timing"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "A fresh correctly mapped topology that produces the same warning would contradict the current diagnosis. No outcome is predicted for that correction. Remaining resource ceilings and the earlier enforced deadline remain binding."
+        }
+      ]
+    },
+    {
+      "id": "patches",
+      "title": "Core kernel patches",
+      "blocks": [
+        {
+          "type": "diff",
+          "takeaway": "Same K1: the API keeps publication, accounting and handle lifetime with its caller",
+          "patch": "--- /dev/null\n+++ b/include/linux/page_compress.h\n@@ -0,0 +8,43 @@\n+struct folio;\n+struct page_compress_pool;\n+\n+enum page_compress_failure {\n+\tPAGE_COMPRESS_NONE,\n+\tPAGE_COMPRESS_CODEC,\n+\tPAGE_COMPRESS_ALLOC,\n+};\n+\n+struct page_compress_result {\n+\tunsigned long handle;\n+\tunsigned int length;\n+\tenum page_compress_failure failure;\n+};\n+\n+/*\n+ * Pools own their codec contexts and object storage, but no frontend references.\n+ * The caller pins the pool and handle across each operation, and drains all\n+ * handles and users before destroy. Creation requires initialized crypto.\n+ */\n+struct page_compress_pool *page_compress_create(const char *codec,\n+\t\t\t\t\t\tconst char *name);\n+void page_compress_destroy(struct page_compress_pool *pool);\n+/* The returned name remains valid while the caller pins the pool. */\n+const char *page_compress_codec(struct page_compress_pool *pool);\n+\n+/*\n+ * Store/load operate on one base page and may sleep for codec completion even\n+ * with a nonblocking allocation mask. A successful store transfers one handle;\n+ * a failed store leaves handle/length zero. PAGE_SIZE length denotes raw data.\n+ * Load does not consume the handle, including on error. The caller owns folio\n+ * locking, index publication, accounting and the decision to store raw data.\n+ */\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result);\n+int page_compress_store_raw(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\t    long index, gfp_t gfp, int nid,\n+\t\t\t    struct page_compress_result *result);\n+int page_compress_load(struct page_compress_pool *pool, unsigned long handle,\n+\t\t       unsigned int length, struct folio *folio, long index);\n+void page_compress_free(struct page_compress_pool *pool, unsigned long handle);\n+unsigned long page_compress_backing_pages(struct page_compress_pool *pool);\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "Same K1: the library compresses and allocates before returning a usable handle",
+          "patch": "--- /dev/null\n+++ b/mm/page_compress.c\n@@ -0,0 +257,50 @@\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result)\n+{\n+\tstruct page_compress_ctx *ctx;\n+\tstruct scatterlist input, output;\n+\tunsigned int dlen;\n+\tunsigned long handle;\n+\tu8 *dst;\n+\tint ret;\n+\n+\t*result = (struct page_compress_result) {\n+\t\t.failure = PAGE_COMPRESS_CODEC,\n+\t};\n+\tif (index < 0 || index >= folio_nr_pages(folio))\n+\t\treturn -EINVAL;\n+\n+\tctx = raw_cpu_ptr(pool->ctx);\n+\tmutex_lock(&ctx->mutex);\n+\n+\tdst = ctx->buffer;\n+\tsg_init_table(&input, 1);\n+\tsg_set_folio(&input, folio, PAGE_SIZE, index * PAGE_SIZE);\n+\tsg_init_one(&output, dst, PAGE_SIZE);\n+\tacomp_request_set_params(ctx->req, &input, &output, PAGE_SIZE, PAGE_SIZE);\n+\n+\t/* The frontend is synchronous even when the codec completes async. */\n+\tret = crypto_wait_req(crypto_acomp_compress(ctx->req), &ctx->wait);\n+\tdlen = ctx->req->dlen;\n+\tif (ret || !dlen || dlen >= PAGE_SIZE) {\n+\t\tret = ret ? ret : -EINVAL;\n+\t\tgoto unlock;\n+\t}\n+\n+\thandle = pc_object_alloc(pool->zs_pool, dlen, gfp, nid);\n+\tif (IS_ERR_VALUE(handle)) {\n+\t\tresult->failure = PAGE_COMPRESS_ALLOC;\n+\t\tret = PTR_ERR((void *)handle);\n+\t\tgoto unlock;\n+\t}\n+\n+\tzs_obj_write(pool->zs_pool, handle, dst, dlen);\n+\tresult->handle = handle;\n+\tresult->length = dlen;\n+\tresult->failure = PAGE_COMPRESS_NONE;\n+\tret = 0;\n+unlock:\n+\tmutex_unlock(&ctx->mutex);\n+\treturn ret;\n+}\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "Same K1: frontend pool creation delegates the engine and preserves its reference lifetime",
+          "patch": "--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -152,13 +140,10 @@ struct crypto_acomp_ctx {\n  * needs to be verified that it's still valid in the tree.\n  */\n struct zswap_pool {\n-\tstruct zs_pool *zs_pool;\n-\tstruct crypto_acomp_ctx __percpu *acomp_ctx;\n+\tstruct page_compress_pool *compress;\n \tstruct percpu_ref ref;\n \tstruct rcu_work release_rwork;\n-\tstruct hlist_node node;\n \tu8 idx;\n-\tchar tfm_name[CRYPTO_MAX_ALG_NAME];\n };\n \n /*\n@@ -309,33 +266,9 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \n \t/* unique name for each pool specifically required by zsmalloc */\n \tsnprintf(name, 38, \"zswap%x\", atomic_inc_return(&zswap_pools_count));\n-\tpool->zs_pool = zs_create_pool(name);\n-\tif (!pool->zs_pool)\n-\t\tgoto error;\n-\n-\tstrscpy(pool->tfm_name, compressor, sizeof(pool->tfm_name));\n-\n-\t/* Many things rely on the zero-initialization. */\n-\tpool->acomp_ctx = alloc_percpu_gfp(*pool->acomp_ctx,\n-\t\t\t\t\t   GFP_KERNEL | __GFP_ZERO);\n-\tif (!pool->acomp_ctx) {\n-\t\tpr_err(\"percpu alloc failed\\n\");\n-\t\tgoto error;\n-\t}\n-\n-\t/*\n-\t * This is serialized against CPU hotplug operations. Hence, cores\n-\t * cannot be offlined until this finishes.\n-\t */\n-\tret = cpuhp_state_add_instance(CPUHP_MM_ZSWP_POOL_PREPARE,\n-\t\t\t\t       &pool->node);\n-\n-\t/*\n-\t * cpuhp_state_add_instance() will not cleanup on failure since\n-\t * we don't register a hotunplug callback.\n-\t */\n-\tif (ret)\n-\t\tgoto cpuhp_add_fail;\n+\tpool->compress = page_compress_create(compressor, name);\n+\tif (IS_ERR(pool->compress))\n+\t\tgoto free_pool;\n \n \t/* being the current pool takes 1 ref; this func expects the\n \t * caller to always add the new pool as the current pool\n@@ -343,7 +276,7 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \tret = percpu_ref_init(&pool->ref, __zswap_pool_empty,\n \t\t\t      PERCPU_REF_ALLOW_REINIT, GFP_KERNEL);\n \tif (ret)\n-\t\tgoto ref_fail;\n+\t\tgoto destroy_compress;\n \n \t/*\n \t * Publish only after the pool is fully built, so lockless walkers\n"
+        }
+      ],
+      "lead": "The exact K1 source is unchanged across these infrastructure contracts. The pinned excerpts show the shared-library mechanism; R3 adds no new kernel hypothesis."
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Revalidated build coverage; no new R3 build",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "91345b54260646f08085ebf30ac1f80a",
+              "control",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "35a0cbd3f5b7415d99bd4c140eab3bc9",
+              "c1-shared-store-r3",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "e01123bd58c44c31977862326be05785",
+              "c1-shared-store-r3",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": []
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "c1-shared-store-r3",
+              "null"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/campaign.json",
+              "150e955586171af33e501d609229b88b97c6a9b014e500652bed981274dfe5dd"
+            ],
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/candidates/c1-shared-store-r3.json",
+              "0a68936af3a96cf53d3054458cdca22bf618309f2b3c8bac3483b5b931ea1917"
+            ],
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/ledger/budget.json",
+              "cc2aa3e137730bf12f1fc8a0615cb347fd83de7087e8a86d33eccd8faa570b1f"
+            ],
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/ledger/ledger.json",
+              "8580601187e18bd6827698d43f77ed23a4fe4cfdd413087af99b52c02b6d8f53"
+            ],
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/ledger/session-closeout.json",
+              "071b0cb37de82c37bb046b67378428c9f972815ccfdabed14251d942adf615b6"
+            ],
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/patches/c1-shared-store-r3.patch",
+              "69e085f0b3703ae2929c0cc8e863b6f606fce1b15e8a4d3ab3fd378ef785f704"
+            ],
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/policy.json",
+              "156a05b7f9d29ba0aa5cf88938d033e1bb69a5cb72577cff04e2656f4cb53557"
+            ],
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/protocol.json",
+              "d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf"
+            ],
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/research.json",
+              "f3be04307e7e7ba7af6d2f95daf63e8fb0c2c291d7b4014dc6f898f9d9cc7e49"
+            ],
+            [
+              "campaigns/codex-compress-lib-r3-2026-11-10/reviews/k2-c1-shared-store-r3-7d5a3cf.json",
+              "20cdb7197f9eee0fc0858c05da43404eb43733e034ef461919136442332e8432"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Original guest results remain authoritative",
+          "columns": [
+            "Run",
+            "Topology",
+            "Passed gates / total",
+            "Integration",
+            "Failed gates"
+          ],
+          "rows": [
+            [
+              "c1r3-b-common-001",
+              "single",
+              "19 / 19",
+              "true",
+              "none"
+            ],
+            [
+              "c1r3-c-debug-001",
+              "single",
+              "20 / 20",
+              "true",
+              "none"
+            ],
+            [
+              "c1r3-c-numa-001",
+              "numa2",
+              "15 / 17",
+              "false",
+              "no_kernel_warnings, no_new_kernel_warnings"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "The NUMA warning remains a failing outcome",
+          "columns": [
+            "Signal",
+            "Observed content"
+          ],
+          "rows": [
+            [
+              "Boot warning",
+              "sched: CPU #2's llc-sibling CPU #0 is not on the same node! [node: 1 != 0]. Ignoring dependency."
+            ],
+            [
+              "Warning location",
+              "arch/x86/kernel/smpboot.c:329 topology_sane"
+            ],
+            [
+              "Trusted topology arguments",
+              "[[\"-smp\", \"4\"], [\"-numa\", \"node,nodeid=0,memdev=c1-node0,cpus=0-1\"], [\"-numa\", \"node,nodeid=1,memdev=c1-node1,cpus=2-3\"]]"
+            ],
+            [
+              "Passing NUMA subcases",
+              "library_unit, guest_hotplug, memcg_balance"
+            ],
+            [
+              "Requested / actual node placement",
+              "{\"placements\": [{\"requested\": 0, \"actual\": 0, \"pages\": 1}, {\"requested\": 1, \"actual\": 1, \"pages\": 1}], \"nodes\": 2, \"placement_count\": 2, \"mismatches\": 0}"
+            ],
+            [
+              "Overall integration",
+              "false; both kernel-warning gates failed"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Existing exact-source builds were reused",
+          "columns": [
+            "Build",
+            "Source commit",
+            "Final configuration SHA-256",
+            "Manifest SHA-256",
+            "New R3 cost"
+          ],
+          "rows": [
+            [
+              "c1-base-common-20261110",
+              "5e84ca928deeacb4eee656806a003f27d1eca82f",
+              "63da430133ca0c4199f5256ddccc04a90129d580e7adc9b9fa0af2f90949262d",
+              "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+              0
+            ],
+            [
+              "c1-7d5a3cfab2ab-debug-v2",
+              "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+              "8a3a8a5cc861fd0e4c4d5d5b2974d3b54e016e7d5593caeb0b949f07ae22d436",
+              "d27ba832157cc32c334d3ecf9decdf7d18e90c2438dfa857ad61656e0fd1b6ff",
+              0
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Costs through the R3 closeout",
+          "columns": [
+            "Contract",
+            "Counted guests",
+            "Counted builds"
+          ],
+          "rows": [
+            [
+              "Original C1",
+              3,
+              3
+            ],
+            [
+              "R2",
+              2,
+              1
+            ],
+            [
+              "R3",
+              3,
+              0
+            ],
+            [
+              "C1 through R3",
+              8,
+              4
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned private-runtime identities",
+          "columns": [
+            "Artifact",
+            "SHA-256"
+          ],
+          "rows": [
+            [
+              "c1r3-b-common-001 result",
+              "1dad49f82bfb57e15793463d925f25ae45ce4f943b9fb18699b1d4a5dc8208b5"
+            ],
+            [
+              "c1r3-b-common-001 serial",
+              "790289543bf79e5f4b8aa29eae29d326dc5bd1398f6d2dc7425fa93da4176fd7"
+            ],
+            [
+              "c1r3-b-common-001 result hash sidecar",
+              "5c74033b13fa35573e1b4c33e7ab33452fb98aad0fb30d120246dc01997cb04f"
+            ],
+            [
+              "c1r3-b-common-001 start sidecar",
+              "707b3a33b87afd3602eec5c5635f1aca0e6752c0ec500863ea5ce8098a310d95"
+            ],
+            [
+              "c1r3-c-debug-001 result",
+              "9d1a8fbfd4de6e110640815412504163d8702fe33205c8f53ad17826cd3acfd2"
+            ],
+            [
+              "c1r3-c-debug-001 serial",
+              "a8d20c74c68371edacb11ea83a52e7912198e8bd2bb93523d1ac6ddc9442c450"
+            ],
+            [
+              "c1r3-c-debug-001 result hash sidecar",
+              "c2b8ebe0e7215516d53943a0884f06f98c6c706b7da4c7a2cc0b7b8063f374e8"
+            ],
+            [
+              "c1r3-c-debug-001 start sidecar",
+              "042850e13ddbaed673b9a4f9d6d93ad886a74998fe76090a808d28e0b8fe96c4"
+            ],
+            [
+              "c1r3-c-numa-001 result",
+              "2767157a386326880422a1939f90a6ae807c6434ee22736f96a2c72f15a8fe83"
+            ],
+            [
+              "c1r3-c-numa-001 serial",
+              "a2720fdfe500355593421ab2770bb6710aca481ccaabc58b04a94e881ba44f57"
+            ],
+            [
+              "c1r3-c-numa-001 result hash sidecar",
+              "2beb0591f8d60c2f6c732aa714d8f7d556501d1bb70324c788b1a3ecc41af4dd"
+            ],
+            [
+              "c1r3-c-numa-001 start sidecar",
+              "55df2cb1a6e4e22deedc36c861beb97e221f9fd95351f13dff553e3d00545d24"
+            ],
+            [
+              "Runtime archive",
+              "a6a788c5146b06a64e339a4126e49f10219bae39ff7c66a8ea800ff9406d9867"
+            ],
+            [
+              "Public observations",
+              "3bb161da534c8da7f2be2b1e54201c2c17d083f7cf45e268acd9ca2e59e13dd7"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "date": "2026-11-10",
+  "harness": "codex",
+  "model": "gpt-6"
+}

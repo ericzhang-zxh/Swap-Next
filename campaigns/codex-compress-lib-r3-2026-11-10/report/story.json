@@ -1,0 +1,431 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r3-2026-11-10",
+  "evidence_sha256": "2bbb64da1f9c9146e03133fa18e6b3ca1015758a3ba59c39f6aec61033b70c63",
+  "title": "Shared compression library: a NUMA boot warning stopped validation",
+  "headline": "Baseline and debug runs passed; a NUMA boot warning kept correctness incomplete.",
+  "sections": [
+    {
+      "id": "context",
+      "title": "One hypothesis across retained infrastructure contracts",
+      "lead": "R3 tested the same shared compression library. Fresh baseline and candidate debug runs passed their per-run gates. The two-node NUMA guest failed on a genuine boot warning, closing this infrastructure contract.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r3-2026-11-10/research.json",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/session-closeout.json",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/budget.json"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The unchanged kernel reached validated debug coverage. The full required matrix remains incomplete, so calibration, performance and dependent architecture phases remain pending."
+        },
+        {
+          "type": "note",
+          "text": "R3 used 3 probe guests and no new builds; existing builds were revalidated and reused. Through this closeout, original C1 plus R2 and R3 consumed 8 guests and 4 builds."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "1. Whole system: restore the application page",
+      "lead": "An application needs its full page in physical RAM. Stored contents may be compressed inside RAM or reside on a backing device. Compression trades CPU work for less storage traffic.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r3-2026-11-10/research.json",
+        "campaigns/codex-compress-lib-r3-2026-11-10/patches/c1-shared-store-r3.patch"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The changed engine serves compressed contents inside RAM",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "sub": "Needs page A",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "fault",
+              "label": "Kernel swap path",
+              "sub": "Find stored contents",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "page",
+              "label": "Full page A",
+              "sub": "Physical RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "compressed",
+              "label": "Compressed A",
+              "sub": "Inside physical RAM",
+              "col": 1,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "disk",
+              "label": "Backing device",
+              "sub": "Outside RAM",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "fault"
+            },
+            {
+              "from": "fault",
+              "to": "page",
+              "label": "already resident"
+            },
+            {
+              "from": "fault",
+              "to": "compressed",
+              "label": "decode"
+            },
+            {
+              "from": "compressed",
+              "to": "page"
+            },
+            {
+              "from": "disk",
+              "to": "page",
+              "label": "read"
+            },
+            {
+              "from": "fault",
+              "to": "disk"
+            }
+          ],
+          "note": "Schematic path, with no illustrative size or timing used as a measurement."
+        },
+        {
+          "type": "note",
+          "text": "The candidate changes the compressed-storage implementation. The existing frontend still decides admission, accounting and writeback. No new RAM-to-disk migration policy is implemented here."
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "2. Subsystem: policy keeps the object identity",
+      "lead": "ZSwap retains the entry index, memory-group charge, ordering and lifetime pins. A shared page library owns per-CPU codec contexts, scratch buffers and compressed-object storage.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r3-2026-11-10/patches/c1-shared-store-r3.patch",
+        "campaigns/codex-compress-lib-r3-2026-11-10/reviews/k2-c1-shared-store-r3-7d5a3cf.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Data moves through the engine; policy stays with the frontend",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "ZSwap entry",
+              "sub": "Handle + length",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "library",
+              "label": "Page library",
+              "sub": "Codec + CPU context",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "object",
+              "label": "Object A",
+              "sub": "Compressed RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "policy",
+              "label": "ZSwap policy",
+              "sub": "Index, charge, LRU",
+              "col": 0,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "release",
+              "label": "Release boundary",
+              "sub": "Drain users, then free",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "library",
+              "label": "store / load"
+            },
+            {
+              "from": "library",
+              "to": "object",
+              "label": "allocate / copy"
+            },
+            {
+              "from": "policy",
+              "to": "entry",
+              "label": "pin"
+            },
+            {
+              "from": "entry",
+              "to": "release"
+            },
+            {
+              "from": "release",
+              "to": "object",
+              "label": "free"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "High-confidence source review supports this ownership boundary. CPU-local codec contexts and requested memory placement require runtime coverage. The single-node debug case passed; the NUMA warning preserves an unresolved validation boundary."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "3. Concrete test: split memory nodes exposed a boot warning",
+      "lead": "The same candidate image passed its single-node debug case. The auxiliary NUMA guest split four virtual CPUs across two memory nodes while retaining an implicit package topology.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r3-2026-11-10/patches/c1-shared-store-r3.patch",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/ledger.json",
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/session-closeout.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Single-node debug: the complete per-run check passed",
+          "nodes": [
+            {
+              "id": "cpus",
+              "label": "Four virtual CPUs",
+              "sub": "One memory node",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "library",
+              "label": "Shared library",
+              "sub": "Same kernel image",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "pass",
+              "label": "Debug case",
+              "sub": "All per-run gates pass",
+              "col": 2,
+              "row": 0,
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "cpus",
+              "to": "library"
+            },
+            {
+              "from": "library",
+              "to": "pass"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "NUMA guest: a reported cache-sibling pair crossed memory nodes",
+          "nodes": [
+            {
+              "id": "package",
+              "label": "Implicit package",
+              "sub": "QEMU -smp 4",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "node0",
+              "label": "Memory node 0",
+              "sub": "CPUs 0 and 1",
+              "col": 0,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "node1",
+              "label": "Memory node 1",
+              "sub": "CPUs 2 and 3",
+              "col": 2,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "warning",
+              "label": "CPU 2 and CPU 0",
+              "sub": "Cache-sibling warning",
+              "col": 1,
+              "row": 2,
+              "tone": "bad"
+            }
+          ],
+          "edges": [
+            {
+              "from": "package",
+              "to": "node0"
+            },
+            {
+              "from": "package",
+              "to": "node1"
+            },
+            {
+              "from": "node0",
+              "to": "warning"
+            },
+            {
+              "from": "node1",
+              "to": "warning"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "The NUMA library, hotplug and memory-accounting subcases passed, including matching requested and actual memory nodes. The boot warning failed both kernel-warning gates, keeping the overall run failed."
+        },
+        {
+          "type": "note",
+          "text": "High-confidence diagnosis: the virtual CPU and memory-node mapping conflict. The warning appears during CPU boot. No candidate-source defect is established by this run; complete coverage remains required."
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Review the topology correction, then gather fresh evidence",
+      "lead": "This frozen contract is closed with its warning intact. A separately reviewed topology correction and new remaining-budget contract must collect fresh correctness evidence before calibration.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r3-2026-11-10/ledger/session-closeout.json",
+        "campaigns/codex-compress-lib-r3-2026-11-10/protocol.json",
+        "campaigns/codex-compress-lib-r3-2026-11-10/research.json"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The next contract still has to prove its topology",
+          "nodes": [
+            {
+              "id": "retain",
+              "label": "Retain failure",
+              "sub": "Raw hashes unchanged",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "review",
+              "label": "Review topology",
+              "sub": "Explicit CPU mapping",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "fresh",
+              "label": "Fresh correctness",
+              "sub": "Warning gates mandatory",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "timing",
+              "label": "Calibrate / compare",
+              "sub": "After full matrix",
+              "col": 3,
+              "row": 0,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "retain",
+              "to": "review"
+            },
+            {
+              "from": "review",
+              "to": "fresh"
+            },
+            {
+              "from": "fresh",
+              "to": "timing"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "A fresh correctly mapped topology that produces the same warning would contradict the current diagnosis. No outcome is predicted for that correction. Remaining resource ceilings and the earlier enforced deadline remain binding."
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "takeaway": "Same K1: the API keeps publication, accounting and handle lifetime with its caller",
+      "source": "campaigns/codex-compress-lib-r3-2026-11-10/patches/c1-shared-store-r3.patch",
+      "patch": "--- /dev/null\n+++ b/include/linux/page_compress.h\n@@ -0,0 +8,43 @@\n+struct folio;\n+struct page_compress_pool;\n+\n+enum page_compress_failure {\n+\tPAGE_COMPRESS_NONE,\n+\tPAGE_COMPRESS_CODEC,\n+\tPAGE_COMPRESS_ALLOC,\n+};\n+\n+struct page_compress_result {\n+\tunsigned long handle;\n+\tunsigned int length;\n+\tenum page_compress_failure failure;\n+};\n+\n+/*\n+ * Pools own their codec contexts and object storage, but no frontend references.\n+ * The caller pins the pool and handle across each operation, and drains all\n+ * handles and users before destroy. Creation requires initialized crypto.\n+ */\n+struct page_compress_pool *page_compress_create(const char *codec,\n+\t\t\t\t\t\tconst char *name);\n+void page_compress_destroy(struct page_compress_pool *pool);\n+/* The returned name remains valid while the caller pins the pool. */\n+const char *page_compress_codec(struct page_compress_pool *pool);\n+\n+/*\n+ * Store/load operate on one base page and may sleep for codec completion even\n+ * with a nonblocking allocation mask. A successful store transfers one handle;\n+ * a failed store leaves handle/length zero. PAGE_SIZE length denotes raw data.\n+ * Load does not consume the handle, including on error. The caller owns folio\n+ * locking, index publication, accounting and the decision to store raw data.\n+ */\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result);\n+int page_compress_store_raw(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\t    long index, gfp_t gfp, int nid,\n+\t\t\t    struct page_compress_result *result);\n+int page_compress_load(struct page_compress_pool *pool, unsigned long handle,\n+\t\t       unsigned int length, struct folio *folio, long index);\n+void page_compress_free(struct page_compress_pool *pool, unsigned long handle);\n+unsigned long page_compress_backing_pages(struct page_compress_pool *pool);\n"
+    },
+    {
+      "takeaway": "Same K1: the library compresses and allocates before returning a usable handle",
+      "source": "campaigns/codex-compress-lib-r3-2026-11-10/patches/c1-shared-store-r3.patch",
+      "patch": "--- /dev/null\n+++ b/mm/page_compress.c\n@@ -0,0 +257,50 @@\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result)\n+{\n+\tstruct page_compress_ctx *ctx;\n+\tstruct scatterlist input, output;\n+\tunsigned int dlen;\n+\tunsigned long handle;\n+\tu8 *dst;\n+\tint ret;\n+\n+\t*result = (struct page_compress_result) {\n+\t\t.failure = PAGE_COMPRESS_CODEC,\n+\t};\n+\tif (index < 0 || index >= folio_nr_pages(folio))\n+\t\treturn -EINVAL;\n+\n+\tctx = raw_cpu_ptr(pool->ctx);\n+\tmutex_lock(&ctx->mutex);\n+\n+\tdst = ctx->buffer;\n+\tsg_init_table(&input, 1);\n+\tsg_set_folio(&input, folio, PAGE_SIZE, index * PAGE_SIZE);\n+\tsg_init_one(&output, dst, PAGE_SIZE);\n+\tacomp_request_set_params(ctx->req, &input, &output, PAGE_SIZE, PAGE_SIZE);\n+\n+\t/* The frontend is synchronous even when the codec completes async. */\n+\tret = crypto_wait_req(crypto_acomp_compress(ctx->req), &ctx->wait);\n+\tdlen = ctx->req->dlen;\n+\tif (ret || !dlen || dlen >= PAGE_SIZE) {\n+\t\tret = ret ? ret : -EINVAL;\n+\t\tgoto unlock;\n+\t}\n+\n+\thandle = pc_object_alloc(pool->zs_pool, dlen, gfp, nid);\n+\tif (IS_ERR_VALUE(handle)) {\n+\t\tresult->failure = PAGE_COMPRESS_ALLOC;\n+\t\tret = PTR_ERR((void *)handle);\n+\t\tgoto unlock;\n+\t}\n+\n+\tzs_obj_write(pool->zs_pool, handle, dst, dlen);\n+\tresult->handle = handle;\n+\tresult->length = dlen;\n+\tresult->failure = PAGE_COMPRESS_NONE;\n+\tret = 0;\n+unlock:\n+\tmutex_unlock(&ctx->mutex);\n+\treturn ret;\n+}\n"
+    },
+    {
+      "takeaway": "Same K1: frontend pool creation delegates the engine and preserves its reference lifetime",
+      "source": "campaigns/codex-compress-lib-r3-2026-11-10/patches/c1-shared-store-r3.patch",
+      "patch": "--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -152,13 +140,10 @@ struct crypto_acomp_ctx {\n  * needs to be verified that it's still valid in the tree.\n  */\n struct zswap_pool {\n-\tstruct zs_pool *zs_pool;\n-\tstruct crypto_acomp_ctx __percpu *acomp_ctx;\n+\tstruct page_compress_pool *compress;\n \tstruct percpu_ref ref;\n \tstruct rcu_work release_rwork;\n-\tstruct hlist_node node;\n \tu8 idx;\n-\tchar tfm_name[CRYPTO_MAX_ALG_NAME];\n };\n \n /*\n@@ -309,33 +266,9 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \n \t/* unique name for each pool specifically required by zsmalloc */\n \tsnprintf(name, 38, \"zswap%x\", atomic_inc_return(&zswap_pools_count));\n-\tpool->zs_pool = zs_create_pool(name);\n-\tif (!pool->zs_pool)\n-\t\tgoto error;\n-\n-\tstrscpy(pool->tfm_name, compressor, sizeof(pool->tfm_name));\n-\n-\t/* Many things rely on the zero-initialization. */\n-\tpool->acomp_ctx = alloc_percpu_gfp(*pool->acomp_ctx,\n-\t\t\t\t\t   GFP_KERNEL | __GFP_ZERO);\n-\tif (!pool->acomp_ctx) {\n-\t\tpr_err(\"percpu alloc failed\\n\");\n-\t\tgoto error;\n-\t}\n-\n-\t/*\n-\t * This is serialized against CPU hotplug operations. Hence, cores\n-\t * cannot be offlined until this finishes.\n-\t */\n-\tret = cpuhp_state_add_instance(CPUHP_MM_ZSWP_POOL_PREPARE,\n-\t\t\t\t       &pool->node);\n-\n-\t/*\n-\t * cpuhp_state_add_instance() will not cleanup on failure since\n-\t * we don't register a hotunplug callback.\n-\t */\n-\tif (ret)\n-\t\tgoto cpuhp_add_fail;\n+\tpool->compress = page_compress_create(compressor, name);\n+\tif (IS_ERR(pool->compress))\n+\t\tgoto free_pool;\n \n \t/* being the current pool takes 1 ref; this func expects the\n \t * caller to always add the new pool as the current pool\n@@ -343,7 +276,7 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \tret = percpu_ref_init(&pool->ref, __zswap_pool_empty,\n \t\t\t      PERCPU_REF_ALLOW_REINIT, GFP_KERNEL);\n \tif (ret)\n-\t\tgoto ref_fail;\n+\t\tgoto destroy_compress;\n \n \t/*\n \t * Publish only after the pool is fully built, so lockless walkers\n"
+    }
+  ],
+  "date": "2026-11-10",
+  "harness": "codex",
+  "model": "gpt-6",
+  "reading": [
+    "docs/research/2026-11-10-xswap-compression-tiering/runtime-incident-004.md",
+    "campaigns/codex-compress-lib-2026-11-10/ledger/budget.json",
+    "campaigns/codex-compress-lib-r2-2026-11-10/ledger/budget.json",
+    "campaigns/codex-compress-lib-r3-2026-11-10/report/observations.json",
+    "docs/research/2026-11-10-xswap-compression-tiering/K2-review.md"
+  ],
+  "patches_title": "Core kernel patches",
+  "patches_lead": "The exact K1 source is unchanged across these infrastructure contracts. The pinned excerpts show the shared-library mechanism; R3 adds no new kernel hypothesis.",
+  "observations_sha256": "3bb161da534c8da7f2be2b1e54201c2c17d083f7cf45e268acd9ca2e59e13dd7",
+  "related_reports": [
+    {
+      "title": "Original C1 contract",
+      "url": "https://ericzhang-zxh.github.io/Swap-Next/codex-compress-lib-2026-11-10/"
+    },
+    {
+      "title": "R2 closeout",
+      "url": "https://ericzhang-zxh.github.io/Swap-Next/codex-compress-lib-r2-2026-11-10/"
+    }
+  ]
+}

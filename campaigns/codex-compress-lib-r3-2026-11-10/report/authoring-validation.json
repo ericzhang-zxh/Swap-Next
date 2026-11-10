@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r3-2026-11-10",
+  "scope": "Isolated authoring snapshot; coordinator owns final source pinning, visual QA and publication.",
+  "framework_commit": "1055588c7a183233541397851b331120386ff7d1",
+  "native_evidence_sha256": "2bbb64da1f9c9146e03133fa18e6b3ca1015758a3ba59c39f6aec61033b70c63",
+  "observations_sha256": "3bb161da534c8da7f2be2b1e54201c2c17d083f7cf45e268acd9ca2e59e13dd7",
+  "html_sha256": "98e5d8bbb92340d2089afeef634c2df816f7a274ec60ace68161aaf92c0f7d64",
+  "checks": {
+    "native_story_schema": true,
+    "native_render_text_budget": true,
+    "identical_input_artifact_reproduction": true,
+    "native_delivery_receipt": true,
+    "raw_results_serial_sidecars_and_reservations": true,
+    "original_warning_failure_preserved": true,
+    "reused_build_manifests_and_provenance": true,
+    "all_frozen_budget_hashes_and_cumulative_costs": true,
+    "runtime_archive_hash_and_file_count": true,
+    "three_explanation_levels": true,
+    "unchanged_kernel_patch_hash": true,
+    "closed_evidence_tables": true,
+    "canonical_earlier_contract_links": true,
+    "single_dated_explainer": true,
+    "no_absolute_host_paths": true,
+    "clean_card_metadata": true,
+    "prose_whitespace": true
+  },
+  "prose_words": 667,
+  "diff_whitespace_note": "REPORT.md preserves space-prefixed context lines inside exact unified-diff excerpts.",
+  "visual_qa": "pending; coordinator must verify the final rendered artifact",
+  "publication": "not attempted"
+}

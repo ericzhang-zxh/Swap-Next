@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r3-2026-11-10",
+  "state": "generated",
+  "evidence_sha256": "2bbb64da1f9c9146e03133fa18e6b3ca1015758a3ba59c39f6aec61033b70c63",
+  "artifacts": {
+    "summary.json": "eb365eca912d3ed1924b370f89e925e02293acfc3744ada9002b47b466d278bd",
+    "REPORT.md": "cb8b6571af70344db69dd2ad38af250abe7a1e8ab198e31e6c280d7d35ae25c9",
+    "explainer.json": "3245053243af5c22ea59de4e99adacdebf81c725c8b8f57d967cee7a66837a06",
+    "explainer.html": "98e5d8bbb92340d2089afeef634c2df816f7a274ec60ace68161aaf92c0f7d64",
+    "generate_report.py": "7eb942dd7aabbd77b33d3d19cbc4da38d759ab140726595f4a65e3f697fa16bf"
+  },
+  "story_sha256": "0482d28f0a9b364f5de4abd2ba8e4b3c483e7f9f290d8cca76ada0e600afea65",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1794347540.1859312
+    },
+    {
+      "state": "generated",
+      "time": 1794347597.758303
+    },
+    {
+      "state": "generated",
+      "time": 1794347646.1118984
+    }
+  ]
+}
