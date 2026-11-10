@@ -248,6 +248,57 @@ class CompressionEvidenceTests(unittest.TestCase):
                                 'abc', 'compressed', 'xswap', 'swapin', 8, config_id='c1-common')
         self.assertFalse(result['gates']['compressed_target_decode'])
 
+    def test_flat_single_topology_for_non_numa_configurations(self):
+        for group in ('compressed-roundtrip', 'legacy-roundtrip', 'race-lifecycle'):
+            body, spec = group_log(group)
+            text = basic_log(spec['backend'], spec['mode'], 'compression', spec['config_id'],
+                             spec['topology_id'], spec).replace('ONLINE_NODES 0\n', 'ONLINE_NODES flat\n') + body
+            with self.subTest(config=spec['config_id']):
+                result = evidence.parse(text, 'abc', spec['backend'], spec['mode'], 'compression', 8,
+                                        config_id=spec['config_id'], correctness_case=spec['id'],
+                                        topology_id=spec['topology_id'], expected_case=spec)
+                self.assertTrue(all(result['gates'].values()), result)
+        result = evidence.parse(timing_log().replace('ONLINE_NODES 0\n', 'ONLINE_NODES flat\n'),
+                                'abc', 'compressed', 'xswap', 'swapin', 8, config_id='c1-common')
+        self.assertTrue(all(result['gates'].values()), result)
+
+    def test_flat_topology_cannot_replace_numa_configuration_observations(self):
+        for group in ('debug-failures', 'numa-lifecycle'):
+            body, spec = group_log(group)
+            text = basic_log(spec['backend'], spec['mode'], 'compression', spec['config_id'],
+                             spec['topology_id'], spec) + body
+            nodes = '0-1' if spec['topology_id'] == 'numa2' else '0'
+            with self.subTest(topology=spec['topology_id']):
+                result = evidence.parse(text.replace('ONLINE_NODES ' + nodes + '\n', 'ONLINE_NODES flat\n'),
+                                        'abc', spec['backend'], spec['mode'], 'compression', 8,
+                                        config_id=spec['config_id'], correctness_case=spec['id'],
+                                        topology_id=spec['topology_id'], expected_case=spec)
+                self.assertFalse(result['gates']['configuration_identity'])
+
+    def test_online_nodes_requires_one_explicit_observation(self):
+        markers = ('', 'ONLINE_NODES\n', 'ONLINE_NODES \n', 'ONLINE_NODES flat extra\n',
+                   'ONLINE_NODES flat\nONLINE_NODES 0\n', 'ONLINE_NODES 0\nONLINE_NODES flat\n',
+                   'ONLINE_NODES flat\nONLINE_NODES flat\n', 'ONLINE_NODES unknown\n')
+        for marker in markers:
+            with self.subTest(marker=marker):
+                result = evidence.parse(timing_log().replace('ONLINE_NODES 0\n', marker),
+                                        'abc', 'compressed', 'xswap', 'swapin', 8, config_id='c1-common')
+                self.assertFalse(result['gates']['configuration_identity'])
+
+    def test_flat_configurations_require_explicit_numa_disabled(self):
+        import configurations
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / '.config'
+            for config_id in ('c1-common', 'c1-legacy', 'c1-kcsan'):
+                source = (ROOT / configurations.get_config(config_id)['path']).read_text()
+                path.write_text(source)
+                self.assertEqual(configurations.validate_final(config_id, path)['values']['NUMA'], 'n')
+                for changed in (source.replace('# CONFIG_NUMA is not set', 'CONFIG_NUMA=y'),
+                                source.replace('# CONFIG_NUMA is not set\n', '')):
+                    path.write_text(changed)
+                    with self.subTest(config=config_id), self.assertRaisesRegex(ValueError, 'CONFIG_NUMA=n'):
+                        configurations.validate_final(config_id, path)
+
     def test_numa_topology_is_bound(self):
         text, expected = group_log('numa-lifecycle')
         spec = row('numa-lifecycle')

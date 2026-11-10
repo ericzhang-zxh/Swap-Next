@@ -11,6 +11,17 @@ fail() {
     poweroff -f
     exit 1
 }
+report_online_nodes() {
+    if [ -e /sys/devices/system/node ]; then
+        online_nodes=$(cat /sys/devices/system/node/online) || fail online_nodes
+        [ -n "$online_nodes" ] || fail online_nodes
+    elif [ "${topology_id:-single}" = single ]; then
+        online_nodes=flat
+    else
+        fail online_nodes
+    fi
+    printf 'ONLINE_NODES %s\n' "$online_nodes"
+}
 mount -t proc proc /proc || fail proc
 mount -t sysfs sysfs /sys || fail sysfs
 mount -t devtmpfs devtmpfs /dev || fail devtmpfs
@@ -50,7 +61,7 @@ if [ "${revision:-0}" = 8 ]; then
     mount -t tmpfs -o mode=0755,size=1M tmpfs /bench/run || fail guest_marker_mount
     printf 'swap-next-guest-v1\n' > /bench/run/swap-next-guest
     echo "GUEST_TOPOLOGY ${topology_id:-single}"
-    echo "ONLINE_NODES $(cat /sys/devices/system/node/online)"
+    report_online_nodes
     chroot /bench /bin/bash /opt/bench/bench.sh "$backend" "$mode" "$workload" "$revision" "$config_id" "$correctness_case" "$correctness_group" "$compression_cases" "${topology_id:-single}" "${compression_target_bytes:-0}" || fail workload
 else
     chroot /bench /bin/bash /opt/bench/bench.sh "$backend" "$mode" "$workload" || fail workload

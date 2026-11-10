@@ -374,6 +374,31 @@ class CompressionRunnerTests(unittest.TestCase):
                 runner.revision8_context(self.args(workload='compression', correctness_case='c-compressed', mode='plain'),
                                          {'protocol_revision': 8})
 
+    def test_guest_observes_flat_only_when_single_node_sysfs_is_absent(self):
+        script = (BASE / 'guest-init').read_text()
+        function = re.search(r'^report_online_nodes\(\) \{.*?^\}', script, re.M | re.S).group(0)
+        cases = [('absent', 'single', 'ONLINE_NODES flat\n'), ('absent', 'numa2', None),
+                 ('missing-online', 'single', None), ('', 'single', None),
+                 ('0\n', 'single', 'ONLINE_NODES 0\n'), ('0-1\n', 'numa2', 'ONLINE_NODES 0-1\n')]
+        for state, topology, expected in cases:
+            with self.subTest(state=state, topology=topology), tempfile.TemporaryDirectory() as directory:
+                node = Path(directory) / 'node'
+                if state != 'absent':
+                    node.mkdir()
+                    if state != 'missing-online':
+                        (node / 'online').write_text(state)
+                isolated = function.replace('/sys/devices/system/node', shlex.quote(str(node)))
+                command = ('fail() { echo "BENCH_FAIL $1"; exit 1; }\n'
+                           + 'topology_id=' + shlex.quote(topology) + '\n' + isolated + '\nreport_online_nodes\n')
+                result = subprocess.run(['sh', '-c', command], text=True, capture_output=True)
+                if expected is None:
+                    self.assertEqual(result.returncode, 1, result)
+                    self.assertEqual(result.stdout, 'BENCH_FAIL online_nodes\n')
+                else:
+                    self.assertEqual(result.returncode, 0, result)
+                    self.assertEqual(result.stdout, expected)
+                    self.assertEqual(result.stderr, '')
+
     def test_topology_is_auxiliary_and_resource_bound(self):
         self.assertEqual(runner.topology_options('single', '4', 4096), [])
         numa = runner.topology_options('numa2', '4', 4096)

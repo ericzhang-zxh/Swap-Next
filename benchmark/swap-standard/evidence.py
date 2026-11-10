@@ -572,8 +572,11 @@ def revision8_identity(text, words, backend, mode, workload, config_id, correctn
     good &= all(text.splitlines().count(marker) == 1 for marker in
                 ('CMDLINE_BEGIN', 'CMDLINE_END', 'BENCH_BOOT', 'BENCH_WORKLOAD_PASS', 'BENCH_PASS'))
     good &= text.splitlines().count('GUEST_TOPOLOGY ' + topology_id) == 1
-    nodes = '0-1' if topology_id == 'numa2' else '0'
-    good &= text.splitlines().count('ONLINE_NODES ' + nodes) == 1
+    nodes = {'0-1'} if topology_id == 'numa2' else {'0'}
+    if topology_id == 'single' and config_id in {'c1-common', 'c1-legacy', 'c1-kcsan'}:
+        nodes.add('flat')
+    observed_nodes = [line for line in text.splitlines() if line.startswith('ONLINE_NODES')]
+    good &= len(observed_nodes) == 1 and observed_nodes[0] in {'ONLINE_NODES ' + value for value in nodes}
     return bool(good)
 
 
