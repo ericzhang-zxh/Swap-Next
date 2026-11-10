@@ -485,6 +485,20 @@ class Revision8ProtocolTests(unittest.TestCase):
         from validity import protocol_rules
         self.assertEqual(protocol_rules(self.protocol())['protocol_revision'], 8)
 
+    def test_resource_limits_can_narrow_without_changing_measurements(self):
+        from validity import protocol_rules
+        protocol = self.protocol()
+        protocol['budget'].update(probe_guest_attempts=29, build_attempts=7, wall_seconds=60000)
+        self.assertEqual(protocol_rules(protocol)['protocol_revision'], 8)
+        for key, ceiling in (('probe_guest_attempts', 32), ('guest_attempts', 88),
+                             ('build_attempts', 10), ('wall_seconds', 64800)):
+            for value in (ceiling + 1, 0, -1, True, 1.5):
+                with self.subTest(key=key, value=value):
+                    changed = copy.deepcopy(protocol)
+                    changed['budget'][key] = value
+                    with self.assertRaises(ValueError):
+                        protocol_rules(changed)
+
     def test_versioned_debug_contract_requires_its_own_exact_frozen_pin(self):
         import configurations
         from validity import protocol_rules

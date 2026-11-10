@@ -293,10 +293,11 @@ def _revision8_compression(protocol):
     if fast.get('calibration_pairs') != 10 or fast.get('comparison_pairs') != 4:
         raise ValueError('revision 8 uses ten A/A and four AB/BA pairs')
     budget = protocol.get('budget', {})
-    expected_budget = {'probe_guest_attempts': 32, 'guest_attempts': 88,
-                       'build_attempts': 10, 'wall_seconds': 64800, 'guest_timeout': 900}
-    if any(budget.get(key) != value for key, value in expected_budget.items()):
-        raise ValueError('revision 8 retains the reviewed 120-guest, 10-build, 18-hour allocation')
+    ceilings = {'probe_guest_attempts': 32, 'guest_attempts': 88,
+                'build_attempts': 10, 'wall_seconds': 64800}
+    if any(type(budget.get(key)) is not int or not 0 < budget[key] <= value
+           for key, value in ceilings.items()) or budget.get('guest_timeout') != 900:
+        raise ValueError('revision 8 resource limits may narrow but not exceed reviewed ceilings; guest timeout remains 900')
     if protocol.get('compression_observer') != COMPRESSION_OBSERVER:
         raise ValueError('revision 8 requires exact per-target compression observer identity')
     if protocol.get('compression_workload') != {'target_bytes': 134217728}:
