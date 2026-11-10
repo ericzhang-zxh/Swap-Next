@@ -12,7 +12,7 @@ The configuration catalog adds c1-common, c1-legacy, c1-debug, c1-kcsan, c1-nosw
 
 Build preparation is counted before launch. A configured artifact carries source commit/tree, input/final config and image hashes, builder/toolchain identity, and its original counted build ledger. Native build-cache validation preserves original observation time and budget. Repeated successful coverage requests return the existing row; failed or interrupted builds remain spent.
 
-Runtime reservations, parser calls and cache identities carry configuration, correctness-case and topology identities. Raw correctness verification binds the recorded complete QEMU command, topology arguments, guest image/source hashes, subcase status/reset evidence and final sanitizer configuration. Typed candidate failures require verified raw serial identity before they can invalidate history.
+Runtime reservations, parser calls and cache identities carry configuration, correctness-case and topology identities. Raw correctness verification binds the recorded complete QEMU command, topology arguments, guest image/source hashes, subcase status/reset evidence and final sanitizer configuration. Typed candidate failures require verified raw serial command-line and configuration identities before they can invalidate history.
 
 ## Interfaces
 
@@ -34,11 +34,11 @@ The parser returns correctness_subcases[id] with status=PASS and reset=true for 
 
 ## Validation
 
-110 guest-free tests passed: 26 new coverage tests plus 84 existing workflow/cache/proof/reservation tests. git diff --check passed.
+112 guest-free tests passed: 28 new coverage tests plus 84 existing workflow/cache/proof/reservation tests. git diff --check passed.
 
     python3 -m unittest evolve.test_compression_coverage evolve.test_standard_workflow evolve.test_calibration_cache evolve.test_reference_cache evolve.control.tests.test_guest_budget evolve.control.tests.test_correctness_proof
 
-The new tests verify full/partial matrices, missing and extra counted attempts, subcase/reset failures, serial identity before typed failure, configuration/topology swaps, command and image hashes, resolved debug flags, counted build origin, symlink rejection, native cache revalidation, reservation before build command, successful idempotence, retained failed attempts, and refusal to calibrate or reuse timing before complete correctness.
+The new tests verify full/partial matrices, missing and extra counted attempts, subcase/reset failures, serial identity before typed failure, configuration/topology swaps, command and image hashes, resolved debug flags, counted build origin, symlink rejection, native cache revalidation, reservation before build command, successful idempotence, retained failed attempts, refusal to calibrate or reuse timing before complete correctness, native timing-cache replay with all seven reservation fields, and refusal to turn an unbound configuration result into a candidate correctness veto.
 
 Tests use synthetic source repositories, artifacts and serial-parser fixtures. They do not compile or boot a kernel. H1's real serial parser and H2's workload have their own tests and require integrated coordinator verification.
 

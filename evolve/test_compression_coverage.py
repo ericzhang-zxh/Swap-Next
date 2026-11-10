@@ -71,7 +71,7 @@ class CoverageFixture:
                     "compression-debug.config", "compression-kcsan.config", "compression-noswap.config",
                     "compression-no-frontends.config")), "benchmark/kernel/build.py",
                 "benchmark/kernel/build_namespace.sh", "benchmark/kernel/lifetime.py",
-                "evolve/control/correctness_proof.py"]:
+                "evolve/control/correctness_proof.py", "benchmark/swap-standard/validity.py"]:
             self.put(relative, (SOURCE / relative).read_bytes())
         self.catalog = load_catalog(root)
         linux = root / "linux"
@@ -93,7 +93,7 @@ class CoverageFixture:
         self.put("benchmark/swap-standard/run.py", b"# Synthetic runner identity only.\n")
         # Matrix attestation is tested independently from H1's serial parser.
         self.put("benchmark/swap-standard/evidence.py",
-                 b"import json\n\ndef parse(serial, *args, **kwargs):\n    return json.loads(serial)\n")
+                 b"import json\nATTRIBUTABLE_FIELDS = frozenset()\n\ndef parse(serial, *args, **kwargs):\n    return json.loads(serial)\n")
         self.put("benchmark/swap-standard/compression.c", b"/* Synthetic observer identity only. */\n")
         self.put("benchmark/swap-standard/bench.img", b"Synthetic guest image; never booted.")
         self.put("benchmark/swap-standard/initramfs.cpio.gz", b"Synthetic initrd; never booted.")
@@ -167,7 +167,8 @@ class CoverageFixture:
         run_id = case["id"] + suffix
         dest = "campaigns/fixture-c1/runs/guests/" + run_id
         parsed = {"metrics": {"fixture": 1},
-                  "gates": {name: True for name in case["required_gates"] + ["cmdline_identity"]}}
+                  "gates": {name: True for name in case["required_gates"]
+                            + ["cmdline_identity", "configuration_identity"]}}
         if case["workload"] == "compression":
             parsed["correctness_subcases"] = {
                 name: {"status": "PASS", "reset": True} for name in case["subcases"]}
@@ -326,6 +327,22 @@ class CompressionCoverageTests(unittest.TestCase):
         self.assertNotIsInstance(caught.exception, proofs.CorrectnessFailure)
         self.assertIn("cannot bind", str(caught.exception))
 
+    def test_unbound_configuration_is_not_a_candidate_correctness_veto(self):
+        raw = self.fx.raw["c-debug"]
+        parsed = json.loads((self.fx.root / raw["serial_log"]).read_text())
+        parsed["gates"]["configuration_identity"] = False
+        self.fx.put(raw["serial_log"], parsed)
+        raw.update(serial_sha256=self.fx.digest(raw["serial_log"]), integration_pass=False,
+                   gates=dict(parsed["gates"], qemu_exit=True))
+        self.fx.save_raw(raw)
+        with self.assertRaises(ValueError) as caught:
+            self.validate()
+        self.assertNotIsInstance(caught.exception, proofs.CorrectnessFailure)
+        self.assertIn("configuration/case/topology", str(caught.exception))
+        progress = proofs.matrix_progress(self.fx.protocol, self.fx.root, self.fx.commits["candidate"])
+        self.assertFalse(progress["failed"])
+        self.assertTrue(progress["attempted"])
+
     def test_config_topology_and_subcase_identity_are_not_interchangeable(self):
         raw = self.fx.raw["c-numa"]
         for key, value in (("config_id", "c1-common"), ("topology_id", "single"),
@@ -455,6 +472,36 @@ class CompressionCoverageTests(unittest.TestCase):
                                           manifest=self.fx.matrix())
         self.assertFalse(progress["passed"])
         self.assertIn("another candidate", progress["reason"])
+
+    def test_native_timing_cache_replays_extended_counted_reservation(self):
+        case = dict(self.fx.protocol["cases"]["compressed"], id="timing-fixture",
+                    role="baseline", required_gates=["cmdline_identity"], subcases=[])
+        raw = self.fx.add_run(case)
+        raw["correctness_case"] = None
+        ticket = json.loads((self.fx.root / raw["reservation"]).read_text())
+        ticket["identity"]["correctness_case"] = None
+        self.fx.put(raw["reservation"], ticket)
+        raw["reservation_sha256"] = self.fx.digest(raw["reservation"])
+        self.fx.save_raw(raw)
+        self.fx.put("campaigns/fixture-c1/ledger/budget.json", {"guests": 0, "probe_guests": 9, "builds": 8})
+        variant = self.fx.build_identity()
+        identity = {"accelerator": "tcg", "guest": self.fx.protocol["guest"],
+                    "guest_image": self.fx.image,
+                    "builds": {self.fx.commits["baseline"]: dict(variant, tree=self.fx.trees["baseline"])}}
+        attempt = {"result": raw["result_path"], "result_sha256": self.fx.digest(raw["result_path"]),
+                   "id": raw["run_id"], "case": "compressed", "status": "PASS", "metrics": raw["metrics"]}
+        parsed, valid = cache.Verifier(self.fx.root).run(attempt, self.fx.protocol, identity,
+                                                        {"enforce_validity": False}, [])
+        self.assertTrue(valid)
+        self.assertEqual(parsed["config_id"], "c1-common")
+        ticket["identity"].pop("config_id")
+        self.fx.put(raw["reservation"], ticket)
+        raw["reservation_sha256"] = self.fx.digest(raw["reservation"])
+        self.fx.save_raw(raw)
+        attempt["result_sha256"] = self.fx.digest(raw["result_path"])
+        with self.assertRaisesRegex(ValueError, "raw counted reservation mismatch"):
+            cache.Verifier(self.fx.root).run(attempt, self.fx.protocol, identity,
+                                             {"enforce_validity": False}, [])
 
     def test_reservations_bind_case_configuration_and_topology(self):
         budget = workflow.guest_budget

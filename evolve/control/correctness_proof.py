@@ -207,6 +207,8 @@ def _validate(proof, protocol, root, case_spec=None):
     parsed_gates = reparsed["gates"]
     if parsed_gates.get("cmdline_identity") is not True:
         raise ValueError("serial parser cannot bind the executed guest identity")
+    if revision8 and parsed_gates.get("configuration_identity") is not True:
+        raise ValueError("serial parser cannot bind the executed configuration/case/topology")
     expected_gates = dict(parsed_gates, qemu_exit=proof["exit_code"] == 0 and proof.get("stop_reason") is None)
     if gates != expected_gates or proof.get("metrics") != reparsed["metrics"]:
         raise ValueError("serial correctness evidence disagrees with runner gates/metrics")

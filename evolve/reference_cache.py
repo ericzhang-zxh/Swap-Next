@@ -345,9 +345,12 @@ class Verifier:
         for name in (("run.py", "evidence.py", "configurations.py") if revision8 else ("run.py", "evidence.py")):
             self.file("benchmark/swap-standard/" + name, result.get("harness_sha256", {}).get(name))
         ticket = self.json(result.get("reservation"), result.get("reservation_sha256"))
+        identity_keys = ("build", "backend", "mode", "workload")
+        if revision8:
+            identity_keys += ("config_id", "correctness_case", "topology_id")
         need(ticket.get("id") == run_id and ticket.get("campaign") == protocol["campaign"] and
              ticket.get("status") == "STARTED" and ticket.get("protocol_sha256") == result["protocol_sha256"] and
-             ticket.get("identity") == {key: result[key] for key in ("build", "backend", "mode", "workload")},
+             ticket.get("identity") == {key: result[key] for key in identity_keys},
              "raw counted reservation mismatch")
         # This is a live accounting check, not a frozen copy of a mutable ledger.
         budget_path = self.root / ("campaigns/" + protocol["campaign"] + "/ledger/budget.json")
