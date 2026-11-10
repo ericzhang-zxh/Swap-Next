@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "logical_phase": "C1 shared compression library",
+  "replacement_campaign": "codex-compress-lib-r3-2026-11-10",
+  "superseded_campaigns": [
+    {
+      "campaign": "codex-compress-lib-2026-11-10",
+      "budget": {
+        "created": 1794340417.3836553,
+        "guests": 0,
+        "probe_guests": 3,
+        "builds": 3
+      },
+      "budget_sha256": "2e03ba0eee0c337bc1ee57e4729b5dd912f7e78d0d4ce30d23091173fe5dac0b",
+      "protocol_sha256": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+      "deadline": 1794405217.3836553
+    },
+    {
+      "campaign": "codex-compress-lib-r2-2026-11-10",
+      "budget": {
+        "created": 1794344444.500093,
+        "guests": 0,
+        "probe_guests": 2,
+        "builds": 1
+      },
+      "budget_sha256": "b529da364b87c259df26d92cb83e01a60752c6e96fd3a1bc04bc3bb4990e511e",
+      "protocol_sha256": "dd5d28e9b355c0c94cc85750c4393ce8e5f125756013ca82581a2132b1035ed0",
+      "deadline": 1794404672.500093
+    }
+  ],
+  "reason": "Expected invalid-codec printk and zero-skip KTAP summaries were rejected by the prior parser. Preserve all prior outcomes; collect fresh correctness on unchanged kernel source.",
+  "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+  "original_phase_caps": {
+    "probe_guests": 32,
+    "fast_guests": 88,
+    "total_guests": 120,
+    "builds": 10,
+    "wall_seconds": 64800
+  },
+  "spent": {
+    "probe_guests": 5,
+    "fast_guests": 0,
+    "builds": 4
+  },
+  "maximum_replacement_caps": {
+    "probe_guests": 27,
+    "fast_guests": 88,
+    "total_guests": 115,
+    "builds": 6
+  },
+  "latest_allowed_deadline_unix": 1794404672.500093,
+  "replacement_wall_seconds": 58398,
+  "prepared_unix": 1794345674.097784,
+  "open_deadline_guard": "Before any runtime launch, verify actual budget.created + wall_seconds <= latest_allowed_deadline_unix.",
+  "reuse_rule": "Only exact natively validated unchanged build artifacts may be reused. Original build costs and timestamps remain. No prior guest or diagnostic replay becomes a fresh successful sample.",
+  "family_caps_unchanged": {
+    "logical_phases": 3,
+    "total_guests": 360,
+    "builds": 30
+  }
+}
