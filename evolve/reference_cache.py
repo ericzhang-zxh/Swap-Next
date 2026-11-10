@@ -313,6 +313,9 @@ class Verifier:
         need(result.get("mode") == case.get("mode", "plain"), "raw run mode mismatch")
         revision8 = protocol.get("protocol_revision") == 8
         if revision8:
+            need(type(result.get("protocol_revision")) is int
+                 and result["protocol_revision"] == protocol["protocol_revision"],
+                 "raw run protocol revision mismatch")
             need(result.get("config_id") == case.get("config_id") == "c1-common"
                  and result.get("topology_id") == case.get("topology_id", "single") == "single"
                  and result.get("correctness_case") is None,

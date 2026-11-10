@@ -38,7 +38,7 @@ The parser returns correctness_subcases[id] with status=PASS and reset=true for 
 
     python3 -m unittest evolve.test_compression_coverage evolve.test_standard_workflow evolve.test_calibration_cache evolve.test_reference_cache evolve.control.tests.test_guest_budget evolve.control.tests.test_correctness_proof
 
-The new tests verify full/partial matrices, missing and extra counted attempts, subcase/reset failures, serial identity before typed failure, configuration/topology swaps, command and image hashes, resolved debug flags, counted build origin, symlink rejection, native cache revalidation, reservation before build command, successful idempotence, retained failed attempts, refusal to calibrate or reuse timing before complete correctness, native timing-cache replay with all seven reservation fields, and refusal to turn an unbound configuration result into a candidate correctness veto.
+The new tests verify full/partial matrices, missing and extra counted attempts, subcase/reset failures, serial identity before typed failure, configuration/topology swaps, command and image hashes, resolved debug flags, counted build origin, symlink rejection, native cache revalidation, reservation before build command, successful idempotence, retained failed attempts, refusal to calibrate or reuse timing before complete correctness, native timing-cache replay with all seven reservation fields and the exact frozen protocol revision, and refusal to turn an unbound configuration result into a candidate correctness veto.
 
 Tests use synthetic source repositories, artifacts and serial-parser fixtures. They do not compile or boot a kernel. H1's real serial parser and H2's workload have their own tests and require integrated coordinator verification.
 

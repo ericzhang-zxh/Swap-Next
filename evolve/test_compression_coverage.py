@@ -494,6 +494,18 @@ class CompressionCoverageTests(unittest.TestCase):
                                                         {"enforce_validity": False}, [])
         self.assertTrue(valid)
         self.assertEqual(parsed["config_id"], "c1-common")
+        for revision in (7, None):
+            changed = copy.deepcopy(raw)
+            if revision is None:
+                changed.pop("protocol_revision")
+            else:
+                changed["protocol_revision"] = revision
+            self.fx.save_raw(changed)
+            attempt["result_sha256"] = self.fx.digest(changed["result_path"])
+            with self.subTest(revision=revision), self.assertRaisesRegex(ValueError, "protocol revision mismatch"):
+                cache.Verifier(self.fx.root).run(attempt, self.fx.protocol, identity,
+                                                 {"enforce_validity": False}, [])
+        self.fx.save_raw(raw)
         ticket["identity"].pop("config_id")
         self.fx.put(raw["reservation"], ticket)
         raw["reservation_sha256"] = self.fx.digest(raw["reservation"])
