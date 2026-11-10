@@ -621,7 +621,7 @@ class SessionTests(unittest.TestCase):
     def test_matrix_partial_coverage_continues_without_repeating_rows(self):
         self.prepare_candidate()
         self.review("review-ok")
-        self.correctness = {"passed": False, "pending": True, "attempted": False,
+        self.correctness = {"passed": False, "pending": True, "attempted": True,
                             "verified_cases": ["baseline-regression"],
                             "next_missing_case": {"id": "baseline-legacy"},
                             "missing_builds": [], "reason": "Complete next frozen case."}
@@ -633,6 +633,10 @@ class SessionTests(unittest.TestCase):
         item = self.driver.next()
         self.assertEqual(item["stage"], "export")
         self.assertIn("Missing raw result", item["reason"])
+        self.correctness.update(failed=True, pending=True, reason="Scientific gate failed.")
+        item = self.driver.next()
+        self.assertEqual(item["stage"], "export")
+        self.assertIn("Scientific gate failed", item["reason"])
 
     def test_matrix_validation_needs_canonical_manifest_before_timing(self):
         protocol = dict(self.protocol, protocol_revision=8)

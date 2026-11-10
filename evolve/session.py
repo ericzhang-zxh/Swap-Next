@@ -279,7 +279,7 @@ def plan(s):
                       identity=ident, expects=["Validated candidates/<id>/mechanism.json bound to its declaration and review."])
     correctness = candidate.get("correctness", {})
     if not correctness.get("passed"):
-        if correctness.get("failed") or correctness.get("attempted"):
+        if correctness.get("failed") or (correctness.get("attempted") and not correctness.get("pending")):
             return _finish(s, "Retained correctness attempt is failed or incomplete: " + correctness.get("reason", "inspect raw evidence"))
         return action("correctness", reason=correctness.get("reason") or
                       "Run the frozen correctness route with the trusted runner and counted reservation.",
