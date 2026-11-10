@@ -244,7 +244,7 @@ class DeliveryTests(unittest.TestCase):
 
 
     def test_patches_section_renders_diffs_and_validates_sources(self):
-        patch_path = self.campaign / "patches/one.patch"
+        patch_path = self.campaign / "patches" / "one.patch"
         patch_path.parent.mkdir(parents=True, exist_ok=True)
         patch_path.write_text("--- a/mm/xswap.c\n+++ b/mm/xswap.c\n@@ -1,2 +1,3 @@\n+bool xswap_load_batch(void);\n")
         story = explain(self.root)

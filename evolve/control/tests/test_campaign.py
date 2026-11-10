@@ -345,7 +345,7 @@ class OpenCloseTests(Fixture):
 
     def test_open_refuses_policy_that_widens_base(self):
         self.prep("one")
-        self.policy("one", allowed_modify=BASE_POLICY["allowed_modify"] + ["mm/memory.c"])
+        self.policy("one", allowed_modify=BASE_POLICY["allowed_modify"] + ["mm/vmscan.c"])
         self.assertIn("base", self.open("one")[1]["error"])
         self.policy("one", allowed_add=["tools/testing/selftests/mm/other_*.c"])
         self.assertIn("base", self.open("one")[1]["error"])

@@ -39,10 +39,12 @@ class BuildSiteTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue((self.site / "xswap-next-2026-10-24/index.html").is_file())
         self.assertTrue((self.site / "swap-standard-evolve-2026-10-22/index.html").is_file())
-        self.assertFalse((self.site / "swap-standard-2026-10-22").exists())
+        self.assertEqual((self.site / "swap-standard-2026-10-22/index.html").read_bytes(),
+                         (self.site / "swap-standard-evolve-2026-10-22/index.html").read_bytes())
         index = (self.site / "index.html").read_text(encoding="utf-8")
         self.assertIn('href="xswap-next-2026-10-24/"', index)
         self.assertIn('href="swap-standard-evolve-2026-10-22/"', index)
+        self.assertNotIn('href="swap-standard-2026-10-22/"', index)
         self.assertLess(index.index("xswap-next-2026-10-24/"),
                         index.index("swap-standard-evolve-2026-10-22/"))
 
