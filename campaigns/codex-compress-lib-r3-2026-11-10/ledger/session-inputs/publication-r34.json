@@ -1,0 +1,6 @@
+{
+  "kind": "publication",
+  "commit": "b66594f201c15704c1efa56fd197f99819847152",
+  "run_id": 42915679336,
+  "reason": "Independent H21/H23 report audits and actual four-view visual QA passed; exact joint Pages deployment succeeded. Verify the canonical report and index bytes before live delivery."
+}

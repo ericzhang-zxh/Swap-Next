@@ -1,0 +1,44 @@
+{
+  "id": "H19",
+  "status": "implementation-complete",
+  "owner": "/root/campaign_validation_research",
+  "task": "Implement the selected auxiliary CPU correction, NOT C2 preparation",
+  "worktree": "worktrees/framework-c1-numa-intel-01a1c6b6",
+  "branch": "infra/c1-numa-intel-01a1c6b6",
+  "base": "dd23123a98b667b95c07c483afe9dd56345b98c7",
+  "model": "Nehalem-v1,vme=off,enforce=on",
+  "topology": "numa2-nehalem-v3",
+  "scope": [
+    "benchmark/swap-standard/configurations.py",
+    "benchmark/swap-standard/run.py",
+    "benchmark/swap-standard/evidence.py",
+    "benchmark/swap-standard/test_compression_evidence.py",
+    "benchmark/swap-standard/test_runner.py",
+    "evolve/test_compression_coverage.py"
+  ],
+  "conditional_scope": [
+    "evolve/control/correctness_proof.py",
+    "evolve/standard_workflow.py",
+    "evolve/test_standard_workflow.py"
+  ],
+  "requirements": [
+    "Only c1-debug-v2 / numa-lifecycle compression correctness may use the new topology; never timing.",
+    "Preserve four vCPUs, 4096 MiB, exact 4,sockets=2,cores=2,threads=1, two 2048-MiB nodes, CPUs0-1/node0 and2-3/node1.",
+    "Derive exactly one CPU option; qemu_accel and actual command must record the effective Nehalem selection, not max.",
+    "Native proof must bind full CPU string, SMP, memory, node and machine arguments; reject aliases, duplicates and conflicting or mismatched records.",
+    "Require actual Intel CPU0 family6/model26/stepping3 observation from kernel-log block for new topology only, without matching fragile brand prose.",
+    "Require both real NUMA placements, existing hotplug/reset, unchanged warning/clocksource/sanitizer gates.",
+    "Preserve every old topology and timing command, old validation behavior, frozen input bytes and guest image.",
+    "Use catalog validation called by native correctness proof; add a full-matrix native fixture test in evolve/test_compression_coverage.py. Conditional scope is only for exact topology identity if necessary, not workflow changes."
+  ],
+  "forbidden": [
+    "No Linux source, validity.py, image, configuration input, protocol, budget, result or campaign-state edits.",
+    "No tsc=reliable, invtsc, watchdog disable, clocksource exemption or gate weakening.",
+    "No kernel build, VM/QMP guest, publication, push or further delegation."
+  ],
+  "evidence": "docs/research/2026-11-10-xswap-compression-tiering/H18-clocksource-validity-review.md",
+  "output": "docs/research/2026-11-10-xswap-compression-tiering/H19-result.md",
+  "acceptance": "Positive canonical commands and negative wrong CPU/model/config/group/timing/alias/duplicate/record mismatches; old commands unchanged; full native matrix fixture proves validation path. Local Eric commit allowed; no Signed-off-by. Notify /root/final_independent_review and coordinator with exact commit. Write your current checkpoint in H19-result.md before long tool output or context transitions.",
+  "implementation_commit": "92b221bcb32b9fad1182547736a97c20d1d560cd",
+  "integrated_commit": "f442a98"
+}
