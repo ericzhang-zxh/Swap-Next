@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r4-2026-11-10",
+  "status": "closed",
+  "line": "xswap-compression-tiering",
+  "machine": "hurricpc",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "protocol_sha256": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+  "verdict": "inconclusive",
+  "performance_accepted": false,
+  "auto_promote": false,
+  "budget": {
+    "created": 1794347289.5792072,
+    "guests": 0,
+    "probe_guests": 2,
+    "builds": 0
+  },
+  "candidates": [
+    {
+      "id": "c1-shared-store-r4",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "parent_candidate": null,
+      "generation": 1,
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "brief_id": "brief-000001-1e746f6d7502",
+      "worktree": "worktrees/codex-compress-lib-r4-2026-11-10/c1-shared-store-r4",
+      "status": "closed",
+      "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+      "created_unix": 1794347339.4334562,
+      "protocol_sha256": "5619dfeea851e7aab3b848fc9d6ab31c5a24d13e7d92e103ab2ce8b2a6c957fd",
+      "mechanism": {
+        "kind": "reviewed_structure",
+        "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+        "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+      },
+      "reason": "Infrastructure-incomplete: the explicit two-socket NUMA guest passed all functional and kernel-warning gates, but the frozen validity check rejected boot-time TSC instability and HPET fallback. Preserve its original integration_pass=true and run_valid=false, both counted attempts, and the frozen contract. No timing or full correctness acceptance.",
+      "value_decision": null
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "f5cf30f03f4148a4913f5cb7b1af25a4",
+      "action": "build-coverage",
+      "tier": "correctness",
+      "candidate": null,
+      "case_id": "b-common",
+      "config_id": "c1-common",
+      "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "role": "baseline",
+      "build": "c1-base-common-20261110",
+      "status": "BUILD_VERIFIED",
+      "started": 1794347730.3540645,
+      "build_reserved": false,
+      "build_reused": true,
+      "build_manifest": "benchmark/kernel/builds/c1-base-common-20261110/result.json",
+      "build_manifest_sha256": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+      "build_provenance": "benchmark/kernel/builds/c1-base-common-20261110/configured-build.json",
+      "build_provenance_sha256": "9575b9f4422433f8a97d5f32dd314d73bba1d82c72fe486202ffd899f618b407",
+      "finished": 1794347730.427152,
+      "build_cache": {
+        "status": "reusable",
+        "identity_key": "7aa5714064c80a9b789c223d59aa831d493f5adc74240719ecd565e549160273",
+        "record_sha256": "00df1c2b1823b86771a7871352d49a27ebd4fd8ed5587a697e2c2f2089c118b0"
+      }
+    },
+    {
+      "id": "3e2b8da58ba5457e8de38aaa1edb7d49",
+      "action": "build-coverage",
+      "tier": "correctness",
+      "candidate": "c1-shared-store-r4",
+      "case_id": "c-numa",
+      "config_id": "c1-debug-v2",
+      "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "role": "candidate",
+      "build": "c1-7d5a3cfab2ab-debug-v2",
+      "status": "BUILD_VERIFIED",
+      "started": 1794347759.3819022,
+      "build_reserved": false,
+      "controller_check": {
+        "status": "SCOPE_PASS",
+        "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "changed_paths": [
+          "include/linux/cpuhotplug.h",
+          "include/linux/page_compress.h",
+          "mm/Kconfig",
+          "mm/Makefile",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c",
+          "mm/zswap.c"
+        ],
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "changed_lines": 1362,
+        "checker_identity": {
+          "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+          "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+        },
+        "diff-check": {
+          "exit_code": 0,
+          "evidence": "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4/static/1794347761437223438-698cdc19297a/diff-check.log",
+          "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+        },
+        "checkpatch": {
+          "exit_code": 1,
+          "evidence": "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4/static/1794347761437223438-698cdc19297a/checkpatch.log",
+          "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+        },
+        "checkpatch-filtered": {
+          "exit_code": 0,
+          "evidence": "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4/static/1794347761437223438-698cdc19297a/checkpatch-filtered.log",
+          "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+        },
+        "checkpatch_advisory": {
+          "type": "FILE_PATH_CHANGES",
+          "classification": "administrative_allowed_add",
+          "added_paths": [
+            "include/linux/page_compress.h",
+            "mm/page_compress.c",
+            "mm/page_compress_test.c"
+          ],
+          "validated_by": "checkpatch-filtered"
+        }
+      },
+      "build_reused": true,
+      "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/result.json",
+      "build_manifest_sha256": "d27ba832157cc32c334d3ecf9decdf7d18e90c2438dfa857ad61656e0fd1b6ff",
+      "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/configured-build.json",
+      "build_provenance_sha256": "0a59141357fd35607296e8ee52226c29d4b284bb467d5aab18dd6485d3c532a5",
+      "finished": 1794347763.0024123,
+      "build_cache": {
+        "status": "reusable",
+        "identity_key": "4d6926a3bca691abbc6142660876420bac2f690926417481bf0dc556e4b31ac9",
+        "record_sha256": "17b59585730346357c7584109db2764d8342a016ecc3172c7cff471ec3265519"
+      }
+    }
+  ],
+  "execution_closeout": {
+    "schema_version": 1,
+    "campaign": "codex-compress-lib-r4-2026-11-10",
+    "mode": "research",
+    "reason": "Infrastructure-incomplete: the explicit two-socket NUMA guest passed all functional and kernel-warning gates, but the frozen validity check rejected boot-time TSC instability and HPET fallback. Preserve its original integration_pass=true and run_valid=false, both counted attempts, and the frozen contract. No timing or full correctness acceptance.",
+    "frozen_inputs": {
+      "owner.json": "85c84010422c629ba52cde925ba3f7c4073ae6a06c852c93dd3722a4672beaa6",
+      "policy.json": "3276c52c9cefa0d3927b067d07d5148fb3a1783873233238189cf4ab5fc2d22b",
+      "protocol.json": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+      "research.json": "177bb2e7a21203e4af6e7cb398432bddd19b56cba41223c34c40bd563721b7a0"
+    },
+    "decisions": [
+      {
+        "id": "decision-d8241516dc25e40087bf0e4c",
+        "action_id": "action-b33c315415100622006af794",
+        "kind": "propose",
+        "identity": {
+          "brief_id": "brief-000001-1e746f6d7502",
+          "brief_sha256": "b6a4bc07ceb5d4c76db656f014099e890c9d5b229c2c0bd3e62ddd31b5be6ffb",
+          "allowed_parents": [
+            "5e84ca928deeacb4eee656806a003f27d1eca82f"
+          ],
+          "idea": "shared-page-store"
+        },
+        "input_hashes": {
+          "evolve/session.py": "e4067291d7e46e02b6ecdf649dffcbfc8b753ae814e36aed9d5ecb425dae49d6",
+          "evolve/control/controller.py": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+          "evolve/standard_workflow.py": "f58c77a241f8918181e9ac30020f721d1d5c6ca34a7a748b94a7d8da1ea9053f",
+          "evolve/research.py": "4fd4cbc7b7aeba4398504f41ab7cd2d382286e126a92bb8855baebc04367b76d",
+          "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+          "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+          "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+          "evolve/delivery.py": "7061a7b7a97d1f52aa05b416e2eecb93eaf42f5d3a18379ba604c5b5a8a72293",
+          "evolve/calibration_cache.py": "3be207df36ce814c78ba8de89fd8ad9e3ea2a32fcb69270d5ca9e6b0fac0e8f0",
+          "evolve/reference_cache.py": "8fd739eec61e152c179f13819c6384596bca324e389b4f20617874b4f9b9a524",
+          "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+          "linux/scripts/checkpatch.pl": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926",
+          "campaigns/codex-compress-lib-r4-2026-11-10/campaign.json": "c77f056a3bb5c4bfa5e80b31bd361bde338966d8998d8582763e3cd3134c5d50",
+          "campaigns/codex-compress-lib-r4-2026-11-10/protocol.json": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+          "campaigns/codex-compress-lib-r4-2026-11-10/policy.json": "3276c52c9cefa0d3927b067d07d5148fb3a1783873233238189cf4ab5fc2d22b",
+          "campaigns/codex-compress-lib-r4-2026-11-10/research.json": "177bb2e7a21203e4af6e7cb398432bddd19b56cba41223c34c40bd563721b7a0",
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/ledger.json": null,
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/budget.json": "fa5189b84b6619762144392346babb1a0cfb7174b77a1393b1fac591cf826f91",
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/guest-reservations/c1r4-b-common-001.json": "043f00370f179c436736e310c916fea2889486084be6eaaa975e8130453a9a5d",
+          "benchmark/kernel/builds/c1-base-common-20261110/result.json": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+          "benchmark/swap-standard/image.json": "05a41c8449135395ea97112233197afbd5ef25eea70d7172e93b32941c870353",
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/calibration-probe.json": null,
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/calibration-fast.json": null,
+          "campaigns/codex-compress-lib-r4-2026-11-10/archive/population.json": "ee189922d2045f8f0f93e296cc46b78a05cbc400fb89286df1acda9a2cfd3639",
+          "campaigns/codex-compress-lib-r4-2026-11-10/archive/briefs/brief-000001-1e746f6d7502.json": "b6a4bc07ceb5d4c76db656f014099e890c9d5b229c2c0bd3e62ddd31b5be6ffb"
+        },
+        "payload": {
+          "kind": "propose",
+          "candidate": "c1-shared-store-r4",
+          "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+          "mechanism": {
+            "kind": "reviewed_structure",
+            "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+            "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+          },
+          "reason": "Same exact shared-library source under separately frozen auxiliary topology correction; preserve prior failures and cumulative costs, with fresh full correctness before timing."
+        }
+      },
+      {
+        "id": "decision-eeed72dc03d8cba6f3cc126b",
+        "action_id": "action-2abb08d68636bebc0df78611",
+        "kind": "stop",
+        "identity": {
+          "candidate": "c1-shared-store-r4",
+          "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+          "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+          "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+        },
+        "input_hashes": {
+          "evolve/session.py": "e4067291d7e46e02b6ecdf649dffcbfc8b753ae814e36aed9d5ecb425dae49d6",
+          "evolve/control/controller.py": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+          "evolve/standard_workflow.py": "f58c77a241f8918181e9ac30020f721d1d5c6ca34a7a748b94a7d8da1ea9053f",
+          "evolve/research.py": "4fd4cbc7b7aeba4398504f41ab7cd2d382286e126a92bb8855baebc04367b76d",
+          "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+          "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+          "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+          "evolve/delivery.py": "7061a7b7a97d1f52aa05b416e2eecb93eaf42f5d3a18379ba604c5b5a8a72293",
+          "evolve/calibration_cache.py": "3be207df36ce814c78ba8de89fd8ad9e3ea2a32fcb69270d5ca9e6b0fac0e8f0",
+          "evolve/reference_cache.py": "8fd739eec61e152c179f13819c6384596bca324e389b4f20617874b4f9b9a524",
+          "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+          "linux/scripts/checkpatch.pl": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926",
+          "campaigns/codex-compress-lib-r4-2026-11-10/campaign.json": "c77f056a3bb5c4bfa5e80b31bd361bde338966d8998d8582763e3cd3134c5d50",
+          "campaigns/codex-compress-lib-r4-2026-11-10/protocol.json": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+          "campaigns/codex-compress-lib-r4-2026-11-10/policy.json": "3276c52c9cefa0d3927b067d07d5148fb3a1783873233238189cf4ab5fc2d22b",
+          "campaigns/codex-compress-lib-r4-2026-11-10/research.json": "177bb2e7a21203e4af6e7cb398432bddd19b56cba41223c34c40bd563721b7a0",
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/ledger.json": "c2bd5366a63e49156eaa64e76d5be4aaae44ec01e82e5fea66398bcfee550a3b",
+          "campaigns/codex-compress-lib-r4-2026-11-10/runs/evaluations/f5cf30f03f4148a4913f5cb7b1af25a4/report.json": "8a9a2fed16c1ff4a6f3fceb61b33219fb2637bd3331a847e89d15e36b9386300",
+          "campaigns/codex-compress-lib-r4-2026-11-10/runs/evaluations/3e2b8da58ba5457e8de38aaa1edb7d49/report.json": "a6a484b81f76f5cbbaa9ec0e708c18c31e14a826433128253b706b6044c31206",
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/budget.json": "555c93a456a9be410aa12faeb0d7dac1ceaff0cff96cc0900ed400041a1938eb",
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/guest-reservations/c1r4-c-numa-001.json": "50c9edcd06cef345ad7c042ad514ae1e0989f8be1a7cca65f771d0bae5240909",
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/guest-reservations/c1r4-b-common-001.json": "cd1031e97dfe01b34615a671636074ada21998a5c7150900efa74f1e31cb2160",
+          "benchmark/kernel/builds/c1-base-common-20261110/result.json": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+          "benchmark/swap-standard/image.json": "05a41c8449135395ea97112233197afbd5ef25eea70d7172e93b32941c870353",
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/calibration-probe.json": null,
+          "campaigns/codex-compress-lib-r4-2026-11-10/ledger/calibration-fast.json": null,
+          "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4.json": "3e550664ddcd82b940b2adc2ae3d211647cd9b6a87eafcc5f7a416bf6b954a5d",
+          "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4/static.json": "8af799e46bd322d0c76504f01bba6729b8e728dbc8297d9e535652cc52735755",
+          "campaigns/codex-compress-lib-r4-2026-11-10/archive/population.json": "33081948f5fe85f37abe434c003c209f52e271c5725c1200bfe5b060009f6ba3",
+          "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4/mechanism.json": "4f517710b736f79544921d5e7ce3e7630fbe83c8fa581200d143fef0ccfed65b",
+          "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4/correctness.json": null,
+          "campaigns/codex-compress-lib-r4-2026-11-10/runs/guests/c1r4-b-common-001/result.json": "12e482e6d73cbe36f17772aca0cde7e0e7ba72c946243f02f103feacf0ff8039",
+          "campaigns/codex-compress-lib-r4-2026-11-10/runs/guests/c1r4-b-common-001/serial.log": "b306b397f4733f3761cdd63449f2a19db4a4fde935baba5a332a2336c321449b",
+          "campaigns/codex-compress-lib-r4-2026-11-10/runs/guests/c1r4-c-numa-001/result.json": "42dc4f4631bbe24bce491d47e40977b50ac8462bda1db988c81303f3d01201ba",
+          "campaigns/codex-compress-lib-r4-2026-11-10/runs/guests/c1r4-c-numa-001/serial.log": "18ac9f90880616d3cb229f77f1a5b385e171f7301d230c39bbfba7c82aa86a45"
+        },
+        "payload": {
+          "kind": "stop",
+          "reason": "Infrastructure-incomplete: the explicit two-socket NUMA guest passed all functional and kernel-warning gates, but the frozen validity check rejected boot-time TSC instability and HPET fallback. Preserve its original integration_pass=true and run_valid=false, both counted attempts, and the frozen contract. No timing or full correctness acceptance."
+        }
+      }
+    ],
+    "actions": [
+      {
+        "action_id": "action-ba01725ce16027c94ddba920",
+        "command": "open",
+        "identity": {
+          "protocol_sha256": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+          "policy_sha256": "3276c52c9cefa0d3927b067d07d5148fb3a1783873233238189cf4ab5fc2d22b"
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-r4-2026-11-10/runs/session/action-ba01725ce16027c94ddba920-89400b9a.log"
+      },
+      {
+        "action_id": "action-0f15a9af4de48b41418a1d2e",
+        "command": "brief",
+        "identity": {
+          "fingerprint": "c14128fc3d4b97f52e7bc859fb8d6e85680ad4167fd84b8b103cd9dafbff48be",
+          "idea": "shared-page-store"
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-r4-2026-11-10/runs/session/action-0f15a9af4de48b41418a1d2e-74007a08.log"
+      },
+      {
+        "action_id": "action-60e8e4e058f285288fd516c5",
+        "command": "new",
+        "identity": {
+          "brief_id": "brief-000001-1e746f6d7502",
+          "idea": "shared-page-store"
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-r4-2026-11-10/runs/session/action-60e8e4e058f285288fd516c5-a7a021ef.log"
+      },
+      {
+        "action_id": "action-d786aee2a1ebe6a8a2a9ef0a",
+        "command": "check",
+        "identity": {
+          "candidate": "c1-shared-store-r4",
+          "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+          "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+          "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+          "checker_identity": {
+            "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+            "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+          }
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-r4-2026-11-10/runs/session/action-d786aee2a1ebe6a8a2a9ef0a-65695220.log"
+      },
+      {
+        "action_id": "action-05280e12f65df29a93e44f5b",
+        "command": "close-candidate",
+        "identity": {
+          "candidate": "c1-shared-store-r4",
+          "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+          "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+          "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+          "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+        },
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-r4-2026-11-10/runs/session/action-05280e12f65df29a93e44f5b-160c430a.log"
+      },
+      {
+        "action_id": "action-f3114ca42139fcbfe7e14776",
+        "command": "close-campaign",
+        "identity": {},
+        "status": "completed",
+        "returncode": 0,
+        "log": "campaigns/codex-compress-lib-r4-2026-11-10/runs/session/action-f3114ca42139fcbfe7e14776-7797b01c.log"
+      }
+    ],
+    "candidate_reasons": {
+      "c1-shared-store-r4": "Infrastructure-incomplete: the explicit two-socket NUMA guest passed all functional and kernel-warning gates, but the frozen validity check rejected boot-time TSC instability and HPET fallback. Preserve its original integration_pass=true and run_valid=false, both counted attempts, and the frozen contract. No timing or full correctness acceptance."
+    },
+    "performance_accepted": false,
+    "auto_promote": false
+  },
+  "regressions": [],
+  "review_blockers": [],
+  "missing_raw_evidence": [],
+  "upstream_comparisons": [],
+  "evidence_reuse": [],
+  "sources": {
+    "campaigns/codex-compress-lib-r4-2026-11-10/campaign.json": "8210ec1f599aadf65cf2bb897f7fd5a726cba79c405701ce7d4f0f0b7ba34e52",
+    "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4.json": "13999aaf1869a58e69cd40aa2b5fd220fe0603e7d00df4282412d86993d2f7e4",
+    "campaigns/codex-compress-lib-r4-2026-11-10/ledger/budget.json": "555c93a456a9be410aa12faeb0d7dac1ceaff0cff96cc0900ed400041a1938eb",
+    "campaigns/codex-compress-lib-r4-2026-11-10/ledger/ledger.json": "c2bd5366a63e49156eaa64e76d5be4aaae44ec01e82e5fea66398bcfee550a3b",
+    "campaigns/codex-compress-lib-r4-2026-11-10/ledger/session-closeout.json": "9dc63c4138df212bbd32e52fc61adf482c6010f4dddb0385e66f3a24c2959590",
+    "campaigns/codex-compress-lib-r4-2026-11-10/patches/c1-shared-store-r4.patch": "69e085f0b3703ae2929c0cc8e863b6f606fce1b15e8a4d3ab3fd378ef785f704",
+    "campaigns/codex-compress-lib-r4-2026-11-10/policy.json": "3276c52c9cefa0d3927b067d07d5148fb3a1783873233238189cf4ab5fc2d22b",
+    "campaigns/codex-compress-lib-r4-2026-11-10/protocol.json": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+    "campaigns/codex-compress-lib-r4-2026-11-10/research.json": "177bb2e7a21203e4af6e7cb398432bddd19b56cba41223c34c40bd563721b7a0",
+    "campaigns/codex-compress-lib-r4-2026-11-10/reviews/k2-c1-shared-store-r4-7d5a3cf.json": "e61af2fb848d294462648ac406442c07759664a74711c7a6096f014894a3b353"
+  },
+  "evidence_sha256": "9bade8bc8cd476d69f04677bdcd0b3f8ee2719da348968bb67e82af3078aab84"
+}

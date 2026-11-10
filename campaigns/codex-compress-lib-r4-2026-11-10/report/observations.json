@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r4-2026-11-10",
+  "native_evidence_sha256": "9bade8bc8cd476d69f04677bdcd0b3f8ee2719da348968bb67e82af3078aab84",
+  "kernel_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "kernel_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+  "attempts": [
+    {
+      "run_id": "c1r4-b-common-001",
+      "role": "baseline",
+      "result_source": "campaigns/codex-compress-lib-r4-2026-11-10/runs/guests/c1r4-b-common-001/result.json",
+      "result_sha256": "12e482e6d73cbe36f17772aca0cde7e0e7ba72c946243f02f103feacf0ff8039",
+      "serial_sha256": "b306b397f4733f3761cdd63449f2a19db4a4fde935baba5a332a2336c321449b",
+      "hash_sidecar_sha256": "fdfa3f66fca550e4e1ae6b3b307c23134ea757f624cc23a9cb881794cc16bf52",
+      "started_sha256": "1d664c85cfb58ae815e92e80b6ad2cffc3899d902da1596c5589f0101057a208",
+      "reservation_source": "campaigns/codex-compress-lib-r4-2026-11-10/ledger/guest-reservations/c1r4-b-common-001.json",
+      "reservation_sha256": "cd1031e97dfe01b34615a671636074ada21998a5c7150900efa74f1e31cb2160",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "build_manifest_sha256": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+      "config_sha256": "63da430133ca0c4199f5256ddccc04a90129d580e7adc9b9fa0af2f90949262d",
+      "image_sha256": "819c8bb2cd5b1ef247d7ef07184ecc243019bd39afc83f4cc775d4a780290e48",
+      "exit_code": 0,
+      "stop_reason": null,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "clocksource_invalid": false,
+      "integration_pass": true,
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_backend_device": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "gate_count": 19,
+      "failed_gates": [],
+      "subcases": {}
+    },
+    {
+      "run_id": "c1r4-c-numa-001",
+      "role": "candidate",
+      "result_source": "campaigns/codex-compress-lib-r4-2026-11-10/runs/guests/c1r4-c-numa-001/result.json",
+      "result_sha256": "42dc4f4631bbe24bce491d47e40977b50ac8462bda1db988c81303f3d01201ba",
+      "serial_sha256": "18ac9f90880616d3cb229f77f1a5b385e171f7301d230c39bbfba7c82aa86a45",
+      "hash_sidecar_sha256": "5760e881556bc2536eef5191528fc1a630b4b504b16acb74709627bbea2af01c",
+      "started_sha256": "5bf1ecaa09a3784caf3aa922b57157f0e8b55ee72342c3e3f48e66405f5d6d45",
+      "reservation_source": "campaigns/codex-compress-lib-r4-2026-11-10/ledger/guest-reservations/c1r4-c-numa-001.json",
+      "reservation_sha256": "50c9edcd06cef345ad7c042ad514ae1e0989f8be1a7cca65f771d0bae5240909",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "config_id": "c1-debug-v2",
+      "topology_id": "numa2-sockets-v2",
+      "build_manifest_sha256": "d27ba832157cc32c334d3ecf9decdf7d18e90c2438dfa857ad61656e0fd1b6ff",
+      "config_sha256": "8a3a8a5cc861fd0e4c4d5d5b2974d3b54e016e7d5593caeb0b949f07ae22d436",
+      "image_sha256": "9d2c4b9d36c48c5f7407ac3b61349d38ad66d2c33d1c5b98ffa1ffb00d93cb46",
+      "exit_code": 0,
+      "stop_reason": null,
+      "run_valid": false,
+      "invalid_reasons": [
+        "clocksource_fallback"
+      ],
+      "clocksource_invalid": true,
+      "integration_pass": true,
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_library_unit": true,
+        "compression_guest_hotplug": true,
+        "compression_memcg_balance": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "gate_count": 17,
+      "failed_gates": [],
+      "subcases": {
+        "library_unit": {
+          "status": "PASS",
+          "evidence_valid": true,
+          "reset": true,
+          "untouched": true,
+          "reset_observations": {}
+        },
+        "guest_hotplug": {
+          "status": "PASS",
+          "evidence_valid": true,
+          "reset": true,
+          "untouched": false,
+          "reset_observations": {
+            "cpu_restored": 1,
+            "objects_and_charges_drained": 1,
+            "temporary_memcg_removed": 1,
+            "swap_devices": 1,
+            "virtual_devices": 1,
+            "physical_devices": 0,
+            "no_backing": 1,
+            "intended_device_matches": 1,
+            "xswap_priority": 32767
+          }
+        },
+        "memcg_balance": {
+          "status": "PASS",
+          "evidence_valid": true,
+          "reset": true,
+          "untouched": false,
+          "reset_observations": {
+            "objects_and_charges_drained": 1,
+            "temporary_memcg_removed": 1,
+            "swap_devices": 1,
+            "virtual_devices": 1,
+            "physical_devices": 0,
+            "no_backing": 1,
+            "intended_device_matches": 1,
+            "xswap_priority": 32767
+          }
+        }
+      }
+    }
+  ],
+  "reused_builds": [
+    {
+      "build": "c1-base-common-20261110",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "source_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+      "config_id": "c1-common",
+      "manifest_source": "benchmark/kernel/builds/c1-base-common-20261110/result.json",
+      "manifest_sha256": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+      "provenance_source": "benchmark/kernel/builds/c1-base-common-20261110/configured-build.json",
+      "provenance_sha256": "9575b9f4422433f8a97d5f32dd314d73bba1d82c72fe486202ffd899f618b407",
+      "final_config_sha256": "63da430133ca0c4199f5256ddccc04a90129d580e7adc9b9fa0af2f90949262d",
+      "image_sha256": "819c8bb2cd5b1ef247d7ef07184ecc243019bd39afc83f4cc775d4a780290e48",
+      "compiled": true,
+      "reused": true,
+      "new_build_cost_in_R4": 0
+    },
+    {
+      "build": "c1-7d5a3cfab2ab-debug-v2",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+      "config_id": "c1-debug-v2",
+      "manifest_source": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/result.json",
+      "manifest_sha256": "d27ba832157cc32c334d3ecf9decdf7d18e90c2438dfa857ad61656e0fd1b6ff",
+      "provenance_source": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/configured-build.json",
+      "provenance_sha256": "0a59141357fd35607296e8ee52226c29d4b284bb467d5aab18dd6485d3c532a5",
+      "final_config_sha256": "8a3a8a5cc861fd0e4c4d5d5b2974d3b54e016e7d5593caeb0b949f07ae22d436",
+      "image_sha256": "9d2c4b9d36c48c5f7407ac3b61349d38ad66d2c33d1c5b98ffa1ffb00d93cb46",
+      "compiled": true,
+      "reused": true,
+      "new_build_cost_in_R4": 0
+    }
+  ],
+  "clock_validity": {
+    "events": [
+      {
+        "serial_line": 501,
+        "message": "tsc: Marking TSC unstable due to TSCs unsynchronized"
+      },
+      {
+        "serial_line": 604,
+        "message": "clocksource: Switched to clocksource hpet"
+      },
+      {
+        "serial_line": 710,
+        "message": "smpboot: CPU 1 is now offline"
+      }
+    ],
+    "integration_pass": true,
+    "run_valid": false,
+    "invalid_reasons": [
+      "clocksource_fallback"
+    ],
+    "functional_gates_passed": 17,
+    "kernel_warning_gates": {
+      "no_kernel_warnings": true,
+      "no_new_kernel_warnings": true
+    },
+    "topology_arguments": [
+      [
+        "-smp",
+        "4,sockets=2,cores=2,threads=1"
+      ],
+      [
+        "-numa",
+        "node,nodeid=0,memdev=c1-node0,cpus=0-1"
+      ],
+      [
+        "-numa",
+        "node,nodeid=1,memdev=c1-node1,cpus=2-3"
+      ]
+    ],
+    "subcases_passed": [
+      "library_unit",
+      "guest_hotplug",
+      "memcg_balance"
+    ],
+    "placement_observations": {
+      "placements": [
+        {
+          "requested": 0,
+          "actual": 0,
+          "pages": 1
+        },
+        {
+          "requested": 1,
+          "actual": 1,
+          "pages": 1
+        }
+      ],
+      "nodes": 2,
+      "placement_count": 2,
+      "mismatches": 0
+    },
+    "event_scope": "Boot TSC instability and HPET selection precede the recorded CPU-offline event. This records ordering, not a new causal diagnosis.",
+    "record_source": "campaigns/codex-compress-lib-r4-2026-11-10/ledger/session-closeout.json",
+    "record_sha256": "9dc63c4138df212bbd32e52fc61adf482c6010f4dddb0385e66f3a24c2959590"
+  },
+  "teardown_scope": "Recorded normal guest exit and named subcase reset observations only. No separate teardown receipt or broader audit is asserted.",
+  "runtime_archive": {
+    "source": "campaigns/codex-compress-lib-r4-2026-11-10/runs/closeout-runtime/archive.json",
+    "sha256": "a7e42aa5364874f86fc737dea3b3b3a0ac09d25461c684efe6c17296b22d818d",
+    "pinned_files": 28
+  },
+  "resources": {
+    "original_C1": {
+      "guests": 3,
+      "builds": 3,
+      "source": "campaigns/codex-compress-lib-2026-11-10/ledger/budget.json",
+      "sha256": "2e03ba0eee0c337bc1ee57e4729b5dd912f7e78d0d4ce30d23091173fe5dac0b"
+    },
+    "R2": {
+      "guests": 2,
+      "builds": 1,
+      "source": "campaigns/codex-compress-lib-r2-2026-11-10/ledger/budget.json",
+      "sha256": "b529da364b87c259df26d92cb83e01a60752c6e96fd3a1bc04bc3bb4990e511e"
+    },
+    "R3": {
+      "guests": 3,
+      "builds": 0,
+      "source": "campaigns/codex-compress-lib-r3-2026-11-10/ledger/budget.json",
+      "sha256": "cc2aa3e137730bf12f1fc8a0615cb347fd83de7087e8a86d33eccd8faa570b1f"
+    },
+    "R4": {
+      "guests": 2,
+      "builds": 0,
+      "source": "campaigns/codex-compress-lib-r4-2026-11-10/ledger/budget.json",
+      "sha256": "555c93a456a9be410aa12faeb0d7dac1ceaff0cff96cc0900ed400041a1938eb"
+    },
+    "cumulative_C1": {
+      "guests": 10,
+      "builds": 4
+    }
+  },
+  "full_correctness_matrix_complete": false,
+  "performance_or_equivalence_result": false
+}

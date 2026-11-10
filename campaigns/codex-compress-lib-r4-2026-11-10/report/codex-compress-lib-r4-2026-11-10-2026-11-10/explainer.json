@@ -1,0 +1,710 @@
+{
+  "title": "Shared compression library: clock fallback invalidated the NUMA run",
+  "subtitle": "codex (gpt-6) \u00b7 line: xswap-compression-tiering \u00b7 base 5e84ca92 \u00b7 1 candidate \u00b7 2 guests / 0 builds",
+  "verdict": {
+    "status": "inconclusive",
+    "headline": "NUMA functional checks passed; clocksource fallback made the run invalid.",
+    "tiles": [
+      {
+        "label": "NUMA functional gates",
+        "value": "Passed",
+        "note": "All checks and warning gates passed."
+      },
+      {
+        "label": "NUMA run validity",
+        "value": "Failed",
+        "note": "Boot clocksource fallback recorded."
+      },
+      {
+        "label": "Correctness matrix",
+        "value": "Incomplete",
+        "note": "No calibration or performance result."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "Functional success and run validity are separate requirements",
+      "lead": "R4 tested the unchanged library with an explicit two-socket NUMA topology. Its fresh baseline passed. The NUMA functional checks passed, while a frozen clock-validity requirement rejected the run and closed this contract.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The NUMA result is warning-free. Library placement, CPU hotplug and memory-accounting subcases passed. Its saved integration_pass is true and run_valid is false; both fields remain intact."
+        },
+        {
+          "type": "note",
+          "text": "R4 consumed 2 probe guests and no new builds. Through this closeout, the four contracts consumed 10 guests and 4 builds. No candidate debug case, later matrix row, calibration or timing ran in R4."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "1. Whole system: restore the application page",
+      "lead": "An application needs its full page in physical RAM. Stored contents may be compressed inside RAM or reside on a backing device. Compression trades CPU work for less storage traffic.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The changed engine serves compressed contents inside RAM",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "sub": "Needs page A",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "fault",
+              "label": "Kernel swap path",
+              "sub": "Find stored contents",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "page",
+              "label": "Full page A",
+              "sub": "Physical RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "compressed",
+              "label": "Compressed A",
+              "sub": "Inside physical RAM",
+              "col": 1,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "disk",
+              "label": "Backing device",
+              "sub": "Outside RAM",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "fault"
+            },
+            {
+              "from": "fault",
+              "to": "page",
+              "label": "already resident"
+            },
+            {
+              "from": "fault",
+              "to": "compressed",
+              "label": "decode"
+            },
+            {
+              "from": "compressed",
+              "to": "page"
+            },
+            {
+              "from": "disk",
+              "to": "page",
+              "label": "read"
+            },
+            {
+              "from": "fault",
+              "to": "disk"
+            }
+          ],
+          "note": "Schematic path, with no illustrative size or timing used as a measurement."
+        },
+        {
+          "type": "note",
+          "text": "The candidate changes the compressed-storage implementation. The existing frontend still decides admission, accounting and writeback. No new RAM-to-disk migration policy is implemented here."
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "2. Subsystem: policy keeps the object identity",
+      "lead": "ZSwap retains the entry index, memory-group charge, ordering and lifetime pins. A shared page library owns per-CPU codec contexts, scratch buffers and compressed-object storage.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Data moves through the engine; policy stays with the frontend",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "ZSwap entry",
+              "sub": "Handle + length",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "library",
+              "label": "Page library",
+              "sub": "Codec + CPU context",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "object",
+              "label": "Object A",
+              "sub": "Compressed RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "policy",
+              "label": "ZSwap policy",
+              "sub": "Index, charge, LRU",
+              "col": 0,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "release",
+              "label": "Release boundary",
+              "sub": "Drain users, then free",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "library",
+              "label": "store / load"
+            },
+            {
+              "from": "library",
+              "to": "object",
+              "label": "allocate / copy"
+            },
+            {
+              "from": "policy",
+              "to": "entry",
+              "label": "pin"
+            },
+            {
+              "from": "entry",
+              "to": "release"
+            },
+            {
+              "from": "release",
+              "to": "object",
+              "label": "free"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "High-confidence source review supports this unchanged ownership boundary. NUMA functional observations now cover placement, hotplug and accounting without kernel warnings. The separate clock-validity failure still prevents a valid complete matrix."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "3. Concrete observation: the boot clock changed before hotplug",
+      "lead": "The retained kernel log marks TSC unstable, then records selection of HPET. The CPU hotplug subcase begins later. This ordering separates the recorded boot event from later test execution.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Recorded ordering: boot clock events precede CPU offline",
+          "nodes": [
+            {
+              "id": "tsc",
+              "label": "TSC marked unstable",
+              "sub": "Kernel boot message",
+              "col": 0,
+              "row": 0,
+              "tone": "bad"
+            },
+            {
+              "id": "hpet",
+              "label": "HPET selected",
+              "sub": "Clocksource fallback",
+              "col": 1,
+              "row": 0,
+              "tone": "bad"
+            },
+            {
+              "id": "hotplug",
+              "label": "CPU hotplug",
+              "sub": "Offline occurs later",
+              "col": 2,
+              "row": 0,
+              "tone": "good"
+            }
+          ],
+          "edges": [
+            {
+              "from": "tsc",
+              "to": "hpet"
+            },
+            {
+              "from": "hpet",
+              "to": "hotplug"
+            }
+          ]
+        },
+        {
+          "type": "flow",
+          "takeaway": "Functional gates and validity both control coverage",
+          "nodes": [
+            {
+              "id": "function",
+              "label": "Functional checks",
+              "sub": "All 17 gates pass",
+              "col": 0,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "validity",
+              "label": "Run validity",
+              "sub": "Clock fallback rejected",
+              "col": 0,
+              "row": 1,
+              "tone": "bad"
+            },
+            {
+              "id": "matrix",
+              "label": "Required matrix",
+              "sub": "Still incomplete",
+              "col": 2,
+              "row": 0,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "function",
+              "to": "matrix",
+              "label": "necessary"
+            },
+            {
+              "from": "validity",
+              "to": "matrix",
+              "label": "also required"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "The baseline is valid and functionally passed. The NUMA run exited normally with successful subcase resets, but clocksource_fallback makes it invalid. These observations do not complete candidate correctness or establish a performance result."
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "No complete paired performance result is available."
+        }
+      ],
+      "lead": "The saved functional pass and validity failure are both authoritative. No full candidate correctness result follows from this invalid run."
+    },
+    {
+      "id": "next",
+      "title": "Review the clock environment before another contract",
+      "lead": "The closed R4 record preserves the invalid run. A separately reviewed environment contract must retain strict validity checks and collect fresh required correctness evidence before any timing comparison.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "A reviewed environment still needs fresh valid coverage",
+          "nodes": [
+            {
+              "id": "retain",
+              "label": "Retain both fields",
+              "sub": "Functional pass / invalid",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "review",
+              "label": "Review environment",
+              "sub": "Boot-clock diagnosis",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "fresh",
+              "label": "Fresh correctness",
+              "sub": "Validity remains required",
+              "col": 2,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "timing",
+              "label": "Calibrate / compare",
+              "sub": "After full matrix",
+              "col": 3,
+              "row": 0,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "retain",
+              "to": "review"
+            },
+            {
+              "from": "review",
+              "to": "fresh"
+            },
+            {
+              "from": "fresh",
+              "to": "timing"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Confidence is high in the recorded outcomes and boot-event order. Cause analysis and any proposed environment change are separate evidence. Their execution outcome is unmeasured here; original costs and the earlier deadline remain binding."
+        }
+      ]
+    },
+    {
+      "id": "patches",
+      "title": "Core kernel patches",
+      "blocks": [
+        {
+          "type": "diff",
+          "takeaway": "Same K1: the API keeps publication, accounting and handle lifetime with its caller",
+          "patch": "--- /dev/null\n+++ b/include/linux/page_compress.h\n@@ -0,0 +8,43 @@\n+struct folio;\n+struct page_compress_pool;\n+\n+enum page_compress_failure {\n+\tPAGE_COMPRESS_NONE,\n+\tPAGE_COMPRESS_CODEC,\n+\tPAGE_COMPRESS_ALLOC,\n+};\n+\n+struct page_compress_result {\n+\tunsigned long handle;\n+\tunsigned int length;\n+\tenum page_compress_failure failure;\n+};\n+\n+/*\n+ * Pools own their codec contexts and object storage, but no frontend references.\n+ * The caller pins the pool and handle across each operation, and drains all\n+ * handles and users before destroy. Creation requires initialized crypto.\n+ */\n+struct page_compress_pool *page_compress_create(const char *codec,\n+\t\t\t\t\t\tconst char *name);\n+void page_compress_destroy(struct page_compress_pool *pool);\n+/* The returned name remains valid while the caller pins the pool. */\n+const char *page_compress_codec(struct page_compress_pool *pool);\n+\n+/*\n+ * Store/load operate on one base page and may sleep for codec completion even\n+ * with a nonblocking allocation mask. A successful store transfers one handle;\n+ * a failed store leaves handle/length zero. PAGE_SIZE length denotes raw data.\n+ * Load does not consume the handle, including on error. The caller owns folio\n+ * locking, index publication, accounting and the decision to store raw data.\n+ */\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result);\n+int page_compress_store_raw(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\t    long index, gfp_t gfp, int nid,\n+\t\t\t    struct page_compress_result *result);\n+int page_compress_load(struct page_compress_pool *pool, unsigned long handle,\n+\t\t       unsigned int length, struct folio *folio, long index);\n+void page_compress_free(struct page_compress_pool *pool, unsigned long handle);\n+unsigned long page_compress_backing_pages(struct page_compress_pool *pool);\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "Same K1: the library compresses and allocates before returning a usable handle",
+          "patch": "--- /dev/null\n+++ b/mm/page_compress.c\n@@ -0,0 +257,50 @@\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result)\n+{\n+\tstruct page_compress_ctx *ctx;\n+\tstruct scatterlist input, output;\n+\tunsigned int dlen;\n+\tunsigned long handle;\n+\tu8 *dst;\n+\tint ret;\n+\n+\t*result = (struct page_compress_result) {\n+\t\t.failure = PAGE_COMPRESS_CODEC,\n+\t};\n+\tif (index < 0 || index >= folio_nr_pages(folio))\n+\t\treturn -EINVAL;\n+\n+\tctx = raw_cpu_ptr(pool->ctx);\n+\tmutex_lock(&ctx->mutex);\n+\n+\tdst = ctx->buffer;\n+\tsg_init_table(&input, 1);\n+\tsg_set_folio(&input, folio, PAGE_SIZE, index * PAGE_SIZE);\n+\tsg_init_one(&output, dst, PAGE_SIZE);\n+\tacomp_request_set_params(ctx->req, &input, &output, PAGE_SIZE, PAGE_SIZE);\n+\n+\t/* The frontend is synchronous even when the codec completes async. */\n+\tret = crypto_wait_req(crypto_acomp_compress(ctx->req), &ctx->wait);\n+\tdlen = ctx->req->dlen;\n+\tif (ret || !dlen || dlen >= PAGE_SIZE) {\n+\t\tret = ret ? ret : -EINVAL;\n+\t\tgoto unlock;\n+\t}\n+\n+\thandle = pc_object_alloc(pool->zs_pool, dlen, gfp, nid);\n+\tif (IS_ERR_VALUE(handle)) {\n+\t\tresult->failure = PAGE_COMPRESS_ALLOC;\n+\t\tret = PTR_ERR((void *)handle);\n+\t\tgoto unlock;\n+\t}\n+\n+\tzs_obj_write(pool->zs_pool, handle, dst, dlen);\n+\tresult->handle = handle;\n+\tresult->length = dlen;\n+\tresult->failure = PAGE_COMPRESS_NONE;\n+\tret = 0;\n+unlock:\n+\tmutex_unlock(&ctx->mutex);\n+\treturn ret;\n+}\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "Same K1: frontend pool creation delegates the engine and preserves its reference lifetime",
+          "patch": "--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -152,13 +140,10 @@ struct crypto_acomp_ctx {\n  * needs to be verified that it's still valid in the tree.\n  */\n struct zswap_pool {\n-\tstruct zs_pool *zs_pool;\n-\tstruct crypto_acomp_ctx __percpu *acomp_ctx;\n+\tstruct page_compress_pool *compress;\n \tstruct percpu_ref ref;\n \tstruct rcu_work release_rwork;\n-\tstruct hlist_node node;\n \tu8 idx;\n-\tchar tfm_name[CRYPTO_MAX_ALG_NAME];\n };\n \n /*\n@@ -309,33 +266,9 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \n \t/* unique name for each pool specifically required by zsmalloc */\n \tsnprintf(name, 38, \"zswap%x\", atomic_inc_return(&zswap_pools_count));\n-\tpool->zs_pool = zs_create_pool(name);\n-\tif (!pool->zs_pool)\n-\t\tgoto error;\n-\n-\tstrscpy(pool->tfm_name, compressor, sizeof(pool->tfm_name));\n-\n-\t/* Many things rely on the zero-initialization. */\n-\tpool->acomp_ctx = alloc_percpu_gfp(*pool->acomp_ctx,\n-\t\t\t\t\t   GFP_KERNEL | __GFP_ZERO);\n-\tif (!pool->acomp_ctx) {\n-\t\tpr_err(\"percpu alloc failed\\n\");\n-\t\tgoto error;\n-\t}\n-\n-\t/*\n-\t * This is serialized against CPU hotplug operations. Hence, cores\n-\t * cannot be offlined until this finishes.\n-\t */\n-\tret = cpuhp_state_add_instance(CPUHP_MM_ZSWP_POOL_PREPARE,\n-\t\t\t\t       &pool->node);\n-\n-\t/*\n-\t * cpuhp_state_add_instance() will not cleanup on failure since\n-\t * we don't register a hotunplug callback.\n-\t */\n-\tif (ret)\n-\t\tgoto cpuhp_add_fail;\n+\tpool->compress = page_compress_create(compressor, name);\n+\tif (IS_ERR(pool->compress))\n+\t\tgoto free_pool;\n \n \t/* being the current pool takes 1 ref; this func expects the\n \t * caller to always add the new pool as the current pool\n@@ -343,7 +276,7 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \tret = percpu_ref_init(&pool->ref, __zswap_pool_empty,\n \t\t\t      PERCPU_REF_ALLOW_REINIT, GFP_KERNEL);\n \tif (ret)\n-\t\tgoto ref_fail;\n+\t\tgoto destroy_compress;\n \n \t/*\n \t * Publish only after the pool is fully built, so lockless walkers\n"
+        }
+      ],
+      "lead": "The exact K1 source remains unchanged across all four infrastructure contracts. These pinned excerpts explain the shared-library hypothesis; R4 adds functional observations, not a new kernel change."
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Revalidated build coverage; no new R4 build",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "f5cf30f03f4148a4913f5cb7b1af25a4",
+              "control",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "3e2b8da58ba5457e8de38aaa1edb7d49",
+              "c1-shared-store-r4",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": []
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "c1-shared-store-r4",
+              "null"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/campaign.json",
+              "8210ec1f599aadf65cf2bb897f7fd5a726cba79c405701ce7d4f0f0b7ba34e52"
+            ],
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4.json",
+              "13999aaf1869a58e69cd40aa2b5fd220fe0603e7d00df4282412d86993d2f7e4"
+            ],
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/ledger/budget.json",
+              "555c93a456a9be410aa12faeb0d7dac1ceaff0cff96cc0900ed400041a1938eb"
+            ],
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/ledger/ledger.json",
+              "c2bd5366a63e49156eaa64e76d5be4aaae44ec01e82e5fea66398bcfee550a3b"
+            ],
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/ledger/session-closeout.json",
+              "9dc63c4138df212bbd32e52fc61adf482c6010f4dddb0385e66f3a24c2959590"
+            ],
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/patches/c1-shared-store-r4.patch",
+              "69e085f0b3703ae2929c0cc8e863b6f606fce1b15e8a4d3ab3fd378ef785f704"
+            ],
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/policy.json",
+              "3276c52c9cefa0d3927b067d07d5148fb3a1783873233238189cf4ab5fc2d22b"
+            ],
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/protocol.json",
+              "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6"
+            ],
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/research.json",
+              "177bb2e7a21203e4af6e7cb398432bddd19b56cba41223c34c40bd563721b7a0"
+            ],
+            [
+              "campaigns/codex-compress-lib-r4-2026-11-10/reviews/k2-c1-shared-store-r4-7d5a3cf.json",
+              "e61af2fb848d294462648ac406442c07759664a74711c7a6096f014894a3b353"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Functional pass and run validity stay separate",
+          "columns": [
+            "Run",
+            "Functional gates",
+            "integration_pass",
+            "run_valid",
+            "Invalid reasons"
+          ],
+          "rows": [
+            [
+              "c1r4-b-common-001",
+              "19 / 19",
+              "true",
+              "true",
+              "none"
+            ],
+            [
+              "c1r4-c-numa-001",
+              "17 / 17",
+              "true",
+              "false",
+              "clocksource_fallback"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Retained boot-clock events precede hotplug",
+          "columns": [
+            "Serial line",
+            "Exact recorded event"
+          ],
+          "rows": [
+            [
+              501,
+              "tsc: Marking TSC unstable due to TSCs unsynchronized"
+            ],
+            [
+              604,
+              "clocksource: Switched to clocksource hpet"
+            ],
+            [
+              710,
+              "smpboot: CPU 1 is now offline"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Exit and subcase-reset observations have a bounded scope",
+          "columns": [
+            "Record",
+            "Exit / reset",
+            "Recorded cleanup fields"
+          ],
+          "rows": [
+            [
+              "c1r4-b-common-001",
+              "exit=0, qemu_exit=true",
+              "stop_reason=None"
+            ],
+            [
+              "c1r4-c-numa-001",
+              "exit=0, qemu_exit=true",
+              "stop_reason=None"
+            ],
+            [
+              "library_unit",
+              "status=PASS, reset=true",
+              "No reset counters emitted; untouched=true"
+            ],
+            [
+              "guest_hotplug",
+              "status=PASS, reset=true",
+              "{\"cpu_restored\": 1, \"intended_device_matches\": 1, \"no_backing\": 1, \"objects_and_charges_drained\": 1, \"physical_devices\": 0, \"swap_devices\": 1, \"temporary_memcg_removed\": 1, \"virtual_devices\": 1, \"xswap_priority\": 32767}"
+            ],
+            [
+              "memcg_balance",
+              "status=PASS, reset=true",
+              "{\"intended_device_matches\": 1, \"no_backing\": 1, \"objects_and_charges_drained\": 1, \"physical_devices\": 0, \"swap_devices\": 1, \"temporary_memcg_removed\": 1, \"virtual_devices\": 1, \"xswap_priority\": 32767}"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Existing exact-source builds were reused",
+          "columns": [
+            "Build",
+            "Source commit",
+            "Final configuration SHA-256",
+            "Manifest SHA-256",
+            "New R4 cost"
+          ],
+          "rows": [
+            [
+              "c1-base-common-20261110",
+              "5e84ca928deeacb4eee656806a003f27d1eca82f",
+              "63da430133ca0c4199f5256ddccc04a90129d580e7adc9b9fa0af2f90949262d",
+              "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+              0
+            ],
+            [
+              "c1-7d5a3cfab2ab-debug-v2",
+              "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+              "8a3a8a5cc861fd0e4c4d5d5b2974d3b54e016e7d5593caeb0b949f07ae22d436",
+              "d27ba832157cc32c334d3ecf9decdf7d18e90c2438dfa857ad61656e0fd1b6ff",
+              0
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Costs through the R4 closeout",
+          "columns": [
+            "Contract",
+            "Counted guests",
+            "Counted builds"
+          ],
+          "rows": [
+            [
+              "Original C1",
+              3,
+              3
+            ],
+            [
+              "R2",
+              2,
+              1
+            ],
+            [
+              "R3",
+              3,
+              0
+            ],
+            [
+              "R4",
+              2,
+              0
+            ],
+            [
+              "C1 through R4",
+              10,
+              4
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned private-runtime identities",
+          "columns": [
+            "Artifact",
+            "SHA-256"
+          ],
+          "rows": [
+            [
+              "c1r4-b-common-001 result",
+              "12e482e6d73cbe36f17772aca0cde7e0e7ba72c946243f02f103feacf0ff8039"
+            ],
+            [
+              "c1r4-b-common-001 serial",
+              "b306b397f4733f3761cdd63449f2a19db4a4fde935baba5a332a2336c321449b"
+            ],
+            [
+              "c1r4-b-common-001 result hash sidecar",
+              "fdfa3f66fca550e4e1ae6b3b307c23134ea757f624cc23a9cb881794cc16bf52"
+            ],
+            [
+              "c1r4-b-common-001 start sidecar",
+              "1d664c85cfb58ae815e92e80b6ad2cffc3899d902da1596c5589f0101057a208"
+            ],
+            [
+              "c1r4-c-numa-001 result",
+              "42dc4f4631bbe24bce491d47e40977b50ac8462bda1db988c81303f3d01201ba"
+            ],
+            [
+              "c1r4-c-numa-001 serial",
+              "18ac9f90880616d3cb229f77f1a5b385e171f7301d230c39bbfba7c82aa86a45"
+            ],
+            [
+              "c1r4-c-numa-001 result hash sidecar",
+              "5760e881556bc2536eef5191528fc1a630b4b504b16acb74709627bbea2af01c"
+            ],
+            [
+              "c1r4-c-numa-001 start sidecar",
+              "5bf1ecaa09a3784caf3aa922b57157f0e8b55ee72342c3e3f48e66405f5d6d45"
+            ],
+            [
+              "Runtime archive",
+              "a7e42aa5364874f86fc737dea3b3b3a0ac09d25461c684efe6c17296b22d818d"
+            ],
+            [
+              "Public observations",
+              "e7037fcf24231d0382400d9e18bcd659b13462dba815a509a0d7393b655ac841"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "date": "2026-11-10",
+  "harness": "codex",
+  "model": "gpt-6"
+}

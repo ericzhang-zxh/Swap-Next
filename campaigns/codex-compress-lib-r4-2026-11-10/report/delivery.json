@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r4-2026-11-10",
+  "state": "generated",
+  "evidence_sha256": "9bade8bc8cd476d69f04677bdcd0b3f8ee2719da348968bb67e82af3078aab84",
+  "artifacts": {
+    "summary.json": "65adfc73e8e45d3983f72192c4c3dc8e2f479a44ea48651a4789024cda5a18a9",
+    "REPORT.md": "0febd2e7fccfebfa3bd024ecffd93488faeb893e07a52c59c0c1bbc4afa21e48",
+    "explainer.json": "b2d59423706320bf8724a09b5d0fa8b7801e8be058d2972313599215cdeea81f",
+    "explainer.html": "1b9dec16c3395e1f39b37bc882abbc580ef9e1ad9fc063a1e33dbc2cb0fc0d88",
+    "generate_report.py": "a22273e1891c6d56f6b04abd20f6aca3302aae482a3d4143907ff3f93ed5458e"
+  },
+  "story_sha256": "275f3afd4cec9d57fa7a6e4230cf9290852a458f2b5a692a19f89b36604158a3",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1794348789.1847498
+    },
+    {
+      "state": "generated",
+      "time": 1794348873.1226175
+    },
+    {
+      "state": "generated",
+      "time": 1794348936.1008778
+    }
+  ]
+}
