@@ -554,6 +554,16 @@ class SessionTests(unittest.TestCase):
             self.assertIn("source evidence expired", row["evidence_error"])
         self.assertEqual(self.calls, [])
 
+    def test_calibration_dispatch_carries_exact_candidate_correctness(self):
+        self.prepare_candidate()
+        self.review("review-calibration")
+        s.write(self.root / "proof.json", {"synthetic": True})
+        self.correctness = {"passed": True, "path": "proof.json"}
+        item = self.driver.next()
+        self.assertEqual(item["stage"], "calibrate_probe")
+        self.assertEqual(item["identity"]["candidate_commit"], self.commit)
+        self.assertEqual(item["argv"][-4:], ["--candidate", "one", "--correctness", "proof.json"])
+
     def test_matrix_partial_coverage_continues_without_repeating_rows(self):
         self.prepare_candidate()
         self.review("review-ok")

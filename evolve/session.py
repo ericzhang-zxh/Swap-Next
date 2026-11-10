@@ -169,7 +169,9 @@ def _tier(s, tier, evaluate=False):
         if status.get("failed"):
             return _finish(s, "Retained " + tier + " calibration is incomplete or noisy; no silent retry.")
         return action("calibrate_" + tier, "command", command="calibrate", tier=tier,
-                      identity={"fingerprint": s.get("fingerprint"), "prior_calibration": status.get("id")},
+                      candidate=candidate["identity"]["candidate"], correctness=candidate["correctness"]["path"],
+                      identity={**candidate["identity"], "fingerprint": s.get("fingerprint"),
+                                "prior_calibration": status.get("id")},
                       expects=["Complete exact-fingerprint baseline calibration, with every attempt retained."])
     return action("evaluate_" + tier, "command", command="evaluate", tier=tier,
                   candidate=candidate["identity"]["candidate"], correctness=candidate["correctness"]["path"],
@@ -1094,11 +1096,11 @@ class Session:
                  "automatic execution stops at probe/fast")
             runtime_action = {"compare": "evaluate", "compare-calibrate": "calibrate"}.get(command, command)
             argv = loop + [runtime_action, "--campaign", self.campaign, "--tier", tier]
-            if command == "evaluate":
+            if command in {"calibrate", "evaluate"}:
                 proof = p["correctness"]
                 delivery.at(self.root, proof)
                 argv += ["--candidate", name(p["candidate"], "candidate"), "--correctness", proof]
-                if tier == "fast":
+                if command == "evaluate" and tier == "fast":
                     need(p.get("selection_reason"), "exact probe admission reason is required")
                     argv += ["--selection-reason", p["selection_reason"]]
             if command in {"compare", "compare-calibrate"}:
