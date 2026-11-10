@@ -37,3 +37,9 @@ The fixtures cover valid new and unchanged legacy layouts; exact group/config/re
 R3's frozen protocol remains SHA-256 `d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf`. The existing H13 draft `C2-validation-contract.md` remains SHA-256 `2f0494cd12ea2bb78f62661849e92da805e088acb7dd340c9898bf96b34248f1` and is on hold.
 
 The coordinator owns H16 review, integration, a separately frozen continuation using the remaining original-phase resources/deadline, and any counted runtime attempt. This patch does not reopen R3 or rescore its failed run. No worker process remains running.
+
+## H16 machine-alias follow-up
+
+H16 found that the new proof accepted an appended `-M q35` even though `-M` is a QEMU machine-selection alias. Follow-up commit `a40180680f403d4ef7c86878fcea93aa7df562be` changes only `configurations.py` and `test_compression_evidence.py`. For `numa2-sockets-v2`, it rejects `-M`, `--M` and attached alias spellings. Canonical `-machine` remains bound to the frozen accelerator contract; legacy topology validation is unchanged.
+
+The regression failed before the fix for all six injected spellings (`-M q35`, `--M q35`, `-M=q35`, `--M=q35`, `-Mq35`, `--Mq35`). After the fix, all 42 compression-evidence tests passed, including the valid new proof and unchanged legacy proof behavior. `git diff --check` passed. The trusted runner never emitted the injected alias, so this finding concerns proof completeness; it introduces no candidate-source veto. No protocol, resource ledger, raw result, kernel build, VM, push or publication action occurred.

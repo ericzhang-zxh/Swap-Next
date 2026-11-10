@@ -1,0 +1,101 @@
+[
+  {
+    "id": "f5cf30f03f4148a4913f5cb7b1af25a4",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": null,
+    "case_id": "b-common",
+    "config_id": "c1-common",
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "role": "baseline",
+    "build": "c1-base-common-20261110",
+    "status": "BUILD_VERIFIED",
+    "started": 1794347730.3540645,
+    "build_reserved": false,
+    "build_reused": true,
+    "build_manifest": "benchmark/kernel/builds/c1-base-common-20261110/result.json",
+    "build_manifest_sha256": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+    "build_provenance": "benchmark/kernel/builds/c1-base-common-20261110/configured-build.json",
+    "build_provenance_sha256": "9575b9f4422433f8a97d5f32dd314d73bba1d82c72fe486202ffd899f618b407",
+    "finished": 1794347730.427152,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "7aa5714064c80a9b789c223d59aa831d493f5adc74240719ecd565e549160273",
+      "record_sha256": "00df1c2b1823b86771a7871352d49a27ebd4fd8ed5587a697e2c2f2089c118b0"
+    }
+  },
+  {
+    "id": "3e2b8da58ba5457e8de38aaa1edb7d49",
+    "action": "build-coverage",
+    "tier": "correctness",
+    "candidate": "c1-shared-store-r4",
+    "case_id": "c-numa",
+    "config_id": "c1-debug-v2",
+    "commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+    "role": "candidate",
+    "build": "c1-7d5a3cfab2ab-debug-v2",
+    "status": "BUILD_VERIFIED",
+    "started": 1794347759.3819022,
+    "build_reserved": false,
+    "controller_check": {
+      "status": "SCOPE_PASS",
+      "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "changed_paths": [
+        "include/linux/cpuhotplug.h",
+        "include/linux/page_compress.h",
+        "mm/Kconfig",
+        "mm/Makefile",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c",
+        "mm/zswap.c"
+      ],
+      "added_paths": [
+        "include/linux/page_compress.h",
+        "mm/page_compress.c",
+        "mm/page_compress_test.c"
+      ],
+      "changed_lines": 1362,
+      "checker_identity": {
+        "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+      },
+      "diff-check": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4/static/1794347761437223438-698cdc19297a/diff-check.log",
+        "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+      },
+      "checkpatch": {
+        "exit_code": 1,
+        "evidence": "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4/static/1794347761437223438-698cdc19297a/checkpatch.log",
+        "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+      },
+      "checkpatch-filtered": {
+        "exit_code": 0,
+        "evidence": "campaigns/codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4/static/1794347761437223438-698cdc19297a/checkpatch-filtered.log",
+        "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+      },
+      "checkpatch_advisory": {
+        "type": "FILE_PATH_CHANGES",
+        "classification": "administrative_allowed_add",
+        "added_paths": [
+          "include/linux/page_compress.h",
+          "mm/page_compress.c",
+          "mm/page_compress_test.c"
+        ],
+        "validated_by": "checkpatch-filtered"
+      }
+    },
+    "build_reused": true,
+    "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/result.json",
+    "build_manifest_sha256": "d27ba832157cc32c334d3ecf9decdf7d18e90c2438dfa857ad61656e0fd1b6ff",
+    "build_provenance": "benchmark/kernel/builds/c1-7d5a3cfab2ab-debug-v2/configured-build.json",
+    "build_provenance_sha256": "0a59141357fd35607296e8ee52226c29d4b284bb467d5aab18dd6485d3c532a5",
+    "finished": 1794347763.0024123,
+    "build_cache": {
+      "status": "reusable",
+      "identity_key": "4d6926a3bca691abbc6142660876420bac2f690926417481bf0dc556e4b31ac9",
+      "record_sha256": "17b59585730346357c7584109db2764d8342a016ecc3172c7cff471ec3265519"
+    }
+  }
+]

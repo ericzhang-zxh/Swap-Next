@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "k2-c1-shared-store-r4-7d5a3cf",
+  "campaign": "codex-compress-lib-r4-2026-11-10",
+  "candidate": "c1-shared-store-r4",
+  "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+  "reviewer": "tier_migration_research (independent of K1 implementation)",
+  "disposition": "pass",
+  "summary": "Reused exact-source K2 review of unchanged commit and tree, preserving original evidence hash. This is not an additional independent review sample. Exact-tree source review supports the structural delegation and preserved frontend ownership without per-object wrappers. No blocking code finding. Ready for bounded debug build after transparent disposition of the generic FILE_PATH_CHANGES advisory; runtime and performance are unverified.",
+  "findings": [],
+  "resolves": [],
+  "evidence": [
+    {
+      "path": "docs/research/2026-11-10-xswap-compression-tiering/K2-review.md",
+      "sha256": "81a10c87560a67169c47a69ff76ef26fe2b434a718f74c40a4836f25b89577f6"
+    }
+  ]
+}

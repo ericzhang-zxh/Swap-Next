@@ -1,0 +1,18 @@
+{
+  "id": "c1r4-c-numa-001",
+  "campaign": "codex-compress-lib-r4-2026-11-10",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794347763.148833,
+  "identity": {
+    "build": "c1-7d5a3cfab2ab-debug-v2",
+    "backend": "compressed",
+    "mode": "xswap",
+    "workload": "compression",
+    "config_id": "c1-debug-v2",
+    "correctness_case": "c-numa",
+    "topology_id": "numa2-sockets-v2"
+  },
+  "protocol_sha256": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+  "started_unix": 1794347763.195817
+}
