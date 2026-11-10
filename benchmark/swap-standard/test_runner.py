@@ -312,8 +312,15 @@ class CompressionRunnerTests(unittest.TestCase):
         cases = [dict(build="b", backend="compressed", mode="xswap", workload="swapin",
                       config_id="c1-common", correctness_case=None, topology_id="single"),
                  dict(build="b", backend="compressed", mode="xswap", workload="compression",
-                      config_id="c1-debug", correctness_case="c-numa", topology_id="numa2")]
+                      config_id="c1-debug", correctness_case="c-numa", topology_id="numa2"),
+                 dict(build="b", backend="compressed", mode="xswap", workload="compression",
+                      config_id="c1-debug-v2", correctness_case="c-numa", topology_id="numa2-sockets-v2")]
         for identity in cases:
+            if identity['topology_id'] == 'numa2-sockets-v2':
+                case = next(row for row in frozen['correctness_matrix']['cases'] if row['id'] == 'c-numa')
+                case.update(config_id='c1-debug-v2', topology_id='numa2-sockets-v2')
+                frozen['configurations']['c1-debug-v2'] = {
+                    'input_config_sha256': configurations.get_config('c1-debug-v2')['input_config_sha256']}
             argv = ["run.py", "--campaign", "demo", "--run-id", "run-1",
                     "--reservation", "/tmp/ticket.json", "--preallocate-swap", "--protocol-revision", "8"]
             for key, value in identity.items():
@@ -379,7 +386,9 @@ class CompressionRunnerTests(unittest.TestCase):
         function = re.search(r'^report_online_nodes\(\) \{.*?^\}', script, re.M | re.S).group(0)
         cases = [('absent', 'single', 'ONLINE_NODES flat\n'), ('absent', 'numa2', None),
                  ('missing-online', 'single', None), ('', 'single', None),
-                 ('0\n', 'single', 'ONLINE_NODES 0\n'), ('0-1\n', 'numa2', 'ONLINE_NODES 0-1\n')]
+                 ('0\n', 'single', 'ONLINE_NODES 0\n'), ('0-1\n', 'numa2', 'ONLINE_NODES 0-1\n'),
+                 ('absent', 'numa2-sockets-v2', None),
+                 ('0-1\n', 'numa2-sockets-v2', 'ONLINE_NODES 0-1\n')]
         for state, topology, expected in cases:
             with self.subTest(state=state, topology=topology), tempfile.TemporaryDirectory() as directory:
                 node = Path(directory) / 'node'
@@ -407,6 +416,23 @@ class CompressionRunnerTests(unittest.TestCase):
         for cpus, ram in ((8, 4096), (4, 8192)):
             with self.assertRaises(ValueError):
                 runner.topology_options('numa2', cpus, ram)
+
+    def test_socket_topology_emits_one_smp_and_preserves_legacy_commands(self):
+        import configurations
+        self.assertEqual(runner.guest_resource_options('single', '4', 4096),
+                         ['-smp', '4', '-m', '4096'])
+        self.assertEqual(runner.guest_resource_options('numa2', '4', 4096),
+                         ['-smp', '4', '-m', '4096', *configurations.NUMA2_ARGS])
+        options = runner.guest_resource_options('numa2-sockets-v2', '4', 4096)
+        self.assertEqual(options, ['-smp', '4,sockets=2,cores=2,threads=1', '-m', '4096',
+                                   *configurations.NUMA2_ARGS])
+        self.assertEqual(options.count('-smp'), 1)
+        for cpus, memory in ((2, 4096), (8, 4096), (4, 2048), (4, 8192)):
+            with self.subTest(cpus=cpus, memory=memory), self.assertRaises(ValueError):
+                runner.guest_resource_options('numa2-sockets-v2', cpus, memory)
+        frozen = {'protocol_revision': 8}
+        with self.assertRaisesRegex(ValueError, 'timing uses'):
+            runner.revision8_context(self.args(topology_id='numa2-sockets-v2'), frozen)
 
     def test_compressed_route_cannot_escape_revision8(self):
         for revision, mode, workload in ((7, 'xswap', 'swapin'), (8, 'plain', 'swapin'), (8, 'xswap', 'metadata')):

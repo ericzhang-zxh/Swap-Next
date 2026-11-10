@@ -23,7 +23,7 @@ KTAP = ('KTAP version 1\n1..1\n    KTAP version 1\n    # Subtest: page_compress\
 
 
 def unit_ktap(topology='single'):
-    nodes = [0, 1] if topology == 'numa2' else [0]
+    nodes = [0, 1] if topology in ('numa2', 'numa2-sockets-v2') else [0]
     comments = ''.join(f'    # page_compress_numa_placement: PAGE_COMPRESS_NUMA requested={node} actual={node} pages=1\n' for node in nodes)
     comments += f'    # page_compress_numa_placement: PAGE_COMPRESS_NUMA_TOTAL nodes={len(nodes)} placements={len(nodes)} mismatches=0\n'
     return KTAP.replace('    ok 3 page_compress_numa_placement', comments + '    ok 3 page_compress_numa_placement')
@@ -109,8 +109,12 @@ def case_log(name, mode, topology="single"):
     return '\n'.join(lines) + '\n'
 
 
-def group_log(group):
+def group_log(group, *, topology=None, config=None):
     spec = row(group)
+    if topology is not None:
+        spec['topology_id'] = topology
+    if config is not None:
+        spec['config_id'] = config
     body = (f'COMPRESSION_GROUP_BEGIN {group}\n'
             + ''.join(case_log(name, spec['mode'], spec['topology_id']) for name in spec['subcases'])
             + f'COMPRESSION_GROUP_END {group}\n')
@@ -129,7 +133,7 @@ def basic_log(backend, mode, workload, config='c1-common', topology='single', sp
     vm0 = 'pswpin 0\npswpout 0\nzswpin 0\nzswpout 0\nzswpwb 0\nswpin_zero 0\nswpout_zero 0\nswap_ra 0\nswap_ra_hit 0'
     vm1 = vm0.replace('zswpin 0', 'zswpin 32768').replace('zswpout 0', 'zswpout 32768')
     return ('BENCH_BOOT\nCMDLINE_BEGIN\n' + command + '\nCMDLINE_END\n'
-            f'GUEST_TOPOLOGY {topology}\nONLINE_NODES ' + ('0-1' if topology == 'numa2' else '0') + '\n'
+            f'GUEST_TOPOLOGY {topology}\nONLINE_NODES ' + ('0-1' if topology in ('numa2', 'numa2-sockets-v2') else '0') + '\n'
             'ZSWAP_ENABLED Y\n' + ('XSWAP_TYPE 1\n' if mode == 'xswap' else '')
             + 'BACKEND_DEVICE ' + ('none' if backend == 'compressed' else '/dev/zram1') + '\n'
             + f'SWAPS_BEGIN\nFilename Type Size Used Priority\n{device} partition 16384 0 32767\nSWAPS_END\n'
@@ -561,6 +565,126 @@ class TraceObserverTests(unittest.TestCase):
             self.assertNotEqual(subprocess.run([str(self.binary)], input=raw, text=True).returncode, 0)
 
 
+class SocketNumaTopologyTests(unittest.TestCase):
+    topology = 'numa2-sockets-v2'
+    smp = '4,sockets=2,cores=2,threads=1'
+    numa = ['-object', 'memory-backend-ram,id=c1-node0,size=2048M',
+            '-object', 'memory-backend-ram,id=c1-node1,size=2048M',
+            '-numa', 'node,nodeid=0,memdev=c1-node0,cpus=0-1',
+            '-numa', 'node,nodeid=1,memdev=c1-node1,cpus=2-3']
+
+    def protocol(self):
+        return {'guest': {'vcpus': 4, 'mem_mib': 4096},
+                'accelerator': {'qemu': ['-accel', 'tcg,thread=multi,tb-size=256',
+                                        '-machine', 'pc', '-cpu', 'max']}}
+
+    def record(self):
+        return {'topology_id': self.topology, 'config_id': 'c1-debug-v2',
+                'correctness_group': 'numa-lifecycle', 'topology_arguments': list(self.numa),
+                'command': ['qemu-system-x86_64', *self.protocol()['accelerator']['qemu'],
+                            '-smp', self.smp, '-m', '4096', *self.numa]}
+
+    def test_new_socket_topology_and_legacy_defaults_are_distinct(self):
+        import configurations
+        protocol = self.protocol()
+        self.assertEqual(configurations.topology_args('numa2', protocol), self.numa)
+        self.assertEqual(configurations.topology_args(self.topology, protocol), self.numa)
+        self.assertEqual(configurations.smp_argument('numa2', protocol), '4')
+        self.assertEqual(configurations.smp_argument(self.topology, protocol), self.smp)
+        configurations.validate_topology_record(protocol, self.record())
+        legacy = self.record()
+        legacy.update(topology_id='numa2', config_id='c1-debug')
+        legacy['command'][legacy['command'].index('-smp') + 1] = '4'
+        configurations.validate_topology_record(protocol, legacy)
+        for cpus, memory in ((2, 4096), (8, 4096), (4, 2048), (4, 8192)):
+            with self.subTest(cpus=cpus, memory=memory), self.assertRaises(ValueError):
+                configurations.topology_args(self.topology, {'guest': {'vcpus': cpus, 'mem_mib': memory}})
+        with self.assertRaisesRegex(ValueError, 'correctness-only'):
+            configurations.topology_args(self.topology, protocol, 'timing')
+
+    def test_new_id_resolves_only_for_versioned_numa_lifecycle(self):
+        import configurations
+        expected = dict(GROUPS['numa-lifecycle'], config_id='c1-debug-v2', topology_id=self.topology)
+        self.assertEqual(configurations.correctness_group('numa-lifecycle', 'c1-debug-v2', self.topology), expected)
+        for group, spec in GROUPS.items():
+            self.assertEqual(configurations.correctness_group(group, spec['config_id'], spec['topology_id']), spec)
+            if group != 'numa-lifecycle':
+                with self.subTest(group=group), self.assertRaises(ValueError):
+                    configurations.correctness_group(group, spec['config_id'], self.topology)
+        for config in ('c1-debug', 'c1-common', 'c1-kcsan'):
+            with self.subTest(config=config), self.assertRaises(ValueError):
+                configurations.correctness_group('numa-lifecycle', config, self.topology)
+        with self.assertRaises(ValueError):
+            configurations.correctness_group('numa-lifecycle', 'c1-debug-v2', 'numa2-untrusted')
+
+    def test_proof_rejects_cpu_topology_mismatch_duplicate_or_fake_cpu_argument(self):
+        import configurations
+        original = self.record()
+        commands = []
+        for value in ('4', '4,sockets=1,cores=4,threads=1', '4,sockets=2,cores=1,threads=2',
+                      self.smp + ',sockets=1', self.smp + ',maxcpus=8'):
+            command = list(original['command'])
+            command[command.index('-smp') + 1] = value
+            commands.append(command)
+        commands += [original['command'] + ['-smp', self.smp],
+                     original['command'] + ['--smp', self.smp],
+                     original['command'] + ['-smp=' + self.smp],
+                     original['command'] + ['-cpu', 'max,sockets=2,cores=2,threads=1'],
+                     original['command'] + ['--cpu', 'max'],
+                     original['command'] + ['-machine', 'pc'],
+                     original['command'] + ['-m', '4096']]
+        for flag, replacement in (('-smp', '4'), ('-cpu', 'max,sockets=2,cores=2,threads=1')):
+            command = list(original['command'])
+            command[command.index(flag) + 1] = replacement
+            if flag == '-smp':
+                command[command.index('-cpu') + 1] = 'max,sockets=2,cores=2,threads=1'
+            commands.append(command)
+        for index, command in enumerate(commands):
+            with self.subTest(mutation=index), self.assertRaises(ValueError):
+                configurations.validate_topology_record(self.protocol(), dict(original, command=command))
+
+    def test_proof_requires_exact_numa_arguments_and_identity(self):
+        import configurations
+        original = self.record()
+        changed_node = list(original['command'])
+        changed_node[-1] = 'node,nodeid=1,memdev=c1-node1,cpus=1-3'
+        commands = [changed_node, original['command'][:-2],
+                    original['command'] + self.numa[-2:],
+                    original['command'] + self.numa[:2],
+                    original['command'] + ['--numa', self.numa[-1]],
+                    original['command'] + ['-object=' + self.numa[1]]]
+        for command in commands:
+            with self.subTest(command=command), self.assertRaises(ValueError):
+                configurations.validate_topology_record(self.protocol(), dict(original, command=command))
+        for values in ({'topology_arguments': []}, {'config_id': 'c1-debug'},
+                       {'correctness_group': 'debug-failures'}, {'topology_id': 'numa2-untrusted'}):
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                configurations.validate_topology_record(self.protocol(), dict(original, **values))
+
+    def parse_log(self, transform=lambda text: text):
+        body, spec = group_log('numa-lifecycle', topology=self.topology, config='c1-debug-v2')
+        text = basic_log('compressed', 'xswap', 'compression', 'c1-debug-v2', self.topology, spec) + body
+        return evidence.parse(transform(text), 'abc', 'compressed', 'xswap', 'compression', 8,
+                              config_id='c1-debug-v2', correctness_case=spec['id'],
+                              topology_id=self.topology, expected_case=spec)
+
+    def test_parser_requires_both_real_nodes_and_preserves_warning_gate(self):
+        valid = self.parse_log()
+        self.assertTrue(all(valid['gates'].values()), valid)
+        self.assertEqual(valid['correctness_subcases']['library_unit']['numa_observations']['nodes'], 2)
+        for value in ('0', '1', 'flat', '0-2', ''):
+            result = self.parse_log(lambda text: text.replace('ONLINE_NODES 0-1', 'ONLINE_NODES ' + value))
+            self.assertFalse(result['gates']['configuration_identity'], value)
+        result = self.parse_log(lambda text: text.replace('GUEST_TOPOLOGY ' + self.topology, 'GUEST_TOPOLOGY numa2'))
+        self.assertFalse(result['gates']['configuration_identity'])
+        for ktap in (unit_ktap('single'), unit_ktap(self.topology).replace('requested=1 actual=1', 'requested=1 actual=0')):
+            result = self.parse_log(lambda text: text.replace(unit_ktap(self.topology), ktap))
+            self.assertFalse(result['gates']['compression_library_unit'])
+        result = self.parse_log(lambda text: text.replace('Linux version fixture',
+                               'WARNING: CPU: 2 PID: 0 at arch/x86/kernel/smpboot.c:329 topology_sane'))
+        self.assertFalse(result['gates']['no_new_kernel_warnings'])
+
+
 class Revision8ProtocolTests(unittest.TestCase):
     def protocol(self):
         import configurations
@@ -639,6 +763,31 @@ class Revision8ProtocolTests(unittest.TestCase):
         self.assertEqual(protocol_rules(replacement)['protocol_revision'], 8)
         replacement['configurations']['c1-debug-v2'] = old_pin
         with self.assertRaisesRegex(ValueError, 'configuration input hash mismatch'):
+            protocol_rules(replacement)
+
+    def test_socket_numa_variant_requires_a_separate_matching_matrix_row(self):
+        import configurations
+        from validity import protocol_rules
+        legacy = self.protocol()
+        replacement = copy.deepcopy(legacy)
+        case = next(item for item in replacement['correctness_matrix']['cases'] if item['group'] == 'numa-lifecycle')
+        case.update(config_id='c1-debug-v2', topology_id='numa2-sockets-v2')
+        replacement['configurations']['c1-debug-v2'] = {
+            'input_config_sha256': configurations.get_config('c1-debug-v2', ROOT)['input_config_sha256']}
+        self.assertEqual(protocol_rules(legacy)['protocol_revision'], 8)
+        self.assertEqual(protocol_rules(replacement)['protocol_revision'], 8)
+        for group in ('debug-failures', 'compressed-roundtrip', 'regression'):
+            changed = copy.deepcopy(replacement)
+            wrong = next(item for item in changed['correctness_matrix']['cases'] if item['group'] == group)
+            wrong['topology_id'] = 'numa2-sockets-v2'
+            with self.subTest(group=group), self.assertRaises(ValueError):
+                protocol_rules(changed)
+        changed = copy.deepcopy(replacement)
+        changed['cases']['swapin-compressed']['topology_id'] = 'numa2-sockets-v2'
+        with self.assertRaises(ValueError):
+            protocol_rules(changed)
+        case['config_id'] = 'c1-debug'
+        with self.assertRaises(ValueError):
             protocol_rules(replacement)
 
     def test_measurement_or_coverage_drift_is_rejected(self):

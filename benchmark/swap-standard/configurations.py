@@ -79,6 +79,7 @@ GROUPS = {
                        "workload": "compression", "topology_id": "numa2",
                        "subcases": ["library_unit", "guest_hotplug", "memcg_balance"]},
 }
+NUMA2_SOCKETS_V2_SMP = "4,sockets=2,cores=2,threads=1"
 NUMA2_ARGS = ["-object", "memory-backend-ram,id=c1-node0,size=2048M",
               "-object", "memory-backend-ram,id=c1-node1,size=2048M",
               "-numa", "node,nodeid=0,memdev=c1-node0,cpus=0-1",
@@ -141,7 +142,7 @@ def pinned_config(protocol, config_id, root=ROOT, purpose=None):
 
 
 def topology_args(topology_id, protocol, purpose="correctness"):
-    _need(topology_id in ("single", "numa2"), "unknown trusted topology")
+    _need(topology_id in ("single", "numa2", "numa2-sockets-v2"), "unknown trusted topology")
     if topology_id == "single":
         return []
     _need(purpose == "correctness", "NUMA topology is correctness-only")
@@ -150,6 +151,14 @@ def topology_args(topology_id, protocol, purpose="correctness"):
           "two-node correctness topology requires 4 vCPU and 4096 MiB total")
     return list(NUMA2_ARGS)
 
+
+
+def smp_argument(topology_id, protocol):
+    """Keep legacy CPU defaults; align the versioned NUMA layout by socket."""
+    topology_args(topology_id, protocol)
+    if topology_id == "numa2-sockets-v2":
+        return NUMA2_SOCKETS_V2_SMP
+    return str(protocol["guest"]["vcpus"])
 
 
 def validate_topology_record(protocol, result, purpose="correctness"):
@@ -163,6 +172,33 @@ def validate_topology_record(protocol, result, purpose="correctness"):
         matches = sum(command[index:index + len(expected)] == expected
                       for index in range(len(command) - len(expected) + 1))
         _need(matches == 1, "guest command omits or duplicates frozen topology arguments")
+    if result.get("topology_id") == "numa2-sockets-v2":
+        _need(result.get("config_id") == "c1-debug-v2"
+              and result.get("correctness_group") == "numa-lifecycle",
+              "socket topology requires the versioned NUMA correctness group")
+
+        def option_values(arguments, option):
+            _need(not any(item.startswith(option + "=") or item == "-" + option
+                          or item.startswith("-" + option + "=") for item in arguments),
+                  "noncanonical guest topology option: " + option)
+            indexes = [index for index, item in enumerate(arguments) if item == option]
+            _need(all(index + 1 < len(arguments) for index in indexes),
+                  "missing guest topology option value: " + option)
+            return [arguments[index + 1] for index in indexes]
+
+        _need(option_values(command, "-smp") == [NUMA2_SOCKETS_V2_SMP],
+              "guest command CPU topology mismatch or duplicate -smp")
+        _need(option_values(command, "-m") == ["4096"], "guest command memory topology mismatch")
+        for option in ("-object", "-numa"):
+            _need(option_values(command, option) == option_values(expected, option),
+                  "guest command NUMA topology mismatch or duplicate " + option)
+        accelerator = protocol.get("accelerator", {}).get("qemu")
+        _need(isinstance(accelerator, list) and all(isinstance(item, str) for item in accelerator),
+              "missing frozen CPU and machine arguments")
+        for option in ("-cpu", "-machine"):
+            frozen = option_values(accelerator, option)
+            _need(len(frozen) == 1 and option_values(command, option) == frozen,
+                  "guest command differs from frozen " + option)
 
 
 def matrix_cases(protocol):
@@ -178,13 +214,19 @@ def matrix_cases(protocol):
     return rows
 
 
-def correctness_group(group, config_id):
+def correctness_group(group, config_id, topology_id=None):
     """Resolve an exact trusted group and its explicitly versioned debug input."""
     _need(group in GROUPS, "unknown trusted correctness group")
     spec = copy.deepcopy(GROUPS[group])
     if config_id == "c1-debug-v2" and group in ("debug-failures", "numa-lifecycle"):
         spec["config_id"] = config_id
     _need(config_id == spec["config_id"], "correctness group config_id mismatch")
+    if topology_id == "numa2-sockets-v2":
+        _need(group == "numa-lifecycle" and config_id == "c1-debug-v2",
+              "socket topology requires the versioned NUMA correctness group")
+        spec["topology_id"] = topology_id
+    _need(topology_id is None or topology_id == spec["topology_id"],
+          "correctness group topology_id mismatch")
     return spec
 
 
@@ -193,7 +235,7 @@ def correctness_case(protocol, case_id):
     row = next((row for row in rows if row["id"] == case_id), None)
     _need(row is not None, "unknown frozen correctness case")
     group = row.get("group")
-    spec = correctness_group(group, row.get("config_id"))
+    spec = correctness_group(group, row.get("config_id"), row.get("topology_id"))
     _need(row.get("role") in ("baseline", "candidate"), "invalid correctness source role")
     for key in ("config_id", "mode", "backend", "workload", "topology_id"):
         _need(row.get(key) == spec[key], "correctness group " + key + " mismatch")

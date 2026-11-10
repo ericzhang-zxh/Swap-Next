@@ -252,7 +252,7 @@ def numa_ktap_observations(raw, topology_id):
             placements.append({'requested': requested, 'actual': actual, 'pages': pages})
         else:
             totals.append(tuple(map(int, total.groups())))
-    expected_nodes = {0, 1} if topology_id == 'numa2' else {0}
+    expected_nodes = {0, 1} if topology_id in ('numa2', 'numa2-sockets-v2') else {0}
     observed_nodes = {entry['requested'] for entry in placements}
     require(observed_nodes == expected_nodes and len(totals) == 1, 'missing required per-node KUnit observations')
     require(totals[0] == (len(expected_nodes), len(placements), 0) and len(placements) >= len(expected_nodes),
@@ -570,7 +570,7 @@ def revision8_identity(text, words, backend, mode, workload, config_id, correctn
                 'missing frozen correctness identity')
         group = expected_case.get('group')
         require(group in GROUPS, 'unknown correctness group')
-        spec = catalog.correctness_group(group, config_id)
+        spec = catalog.correctness_group(group, config_id, topology_id)
         for key, value in {'backend': backend, 'mode': mode, 'workload': workload,
                            'config_id': config_id, 'topology_id': topology_id}.items():
             require(spec[key] == value and expected_case.get(key) == value, 'correctness identity mismatch: ' + key)
@@ -593,7 +593,7 @@ def revision8_identity(text, words, backend, mode, workload, config_id, correctn
     good &= all(text.splitlines().count(marker) == 1 for marker in
                 ('CMDLINE_BEGIN', 'CMDLINE_END', 'BENCH_BOOT', 'BENCH_WORKLOAD_PASS', 'BENCH_PASS'))
     good &= text.splitlines().count('GUEST_TOPOLOGY ' + topology_id) == 1
-    nodes = {'0-1'} if topology_id == 'numa2' else {'0'}
+    nodes = {'0-1'} if topology_id in ('numa2', 'numa2-sockets-v2') else {'0'}
     if topology_id == 'single' and config_id in {'c1-common', 'c1-legacy', 'c1-kcsan'}:
         nodes.add('flat')
     observed_nodes = [line for line in text.splitlines() if line.startswith('ONLINE_NODES')]

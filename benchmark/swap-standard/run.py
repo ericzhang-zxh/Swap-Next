@@ -298,14 +298,18 @@ def revision8_context(args, frozen):
 
 def topology_options(topology_id, cpus, memory):
     """Auxiliary NUMA correctness uses the same total resources as timing."""
-    if topology_id == "single":
-        return []
-    if topology_id != "numa2" or int(cpus) != 4 or int(memory) != 4096:
-        raise ValueError("numa2 requires 4 vCPU and 4096 MiB")
-    return ["-object", "memory-backend-ram,id=c1-node0,size=2048M",
-            "-object", "memory-backend-ram,id=c1-node1,size=2048M",
-            "-numa", "node,nodeid=0,memdev=c1-node0,cpus=0-1",
-            "-numa", "node,nodeid=1,memdev=c1-node1,cpus=2-3"]
+    from configurations import topology_args
+
+    return topology_args(topology_id, {"guest": {"vcpus": int(cpus), "mem_mib": int(memory)}})
+
+
+def guest_resource_options(topology_id, cpus, memory):
+    """Emit one CPU definition, with the exact topology recorded by the proof."""
+    from configurations import smp_argument
+
+    shape = {"guest": {"vcpus": int(cpus), "mem_mib": int(memory)}}
+    return ["-smp", smp_argument(topology_id, shape), "-m", str(memory),
+            *topology_options(topology_id, cpus, memory)]
 
 
 def guest_commandline(args, image_sha):
@@ -340,7 +344,7 @@ def main():
     parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime", "correctness", "compression"], required=True)
     parser.add_argument("--config-id", default="standard")
     parser.add_argument("--correctness-case")
-    parser.add_argument("--topology-id", choices=["single", "numa2"], default="single")
+    parser.add_argument("--topology-id", choices=["single", "numa2", "numa2-sockets-v2"], default="single")
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--run-id", type=run_id, help="explicit unique run directory name")
@@ -442,7 +446,8 @@ def main():
         image_sha = manifest["image_sha256"]
         append = guest_commandline(args, image_sha)
         command = ["qemu-system-x86_64", *accel,
-                   "-smp", guest_cpus, "-m", str(guest_mib), *topology_options(args.topology_id, guest_cpus, guest_mib), "-nodefaults", "-display", "none", "-serial", "stdio",
+                   *guest_resource_options(args.topology_id, guest_cpus, guest_mib),
+                   "-nodefaults", "-display", "none", "-serial", "stdio",
                    "-monitor", "none", "-nic", "none", "-no-reboot",
                    "-sandbox", "on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny",
                    "-kernel", str(image), "-initrd", str(BASE / "initramfs.cpio.gz"), "-append", append,
