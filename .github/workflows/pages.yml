@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "campaigns/*/report/**/explainer.*"
+      - "campaigns/report-groups.json"
+      - "campaigns/group_report_index.py"
       - ".agents/skills/explaining-campaign-results/scripts/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -33,6 +35,7 @@ jobs:
             campaigns
             .agents/skills/explaining-campaign-results/scripts
       - run: python3 .agents/skills/explaining-campaign-results/scripts/build_site.py campaigns _site
+      - run: python3 campaigns/group_report_index.py campaigns _site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

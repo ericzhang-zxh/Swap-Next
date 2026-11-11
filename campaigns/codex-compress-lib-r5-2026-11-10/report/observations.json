@@ -1,0 +1,1021 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r5-2026-11-10",
+  "native_evidence_sha256": "c2e24110f9c096e5175441dc91fc9b90570a226fa862442524bd13b5aabdceb3",
+  "source_pins": {
+    "campaigns/codex-compress-lib-2026-11-10/protocol.json": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+    "campaigns/codex-compress-lib-2026-11-10/policy.json": "56a0bdd0afc689127fcd21ab7a1e489e5daa9438321249dedf9d1afb3d58d2c9",
+    "campaigns/codex-compress-lib-2026-11-10/ledger/budget.json": "2e03ba0eee0c337bc1ee57e4729b5dd912f7e78d0d4ce30d23091173fe5dac0b",
+    "campaigns/codex-compress-lib-2026-11-10/campaign.json": "368180778582b7ec4ecadaed1de28d018c2e9f81b439c4cf69f3aae96198ae04",
+    "campaigns/codex-compress-lib-r2-2026-11-10/protocol.json": "dd5d28e9b355c0c94cc85750c4393ce8e5f125756013ca82581a2132b1035ed0",
+    "campaigns/codex-compress-lib-r2-2026-11-10/policy.json": "9fb597dc2e193cddba92bc7a4962b0d1be3fe85bd3cb83ad76ccaead8c656d75",
+    "campaigns/codex-compress-lib-r2-2026-11-10/ledger/budget.json": "b529da364b87c259df26d92cb83e01a60752c6e96fd3a1bc04bc3bb4990e511e",
+    "campaigns/codex-compress-lib-r2-2026-11-10/campaign.json": "4c66515d04650d2d94daea3937edb77bd42e8ebca04ed6f6d0346c75b46acdbe",
+    "campaigns/codex-compress-lib-r3-2026-11-10/protocol.json": "d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf",
+    "campaigns/codex-compress-lib-r3-2026-11-10/policy.json": "156a05b7f9d29ba0aa5cf88938d033e1bb69a5cb72577cff04e2656f4cb53557",
+    "campaigns/codex-compress-lib-r3-2026-11-10/ledger/budget.json": "cc2aa3e137730bf12f1fc8a0615cb347fd83de7087e8a86d33eccd8faa570b1f",
+    "campaigns/codex-compress-lib-r3-2026-11-10/campaign.json": "150e955586171af33e501d609229b88b97c6a9b014e500652bed981274dfe5dd",
+    "campaigns/codex-compress-lib-r4-2026-11-10/protocol.json": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+    "campaigns/codex-compress-lib-r4-2026-11-10/policy.json": "3276c52c9cefa0d3927b067d07d5148fb3a1783873233238189cf4ab5fc2d22b",
+    "campaigns/codex-compress-lib-r4-2026-11-10/ledger/budget.json": "555c93a456a9be410aa12faeb0d7dac1ceaff0cff96cc0900ed400041a1938eb",
+    "campaigns/codex-compress-lib-r4-2026-11-10/campaign.json": "8210ec1f599aadf65cf2bb897f7fd5a726cba79c405701ce7d4f0f0b7ba34e52",
+    "campaigns/codex-compress-lib-r5-2026-11-10/protocol.json": "e9e282998de6bc59c2563b398f5968c33f1a5ee219a06cca6e15267d9a9511e3",
+    "campaigns/codex-compress-lib-r5-2026-11-10/policy.json": "283245b9ee065feb8b89858127d1dc03ca564e91bc72ce356c74e516d9af5881",
+    "campaigns/codex-compress-lib-r5-2026-11-10/ledger/budget.json": "4183d55eb370ca2540332433d95a9101bb4750639ecab41d1182cc52cbde63bb",
+    "campaigns/codex-compress-lib-r5-2026-11-10/campaign.json": "0735185ff256eda0ccb876a9c13982a5d23950b44128b20feb348624baf569ca",
+    "campaigns/codex-compress-lib-r6-2026-11-10/protocol.json": "f89b124964ed885cfc3e17596f558948e31c6cb7a14d3536a33f7c5d64fa92da",
+    "campaigns/codex-compress-lib-r6-2026-11-10/policy.json": "e4dfb59ccea57eb5aadd7db2e4a6104cb5ab5533d70dbebc2723b9b38b8d7862",
+    "campaigns/codex-compress-lib-r6-2026-11-10/ledger/budget.json": "985b39c79d5fbb0f2f7d471679458e8c3c4906ff35fbfa378b91796654d7baf2",
+    "campaigns/codex-compress-lib-r6-2026-11-10/campaign.json": "f17055b04c058d65a587dc921e2b21ba1994110f225efcb050ec09803035cd20",
+    "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/correctness.json": "f53bf3552546426a382657f4580d5b25bd25287e74fb032873da8ba8246d45cd",
+    "docs/research/2026-11-10-xswap-compression-tiering/H25-timing-observer-diagnosis.md": "b3b496f457d2e189ae7e46da038f05215f38b3ab74f7cbd60f4fe233f294c960",
+    "docs/research/2026-11-10-xswap-compression-tiering/H26-result.md": "d8fb0271e36c5bb71ffae4a805c4abe02d1476a6754480449b308c56e3b9e4b4",
+    "docs/research/2026-11-10-xswap-compression-tiering/H27-trace-diagnostic-admission.md": "ca0e4eb10256ca0761e47ddff67c194a00043330aa9ed1245177d53cd2a527c3",
+    "docs/research/2026-11-10-xswap-compression-tiering/runtime-incident-006.md": "36bb68d142995e4f5318fe2d04b5ece339ed5bb511909285e9c5f902a0099e25",
+    "docs/research/2026-11-10-xswap-compression-tiering/runtime-incident-007.md": "05e11abf5f2a18bf27d281c2b8a15af61086b0dde10c99dd17eb033e81739646"
+  },
+  "resources": [
+    {
+      "campaign": "codex-compress-lib-2026-11-10",
+      "counted": 3,
+      "launched": 3,
+      "builds": 3
+    },
+    {
+      "campaign": "codex-compress-lib-r2-2026-11-10",
+      "counted": 2,
+      "launched": 2,
+      "builds": 1
+    },
+    {
+      "campaign": "codex-compress-lib-r3-2026-11-10",
+      "counted": 3,
+      "launched": 3,
+      "builds": 0
+    },
+    {
+      "campaign": "codex-compress-lib-r4-2026-11-10",
+      "counted": 2,
+      "launched": 2,
+      "builds": 0
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "counted": 9,
+      "launched": 9,
+      "builds": 5
+    }
+  ],
+  "totals": {
+    "counted": 19,
+    "launched": 19,
+    "builds": 9
+  },
+  "attempts": [
+    {
+      "campaign": "codex-compress-lib-2026-11-10",
+      "run_id": "c1-b-common-001",
+      "case": "b-common",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "build": "c1-base-common-20261110",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "integration_pass": false,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": false,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_backend_device": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 22.539151126984507,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-2026-11-10/runs/guests/c1-b-common-001/result.json",
+      "result_sha256": "5076e03403000c191c77338785c38d60e7bf98b1941162059ad39d42acfedb0d",
+      "serial_sha256": "13d0051f8d9c9a6a853efa4ad78cf4abe4f21df2ac571922be28adb244ba9a46",
+      "reservation_source": "campaigns/codex-compress-lib-2026-11-10/ledger/guest-reservations/c1-b-common-001.json",
+      "reservation_sha256": "68ad7584b3817a45933e8d4e585e2a70d1d842a3cfe63dc0f13f472eba8f29fc",
+      "subcases": {}
+    },
+    {
+      "campaign": "codex-compress-lib-2026-11-10",
+      "run_id": "c1-b-common-002",
+      "case": "b-common",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "build": "c1-base-common-20261110",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_backend_device": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 23.542138014920056,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-2026-11-10/runs/guests/c1-b-common-002/result.json",
+      "result_sha256": "ac6efb4096b6361f064626fd2a68fe8d6f8e80fa23e834c1cd393c7191b45064",
+      "serial_sha256": "a553d2a3141c7e08597b5d2aa1acb7a7688756a16e506f6a0ea6f1e0bad3c456",
+      "reservation_source": "campaigns/codex-compress-lib-2026-11-10/ledger/guest-reservations/c1-b-common-002.json",
+      "reservation_sha256": "bca7adc58e984cf352453d98106fb0112067d94187f5acab8819dc4f066e7944",
+      "subcases": {}
+    },
+    {
+      "campaign": "codex-compress-lib-2026-11-10",
+      "run_id": "c1-b-legacy-001",
+      "case": "b-legacy",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "build": "c1-5e84ca928dee-legacy",
+      "config_id": "c1-legacy",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_roundtrip": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 5.508158544078469,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-2026-11-10/runs/guests/c1-b-legacy-001/result.json",
+      "result_sha256": "e80ead65e8fcb02e8c37744f14ff884b95afdd5d8a6c54f10a7e47d7d91a5658",
+      "serial_sha256": "49cf881a474036855e90248d030d8d2cb05190ceec921915c5ca48844b5eedb8",
+      "reservation_source": "campaigns/codex-compress-lib-2026-11-10/ledger/guest-reservations/c1-b-legacy-001.json",
+      "reservation_sha256": "bed24d9bea66bbd711a88ca3e99ccf182da4f8618726b6d8d8d5f5433080b994",
+      "subcases": {
+        "roundtrip": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    },
+    {
+      "campaign": "codex-compress-lib-r2-2026-11-10",
+      "run_id": "c1r2-b-common-001",
+      "case": "b-common",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "build": "c1-base-common-20261110",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_backend_device": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 23.542624142952263,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r2-2026-11-10/runs/guests/c1r2-b-common-001/result.json",
+      "result_sha256": "56763f5f085f0160ce9f6f479af52d8dddf985c961ad9a0dcd750ba9d523cc1c",
+      "serial_sha256": "4ed8c65b34cefc84417ef7203911082f89809cfa4de6d86d925a898281198228",
+      "reservation_source": "campaigns/codex-compress-lib-r2-2026-11-10/ledger/guest-reservations/c1r2-b-common-001.json",
+      "reservation_sha256": "9ebdce0e661a19e3a5092b2715485f069d1d8bdfc2c54ad7cad30b93e4012649",
+      "subcases": {}
+    },
+    {
+      "campaign": "codex-compress-lib-r2-2026-11-10",
+      "run_id": "c1r2-c-debug-001",
+      "case": "c-debug",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-debug-v2",
+      "config_id": "c1-debug-v2",
+      "topology_id": "single",
+      "integration_pass": false,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "parse_complete": false,
+        "qemu_exit": true
+      },
+      "wall_seconds": 71.55226076906547,
+      "parse_error": "unknown compression record: zswap: compressor swap_next_invalid_codec_7d83 not available",
+      "result_source": "campaigns/codex-compress-lib-r2-2026-11-10/runs/guests/c1r2-c-debug-001/result.json",
+      "result_sha256": "2c8ac864d761e796c0d439f4f069502fed3d8f26e8031bd0da4d4651966b9d6e",
+      "serial_sha256": "87c7ebe30f51fd8ce45a14b188a7140bef043fc806cac95011f9b8793b788280",
+      "reservation_source": "campaigns/codex-compress-lib-r2-2026-11-10/ledger/guest-reservations/c1r2-c-debug-001.json",
+      "reservation_sha256": "fe3475c095f7879c4adc40417578c463b7d890270b4308e9b895deceb96841a4",
+      "subcases": {}
+    },
+    {
+      "campaign": "codex-compress-lib-r3-2026-11-10",
+      "run_id": "c1r3-b-common-001",
+      "case": "b-common",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "build": "c1-base-common-20261110",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_backend_device": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 23.04157797107473,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r3-2026-11-10/runs/guests/c1r3-b-common-001/result.json",
+      "result_sha256": "1dad49f82bfb57e15793463d925f25ae45ce4f943b9fb18699b1d4a5dc8208b5",
+      "serial_sha256": "790289543bf79e5f4b8aa29eae29d326dc5bd1398f6d2dc7425fa93da4176fd7",
+      "reservation_source": "campaigns/codex-compress-lib-r3-2026-11-10/ledger/guest-reservations/c1r3-b-common-001.json",
+      "reservation_sha256": "9582883fcf9c58244e3d91eb8f5e4547710186a7cb3301e6a71ac905760f4cfb",
+      "subcases": {}
+    },
+    {
+      "campaign": "codex-compress-lib-r3-2026-11-10",
+      "run_id": "c1r3-c-debug-001",
+      "case": "c-debug",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-debug-v2",
+      "config_id": "c1-debug-v2",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_invalid_codec": true,
+        "compression_library_unit": true,
+        "compression_large_folio": true,
+        "compression_memcg_balance": true,
+        "compression_memcg_offline": true,
+        "compression_memcg_limits": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 73.54817337007262,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r3-2026-11-10/runs/guests/c1r3-c-debug-001/result.json",
+      "result_sha256": "9d1a8fbfd4de6e110640815412504163d8702fe33205c8f53ad17826cd3acfd2",
+      "serial_sha256": "a8d20c74c68371edacb11ea83a52e7912198e8bd2bb93523d1ac6ddc9442c450",
+      "reservation_source": "campaigns/codex-compress-lib-r3-2026-11-10/ledger/guest-reservations/c1r3-c-debug-001.json",
+      "reservation_sha256": "df6184f5f8ae806bc5686b243291dfe9339b23d0e8c200aae5ec86fd9a10474c",
+      "subcases": {
+        "invalid_codec": {
+          "status": "PASS",
+          "reset": true
+        },
+        "library_unit": {
+          "status": "PASS",
+          "reset": true
+        },
+        "large_folio": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_balance": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_offline": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_limits": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    },
+    {
+      "campaign": "codex-compress-lib-r3-2026-11-10",
+      "run_id": "c1r3-c-numa-001",
+      "case": "c-numa",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-debug-v2",
+      "config_id": "c1-debug-v2",
+      "topology_id": "numa2",
+      "integration_pass": false,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": false,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_library_unit": true,
+        "compression_guest_hotplug": true,
+        "compression_memcg_balance": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": false,
+        "qemu_exit": true
+      },
+      "wall_seconds": 60.54006478819065,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r3-2026-11-10/runs/guests/c1r3-c-numa-001/result.json",
+      "result_sha256": "2767157a386326880422a1939f90a6ae807c6434ee22736f96a2c72f15a8fe83",
+      "serial_sha256": "a2720fdfe500355593421ab2770bb6710aca481ccaabc58b04a94e881ba44f57",
+      "reservation_source": "campaigns/codex-compress-lib-r3-2026-11-10/ledger/guest-reservations/c1r3-c-numa-001.json",
+      "reservation_sha256": "a2e28256196b9ef9ce5a0c8229912236b8fc27135ae08b89581e1551a88b360b",
+      "subcases": {
+        "library_unit": {
+          "status": "PASS",
+          "reset": true
+        },
+        "guest_hotplug": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_balance": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    },
+    {
+      "campaign": "codex-compress-lib-r4-2026-11-10",
+      "run_id": "c1r4-b-common-001",
+      "case": "b-common",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "build": "c1-base-common-20261110",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_backend_device": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 22.54046685900539,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r4-2026-11-10/runs/guests/c1r4-b-common-001/result.json",
+      "result_sha256": "12e482e6d73cbe36f17772aca0cde7e0e7ba72c946243f02f103feacf0ff8039",
+      "serial_sha256": "b306b397f4733f3761cdd63449f2a19db4a4fde935baba5a332a2336c321449b",
+      "reservation_source": "campaigns/codex-compress-lib-r4-2026-11-10/ledger/guest-reservations/c1r4-b-common-001.json",
+      "reservation_sha256": "cd1031e97dfe01b34615a671636074ada21998a5c7150900efa74f1e31cb2160",
+      "subcases": {}
+    },
+    {
+      "campaign": "codex-compress-lib-r4-2026-11-10",
+      "run_id": "c1r4-c-numa-001",
+      "case": "c-numa",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-debug-v2",
+      "config_id": "c1-debug-v2",
+      "topology_id": "numa2-sockets-v2",
+      "integration_pass": true,
+      "run_valid": false,
+      "invalid_reasons": [
+        "clocksource_fallback"
+      ],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_library_unit": true,
+        "compression_guest_hotplug": true,
+        "compression_memcg_balance": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 58.53831811295822,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r4-2026-11-10/runs/guests/c1r4-c-numa-001/result.json",
+      "result_sha256": "42dc4f4631bbe24bce491d47e40977b50ac8462bda1db988c81303f3d01201ba",
+      "serial_sha256": "18ac9f90880616d3cb229f77f1a5b385e171f7301d230c39bbfba7c82aa86a45",
+      "reservation_source": "campaigns/codex-compress-lib-r4-2026-11-10/ledger/guest-reservations/c1r4-c-numa-001.json",
+      "reservation_sha256": "50c9edcd06cef345ad7c042ad514ae1e0989f8be1a7cca65f771d0bae5240909",
+      "subcases": {
+        "library_unit": {
+          "status": "PASS",
+          "reset": true
+        },
+        "guest_hotplug": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_balance": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "run_id": "48fd11859f014277b7188b6874673175-swapin-compressed-0",
+      "case": null,
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "build": "c1-base-common-20261110",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "integration_pass": false,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "parse_complete": false,
+        "qemu_exit": true
+      },
+      "wall_seconds": 9.01051046489738,
+      "parse_error": "missing or duplicate evidence: ^COMPRESSED_SAMPLES seq=(\\d+) rand=(\\d+) target_checks=(\\d+) decoded=(\\d+) trace_lost=(\\d+) probe_missed=(\\d+) probe_hits=(\\d+)$",
+      "result_source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/guests/48fd11859f014277b7188b6874673175-swapin-compressed-0/result.json",
+      "result_sha256": "062011b64633567f5d4546129c385c14536e2c2121bb5b9f03eedd0bffbb51fb",
+      "serial_sha256": "5018cc8eddbe54aa8aee59baf90272b23f08bab15259004ce10fa91f454502ed",
+      "reservation_source": "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/48fd11859f014277b7188b6874673175-swapin-compressed-0.json",
+      "reservation_sha256": "b649d9f46ea39989ab6baca3ab065774058c9c6037fa1fbea239ee18416b51b7",
+      "subcases": {}
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "run_id": "c1r5-b-common-001",
+      "case": "b-common",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "build": "c1-base-common-20261110",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_backend_device": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 23.04099290096201,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/guests/c1r5-b-common-001/result.json",
+      "result_sha256": "885c54cd9f86365b2ae37c8a92a095ded7b6d0f77aa80dbb299d8751b814087f",
+      "serial_sha256": "891972f89733c678ad4692f4de9179e43d8776318ef3a8d6cb86d1f9a07ffa3d",
+      "reservation_source": "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/c1r5-b-common-001.json",
+      "reservation_sha256": "ffbbb131b8ecb5f2e71479382cc4d31a8a5f5bcccc153d3c2913b5d5c928dcf6",
+      "subcases": {}
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "run_id": "c1r5-b-legacy-001",
+      "case": "b-legacy",
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "build": "c1-5e84ca928dee-legacy",
+      "config_id": "c1-legacy",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_roundtrip": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 5.508520210161805,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/guests/c1r5-b-legacy-001/result.json",
+      "result_sha256": "e07047c03f341f0282c371ee5ee2ccf7c8487ddb74b6d7aa50feb428c2850c00",
+      "serial_sha256": "c82f9247c0a8a2ad9e7091acfa662d62809b50436f34433c668bee33ae885135",
+      "reservation_source": "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/c1r5-b-legacy-001.json",
+      "reservation_sha256": "460a82d5593354cea42e5fa77f24f8bfb58e70e89bb4d91401765f95db6afeb9",
+      "subcases": {
+        "roundtrip": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "run_id": "c1r5-c-common-001",
+      "case": "c-common",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-common",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "correctness_backend_device": true,
+        "correctness_evidence": true,
+        "data_roundtrip": true,
+        "fork_cow": true,
+        "concurrent_fault": true,
+        "destroy_live_pages": true,
+        "swapoff_live_pages": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 22.538933621020988,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/guests/c1r5-c-common-001/result.json",
+      "result_sha256": "0e1f7f9e2ee10bccc070035651e9ef48e16457626b7991cb237c58c937c657c6",
+      "serial_sha256": "d7e417cb47bfe1bf15199c6dbfe86ec40736710f9a076a530f804f7f1602d9eb",
+      "reservation_source": "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/c1r5-c-common-001.json",
+      "reservation_sha256": "78a2875a27353dfcd748031187e467a277b740ef66618658ed11aeb2baf8a6ef",
+      "subcases": {}
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "run_id": "c1r5-c-compressed-001",
+      "case": "c-compressed",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-common",
+      "config_id": "c1-common",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_roundtrip": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 5.011999105103314,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/guests/c1r5-c-compressed-001/result.json",
+      "result_sha256": "a26089a15a0a5a5d4522bad5c4dc62c5aba663c6f28697cbcf344e306df56f30",
+      "serial_sha256": "c05244c63772354ee78ce8ea13a5e1c7c23718245a8c3022f4d9d5e1d853dd4b",
+      "reservation_source": "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/c1r5-c-compressed-001.json",
+      "reservation_sha256": "f0077384937868b7748442d99d5de827fb16c13ee2ecf9f13f33ec77c17903e3",
+      "subcases": {
+        "roundtrip": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "run_id": "c1r5-c-debug-001",
+      "case": "c-debug",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-debug-v2",
+      "config_id": "c1-debug-v2",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_invalid_codec": true,
+        "compression_library_unit": true,
+        "compression_large_folio": true,
+        "compression_memcg_balance": true,
+        "compression_memcg_offline": true,
+        "compression_memcg_limits": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 71.54908800707199,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/guests/c1r5-c-debug-001/result.json",
+      "result_sha256": "eee13750503c4fb8228ac60999975eb272e367233cce20a4e6daa63e47034806",
+      "serial_sha256": "714dab5bab14654bcb92eed43d7c35e8128e8446daa2ca06d17839d586270afa",
+      "reservation_source": "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/c1r5-c-debug-001.json",
+      "reservation_sha256": "e3fa7f4f3371bf637d9975d610098ccbb4664330a1e7b6969755cfb2397666f8",
+      "subcases": {
+        "invalid_codec": {
+          "status": "PASS",
+          "reset": true
+        },
+        "library_unit": {
+          "status": "PASS",
+          "reset": true
+        },
+        "large_folio": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_balance": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_offline": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_limits": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "run_id": "c1r5-c-legacy-001",
+      "case": "c-legacy",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-legacy",
+      "config_id": "c1-legacy",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_roundtrip": true,
+        "compression_codec_switch": true,
+        "compression_invalid_codec": true,
+        "compression_memcg_balance": true,
+        "compression_memcg_offline": true,
+        "compression_memcg_limits": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 10.0123551429715,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/guests/c1r5-c-legacy-001/result.json",
+      "result_sha256": "c5e6f88aef1e6fdd5ca2a3fd40a85e7fba8a2b2bb092e77e5d08de8bcfc4a6b3",
+      "serial_sha256": "49813c266280538e339dfcf35900e8e5ad52af8e2b63fc9e82f4fe89505c2bca",
+      "reservation_source": "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/c1r5-c-legacy-001.json",
+      "reservation_sha256": "5588fea00b822074b3cdadc34271e285350e4206cbb1ba745a0ff1c192097203",
+      "subcases": {
+        "roundtrip": {
+          "status": "PASS",
+          "reset": true
+        },
+        "codec_switch": {
+          "status": "PASS",
+          "reset": true
+        },
+        "invalid_codec": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_balance": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_offline": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_limits": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "run_id": "c1r5-c-numa-001",
+      "case": "c-numa",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-debug-v2",
+      "config_id": "c1-debug-v2",
+      "topology_id": "numa2-nehalem-v3",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_library_unit": true,
+        "compression_guest_hotplug": true,
+        "compression_memcg_balance": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 57.538174642948434,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/guests/c1r5-c-numa-001/result.json",
+      "result_sha256": "7dd104b94dee2b7c0cf769ef5e825ac8d686c8ddd147be81f66f5dfb553ee59a",
+      "serial_sha256": "5018e5fe7db027d70f814c81dbdcc7c56370fa30545286c5c6401b68e32b28d6",
+      "reservation_source": "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/c1r5-c-numa-001.json",
+      "reservation_sha256": "916cc24931e073c4671e836fbf82d040547f23b7ada53b7a71dd4aa7bf20233c",
+      "subcases": {
+        "library_unit": {
+          "status": "PASS",
+          "reset": true
+        },
+        "guest_hotplug": {
+          "status": "PASS",
+          "reset": true
+        },
+        "memcg_balance": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "run_id": "c1r5-c-race-001",
+      "case": "c-race",
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "build": "c1-7d5a3cfab2ab-kcsan",
+      "config_id": "c1-kcsan",
+      "topology_id": "single",
+      "integration_pass": true,
+      "run_valid": true,
+      "invalid_reasons": [],
+      "gates": {
+        "boot": true,
+        "cmdline_identity": true,
+        "workload_complete": true,
+        "kernel_log_present": true,
+        "no_kernel_warnings": true,
+        "thp_policy": true,
+        "configuration_identity": true,
+        "swap_activity": true,
+        "backend_exercised": true,
+        "swap_routing": true,
+        "compression_concurrent_fault": true,
+        "compression_codec_switch": true,
+        "compression_live_destroy": true,
+        "compression_evidence": true,
+        "compression_reset": true,
+        "no_new_kernel_warnings": true,
+        "qemu_exit": true
+      },
+      "wall_seconds": 58.04064684198238,
+      "parse_error": null,
+      "result_source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/guests/c1r5-c-race-001/result.json",
+      "result_sha256": "dab823527abbf0a516f173836fd4536c87cd3da4931030f35d35529bea2d2f55",
+      "serial_sha256": "de4525da299f6400631d7aadedd18f37f7aab6d44212c080a15c9f510cbacb89",
+      "reservation_source": "campaigns/codex-compress-lib-r5-2026-11-10/ledger/guest-reservations/c1r5-c-race-001.json",
+      "reservation_sha256": "f353b06121226e4a4ddbb6044c48f4b454d9cd132439f150b2e26f6859c9e9ef",
+      "subcases": {
+        "concurrent_fault": {
+          "status": "PASS",
+          "reset": true
+        },
+        "codec_switch": {
+          "status": "PASS",
+          "reset": true
+        },
+        "live_destroy": {
+          "status": "PASS",
+          "reset": true
+        }
+      }
+    }
+  ],
+  "r5_correctness": {
+    "source": "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/correctness.json",
+    "sha256": "f53bf3552546426a382657f4580d5b25bd25287e74fb032873da8ba8246d45cd",
+    "cases": [
+      "b-common",
+      "b-legacy",
+      "c-common",
+      "c-legacy",
+      "c-compressed",
+      "c-debug",
+      "c-race",
+      "c-numa"
+    ],
+    "disabled_builds": [
+      "c-noswap",
+      "c-no-frontends"
+    ],
+    "historical_parser_replay": "All eight archived serial records reproduce saved gates and metrics; no new runtime sample."
+  },
+  "r5_runtime_archive": {
+    "source": "campaigns/codex-compress-lib-r5-2026-11-10/runs/closeout-runtime/archive.json",
+    "sha256": "5a385e3b3ebae82697d0917b4be8607aa736fd812c243be4e8c009ac1f33e041"
+  },
+  "current_reservations": [
+    {
+      "id": "48fd11859f014277b7188b6874673175-swapin-compressed-0",
+      "status": "STARTED",
+      "sha256": "b649d9f46ea39989ab6baca3ab065774058c9c6037fa1fbea239ee18416b51b7"
+    },
+    {
+      "id": "c1r5-b-common-001",
+      "status": "STARTED",
+      "sha256": "ffbbb131b8ecb5f2e71479382cc4d31a8a5f5bcccc153d3c2913b5d5c928dcf6"
+    },
+    {
+      "id": "c1r5-b-legacy-001",
+      "status": "STARTED",
+      "sha256": "460a82d5593354cea42e5fa77f24f8bfb58e70e89bb4d91401765f95db6afeb9"
+    },
+    {
+      "id": "c1r5-c-common-001",
+      "status": "STARTED",
+      "sha256": "78a2875a27353dfcd748031187e467a277b740ef66618658ed11aeb2baf8a6ef"
+    },
+    {
+      "id": "c1r5-c-compressed-001",
+      "status": "STARTED",
+      "sha256": "f0077384937868b7748442d99d5de827fb16c13ee2ecf9f13f33ec77c17903e3"
+    },
+    {
+      "id": "c1r5-c-debug-001",
+      "status": "STARTED",
+      "sha256": "e3fa7f4f3371bf637d9975d610098ccbb4664330a1e7b6969755cfb2397666f8"
+    },
+    {
+      "id": "c1r5-c-legacy-001",
+      "status": "STARTED",
+      "sha256": "5588fea00b822074b3cdadc34271e285350e4206cbb1ba745a0ff1c192097203"
+    },
+    {
+      "id": "c1r5-c-numa-001",
+      "status": "STARTED",
+      "sha256": "916cc24931e073c4671e836fbf82d040547f23b7ada53b7a71dd4aa7bf20233c"
+    },
+    {
+      "id": "c1r5-c-race-001",
+      "status": "STARTED",
+      "sha256": "f353b06121226e4a4ddbb6044c48f4b454d9cd132439f150b2e26f6859c9e9ef"
+    }
+  ],
+  "performance_accepted": false,
+  "baseline_advanced": false,
+  "promoted": false
+}

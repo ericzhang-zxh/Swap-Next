@@ -1,0 +1,51 @@
+{
+  "id": "H28",
+  "status": "interrupted-by-platform-content-safety",
+  "owner": "/root/c2_guest_driver",
+  "worktree": "worktrees/framework-c2-guest-driver-01a1c6b6",
+  "branch": "infra/c2-guest-driver-01a1c6b6",
+  "base": "4be68b8",
+  "task": "Implement complete C2 guest-side schema-2 correctness driver and wrappers against the accepted wire; no image or runtime.",
+  "read_first": [
+    "AGENTS.md",
+    "docs/research/2026-11-10-xswap-compression-tiering/C2-execution-brief.md",
+    "docs/research/2026-11-10-xswap-compression-tiering/C2-validation-contract.md",
+    "docs/research/2026-11-10-xswap-compression-tiering/C2-coordinator-decisions.md",
+    "docs/research/2026-11-10-xswap-compression-tiering/C2-wire-contract.md",
+    "docs/research/2026-11-10-xswap-compression-tiering/K3-C2-source-feasibility.md"
+  ],
+  "owned_paths": [
+    "benchmark/swap-standard/compression.c",
+    "benchmark/swap-standard/bench.sh",
+    "benchmark/swap-standard/guest-init",
+    "benchmark/swap-standard/test_compression_workload.py",
+    "benchmark/swap-standard/test_c2_guest_workload.py",
+    "benchmark/swap-standard/prepare-image.py only if strictly needed for a dependency/header; no builder/cache changes"
+  ],
+  "peer": "/root/campaign_validation_research owns H24 host catalog/parser/runner/reservation/proof/cache/planner/config and C2-wire-contract.md. Coordinate exact wire/CLI directly; primary owns consequential changes.",
+  "forbidden": [
+    "No swapin.c edit; H26/coordinator owns diagnostic then matched observer.",
+    "No host parser/catalog/evolve/config changes, main implementation edits, kernel source/build/VM/QMP/runtime/image preparation, protocol/budget/raw mutation, push or delegation/AGY.",
+    "Never fabricate operation events, physical associations, generations, compressed success, data verification, overlap or teardown. Unsupported or unexercised phases must stop INCOMPLETE."
+  ],
+  "acceptance": [
+    "Preserve all revision8 command and evidence paths unchanged.",
+    "Exact revision9 source-role/commit/contract/frontend/observer binding propagated from native command line to driver.",
+    "Implement all named ordered phase sets with real operations and complete raw copied snapshots/events/swaps; strict own command readback and meaningful cleanup.",
+    "No placeholder PASS; use raw independently verified positive/negative/error/overlap evidence and existing actual physical/legacy wrappers.",
+    "Source-only compile/guest-free positive and adversarial tests in permitted windows; do not claim fixtures prove runtime."
+  ],
+  "output": "docs/research/2026-11-10-xswap-compression-tiering/H28-result.md",
+  "commit": "Local Eric Zhang commit allowed, no Signed-off-by; concise early real-file checkpoint and evidence locations.",
+  "recovery": {
+    "blocked_step": "unknown; platform did not return the exact refused step",
+    "last_completed": "reuse and race handlers appended",
+    "modified_file": "benchmark/swap-standard/compression.c",
+    "insertions": 1687,
+    "deletions": 2,
+    "checks_run": false,
+    "runtime_started": false,
+    "implementation_complete": false,
+    "retry_performed": false
+  }
+}

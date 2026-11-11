@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "groups": [
+    {
+      "title": "Shared compression library C1",
+      "representative": "codex-compress-lib-r6-2026-11-10",
+      "members": [
+        "codex-compress-lib-2026-11-10",
+        "codex-compress-lib-r2-2026-11-10",
+        "codex-compress-lib-r3-2026-11-10",
+        "codex-compress-lib-r4-2026-11-10",
+        "codex-compress-lib-r5-2026-11-10",
+        "codex-compress-lib-r6-2026-11-10"
+      ]
+    }
+  ]
+}
