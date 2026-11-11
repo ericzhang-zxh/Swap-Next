@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "logical_phase": "C1 shared compression library",
+  "replacement_campaign": "codex-compress-lib-r8-2026-11-11",
+  "superseded_campaigns": [
+    {
+      "campaign": "codex-compress-lib-2026-11-10",
+      "budget": {
+        "created": 1794340417.3836553,
+        "guests": 0,
+        "probe_guests": 3,
+        "builds": 3
+      },
+      "budget_sha256": "2e03ba0eee0c337bc1ee57e4729b5dd912f7e78d0d4ce30d23091173fe5dac0b",
+      "protocol_sha256": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+      "deadline": 1794405217.3836553
+    },
+    {
+      "campaign": "codex-compress-lib-r2-2026-11-10",
+      "budget": {
+        "created": 1794344444.500093,
+        "guests": 0,
+        "probe_guests": 2,
+        "builds": 1
+      },
+      "budget_sha256": "b529da364b87c259df26d92cb83e01a60752c6e96fd3a1bc04bc3bb4990e511e",
+      "protocol_sha256": "dd5d28e9b355c0c94cc85750c4393ce8e5f125756013ca82581a2132b1035ed0",
+      "deadline": 1794404672.500093
+    },
+    {
+      "campaign": "codex-compress-lib-r3-2026-11-10",
+      "budget": {
+        "created": 1794345695.3209484,
+        "guests": 0,
+        "probe_guests": 3,
+        "builds": 0
+      },
+      "budget_sha256": "cc2aa3e137730bf12f1fc8a0615cb347fd83de7087e8a86d33eccd8faa570b1f",
+      "protocol_sha256": "d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf",
+      "deadline": 1794404093.3209484
+    },
+    {
+      "campaign": "codex-compress-lib-r4-2026-11-10",
+      "budget": {
+        "created": 1794347289.5792072,
+        "guests": 0,
+        "probe_guests": 2,
+        "builds": 0
+      },
+      "budget_sha256": "555c93a456a9be410aa12faeb0d7dac1ceaff0cff96cc0900ed400041a1938eb",
+      "protocol_sha256": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+      "deadline": 1794403573.5792072
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "budget": {
+        "created": 1794350186.6756349,
+        "guests": 0,
+        "probe_guests": 9,
+        "builds": 5
+      },
+      "budget_sha256": "4183d55eb370ca2540332433d95a9101bb4750639ecab41d1182cc52cbde63bb",
+      "protocol_sha256": "e9e282998de6bc59c2563b398f5968c33f1a5ee219a06cca6e15267d9a9511e3",
+      "deadline": 1794403009.6756349
+    },
+    {
+      "campaign": "codex-compress-lib-r6-2026-11-10",
+      "budget": {
+        "created": 1794354546.1003957,
+        "guests": 0,
+        "probe_guests": 1,
+        "builds": 0
+      },
+      "budget_sha256": "985b39c79d5fbb0f2f7d471679458e8c3c4906ff35fbfa378b91796654d7baf2",
+      "protocol_sha256": "f89b124964ed885cfc3e17596f558948e31c6cb7a14d3536a33f7c5d64fa92da",
+      "deadline": 1794358146.1003957
+    },
+    {
+      "campaign": "codex-compress-lib-r7-2026-11-11",
+      "budget": {
+        "created": 1794439992.62163,
+        "guests": 0,
+        "probe_guests": 9,
+        "builds": 0
+      },
+      "budget_sha256": "18205ca7fadb84e7ec03e3fdc7465c08978bc659d08d9464abb1c4db06e9b2f7",
+      "protocol_sha256": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+      "deadline": 1794443592.62163
+    }
+  ],
+  "reason": "Check the observer-isolation repair prompted by the reproduced two-return diagnostic. Preserve the original timed interval, strict evidence and kernel revisions.",
+  "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+  "original_phase_caps": {
+    "probe_guests": 32,
+    "fast_guests": 88,
+    "total_guests": 120,
+    "builds": 10,
+    "wall_seconds": 64800
+  },
+  "spent": {
+    "probe_guests": 29,
+    "fast_guests": 0,
+    "builds": 9
+  },
+  "resource_reallocation": {
+    "from_pool": "fast",
+    "to_pool": "probe",
+    "slots": 7,
+    "available_before_narrowing": {
+      "probe_guests": 3,
+      "fast_guests": 88,
+      "builds": 1
+    },
+    "reason": "Cover the fresh correctness matrix and two diagnostic guests inside the unchanged 120-guest and ten-build cumulative phase limits."
+  },
+  "maximum_replacement_caps": {
+    "probe_guests": 10,
+    "fast_guests": 1,
+    "total_guests": 11,
+    "builds": 1
+  },
+  "replacement_wall_seconds": 3600,
+  "prepared_unix": 1794441011.5418887,
+  "open_deadline_guard": "Use the new native one-hour deadline and both STOP gates. Retain all predecessor deadline and ledger bytes.",
+  "reuse_rule": "Only exact natively validated unchanged build artifacts may be reused. Original build costs and timestamps remain. No prior guest or diagnostic replay becomes a fresh successful sample.",
+  "family_caps_unchanged": {
+    "logical_phases": 3,
+    "total_guests": 360,
+    "builds": 30
+  },
+  "diagnostic_only": {
+    "planned_guest_attempts": 10,
+    "kernel_candidate_creation": true,
+    "calibration_sample": false,
+    "source_role": "baseline_then_candidate",
+    "reuse_correctness_for_performance": false,
+    "planned_baseline_diagnostic_attempts": 1,
+    "new_kernel_hypothesis": false,
+    "correctness_guests": 8,
+    "guest_image_manifest_sha256": "312c7dec0298b77970d2984b3c7ef914d0ea78a1ecb90ab80b201b3beb43a29b",
+    "guest_image_sha256": "eb9a5f28d7ec5e1cb9aaa6e7e15aee86b649ee8a2ff90c6dbb4b9ce054e21070",
+    "initrd_sha256": "38493c58bb68de9a514b176d534692e0dd678a043c62eb2e8e20298220391a01",
+    "planned_candidate_diagnostic_attempts": 1,
+    "stop_after_failure_or_pair": true
+  },
+  "prior_inherited_deadline_unix": 1794403009.6756349
+}

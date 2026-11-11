@@ -1,0 +1,549 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r8-2026-11-11",
+  "protocol_revision": 8,
+  "protocol_id": "codex-c1-shared-compression-tcg-v8-observer-isolation-diagnostic",
+  "approval": "Owner authorized repair, bounded execution and report delivery on 2026-11-11. Prior frozen contracts and cumulative spending are retained.",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "baseline_build": "c1-base-common-20261110",
+  "max_probe_candidates": 1,
+  "max_candidates": 1,
+  "budget": {
+    "probe_guest_attempts": 10,
+    "guest_attempts": 1,
+    "build_attempts": 1,
+    "wall_seconds": 3600,
+    "guest_timeout": 900,
+    "note": "Eight correctness guests, then one anchor and one candidate isolated-observer diagnostic if the anchor passes. No new kernel build, calibration, fast trial or code promotion."
+  },
+  "planned_guest_counts": {
+    "probe_calibration": 0,
+    "probe_candidate": 0,
+    "fast_calibration": 0,
+    "fast_candidate": 0,
+    "fresh_correctness": 8,
+    "observer_diagnostic": 2,
+    "planned_total": 10,
+    "total_ceiling": 11
+  },
+  "wall_estimate": {
+    "confidence": "medium",
+    "note": "One hour from native open. Stop on failed correctness or deadline. The prior diagnostic contract remains closed under its original deadline."
+  },
+  "guest": {
+    "vcpus": 4,
+    "mem_mib": 4096,
+    "swap_gib": 16
+  },
+  "accelerator": {
+    "require": "tcg",
+    "qemu": [
+      "-accel",
+      "tcg,thread=multi,tb-size=256",
+      "-machine",
+      "pc",
+      "-cpu",
+      "max"
+    ],
+    "kvm_default": "run.py keeps KVM, 8 vCPU and 8192 MiB when SWAP_NEXT_ACCEL is unset. This revision's child environment sets SWAP_NEXT_ACCEL=tcg, SWAP_NEXT_TCG_SMP=4 and SWAP_NEXT_TCG_MEM_MIB=4096, and the workflow rejects any result whose accelerator is not tcg.",
+    "host_cpus": "This revision does not offline or online host CPUs."
+  },
+  "kbench_params": {
+    "SETTLE_SEC": "3",
+    "SWAPPINESS": "60",
+    "ZRAM_COMP": "lz4",
+    "ZRAM0_SIZE": "3200M",
+    "ZRAM1_SIZE": "20000M",
+    "ZRAM64K_SIZE": "8G",
+    "ZSWAP_COMP": "lzo",
+    "ZSWAP_ZPOOL": "zsmalloc",
+    "THP_SIZE": "2048kB",
+    "THP_SIZE_64K": "64kB",
+    "USEMEM_NPROC": "8",
+    "USEMEM_SIZE": "1G",
+    "USEMEM_MEMCG": "4G",
+    "BUILD_MEMCG": "470M",
+    "BUILD_JOBS": "32",
+    "BUILD_SETTLE_SEC": "10",
+    "REDIS_MEMCG": "1536M",
+    "REDIS_MAXMEMORY": "2560M",
+    "REDIS_KEYS": "3000000",
+    "REDIS_VALUE": "1024",
+    "SWAPIN_SIZE": "1G"
+  },
+  "backends": {
+    "disk": "16 GiB preallocated virtio raw swap file, cache=none. 2 MiB THP policy is set; swap-in opts out with MADV_NOHUGEPAGE.",
+    "zswap": "lzo/zsmalloc, shrinker enabled, backed by lz4 zram1 20000M. Guest cmdline sets zswap.enabled=1 and zswap.compressor=lzo.",
+    "zram": "lz4 zram0 3200M priority 100 and zram1 20000M priority 0. Not a scored case.",
+    "zram-64k": "lz4 zram0 8G, 64 KiB THP only; retained swap-in regression guard.",
+    "brd": "1 TiB brd (brd.rd_size=1073741824). Probe-only metadata case, plain mode, so SwapTotal is the brd device alone.",
+    "compressed": "XSwap virtual device only, with no lower physical swap backing. Nonzero compressible target data, pagemap/mincore residency, and one successful PID-filtered zswap_load return per timed touch; trace loss and misses invalidate the sample."
+  },
+  "page_cluster": {
+    "value": 3,
+    "source": "kernel default",
+    "guest": "bench.sh reads /proc/sys/vm/page-cluster, prints PAGE_CLUSTER, and fails unless the value is 3. It does not write the sysctl."
+  },
+  "baseline_lineage": {
+    "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "build": "c1-base-common-20261110",
+    "mode": "xswap",
+    "config": "benchmark/config/compression-common.config",
+    "submodule_pin": "744e5400b36f84b4816e3ff8531ec2dff52b474c",
+    "note": "Build requested archive from the frozen object store; never change linux/ HEAD. Both compared arms use identical tracing-enabled common configuration."
+  },
+  "kernel_config": {
+    "path": "benchmark/config/compression-common.config",
+    "input_config_sha256": "41d706ae5e27a90845e25465d3b4b35080cf9bc79201c17a80d594cc137313cc",
+    "required": [
+      "CONFIG_SWAP=y",
+      "CONFIG_ZSWAP=y",
+      "CONFIG_XSWAP=y",
+      "CONFIG_MEMCG=y",
+      "CONFIG_TRANSPARENT_HUGEPAGE=y",
+      "CONFIG_THP_SWAP=y",
+      "CONFIG_KALLSYMS=y",
+      "CONFIG_KPROBES=y",
+      "CONFIG_KPROBE_EVENTS=y",
+      "CONFIG_FTRACE=y"
+    ]
+  },
+  "input_config_sha256": "41d706ae5e27a90845e25465d3b4b35080cf9bc79201c17a80d594cc137313cc",
+  "guest_image": {
+    "prepare": "python3 benchmark/swap-standard/prepare-image.py --src <pinned valkey and vm-scalability checkouts> --busybox-template <busybox rootfs>",
+    "provenance": "benchmark/swap-standard/image.json",
+    "where": "Designated Linux worker; exact source, image and initramfs provenance is verified before each guest.",
+    "contains": "guest-init, bench.sh, params.sh, swapin, churn, correctness, console-drain, and the pinned linux source archive and compression"
+  },
+  "cases": {
+    "swapin-disk": {
+      "workload": "swapin",
+      "backend": "disk",
+      "mode": "xswap",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": null,
+      "probe_signals": [
+        "swapin_vmstat_delta.pswpin",
+        "swapin_vmstat_delta.zswpin",
+        "swapin_vmstat_delta.swap_ra",
+        "swapin_vmstat_delta.swap_ra_hit",
+        "swapin_vmstat_delta.pgmajfault",
+        "swapin_vmstat_delta.zswpwb",
+        "xswap.grows",
+        "xswap.shrinks",
+        "xswap.usage_pages",
+        "xswap.clusters_mapped"
+      ],
+      "guard": [
+        "swapin_seq.mean_ns",
+        "swapin_rand.mean_ns"
+      ],
+      "config_id": "c1-common",
+      "topology_id": "single"
+    },
+    "swapin-zram-64k": {
+      "workload": "swapin",
+      "backend": "zram-64k",
+      "mode": "xswap",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": null,
+      "guard": [
+        "swapin_seq.mean_ns",
+        "swapin_rand.mean_ns"
+      ],
+      "probe_signals": [
+        "swapin_vmstat_delta.pswpin",
+        "swapin_vmstat_delta.zswpin",
+        "swapin_vmstat_delta.swap_ra",
+        "swapin_vmstat_delta.swap_ra_hit",
+        "swapin_vmstat_delta.pgmajfault",
+        "swapin_vmstat_delta.zswpwb",
+        "xswap.grows",
+        "xswap.shrinks",
+        "xswap.usage_pages",
+        "xswap.clusters_mapped"
+      ],
+      "config_id": "c1-common",
+      "topology_id": "single"
+    },
+    "metadata-brd": {
+      "workload": "metadata",
+      "backend": "brd",
+      "mode": "plain",
+      "metrics": {
+        "metadata_delta_bytes_per_capacity_slot": "lower"
+      },
+      "primary": null,
+      "probe_signals": [
+        "metadata_delta_bytes_per_capacity_slot"
+      ],
+      "metadata_accounting": {
+        "numerator": "attributable_meminfo",
+        "fields": [
+          "SUnreclaim",
+          "VmallocUsed",
+          "PageTables",
+          "Percpu"
+        ],
+        "excluded_fields": [
+          "MemFree",
+          "MemAvailable",
+          "Slab"
+        ],
+        "on_missing": "fail",
+        "on_vmalloc_decrease": "fail",
+        "on_negative_sum": "fail",
+        "signed_fields": [
+          "SUnreclaim",
+          "PageTables",
+          "Percpu"
+        ]
+      },
+      "config_id": "c1-common",
+      "topology_id": "single"
+    },
+    "swapin-compressed": {
+      "workload": "swapin",
+      "backend": "compressed",
+      "mode": "xswap",
+      "metrics": {
+        "swapin_seq.mean_ns": "lower",
+        "swapin_seq.p99_ns": "lower",
+        "swapin_rand.mean_ns": "lower",
+        "swapin_rand.p99_ns": "lower"
+      },
+      "primary": "swapin_seq.mean_ns",
+      "probe_signals": [
+        "swapin_vmstat_delta.pswpin",
+        "swapin_vmstat_delta.zswpin",
+        "swapin_vmstat_delta.swap_ra",
+        "swapin_vmstat_delta.swap_ra_hit",
+        "swapin_vmstat_delta.pgmajfault",
+        "swapin_vmstat_delta.zswpwb",
+        "xswap.grows",
+        "xswap.shrinks",
+        "xswap.usage_pages",
+        "xswap.clusters_mapped"
+      ],
+      "guard": [
+        "swapin_rand.mean_ns"
+      ],
+      "config_id": "c1-common",
+      "topology_id": "single"
+    }
+  },
+  "tiers": {
+    "probe": {
+      "kind": "probe",
+      "cases": [
+        "swapin-compressed",
+        "swapin-disk",
+        "swapin-zram-64k",
+        "metadata-brd"
+      ],
+      "calibration_runs": 3,
+      "candidate_runs": 1
+    },
+    "fast": {
+      "cases": [
+        "swapin-compressed",
+        "swapin-disk",
+        "swapin-zram-64k"
+      ],
+      "calibration_pairs": 10,
+      "comparison_pairs": 4
+    }
+  },
+  "probe_band": {
+    "relative_padding": 0.01,
+    "integer_padding_floor": 1,
+    "metadata_spread_fraction": 0.01
+  },
+  "order": "alternating AB then BA; same order in calibration",
+  "repetition": {
+    "swapin_passes": 1,
+    "discarded_warmups": 0,
+    "reclaim_attempts_max": 16,
+    "reclaim_target": "At least 90% of each 64 MiB order for compressed; at least 90% of the 1 GiB region for disk/zram.",
+    "swapin_cgroup": "max",
+    "swapin_madvise": "MADV_NOHUGEPAGE",
+    "settle_on_swapin_path": false
+  },
+  "calibration_max_age_seconds": 86400,
+  "noise_floor": 0.03,
+  "noise_ceiling": 0.25,
+  "noise_envelope": "p90",
+  "comparison_decision": "median",
+  "advisory_metric_suffixes": [
+    ".p99_ns"
+  ],
+  "bootstrap_resamples": 10000,
+  "promotion": "human_review_only",
+  "preallocate_swap": true,
+  "validity": {
+    "clocksource_fallback": "invalid_and_rerun",
+    "pre_qemu_seconds_max": 60,
+    "wall_time_factor": 1.5,
+    "wall_median_min_samples": 3,
+    "reruns_per_arm": 2,
+    "host_load": "loadavg and PSI when /proc/pressure exists, stored on every attempt before launch and after exit"
+  },
+  "screen": "TCG exploratory C1 shared compression screen; compression primary and disk/zram guards. No slow tier or automatic code acceptance.",
+  "excluded": {
+    "build": "kbench build OOMs in a 470M memcg on this tree: the 2026-10-27 KVM smoke killed objtool after about 17 min with anon-rss 465668 kB and 445 MiB already swapped. BUILD_MEMCG stays 470M and BUILD_JOBS stays 32. This revision does not score build. A full TCG kernel build also does not fit guest_timeout 900s. The parser already records build_system_usec when a build guest runs; this revision never launches one, so system time is not a result.",
+    "usemem-rand": "OOM and synchronization hang in the pre-kbench integration; not a case in this revision."
+  },
+  "build_oom": {
+    "choice": "exclude",
+    "memory_limit": "470M",
+    "jobs": 32,
+    "params_unchanged": true,
+    "evidence": "campaigns/kbench-smoke-2026-10-27/report/README.md",
+    "rejected_alternatives": {
+      "raise_memcg": "A limit that fits objtool abandons the kbench pressure point and still leaves a full kernel build, which does not finish inside guest_timeout under TCG.",
+      "reduce_jobs": "The killed task was objtool on vmlinux, which is not a -j fan-out. Reducing -j would also change the shared kbench parameter."
+    }
+  },
+  "required_correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings",
+    "compression_evidence",
+    "compression_reset",
+    "compression_roundtrip",
+    "compression_codec_switch",
+    "compression_invalid_codec",
+    "compression_concurrent_fault",
+    "compression_live_destroy",
+    "compression_memcg_balance",
+    "compression_memcg_offline",
+    "compression_memcg_limits",
+    "compression_guest_hotplug",
+    "compression_large_folio",
+    "compression_library_unit",
+    "kasan",
+    "lockdep",
+    "kcsan"
+  ],
+  "purpose": "Verify that a matched isolated observer can bind one decoder return to each timed target in a single guest per kernel. This is a diagnostic, not a calibrated comparison.",
+  "measurement_revision": "Revision 8 adds complete hash-bound C1 configuration correctness and 128 MiB compressed-resident instrumented swap-in. Existing disk/zram use 1 GiB. Metadata retains revision 7 attributable accounting with fresh calibration; historical protocols and outcomes remain unchanged. This separately frozen contract replaces only the contradictory debug input with c1-debug-v2; all timing and correctness gates remain unchanged. Original C1 costs are deducted from its available resources. This continuation corrects recognition of the expected invalid-codec diagnostic and standard zero-skip KUnit summaries without changing semantic gates or timing. Prior raw outcomes remain failed; correctness is collected afresh. This continuation changes only the auxiliary two-node CPU/package mapping to numa2-sockets-v2, preserving four vCPUs, 4096 MiB, all warning gates and single-topology timing. Prior NUMA warning remains failed; full correctness is collected afresh. This continuation selects the source-reviewed Nehalem-v1,vme=off,enforce=on CPU only for c1-debug-v2 / numa-lifecycle correctness, with the same two sockets, four CPUs and two memory nodes. All single-topology timing retains max. Native proof and actual numeric CPU0 identity are required; clocksource, warning and sanitizer gates are unchanged. R4 remains invalid and no historical guest becomes a new sample. This final C1 continuation changes failure observability only. It schedules eight fresh native correctness guests on the new image, followed by one baseline diagnostic. It does not complete calibration. All original validity/acceptance rules remain mandatory; no diagnostic becomes accepted performance evidence.",
+  "ceiling_justification": "The ceiling is 25%, the bottom of the 25-30% band used by revision 3 and the revision 4 template. Revision 2 TCG pair-median spreads were 4-10% and worst-pair tails were 19-28%. A 25% ceiling fails the tier as CALIBRATION_NOISY when the scored-mean p90 exceeds 25%, which stops candidate comparison until the measurement is cleaner. A 30% ceiling would accept noise as large as the effect the revision 3 screen was meant to resolve. There is no TCG kbench A/A yet; the first passing calibration's per-metric p90 is the observation that would support a later revision with a different ceiling. Confidence in applying the revision 3 split to this setup is medium.",
+  "mechanism_evidence": [
+    "Exact-tree reviewed extraction and lifetime argument",
+    "Nonzero compressed objects and observed demand decode with no lower backing",
+    "Actual config and matrix coverage",
+    "Payload and zsmalloc backing observations plus static context/metadata footprint review"
+  ],
+  "limitations": [
+    "Compression latency includes probe execution cost; trace reads are outside the timed touch.",
+    "The 128 MiB total target splits into sequential and random halves; timed counts reflect verified initially swapped targets.",
+    "C1 preserves ZSwap policy and does not implement independent XSwap or tier migration.",
+    "A failed correctness matrix stops dependent execution. A noisy calibration prevents speed or equivalence claims.",
+    "KUnit source semantics require exact-tree independent review; accepted test names alone are insufficient.",
+    "No host CPU, swap or kernel changes. No slow tier or promotion."
+  ],
+  "candidate_builds": {},
+  "mechanism_evidence_types": [
+    "counter_shift",
+    "reviewed_structure"
+  ],
+  "template_only": false,
+  "compression_observer": {
+    "id": "pid_kretprobe_zswap_load_v1",
+    "instrumented_latency": true,
+    "clock": "monotonic_raw",
+    "maxactive": 64,
+    "per_target_decode": true,
+    "target_residency": "pagemap_and_mincore",
+    "loss_policy": "fail"
+  },
+  "compression_workload": {
+    "target_bytes": 134217728
+  },
+  "configurations": {
+    "c1-common": {
+      "input_config_sha256": "41d706ae5e27a90845e25465d3b4b35080cf9bc79201c17a80d594cc137313cc"
+    },
+    "c1-legacy": {
+      "input_config_sha256": "93922f844b186fbd78c46fe7431d788c3e2c4a3aee47fca74ca80919312be904"
+    },
+    "c1-kcsan": {
+      "input_config_sha256": "fde81c0c2b93edce1392c7803a70efb4423db3d93867fa12e1894726ab1955a9"
+    },
+    "c1-noswap": {
+      "input_config_sha256": "3621d35b878c1cf5df3461801604d9b1043a218211f3b2efb37a1f846acc43b9"
+    },
+    "c1-no-frontends": {
+      "input_config_sha256": "f86241d990826e819776d0300a8f326b3e167a456f863ef4f1e939e29e0538f9"
+    },
+    "c1-debug-v2": {
+      "input_config_sha256": "df562dced5dce4462aa061ea25698ba3a2400e9bfcc078961a2e35a89c2905ee"
+    }
+  },
+  "correctness_matrix": {
+    "schema_version": 1,
+    "cases": [
+      {
+        "id": "b-common",
+        "role": "baseline",
+        "group": "regression",
+        "config_id": "c1-common",
+        "mode": "xswap",
+        "backend": "disk",
+        "workload": "correctness",
+        "topology_id": "single",
+        "subcases": []
+      },
+      {
+        "id": "b-legacy",
+        "role": "baseline",
+        "group": "legacy-roundtrip",
+        "config_id": "c1-legacy",
+        "mode": "plain",
+        "backend": "zswap",
+        "workload": "compression",
+        "topology_id": "single",
+        "subcases": [
+          "roundtrip"
+        ]
+      },
+      {
+        "id": "c-common",
+        "role": "candidate",
+        "group": "regression",
+        "config_id": "c1-common",
+        "mode": "xswap",
+        "backend": "disk",
+        "workload": "correctness",
+        "topology_id": "single",
+        "subcases": []
+      },
+      {
+        "id": "c-legacy",
+        "role": "candidate",
+        "group": "legacy-lifecycle",
+        "config_id": "c1-legacy",
+        "mode": "plain",
+        "backend": "zswap",
+        "workload": "compression",
+        "topology_id": "single",
+        "subcases": [
+          "roundtrip",
+          "codec_switch",
+          "invalid_codec",
+          "memcg_balance",
+          "memcg_offline",
+          "memcg_limits"
+        ]
+      },
+      {
+        "id": "c-compressed",
+        "role": "candidate",
+        "group": "compressed-roundtrip",
+        "config_id": "c1-common",
+        "mode": "xswap",
+        "backend": "compressed",
+        "workload": "compression",
+        "topology_id": "single",
+        "subcases": [
+          "roundtrip"
+        ]
+      },
+      {
+        "id": "c-debug",
+        "role": "candidate",
+        "group": "debug-failures",
+        "config_id": "c1-debug-v2",
+        "mode": "xswap",
+        "backend": "compressed",
+        "workload": "compression",
+        "topology_id": "single",
+        "subcases": [
+          "invalid_codec",
+          "library_unit",
+          "large_folio",
+          "memcg_balance",
+          "memcg_offline",
+          "memcg_limits"
+        ]
+      },
+      {
+        "id": "c-race",
+        "role": "candidate",
+        "group": "race-lifecycle",
+        "config_id": "c1-kcsan",
+        "mode": "xswap",
+        "backend": "compressed",
+        "workload": "compression",
+        "topology_id": "single",
+        "subcases": [
+          "concurrent_fault",
+          "codec_switch",
+          "live_destroy"
+        ]
+      },
+      {
+        "id": "c-numa",
+        "role": "candidate",
+        "group": "numa-lifecycle",
+        "config_id": "c1-debug-v2",
+        "mode": "xswap",
+        "backend": "compressed",
+        "workload": "compression",
+        "topology_id": "numa2-nehalem-v3",
+        "subcases": [
+          "library_unit",
+          "guest_hotplug",
+          "memcg_balance"
+        ]
+      }
+    ],
+    "build_only": [
+      {
+        "id": "c-noswap",
+        "role": "candidate",
+        "config_id": "c1-noswap"
+      },
+      {
+        "id": "c-no-frontends",
+        "role": "candidate",
+        "config_id": "c1-no-frontends"
+      }
+    ]
+  },
+  "blocked_commits": {
+    "4f83412c1d59eaf6a4d2460cb47fe0177a3be0c4": "Unresolved descriptor lifetime review; dependent experiment held",
+    "157c4a178c587add1d22f4b483629b49a6ff0eca": "Unresolved descriptor lifetime review; dependent experiment held",
+    "b674f0d1e90c5b158f0a31d4ea877c4876535c2a": "Unresolved descriptor lifetime review; dependent experiment held",
+    "8f02472031fb71b9791a5199872701c645afd276": "Unresolved descriptor lifetime review; dependent experiment held",
+    "615f839bb6653ffd56dbb66ebdc855dea0823d54": "Unresolved descriptor lifetime review; dependent experiment held"
+  },
+  "diagnostic_only": {
+    "planned_guest_attempts": 10,
+    "kernel_candidate_creation": true,
+    "calibration_sample": false,
+    "source_role": "baseline_then_candidate",
+    "reuse_correctness_for_performance": false,
+    "planned_baseline_diagnostic_attempts": 1,
+    "new_kernel_hypothesis": false,
+    "correctness_guests": 8,
+    "guest_image_manifest_sha256": "312c7dec0298b77970d2984b3c7ef914d0ea78a1ecb90ab80b201b3beb43a29b",
+    "guest_image_sha256": "eb9a5f28d7ec5e1cb9aaa6e7e15aee86b649ee8a2ff90c6dbb4b9ce054e21070",
+    "initrd_sha256": "38493c58bb68de9a514b176d534692e0dd678a043c62eb2e8e20298220391a01",
+    "planned_candidate_diagnostic_attempts": 1,
+    "stop_after_failure_or_pair": true
+  },
+  "c1_observer_isolation": true
+}
