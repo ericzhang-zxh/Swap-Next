@@ -259,6 +259,12 @@ def revision8_context(args, frozen):
 
     if not isinstance(frozen, dict) or frozen.get("protocol_revision") not in (8, 9):
         raise ValueError("configured runner requires its frozen protocol")
+    isolated = frozen.get("c1_observer_isolation", False)
+    diagnostic = frozen.get("diagnostic_only", {})
+    if type(isolated) is not bool or (isolated and (frozen["protocol_revision"] != 8
+            or not isinstance(diagnostic, dict) or diagnostic.get("calibration_sample") is not False)):
+        raise ValueError("isolated C1 observer requires a revision-8 diagnostic contract")
+    args.c1_observer_isolation = isolated and args.backend == "compressed" and args.workload == "swapin"
     args.compression_target_bytes = 0
     args.expected_case = None
     args.correctness_group = ""
@@ -331,6 +337,8 @@ def guest_commandline(args, image_sha):
                       f"bench.correctness_group={args.correctness_group}"]
         if args.compression_target_bytes:
             words.append("bench.compression_target_bytes=" + str(args.compression_target_bytes))
+        if getattr(args, "c1_observer_isolation", False):
+            words.append("bench.c1_observer_isolation=1")
         if args.compression_cases:
             words.append("bench.compression_cases=" + ",".join(args.compression_cases))
     if args.protocol_revision == 9:
@@ -561,10 +569,13 @@ def main():
         # also rejects wall times above 1.5x the running median.
         result["run_valid"] = not reasons
         try:
-            result.update(parse(serial, image_sha, args.backend, args.mode, args.workload, args.protocol_revision,
-                                config_id=args.config_id, correctness_case=args.correctness_case,
-                                topology_id=args.topology_id, expected_case=args.expected_case,
-                                source_binding=getattr(args, "source_binding", None)))
+            parsed = parse(serial, image_sha, args.backend, args.mode, args.workload, args.protocol_revision,
+                           config_id=args.config_id, correctness_case=args.correctness_case,
+                           topology_id=args.topology_id, expected_case=args.expected_case,
+                           source_binding=getattr(args, "source_binding", None))
+            if parsed["gates"].get("c1_observer_isolation", False) != getattr(args, "c1_observer_isolation", False):
+                raise ValueError("C1 observer isolation differs from frozen diagnostic identity")
+            result.update(parsed)
         except (ValueError, KeyError, TypeError) as exc:
             result.update(gates={"parse_complete": False}, parse_error=str(exc))
         result["gates"]["qemu_exit"] = proc.returncode == 0 and reason is None

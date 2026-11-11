@@ -47,6 +47,7 @@ correctness_group=$(arg bench.correctness_group)
 compression_cases=$(arg bench.compression_cases)
 topology_id=$(arg bench.topology_id)
 compression_target_bytes=$(arg bench.compression_target_bytes)
+c1_observer_isolation=$(arg bench.c1_observer_isolation)
 [ -n "$backend" ] && [ -n "$mode" ] && [ -n "$workload" ] || fail cmdline
 mkdir -p /bench
 mount -t ext4 -o ro /dev/vdb /bench || fail benchroot
@@ -62,7 +63,7 @@ if [ "${revision:-0}" = 8 ]; then
     printf 'swap-next-guest-v1\n' > /bench/run/swap-next-guest
     echo "GUEST_TOPOLOGY ${topology_id:-single}"
     report_online_nodes
-    chroot /bench /bin/bash /opt/bench/bench.sh "$backend" "$mode" "$workload" "$revision" "$config_id" "$correctness_case" "$correctness_group" "$compression_cases" "${topology_id:-single}" "${compression_target_bytes:-0}" || fail workload
+    chroot /bench /bin/bash /opt/bench/bench.sh "$backend" "$mode" "$workload" "$revision" "$config_id" "$correctness_case" "$correctness_group" "$compression_cases" "${topology_id:-single}" "${compression_target_bytes:-0}" "$c1_observer_isolation" || fail workload
 else
     chroot /bench /bin/bash /opt/bench/bench.sh "$backend" "$mode" "$workload" || fail workload
 fi

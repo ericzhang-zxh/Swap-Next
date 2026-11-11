@@ -873,6 +873,8 @@ class Workflow:
         return row
 
     def run(self, action, tier, candidate=None, correctness=None, selection_reason=None, approval=None, comparison=None, contrast=None):
+        if self.p.get("c1_observer_isolation"):
+            raise RuntimeError("BLOCKED: isolated C1 observer is diagnostic-only")
         if tier == "probe":
             return self.run_probe(action, candidate, correctness)
         self.slow_permit = None

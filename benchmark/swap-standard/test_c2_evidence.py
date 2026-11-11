@@ -567,6 +567,30 @@ def isolation_log(raw=None):
     return "\n".join(lines) + "\n"
 
 
+class C1IsolatedDiagnosticTests(unittest.TestCase):
+    def setUp(self):
+        from test_compression_evidence import timing_log
+
+        self.flag = "bench.c1_observer_isolation=1"
+        self.text = timing_log()
+        self.before, self.after = isolation_log().split("COMPRESSED_ISOLATION_BEGIN phase=after_measurement", 1)
+        self.after = "COMPRESSED_ISOLATION_BEGIN phase=after_measurement" + self.after
+        self.flagged = self.text.replace("bench.workload=swapin", "bench.workload=swapin " + self.flag)
+
+    def parse(self, text):
+        return evidence.parse(text, "abc", "compressed", "xswap", "swapin", 8, config_id="c1-common")
+
+    def test_isolation_gate_requires_two_bracketing_snapshots(self):
+        text = self.flagged.replace("SWAPIN_SWAPPED ", self.before + "SWAPIN_SWAPPED ")
+        text = text.replace("COMPRESSED_SAMPLES ", self.after + "COMPRESSED_SAMPLES ")
+        self.assertTrue(self.parse(text)["gates"]["c1_observer_isolation"])
+        self.assertNotIn("c1_observer_isolation", self.parse(self.text)["gates"])
+        for invalid in (self.flagged, text.replace(self.after, "") + self.after,
+                        text.replace(self.flag, self.flag + " " + self.flag)):
+            with self.assertRaises(ValueError):
+                self.parse(invalid)
+
+
 class C2IsolationTests(unittest.TestCase):
     def test_actual_locked_observer_and_exact_unlocked_target(self):
         result = evidence.c2_isolation_evidence(isolation_log())

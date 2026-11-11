@@ -6,7 +6,7 @@ set -euo pipefail
 backend=$1 mode=$2 workload=$3
 revision=${4:-1} config_id=${5:-standard} correctness_case=${6:-}
 correctness_group=${7:-} compression_cases=${8:-} topology_id=${9:-single}
-compression_target_bytes=${10:-0}
+compression_target_bytes=${10:-0} c1_observer_isolation=${11:-}
 export PATH=/opt/bench/bin:/usr/bin:/usr/sbin LC_ALL=C HOME=/tmp
 . /opt/bench/params.sh
 
@@ -263,7 +263,13 @@ run_swapin() {
 		[ "$#" -eq 1 ] && [ -f "$1" ] || fail compressed_type
 		type=${1##*/type}
 		[ "$compression_target_bytes" = 134217728 ] || fail compressed_target_bytes
-		swapin "$compression_target_bytes" "$cg/memory.reclaim" compressed "$type" "$cg"
+		local observer_args=()
+		case "$c1_observer_isolation" in
+			"") ;;
+			1) observer_args=(isolate-c1-observer) ;;
+			*) fail compressed_observer_identity ;;
+		esac
+		swapin "$compression_target_bytes" "$cg/memory.reclaim" compressed "$type" "$cg" "${observer_args[@]}"
 	else
 		swapin "$SWAPIN_SIZE" "$cg/memory.reclaim"
 	fi

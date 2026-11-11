@@ -2198,6 +2198,11 @@ def parse(text, image_sha, backend, mode, workload, protocol_revision=1, *,
     log = block(text, 'KERNEL_LOG_BEGIN', 'KERNEL_LOG_END') or ''
     cmdline = block(text, 'CMDLINE_BEGIN', 'CMDLINE_END') or ''
     words = set(cmdline.split())
+    observer_args = [word for word in cmdline.split() if word.startswith('bench.c1_observer_isolation=')]
+    if observer_args:
+        require(observer_args == ['bench.c1_observer_isolation=1']
+                and (protocol_revision, backend, mode, workload) == (8, 'compressed', 'xswap', 'swapin'),
+                'invalid isolated C1 observer identity')
     diagnostics = list(dict.fromkeys(line for line in text.splitlines() if DIAGNOSTIC.search(line)))
     vm_before, vm_end = kv_block(text, 'VMSTAT', 'before'), kv_block(text, 'VMSTAT', 'end')
     metrics = {'vmstat_delta': delta(vm_end, vm_before)}
@@ -2315,6 +2320,14 @@ def parse(text, image_sha, backend, mode, workload, protocol_revision=1, *,
 
         if protocol_revision == 8 and backend == 'compressed':
             gates.update(compressed_timing_evidence(text, metrics))
+            if observer_args:
+                metrics['c1_observer_isolation'] = c2_isolation_evidence(text)
+                require(text.index('COMPRESSED_ISOLATION_BEGIN phase=before_reclaim')
+                        < text.index('SWAPIN_SWAPPED ')
+                        < text.index('COMPRESSED_STATE phase=stored')
+                        < text.index('COMPRESSED_ISOLATION_BEGIN phase=after_measurement')
+                        < text.index('COMPRESSED_SAMPLES '), 'C1 observer isolation did not bracket measurement')
+                gates['c1_observer_isolation'] = True
         if protocol_revision == 9:
             if backend == "compressed":
                 gates.update(c2_compressed_timing_evidence(text, metrics, source_binding))
