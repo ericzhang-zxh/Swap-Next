@@ -56,7 +56,8 @@ LIMITS = [
     'Independent XSwap test support is incomplete. An automated platform content-safety review interrupted '
     'its test-driver worker; the exact refused operation was not supplied. The partial driver was retained '
     'and the blocked operation was not retried. Independent XSwap and pressure-driven movement to disk have not run.',
-    'Earlier failed attempts and the reserved diagnostic that never launched remain in the resource totals. '
+    'Earlier failed attempts remain in the resource totals. The final family report also counts '
+    'the diagnostic reservation that never launched. '
     'Replaying archived results checks their interpretation; it adds no new experiment.'
 ]
 
