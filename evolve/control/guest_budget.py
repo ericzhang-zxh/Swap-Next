@@ -86,13 +86,14 @@ def reservation_identity(p, build, backend, mode, workload, config_id="standard"
             or not isinstance(workload, str) or not workload):
         raise store.CampaignError("invalid guest reservation identity")
     identity = dict(zip(IDENTITY_KEYS, (build, backend, mode, workload)))
-    if p.get("protocol_revision") != 8:
+    if p.get("protocol_revision") not in (8, 9):
         if (backend not in ("disk", "zswap", "zram", "zram-64k", "brd")
                 or config_id != "standard" or correctness_case is not None or topology_id != "single"):
             raise store.CampaignError("invalid legacy guest reservation identity")
         return identity
     try:
         catalog = configuration_module()
+        case = None
         if correctness_case is not None:
             case = catalog.correctness_case(p, correctness_case)
             expected = {key: case[key] for key in ("backend", "mode", "workload", "config_id", "topology_id")}
@@ -114,6 +115,11 @@ def reservation_identity(p, build, backend, mode, workload, config_id="standard"
     except (ValueError, KeyError, TypeError, OSError) as exc:
         raise store.CampaignError(str(exc)) from exc
     identity.update(config_id=config_id, correctness_case=correctness_case, topology_id=topology_id)
+    if p.get("protocol_revision") == 9:
+        try:
+            identity.update(catalog.runtime_source_binding(p, store.PROJECT, build, config_id, backend, case))
+        except (ValueError, KeyError, TypeError, OSError) as exc:
+            raise store.CampaignError(str(exc)) from exc
     return identity
 
 

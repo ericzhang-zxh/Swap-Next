@@ -173,6 +173,7 @@ _APPROVED_SHAPE = {
     6: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
     7: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
     8: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
+    9: {"vcpus": 4, "mem_mib": 4096, "accel": "tcg"},
 }
 _TCG_QEMU = ["-accel", "tcg,thread=multi,tb-size=256", "-machine", "pc", "-cpu", "max"]
 
@@ -210,7 +211,7 @@ def _kbench_screen(protocol, rules, validity, accelerator, revision):
         raise ValueError(label + " baseline commit")
     if protocol.get("page_cluster", {}).get("value") != 3:
         raise ValueError(label + " page-cluster is the kernel default 3")
-    timing_cases = (["swapin-compressed"] if revision == 8 else []) + ["swapin-disk", "swapin-zram-64k"]
+    timing_cases = (["swapin-compressed"] if revision in (8, 9) else []) + ["swapin-disk", "swapin-zram-64k"]
     if tiers.get("fast", {}).get("cases") != timing_cases:
         raise ValueError(label + " fast cases")
     if tiers.get("probe", {}).get("cases") != timing_cases + ["metadata-brd"]:
@@ -219,17 +220,17 @@ def _kbench_screen(protocol, rules, validity, accelerator, revision):
     if set(cases) != set(timing_cases + ["metadata-brd"]):
         raise ValueError(label + " case set")
     timing_backends = [("swapin-disk", "disk"), ("swapin-zram-64k", "zram-64k")]
-    if revision == 8:
+    if revision in (8, 9):
         timing_backends.insert(0, ("swapin-compressed", "compressed"))
     for name, backend in timing_backends:
         spec = cases[name]
-        expected_primary = None if revision == 8 and backend != "compressed" else "swapin_seq.mean_ns"
+        expected_primary = None if revision in (8, 9) and backend != "compressed" else "swapin_seq.mean_ns"
         if (spec.get("workload") != "swapin" or spec.get("mode") != "xswap" or
                 spec.get("backend") != backend or spec.get("primary") != expected_primary):
             raise ValueError(label + " swap-in cases are xswap")
         if spec.get("metrics", {}).get("swapin_rand.mean_ns") != "lower":
             raise ValueError(label + " keeps swapin_rand as a guard")
-        if revision == 8:
+        if revision in (8, 9):
             expected_metrics = {"swapin_seq.mean_ns": "lower", "swapin_rand.mean_ns": "lower",
                                 "swapin_seq.p99_ns": "lower", "swapin_rand.p99_ns": "lower"}
             if spec.get("metrics") != expected_metrics:
@@ -319,6 +320,40 @@ def _revision8_compression(protocol):
     module.validate_protocol(protocol, Path(__file__).resolve().parents[2])
 
 
+
+def _revision9_compression(protocol):
+    """C2 identity is separate; statistical and validity parameters stay fixed."""
+    fast = protocol.get("tiers", {}).get("fast", {})
+    probe = protocol.get("tiers", {}).get("probe", {})
+    if (fast.get("calibration_pairs") != 10 or fast.get("comparison_pairs") != 4
+            or probe.get("calibration_runs") != 3 or probe.get("candidate_runs") != 1):
+        raise ValueError("revision 9 keeps ten A/A and four AB/BA pairs and 3/1 probe runs")
+    ceilings = {"probe_guest_attempts": 32, "guest_attempts": 88,
+                "build_attempts": 10, "wall_seconds": 64800}
+    budget = protocol.get("budget", {})
+    if (any(type(budget.get(key)) is not int or not 0 < budget[key] <= value
+            for key, value in ceilings.items()) or budget.get("guest_timeout") != 900
+            or budget["probe_guest_attempts"] + budget["guest_attempts"] > 120):
+        raise ValueError("revision 9 resource limits exceed reviewed C2 ceilings")
+    if protocol.get("compression_workload") != {"target_bytes": 134217728}:
+        raise ValueError("revision 9 compressed target is 128 MiB")
+    expected = {
+        "numerator": "attributable_meminfo", "fields": list(ATTRIBUTABLE_FIELDS),
+        "excluded_fields": ["MemFree", "MemAvailable", "Slab"],
+        "on_missing": "fail", "on_vmalloc_decrease": "fail", "on_negative_sum": "fail",
+        "signed_fields": ["SUnreclaim", "PageTables", "Percpu"],
+    }
+    if protocol.get("cases", {}).get("metadata-brd", {}).get("metadata_accounting") != expected:
+        raise ValueError("revision 9 metadata uses the retained attributable counters")
+    if protocol.get("metadata_rescore") is not None:
+        raise ValueError("revision 9 requires fresh calibration")
+    path = Path(__file__).resolve().with_name("configurations.py")
+    spec = importlib.util.spec_from_file_location("swap_standard_revision9_configurations", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.validate_c2_protocol(protocol, Path(__file__).resolve().parents[2])
+
+
 def protocol_rules(protocol):
     """Measurement rules for approved revisions. Revision 6 is the TCG kbench screen."""
     if not isinstance(protocol, dict):
@@ -379,12 +414,14 @@ def protocol_rules(protocol):
         if revision == 4 and (protocol.get("preallocate_swap") is not True or
                               any(c.get("mode", "plain") != "plain" for c in protocol.get("cases", {}).values())):
             raise ValueError("revision 4 requires plain mode and preallocated swap")
-        if revision in (6, 7, 8):
+        if revision in (6, 7, 8, 9):
             _kbench_screen(protocol, rules, validity, accelerator, revision)
         if revision == 7:
             _revision7_metadata(protocol)
         if revision == 8:
             _revision8_compression(protocol)
+        if revision == 9:
+            _revision9_compression(protocol)
         for name, spec in protocol.get("tiers", {}).items():
             if spec.get("kind") == "probe":
                 if name != "probe":

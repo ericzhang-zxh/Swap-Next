@@ -816,7 +816,7 @@ class Session:
 
     def _correctness(self, record, identity, protocol):
         commit = identity.get("candidate_commit")
-        if protocol.get("protocol_revision") == 8:
+        if protocol.get("protocol_revision") in (8, 9):
             return self._matrix_correctness(record, commit, protocol)
         found, invalid = [], []
         paths = sorted(self.directory.glob("runs/guests/*/result.json"))

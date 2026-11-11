@@ -214,13 +214,13 @@ def validate(build, backend, mode, workload, protocol_revision=1, config_id='sta
         required += ["ZRAM"]
     if backend == "brd":
         required += ["BLK_DEV_RAM"]
-    if protocol_revision == 8:
+    if protocol_revision in (8, 9):
         from configurations import get_config, validate_final
         purpose = "correctness" if correctness_case else "timing"
         definition = get_config(config_id, PROJECT, purpose=purpose)
         if manifest.get("input_config_sha256") != definition["input_config_sha256"]:
             raise ValueError("build input config does not match config_id")
-        validate_final(config_id, config, purpose=purpose)
+        validate_final(config_id, config, purpose=purpose, protocol_revision=protocol_revision)
         if mode == "xswap":
             required += ["XSWAP"]
     else:
@@ -246,19 +246,19 @@ def validate_workload(backend, mode, workload, protocol_revision=1):
     if workload == "correctness" and (mode != "xswap" or backend not in ("disk", "zswap")):
         raise ValueError("correctness requires xswap with disk or zswap")
     if backend == "compressed":
-        if protocol_revision != 8 or mode != "xswap" or workload not in ("swapin", "compression"):
-            raise ValueError("compressed backend requires revision 8 xswap swapin or compression")
+        if protocol_revision not in (8, 9) or mode != "xswap" or workload not in ("swapin", "compression"):
+            raise ValueError("compressed backend requires revision 8 or 9 xswap swapin or compression")
     if workload == "compression":
-        if protocol_revision != 8 or (mode, backend) not in (("xswap", "compressed"), ("plain", "zswap")):
-            raise ValueError("compression correctness requires revision 8 compressed XSwap or legacy ZSwap")
+        if protocol_revision not in (8, 9) or (mode, backend) not in (("xswap", "compressed"), ("plain", "zswap")):
+            raise ValueError("compression correctness requires revision 8 or 9 compressed XSwap or legacy ZSwap")
 
 
 def revision8_context(args, frozen):
     """Bind a new runner invocation to the trusted config and matrix catalog."""
     from configurations import correctness_case as resolve_case, pinned_config
 
-    if not isinstance(frozen, dict) or frozen.get("protocol_revision") != 8:
-        raise ValueError("revision 8 requires its frozen protocol")
+    if not isinstance(frozen, dict) or frozen.get("protocol_revision") not in (8, 9):
+        raise ValueError("configured runner requires its frozen protocol")
     args.compression_target_bytes = 0
     args.expected_case = None
     args.correctness_group = ""
@@ -293,6 +293,11 @@ def revision8_context(args, frozen):
         if frozen.get("compression_workload") != {"target_bytes": 134217728}:
             raise ValueError("compressed target bytes differ from trusted revision 8 workload")
         args.compression_target_bytes = 134217728
+    args.source_binding = {}
+    if args.protocol_revision == 9:
+        from configurations import runtime_source_binding
+        args.source_binding = runtime_source_binding(frozen, PROJECT, args.build,
+            args.config_id, args.backend, args.expected_case)
     return definition
 
 
@@ -318,8 +323,8 @@ def guest_commandline(args, image_sha):
              "zswap.enabled=1", "zswap.compressor=lzo", "brd.rd_size=1073741824",
              f"bench.backend={args.backend}", f"bench.mode={args.mode}",
              f"bench.workload={args.workload}", f"bench.image_sha={image_sha}"]
-    if args.protocol_revision == 8:
-        words += [f"bench.protocol_revision=8", f"bench.config_id={args.config_id}",
+    if args.protocol_revision in (8, 9):
+        words += [f"bench.protocol_revision={args.protocol_revision}", f"bench.config_id={args.config_id}",
                   f"bench.topology_id={args.topology_id}"]
         if args.correctness_case:
             words += [f"bench.correctness_case={args.correctness_case}",
@@ -328,6 +333,11 @@ def guest_commandline(args, image_sha):
             words.append("bench.compression_target_bytes=" + str(args.compression_target_bytes))
         if args.compression_cases:
             words.append("bench.compression_cases=" + ",".join(args.compression_cases))
+    if args.protocol_revision == 9:
+        binding = args.source_binding
+        words += ["bench." + key + "=" + binding[key]
+                  for key in ("contract_id", "source_role", "source_commit", "frontend")]
+        words.append("bench.observer=" + binding["observer_id"])
     return " ".join(words)
 
 
@@ -344,7 +354,7 @@ def main():
     parser.add_argument("--workload", choices=["usemem", "usemem-rand", "build", "redis", "swapin", "metadata", "lifetime", "correctness", "compression"], required=True)
     parser.add_argument("--config-id", default="standard")
     parser.add_argument("--correctness-case")
-    parser.add_argument("--topology-id", choices=["single", "numa2", "numa2-sockets-v2", "numa2-nehalem-v3"], default="single")
+    parser.add_argument("--topology-id", choices=["single", "numa2", "numa2-sockets-v2", "numa2-nehalem-v3", "c2-numa2-nehalem-v1"], default="single")
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--run-id", type=run_id, help="explicit unique run directory name")
@@ -364,7 +374,7 @@ def main():
     if (args.workload == "metadata") != (args.backend == "brd"):
         parser.error("metadata uses brd exclusively; brd is reserved for metadata")
     validate_workload(args.backend, args.mode, args.workload, args.protocol_revision)
-    if args.protocol_revision != 8 and (args.config_id != "standard" or args.correctness_case or args.topology_id != "single"):
+    if args.protocol_revision not in (8, 9) and (args.config_id != "standard" or args.correctness_case or args.topology_id != "single"):
         parser.error("config, correctness and topology identities require revision 8")
     for value in (args.config_id, args.correctness_case):
         if value is not None and not re.fullmatch(r"[a-z][a-z0-9-]{0,63}", value):
@@ -401,7 +411,7 @@ def main():
             guest = frozen.get("guest", {})
             if guest and (guest.get("mem_mib") != memory or guest.get("vcpus") != int(cpus)):
                 raise campaign_store.CampaignError("runner guest size does not match protocol")
-            if args.protocol_revision == 8:
+            if args.protocol_revision in (8, 9):
                 revision8_context(args, frozen)
                 topology_options(args.topology_id, cpus, memory)
                 from configurations import effective_accelerator
@@ -411,13 +421,15 @@ def main():
                 raise campaign_store.CampaignError(
                     "workload excluded by protocol: " + args.workload + ": " + reason)
             identity = {key: getattr(args, key) for key in guest_budget.IDENTITY_KEYS}
-            if args.protocol_revision == 8:
+            if args.protocol_revision in (8, 9):
                 identity.update(config_id=args.config_id, correctness_case=args.correctness_case,
                                 topology_id=args.topology_id)
+            if args.protocol_revision == 9:
+                identity.update(args.source_binding)
             guest_budget.consume_guest(args.campaign, args.run_id, args.reservation, identity)
         except (campaign_store.CampaignError, OSError, ValueError) as exc:
             raise SystemExit("BLOCKED: " + str(exc))
-    if args.check_only and args.protocol_revision == 8:
+    if args.check_only and args.protocol_revision in (8, 9):
         if not args.campaign:
             parser.error("revision 8 check-only requires --campaign for its frozen contract")
         revision8_context(args, guest_budget.protocol(args.campaign))
@@ -467,12 +479,14 @@ def main():
                       config_sha256=sha(config), guest_provenance=provenance, command=command,
                       performance_accepted=False, calibrated=False, auto_promote=False,
                       harness_sha256={x.name: sha(x) for x in BASE.iterdir() if x.is_file() and x.suffix in (".py", ".sh", ".json", ".c") and x.name != "image.json"})
-        if args.protocol_revision == 8:
+        if args.protocol_revision in (8, 9):
             result.update(config_id=args.config_id, correctness_case=args.correctness_case,
                           topology_id=args.topology_id, correctness_group=args.correctness_group,
                           expected_subcases=args.compression_cases,
                           compression_target_bytes=args.compression_target_bytes,
                           topology_arguments=topology_options(args.topology_id, guest_cpus, guest_mib))
+        if args.protocol_revision == 9:
+            result.update(args.source_binding)
         result.update(attestation_fields(args, dest, build, manifest))
         snapshot = dest / "harness"
         snapshot.mkdir()
@@ -549,7 +563,8 @@ def main():
         try:
             result.update(parse(serial, image_sha, args.backend, args.mode, args.workload, args.protocol_revision,
                                 config_id=args.config_id, correctness_case=args.correctness_case,
-                                topology_id=args.topology_id, expected_case=args.expected_case))
+                                topology_id=args.topology_id, expected_case=args.expected_case,
+                                source_binding=getattr(args, "source_binding", None)))
         except (ValueError, KeyError, TypeError) as exc:
             result.update(gates={"parse_complete": False}, parse_error=str(exc))
         result["gates"]["qemu_exit"] = proc.returncode == 0 and reason is None

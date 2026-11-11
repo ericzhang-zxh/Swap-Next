@@ -105,7 +105,7 @@ def configuration_module():
 
 
 def validate_result_configuration(protocol, result, case):
-    if protocol.get("protocol_revision") != 8:
+    if protocol.get("protocol_revision") not in (8, 9):
         return
     config_id = case.get("config_id", "c1-common")
     for key, expected in (("config_id", config_id), ("topology_id", case.get("topology_id", "single")),
@@ -114,6 +114,11 @@ def validate_result_configuration(protocol, result, case):
             raise RuntimeError("timing result " + key + " differs from frozen case")
     catalog = configuration_module()
     catalog.validate_topology_record(protocol, result, "timing")
+    if protocol.get("protocol_revision") == 9:
+        binding = catalog.runtime_source_binding(protocol, ROOT, result.get("build"),
+            config_id, case["backend"])
+        if any(result.get(key) != value for key, value in binding.items()):
+            raise RuntimeError("timing result source-role observer binding mismatch")
     config = catalog.pinned_config(protocol, config_id, ROOT, "timing")
     if result.get("input_config_sha256") != config["input_config_sha256"]:
         raise RuntimeError("timing result input configuration mismatch")
@@ -140,7 +145,7 @@ def runner_extra(protocol, case=None):
     extra = ["--protocol-revision", str(protocol.get("protocol_revision", 1))]
     if protocol.get("preallocate_swap"):
         extra.append("--preallocate-swap")
-    if protocol.get("protocol_revision") == 8:
+    if protocol.get("protocol_revision") in (8, 9):
         case = case or {}
         extra += ["--config-id", case.get("config_id", "c1-common"),
                   "--topology-id", case.get("topology_id", "single")]
@@ -157,7 +162,7 @@ METADATA_METRIC = "metadata_delta_bytes_per_capacity_slot"
 def contract_errors(p):
     """Every new campaign scores swap-in latency and screens metadata bytes per slot."""
     errors = []
-    if p.get("protocol_revision") == 8:
+    if p.get("protocol_revision") in (8, 9):
         try:
             configuration_module().validate_protocol(p, ROOT)
         except (ValueError, OSError, KeyError, TypeError) as exc:
@@ -225,7 +230,7 @@ def fingerprint(p):
     paths += [BENCH / name for name in ["guest-init", "tools.json", "swapin.c", "correctness.c", "console-drain.c"]]
     paths += [ROOT / "benchmark/kernel" / name for name in ["build.py", "lifetime.py", "build_namespace.sh"]]
     paths += [ROOT / "benchmark/kernel/builds" / p["baseline_build"] / "result.json"]
-    if p.get("protocol_revision") == 8:
+    if p.get("protocol_revision") in (8, 9):
         catalog = configuration_module()
         catalog.validate_protocol(p, ROOT)
         paths += [ROOT / catalog.pinned_config(p, config_id, ROOT)["path"]
@@ -370,7 +375,7 @@ class Workflow:
             extra = ({"config_id": case.get("config_id", "c1-common"),
                       "correctness_case": case.get("id") if "group" in case else None,
                       "topology_id": case.get("topology_id", "single")}
-                     if self.p.get("protocol_revision") == 8 else {})
+                     if self.p.get("protocol_revision") in (8, 9) else {})
             ticket = guest_budget.reserve_guest(self.p["campaign"], run_id, build, case["backend"],
                                                 case.get("mode", "plain"), case["workload"], pool, **extra)
         except campaign_store.CampaignError as exc:
@@ -489,7 +494,7 @@ class Workflow:
         return commit, record, proof
 
     def timing_correctness(self, candidate, correctness, row):
-        if self.p.get("protocol_revision") != 8:
+        if self.p.get("protocol_revision") not in (8, 9):
             return None
         if not candidate or not correctness:
             raise RuntimeError("BLOCKED: revision 8 timing requires --candidate and a complete --correctness matrix")
@@ -565,7 +570,7 @@ class Workflow:
         if checked.get("status") != "SCOPE_PASS" or checked.get("candidate_commit") != commit or checked.get("parent") != self.p["baseline_commit"]:
             raise RuntimeError("controller scope check missing")
         row["controller_check"] = checked
-        if self.p.get("protocol_revision") == 8:
+        if self.p.get("protocol_revision") in (8, 9):
             return self.timing_build(self.configuration_build_name(commit, "c1-common", candidate), commit)
         build = self.p.get("candidate_builds", {}).get(candidate, "std-" + commit[:12])
         if not re.fullmatch(r"[a-z0-9-]{1,48}", build):
@@ -585,6 +590,8 @@ class Workflow:
         return build
 
     def configuration_build_name(self, commit, config_id, candidate=None):
+        if self.p.get("protocol_revision") == 9 and config_id.startswith("c2-"):
+            return "c2-" + commit[:12] + "-" + config_id.removeprefix("c2-")
         if config_id == "c1-common":
             build = (self.p["baseline_build"] if commit == self.p["baseline_commit"] else
                      self.p.get("candidate_builds", {}).get(candidate, "c1-" + commit[:12] + "-common"))
@@ -595,7 +602,7 @@ class Workflow:
         return build
 
     def timing_build(self, build, commit):
-        if self.p.get("protocol_revision") == 8:
+        if self.p.get("protocol_revision") in (8, 9):
             reference = "benchmark/kernel/builds/" + build + "/result.json"
             correctness_proof._configured_build(ROOT, reference, sha(ROOT / reference),
                 commit, self.p, "c1-common", "timing")
@@ -629,11 +636,11 @@ class Workflow:
     def build_coverage(self, candidate, case_id):
         """One counted config build or a verified reuse; never a guest launch."""
         self.check()
-        if self.p.get("protocol_revision") != 8 or self.p.get("template_only"):
+        if self.p.get("protocol_revision") not in (8, 9) or self.p.get("template_only"):
             raise RuntimeError("BLOCKED: configured coverage requires executable revision 8")
         catalog = configuration_module()
         matrix = catalog.validate_protocol(self.p, ROOT)
-        case = next((item for item in matrix["cases"] + matrix["build_only"]
+        case = next((item for item in matrix["cases"] + matrix["build_only"] + matrix.get("negative_builds", [])
                      if item["id"] == case_id), None)
         if case is None:
             raise RuntimeError("BLOCKED: unknown frozen coverage case")
@@ -644,22 +651,25 @@ class Workflow:
             if not candidate:
                 raise RuntimeError("BLOCKED: candidate coverage requires --candidate")
             commit, record = self.candidate_source(candidate)
-        purpose = "build-only" if case in matrix["build_only"] else "correctness"
+        negative = case in matrix.get("negative_builds", [])
+        expected_status = "EXPECTED_UNSUPPORTED_CONFIG" if negative else "BUILD_VERIFIED"
+        purpose = "expected-negative" if negative else "build-only" if case in matrix["build_only"] else "correctness"
         config = catalog.pinned_config(self.p, case["config_id"], ROOT, purpose)
         build = self.configuration_build_name(commit, case["config_id"], candidate)
         reference = "benchmark/kernel/builds/" + build + "/result.json"
         path = ROOT / reference
         prior = [item for item in self.ledger if item.get("action") == "build-coverage"
                  and item.get("commit") == commit and item.get("config_id") == case["config_id"]]
-        if any(item.get("build_reserved") and item.get("status") != "BUILD_VERIFIED" for item in prior):
+        if any(item.get("build_reserved") and item.get("status") != expected_status for item in prior):
             raise RuntimeError("BLOCKED: failed or interrupted configured build remains spent")
         same = [item for item in prior if item.get("case_id") == case_id]
         if same:
-            if len(same) != 1 or same[0].get("status") != "BUILD_VERIFIED":
+            if len(same) != 1 or same[0].get("status") != expected_status:
                 raise RuntimeError("BLOCKED: retained coverage case requires reconciliation")
             correctness_proof._configured_build(ROOT, reference, same[0]["build_manifest_sha256"],
                 commit, self.p, case["config_id"], purpose)
-            self.configured_build_reference(same[0])
+            if not negative:
+                self.configured_build_reference(same[0])
             return same[0]
         ident = uuid.uuid4().hex
         row = {"id": ident, "action": "build-coverage", "tier": "correctness",
@@ -682,6 +692,8 @@ class Workflow:
                     raise RuntimeError("controller scope check missing")
                 row["controller_check"] = checked
             if path.exists():
+                if negative:
+                    raise RuntimeError("BLOCKED: expected-negative build requires its own counted full build")
                 correctness_proof._configured_build(ROOT, reference, sha(path),
                     commit, self.p, case["config_id"], purpose)
                 row["build_reused"] = True
@@ -705,17 +717,21 @@ class Workflow:
                            "build_manifest_sha256": sha(path), "environment": environment,
                            "campaign": self.p["campaign"], "evaluation_id": ident,
                            "protocol_sha256": sha(PROTOCOL)}
+                if negative:
+                    binding.update(outcome=expected_status, guest_eligible=False,
+                                   build_log_sha256=sha(path.parent / "build.log"))
                 save(path.with_name("configured-build.json"), binding)
                 correctness_proof._configured_build(ROOT, reference, sha(path), commit,
                     self.p, case["config_id"], purpose, require_counted=False)
                 row["build_reused"] = False
-            row.update(status="BUILD_VERIFIED", build_manifest=reference, build_manifest_sha256=sha(path),
+            row.update(status=expected_status, guest_eligible=not negative, build_manifest=reference, build_manifest_sha256=sha(path),
                        build_provenance=str(path.with_name("configured-build.json").relative_to(ROOT)),
                        build_provenance_sha256=sha(path.with_name("configured-build.json")),
                        finished=time.time())
             save(dest / "report.json", row)
             save(self.ledger_path, self.ledger)
-            row["build_cache"] = self.configured_build_reference(row, register=True)
+            if not negative:
+                row["build_cache"] = self.configured_build_reference(row, register=True)
         except (Exception, KeyboardInterrupt) as exc:
             row.update(status="BUILD_FAILED" if row["build_reserved"] else "BLOCKED",
                        reason=failure_reason(exc), finished=time.time())
@@ -965,7 +981,7 @@ class Workflow:
                         raise RuntimeError("controller scope check missing")
                     row["controller_check"] = checked
                     calibration = self.calibration(tier, fp)
-                    if self.p.get("protocol_revision") == 8:
+                    if self.p.get("protocol_revision") in (8, 9):
                         build = self.timing_build(self.configuration_build_name(commit, "c1-common", candidate), commit)
                     else:
                         build = self.p.get("candidate_builds", {}).get(candidate, "std-" + commit[:12])

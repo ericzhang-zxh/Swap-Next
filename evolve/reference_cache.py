@@ -147,8 +147,8 @@ def semantic_identity(kind, identity):
             need(type(guest.get(key)) is int and guest[key] > 0, "guest " + key + " required")
         builds = identity.get("builds")
         need(isinstance(builds, dict) and identity["source_commit"] in builds, "exact runtime builds required")
-        revision8 = identity["protocol"].get("protocol_revision") == 8
-        matrix_builds = revision8 and kind == "correctness"
+        configured = identity["protocol"].get("protocol_revision") in (8, 9)
+        matrix_builds = configured and kind == "correctness"
         expected_configs = {}
         if matrix_builds:
             matrix = identity["protocol"].get("correctness_matrix", {})
@@ -168,7 +168,7 @@ def semantic_identity(kind, identity):
                 need(isinstance(variant, dict), "runtime configuration build malformed")
                 for key in ("image_sha256", "config_sha256", "input_config_sha256"):
                     need(isinstance(variant.get(key), str) and HEX64.fullmatch(variant[key]), "runtime " + key)
-                if revision8:
+                if configured:
                     need(variant.get("config_id") == config_id
                          and config_id in identity["protocol"].get("configurations", {}),
                          "runtime named configuration mismatch")
@@ -185,7 +185,7 @@ def semantic_identity(kind, identity):
         need(isinstance(guest_image.get("sources"), dict) and guest_image["sources"], "guest source hashes required")
         harness = identity.get("harness")
         required = set(RUNTIME_HARNESS)
-        if revision8:
+        if configured:
             required.update({"benchmark/swap-standard/configurations.py",
                              "benchmark/swap-standard/compression.c", "evolve/control/correctness_proof.py"})
         required.add("evolve/control/correctness_proof.py" if kind == "correctness" else "benchmark/swap-standard/analysis.py")
@@ -311,8 +311,8 @@ class Verifier:
         for key in ("backend", "workload"):
             need(result.get(key) == case[key], "raw run " + key + " mismatch")
         need(result.get("mode") == case.get("mode", "plain"), "raw run mode mismatch")
-        revision8 = protocol.get("protocol_revision") == 8
-        if revision8:
+        configured = protocol.get("protocol_revision") in (8, 9)
+        if configured:
             need(type(result.get("protocol_revision")) is int
                  and result["protocol_revision"] == protocol["protocol_revision"],
                  "raw run protocol revision mismatch")
@@ -337,7 +337,14 @@ class Verifier:
         parser = self.native("benchmark/swap-standard/evidence.py")
         revision = result.get("protocol_revision", protocol.get("protocol_revision", 1))
         kwargs = ({"config_id": result["config_id"], "correctness_case": None,
-                   "topology_id": result["topology_id"]} if revision8 else {})
+                   "topology_id": result["topology_id"]} if configured else {})
+        if revision == 9:
+            catalog = self.native("benchmark/swap-standard/configurations.py")
+            binding = catalog.runtime_source_binding(protocol, self.root, result["build"],
+                result["config_id"], result["backend"])
+            need(all(result.get(key) == value for key, value in binding.items()),
+                 "cached timing source-role observer mismatch")
+            kwargs["source_binding"] = binding
         parsed = parser.parse(serial.read_text(errors="replace"), result["image_sha256"],
                               result["backend"], result["mode"], result["workload"],
                               revision, **kwargs)
@@ -345,12 +352,14 @@ class Verifier:
         need(result.get("gates") == expected_gates and result.get("metrics") == parsed["metrics"],
              "raw serial differs from result gates/metrics")
         need(result.get("integration_pass") is True and all(expected_gates.values()), "raw correctness failed")
-        for name in (("run.py", "evidence.py", "configurations.py") if revision8 else ("run.py", "evidence.py")):
+        for name in (("run.py", "evidence.py", "configurations.py") if configured else ("run.py", "evidence.py")):
             self.file("benchmark/swap-standard/" + name, result.get("harness_sha256", {}).get(name))
         ticket = self.json(result.get("reservation"), result.get("reservation_sha256"))
         identity_keys = ("build", "backend", "mode", "workload")
-        if revision8:
+        if configured:
             identity_keys += ("config_id", "correctness_case", "topology_id")
+        if revision == 9:
+            identity_keys += catalog.C2_BINDING_KEYS
         need(ticket.get("id") == run_id and ticket.get("campaign") == protocol["campaign"] and
              ticket.get("status") == "STARTED" and ticket.get("protocol_sha256") == result["protocol_sha256"] and
              ticket.get("identity") == {key: result[key] for key in identity_keys},
@@ -387,7 +396,7 @@ def _extract(metrics, path):
 def _report(verifier, kind, identity, provenance):
     protocol, rules = verifier.protocol(identity, provenance)
     report = verifier.json(provenance["artifact"])
-    if protocol.get("protocol_revision") == 8:
+    if protocol.get("protocol_revision") in (8, 9):
         proof = verifier.json(report.get("correctness_manifest"), report.get("correctness_manifest_sha256"))
         summary = verifier.native("evolve/control/correctness_proof.py").validate(proof, protocol, verifier.root)
         need(summary.get("passed") is True
@@ -483,7 +492,7 @@ def _report(verifier, kind, identity, provenance):
     return {"checks": ["raw-results", "serial-reparse", "counted-reservations", "native-analysis-replay"],
             "coverage": {"cases": cases, "backends": sorted({protocol["cases"][c]["backend"] for c in cases}),
                          "gates": [], **({"configurations": ["c1-common"], "topologies": ["single"]}
-                                        if protocol.get("protocol_revision") == 8 else {})},
+                                        if protocol.get("protocol_revision") in (8, 9) else {})},
             "status": report["status"]}
 
 
@@ -531,7 +540,7 @@ def _verify(root, kind, identity, provenance):
             proof = read(artifact)
             need(proof.get("source_commit") == identity["source_commit"], "proof source mismatch")
             summary = verifier.native("evolve/control/correctness_proof.py").validate(proof, protocol, verifier.root)
-            if protocol.get("protocol_revision") == 8:
+            if protocol.get("protocol_revision") in (8, 9):
                 for entry in proof["runs"]:
                     raw = verifier.json(entry["result_path"], entry["result_sha256"])
                     for path_key, hash_key in (("build_manifest", "build_manifest_sha256"),
@@ -545,6 +554,21 @@ def _verify(root, kind, identity, provenance):
                     expected = identity["builds"][item["source_commit"]]["configurations"][item["config_id"]]
                     verifier.file(item["build_manifest"], item["build_manifest_sha256"])
                     verifier.build(item["build_manifest"], item["source_commit"], expected)
+                for item in summary.get("negative_builds", []):
+                    manifest = verifier.json(item["build_manifest"], item["build_manifest_sha256"])
+                    directory = str(Path(item["build_manifest"]).parent)
+                    binding = verifier.json(directory + "/configured-build.json")
+                    verifier.file(directory + "/build.log", binding["build_log_sha256"])
+                    verifier.file(directory + "/output/.config", manifest["config_sha256"])
+                    verifier.file(directory + "/output/arch/x86/boot/bzImage", manifest["image_sha256"])
+                    config = verifier.native("benchmark/swap-standard/configurations.py").get_config(
+                        item["config_id"], verifier.root, "expected-negative")
+                    verifier.file(config["path"], manifest["input_config_sha256"])
+                    # Its full typed verification occurs in the native matrix validator;
+                    # it is deliberately absent from the positive build variants/cache.
+                    need(item.get("guest_eligible") is False
+                         and item.get("status") == "EXPECTED_UNSUPPORTED_CONFIG",
+                         "negative coverage lost its typed outcome")
                 coverage = dict(summary["coverage"],
                     gates=sorted(key for key, passed in summary["gates"].items() if passed))
             else:

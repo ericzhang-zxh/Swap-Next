@@ -68,9 +68,9 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
     cases = protocol.get("cases", {})
     if not isinstance(cases, dict) or not all(isinstance(case, dict) for case in cases.values()):
         raise ValueError("malformed protocol cases")
-    revision8 = protocol.get("protocol_revision") == 8
+    configured = protocol.get("protocol_revision") in (8, 9)
     bench = historical_bench or "benchmark/swap-standard"
-    if revision8:
+    if configured:
         if case_spec is None:
             raise ValueError("revision 8 requires a complete correctness matrix")
         expected = configurations(root).correctness_case(protocol, case_spec["id"])
@@ -83,9 +83,9 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
             raise ValueError("raw correctness case ID mismatch")
         configurations(root).validate_topology_record(protocol, proof)
     routes = {(case.get("mode", "plain"), case.get("backend")) for case in cases.values() if case.get("workload") == "swapin"}
-    if not revision8 and routes and all(mode == "plain" for mode, _ in routes):
+    if not configured and routes and all(mode == "plain" for mode, _ in routes):
         raise ValueError("plain-mode correctness workload capability is missing")
-    if not revision8 and not routes:
+    if not configured and not routes:
         raise ValueError("protocol has no swap-in correctness route")
     if type(proof.get("proof_schema_version")) is not int or proof["proof_schema_version"] != 1:
         raise ValueError("missing raw runner proof schema")
@@ -109,9 +109,9 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
     if proof.get("protocol_sha256") != protocol_hash or proof.get("protocol_revision") != protocol.get("protocol_revision", 1):
         raise ValueError("proof protocol hash/revision mismatch")
     mode, backend = proof.get("mode"), proof.get("backend")
-    if not revision8 and mode == "plain":
+    if not configured and mode == "plain":
         raise ValueError("plain-mode correctness workload capability is missing")
-    if not revision8 and ((mode, backend) not in routes or mode != "xswap" or backend not in ("disk", "zswap") or proof.get("workload") != "correctness"):
+    if not configured and ((mode, backend) not in routes or mode != "xswap" or backend not in ("disk", "zswap") or proof.get("workload") != "correctness"):
         raise ValueError("proof mode/backend/workload does not match protocol correctness route")
     if (type(proof.get("integration_pass")) is not bool or type(proof.get("run_valid")) is not bool or
             type(proof.get("exit_code")) is not int or not isinstance(proof.get("invalid_reasons"), list) or
@@ -119,7 +119,7 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
             proof.get("stop_reason") is not None and not isinstance(proof["stop_reason"], str)):
         raise ValueError("malformed runner outcome")
     gates = proof.get("gates")
-    required = case_spec["required_gates"] if revision8 else protocol.get("required_correctness_gates")
+    required = case_spec["required_gates"] if configured else protocol.get("required_correctness_gates")
     if (not isinstance(required, list) or not required or not all(isinstance(k, str) and k for k in required) or
             not isinstance(gates, dict) or not gates or not all(type(v) is bool for v in gates.values())):
         raise ValueError("malformed correctness gate contract")
@@ -133,8 +133,10 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
     ticket_path = hashed(root, proof.get("reservation"), proof.get("reservation_sha256"), ticket_ref)
     ticket = json.loads(ticket_path.read_bytes())
     identity = {key: proof[key] for key in ("build", "backend", "mode", "workload")}
-    if revision8:
+    if configured:
         identity.update({key: proof[key] for key in ("config_id", "correctness_case", "topology_id")})
+    if protocol.get("protocol_revision") == 9:
+        identity.update({key: proof.get(key) for key in configurations(root).C2_BINDING_KEYS})
     if (ticket.get("campaign") != campaign or ticket.get("id") != run_id or ticket.get("status") != "STARTED" or
             ticket.get("identity") != identity or ticket.get("protocol_sha256") != protocol_hash or
             ticket.get("pool") not in ("fast", "probe") or not finite(ticket.get("reserved_unix")) or
@@ -158,7 +160,7 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
             type(manifest.get("exit_code")) is not int or manifest["exit_code"] != 0 or
             manifest.get("instrument_sha256", "missing") is not None):
         raise ValueError("build manifest source commit/pass mismatch")
-    if revision8:
+    if configured:
         catalog = configurations(root)
         pinned = catalog.pinned_config(protocol, case_spec["config_id"], root, "correctness")
         input_config = file_at(root, pinned["path"])
@@ -169,18 +171,23 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
     config = file_at(root, f"benchmark/kernel/builds/{build}/output/.config")
     if manifest.get("config_sha256") != sha(config) or proof.get("config_sha256") != sha(config):
         raise ValueError("build final config mismatch")
-    if revision8:
-        final_config = catalog.validate_final(case_spec["config_id"], config, "correctness")
+    if configured:
+        final_config = catalog.validate_final(case_spec["config_id"], config, "correctness", protocol_revision=protocol["protocol_revision"])
         catalog.verify_build_binding(root, manifest_path, commit, case_spec["config_id"])
+        if protocol.get("protocol_revision") == 9:
+            binding = catalog.runtime_source_binding(protocol, root, build, case_spec["config_id"],
+                                                      backend, case_spec)
+            if any(proof.get(key) != value for key, value in binding.items()):
+                raise ValueError("correctness source-role observer binding mismatch")
     image = file_at(root, f"benchmark/kernel/builds/{build}/output/arch/x86/boot/bzImage")
     if manifest.get("image_sha256") != sha(image) or proof.get("image_sha256") != sha(image):
         raise ValueError("build image mismatch")
     serial = hashed(root, proof.get("serial_log"), proof.get("serial_sha256"), run + "/serial.log")
     harness = proof.get("harness_sha256", {})
     if not isinstance(harness, dict): raise ValueError("missing runner/parser harness hashes")
-    for name in (("run.py", "evidence.py", "configurations.py") if revision8 else ("run.py", "evidence.py")):
+    for name in (("run.py", "evidence.py", "configurations.py") if configured else ("run.py", "evidence.py")):
         hashed(root, bench + "/" + name, harness.get(name))
-    if revision8:
+    if configured:
         guest_manifest = json.loads(file_at(root, bench + "/image.json").read_bytes())
         if proof.get("guest_provenance") != guest_manifest:
             raise ValueError("correctness guest image provenance mismatch")
@@ -192,10 +199,11 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
     parser = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(parser)
     subcases_failed = False
-    if revision8:
+    if configured:
         reparsed = parser.parse(serial.read_text(errors="replace"), proof["image_sha256"],
-            backend, mode, proof["workload"], protocol_revision=8, config_id=case_spec["config_id"],
-            correctness_case=case_spec["id"], topology_id=case_spec["topology_id"], expected_case=case_spec)
+            backend, mode, proof["workload"], protocol_revision=protocol["protocol_revision"], config_id=case_spec["config_id"],
+            correctness_case=case_spec["id"], topology_id=case_spec["topology_id"], expected_case=case_spec,
+            **({"source_binding": {key: proof[key] for key in catalog.C2_BINDING_KEYS}} if protocol["protocol_revision"] == 9 else {}))
         if proof["workload"] == "compression":
             subcases = reparsed.get("correctness_subcases")
             if (not isinstance(subcases, dict) or set(subcases) != set(case_spec["subcases"])
@@ -208,7 +216,7 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
     parsed_gates = reparsed["gates"]
     if parsed_gates.get("cmdline_identity") is not True:
         raise ValueError("serial parser cannot bind the executed guest identity")
-    if revision8 and not historical_bench and parsed_gates.get("configuration_identity") is not True:
+    if configured and not historical_bench and parsed_gates.get("configuration_identity") is not True:
         raise ValueError("serial parser cannot bind the executed configuration/case/topology")
     expected_gates = dict(parsed_gates, qemu_exit=proof["exit_code"] == 0 and proof.get("stop_reason") is None)
     if gates != expected_gates or proof.get("metrics") != reparsed["metrics"]:
@@ -226,7 +234,7 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
                "integration_pass": expected_integration, "gates": dict(expected_gates),
                "exit_code": proof["exit_code"], "stop_reason": proof.get("stop_reason"),
                "run_valid": proof["run_valid"], "invalid_reasons": list(proof["invalid_reasons"])}
-    if revision8:
+    if configured:
         summary.update(config_id=case_spec["config_id"], correctness_case=case_spec["id"],
                        case_id=case_spec["id"], topology_id=case_spec["topology_id"],
                        workload=proof["workload"])
@@ -236,7 +244,7 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
         # This internal replay only classifies the retained invalid baseline.
         # It never returns a correctness pass or relaxes current guest validation.
         failed = {key for key, value in expected_gates.items() if value is not True}
-        if (not revision8 or failed != {"configuration_identity"} or subcases_failed
+        if (not configured or failed != {"configuration_identity"} or subcases_failed
                 or proof["run_valid"] is not True or proof["invalid_reasons"]
                 or reparsed["metrics"].get("kernel_diagnostics") != []):
             raise ValueError("baseline infrastructure replay has additional failures or invalid conditions")
@@ -249,7 +257,7 @@ def _validate(proof, protocol, root, case_spec=None, historical_bench=None):
         raise CorrectnessFailure(reason, summary)
     if proof["run_valid"] is not True or proof["invalid_reasons"]:
         raise ValueError("correctness evidence has invalid measurement conditions")
-    if revision8:
+    if configured:
         values = final_config["values"]
         for flag, gate in (("KASAN", "kasan"), ("PROVE_LOCKING", "lockdep"), ("KCSAN", "kcsan")):
             if values.get(flag) == "y":
@@ -262,7 +270,7 @@ def validate(proof, protocol, root):
     """Return a raw-file-bound summary, or raise ValueError without changing files."""
     try:
         root = Path(root).resolve()
-        if protocol.get("protocol_revision") == 8:
+        if protocol.get("protocol_revision") in (8, 9):
             return _validate_matrix(proof, protocol, root)
         return _validate(proof, protocol, root)
     except (OSError, KeyError, TypeError, AttributeError, json.JSONDecodeError, subprocess.SubprocessError) as exc:
@@ -295,8 +303,15 @@ def _configured_build(root, reference, expected_hash, commit, protocol, config_i
         raise ValueError("coverage build input configuration mismatch")
     base = relative.parent.as_posix()
     final = hashed(root, base + "/output/.config", manifest.get("config_sha256"))
-    catalog.validate_final(config_id, final, purpose)
-    catalog.verify_build_binding(root, path, commit, config_id, require_counted=require_counted)
+    negative = purpose == "expected-negative"
+    if negative:
+        catalog.validate_negative_final(config_id, final, commit)
+    else:
+        catalog.validate_final(config_id, final, purpose, protocol_revision=protocol["protocol_revision"])
+    binding = catalog.verify_build_binding(root, path, commit, config_id, require_counted=require_counted,
+        expected_status="EXPECTED_UNSUPPORTED_CONFIG" if negative else "BUILD_VERIFIED")
+    if negative:
+        hashed(root, base + "/build.log", binding.get("build_log_sha256"))
     hashed(root, base + "/output/arch/x86/boot/bzImage", manifest.get("image_sha256"))
     return manifest
 
@@ -497,12 +512,14 @@ def _check_configured_attempts(protocol, root, candidate_commit, matrix):
     ledger = json.loads(file_at(root, reference).read_bytes())
     if not isinstance(ledger, list) or not all(isinstance(row, dict) for row in ledger):
         raise ValueError("malformed configured-build ledger")
-    required = {(_expected_commit(case, protocol, candidate_commit), case["config_id"])
+    required = {(_expected_commit(case, protocol, candidate_commit), case["config_id"]): "BUILD_VERIFIED"
                 for case in matrix["cases"] + matrix["build_only"]}
+    required.update({(_expected_commit(case, protocol, candidate_commit), case["config_id"]):
+                     "EXPECTED_UNSUPPORTED_CONFIG" for case in matrix.get("negative_builds", [])})
     for row in ledger:
         if (row.get("action") == "build-coverage"
                 and (row.get("commit"), row.get("config_id")) in required
-                and row.get("status") != "BUILD_VERIFIED"):
+                and row.get("status") != required[(row.get("commit"), row.get("config_id"))]):
             raise ValueError("required configured build failed or incomplete: "
                              + str(row.get("case_id")) + " (" + str(row.get("status")) + ")")
 
@@ -553,6 +570,20 @@ def _validate_matrix(proof, protocol, root):
             _expected_commit(case, protocol, commit), protocol, case["config_id"], "build-only")
         build_summaries.append(dict(entry, config_id=case["config_id"],
                                     source_commit=manifest["commit"], build_only=True))
+    negative_entries = proof.get("negative_builds", [])
+    expected_negative = {case["id"]: case for case in matrix.get("negative_builds", [])}
+    if not isinstance(negative_entries, list):
+        raise ValueError("correctness negative build evidence missing")
+    ids = [row.get("case_id") if isinstance(row, dict) else None for row in negative_entries]
+    if len(ids) != len(set(ids)) or set(ids) != set(expected_negative):
+        raise ValueError("correctness expected-negative coverage mismatch")
+    negative_summaries = []
+    for entry in negative_entries:
+        case = expected_negative[entry["case_id"]]
+        manifest = _configured_build(root, entry.get("build_manifest"), entry.get("build_manifest_sha256"),
+            protocol["baseline_commit"], protocol, case["config_id"], "expected-negative")
+        negative_summaries.append(dict(entry, status="EXPECTED_UNSUPPORTED_CONFIG", guest_eligible=False,
+                                       source_commit=manifest["commit"], config_id=case["config_id"]))
     required = protocol.get("required_correctness_gates", [])
     if not required or not all(gates.get(name) is True for name in required):
         raise ValueError("candidate matrix lacks required scientific gates")
@@ -562,6 +593,7 @@ def _validate_matrix(proof, protocol, root):
             "baseline_commit": protocol["baseline_commit"], "protocol_sha256": sha(protocol_file),
             "status": "CORRECTNESS_PASS", "passed": True, "integration_pass": True,
             "gates": gates, "cases": summaries, "builds": build_summaries,
+            **({"negative_builds": negative_summaries} if protocol.get("protocol_revision") == 9 else {}),
             "infrastructure_supersessions": supersessions,
             "backend": "matrix", "mode": "matrix", "run_id": None,
             "coverage": {"cases": [item["case_id"] for item in summaries],
@@ -672,7 +704,10 @@ def matrix_progress(protocol, root, candidate_commit, manifest=None, manifest_pa
         builds = []
         ledger_path = root / "campaigns" / protocol["campaign"] / "ledger/ledger.json"
         ledger = json.loads(ledger_path.read_bytes()) if ledger_path.is_file() else []
-        for case in matrix["build_only"]:
+        negative_builds = []
+        for case in matrix["build_only"] + matrix.get("negative_builds", []):
+            negative = case in matrix.get("negative_builds", [])
+            expected_status = "EXPECTED_UNSUPPORTED_CONFIG" if negative else "BUILD_VERIFIED"
             matching = [item for item in ledger if item.get("action") == "build-coverage"
                         and item.get("case_id") == case["id"]
                         and item.get("commit") == _expected_commit(case, protocol, candidate_commit)]
@@ -682,11 +717,12 @@ def matrix_progress(protocol, root, candidate_commit, manifest=None, manifest_pa
                 result["missing_builds"].append(case)
                 continue
             item = matching[0]
-            if item.get("status") != "BUILD_VERIFIED":
+            if item.get("status") != expected_status:
                 raise ValueError("build-only coverage failed or incomplete: " + case["id"])
             _configured_build(root, item.get("build_manifest"), item.get("build_manifest_sha256"),
-                _expected_commit(case, protocol, candidate_commit), protocol, case["config_id"], "build-only")
-            builds.append({"case_id": case["id"], "build_manifest": item["build_manifest"],
+                _expected_commit(case, protocol, candidate_commit), protocol, case["config_id"],
+                "expected-negative" if negative else "build-only")
+            (negative_builds if negative else builds).append({"case_id": case["id"], "build_manifest": item["build_manifest"],
                            "build_manifest_sha256": item["build_manifest_sha256"]})
         if len(rows) != len(matrix["cases"]) or result["missing_builds"]:
             result["reason"] = "Complete the next frozen matrix case; existing successful coverage is retained."
@@ -695,7 +731,8 @@ def matrix_progress(protocol, root, candidate_commit, manifest=None, manifest_pa
                     "campaign": protocol["campaign"], "candidate_commit": candidate_commit,
                     "source_commit": candidate_commit, "baseline_commit": protocol["baseline_commit"],
                     "protocol_sha256": sha(root / "campaigns" / protocol["campaign"] / "protocol.json"),
-                    "runs": rows, "builds": builds}
+                    "runs": rows, "builds": builds,
+                    **({"negative_builds": negative_builds} if protocol.get("protocol_revision") == 9 else {})}
         summary = _validate_matrix(proposal, protocol, root)
         result.update(passed=True, pending=False, manifest_data=proposal, summary=summary,
                       path=result.get("manifest_path"), reason="Complete verified matrix; retain the canonical manifest.")

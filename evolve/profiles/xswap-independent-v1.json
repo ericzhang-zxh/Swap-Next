@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "id": "xswap-independent-v1",
+  "version": 1,
+  "description": "Inactive C2 preparation for a device-owned XSwap compression frontend with generic accounting and exact revision-9 source-bound evidence.",
+  "executable": false,
+  "allowed_modify": [
+    "mm/zswap.c",
+    "mm/Kconfig",
+    "mm/Makefile",
+    "include/linux/cpuhotplug.h",
+    "tools/testing/selftests/mm/Makefile",
+    "mm/swapfile.c",
+    "mm/page_io.c",
+    "mm/swap.h",
+    "include/linux/swap.h",
+    "include/linux/swap_ops.h",
+    "mm/memcontrol.c",
+    "mm/swap_state.c",
+    "include/linux/memcontrol.h",
+    "include/linux/zswap.h"
+  ],
+  "allowed_add": [
+    "mm/page_compress.c",
+    "include/linux/page_compress.h",
+    "mm/page_compress_test.c",
+    "mm/xswap.c",
+    "mm/xswap.h",
+    "tools/testing/selftests/mm/swap_next_compression.c"
+  ],
+  "primary_metrics": [
+    "swapin_seq.mean_ns",
+    "swapin_rand.mean_ns"
+  ],
+  "mechanism_evidence": [
+    "reviewed_structure",
+    "counter_shift"
+  ],
+  "correctness_gates": [
+    "data_roundtrip",
+    "fork_cow",
+    "concurrent_fault",
+    "swapoff_live_pages",
+    "no_new_kernel_warnings",
+    "configuration_identity",
+    "source_role_identity",
+    "compression_evidence",
+    "compression_reset",
+    "compression_physical_regression",
+    "compression_legacy_roundtrip",
+    "compression_legacy_codec_switch",
+    "compression_legacy_invalid_codec",
+    "compression_legacy_memcg_balance",
+    "compression_legacy_memcg_offline",
+    "compression_legacy_memcg_limit",
+    "compression_independent_roundtrip",
+    "compression_zero_control",
+    "compression_xswap_legacy_disabled",
+    "compression_xswap_legacy_quota_zero",
+    "compression_ordinary_legacy_disabled",
+    "compression_ordinary_legacy_quota_zero",
+    "compression_both_live",
+    "compression_cap_bound",
+    "compression_incompressible_fallback",
+    "compression_physical_fallback",
+    "compression_library_unit",
+    "compression_legacy_lifecycle",
+    "compression_independent_large_folio",
+    "compression_incompressible_control",
+    "compression_no_target_retention",
+    "compression_swap_charge_denied",
+    "compression_init_refusal",
+    "compression_entry_refusal",
+    "compression_charge_refusal",
+    "compression_publish_refusal",
+    "compression_rollback_first",
+    "compression_rollback_middle",
+    "compression_rollback_last",
+    "compression_decode_old_backing",
+    "compression_write_completion_error",
+    "compression_read_completion_error",
+    "compression_reused_slot",
+    "compression_live_destroy",
+    "compression_independent_node0",
+    "compression_independent_node1",
+    "compression_live_cpu_hotplug",
+    "compression_owner_balance",
+    "compression_mixed_load_free",
+    "compression_legacy_pool_offline",
+    "compression_mixed_live_destroy",
+    "compression_fault_cow_invalidate",
+    "compression_reused_slot_overlap",
+    "compression_live_destroy_overlap",
+    "compression_backing_swapoff_overlap",
+    "kasan",
+    "lockdep",
+    "kcsan"
+  ],
+  "correctness_modes": [
+    "plain",
+    "xswap"
+  ],
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ],
+  "resource_cap": {
+    "guest_attempts": 120,
+    "build_attempts": 10,
+    "wall_seconds": 64800
+  },
+  "missing_capabilities": [
+    "Complete the actual guest phase driver and source-bound physical-cap-zero timing readback; the retained partial guest implementation does not supply these capabilities.",
+    "Integrate the separable host and matched compressed observer preparation, then independently review the exact native capability and candidate tree before activation.",
+    "Verify current C1 dependency eligibility and native reuse of both immutable anchor control builds before opening any C2 runtime allocation.",
+    "Execute the full twelve-guest correctness matrix, nine candidate configurations and one counted expected-negative anchor build, then fresh source-matched timing calibration under the admitted protocol."
+  ],
+  "limitations": [
+    "Preparation only: executable=false remains authoritative; synthetic host fixtures are parser and identity tests, not kernel, build or guest evidence.",
+    "Compare exact anchor A against candidate C cumulatively; predecessor K is provenance only, with no separately measured marginal C2 speedup.",
+    "The cap counts allocator backing pages and does not assert equal total memory footprint or a new cgroup quota.",
+    "Compressed timing uses the matched instrumented observer with actual smaps isolation; noncompressed revision-9 timing remains fail-closed until its adapter is complete.",
+    "No C3 pressure/writeback policy, public cgroup ABI, host mutation, slow tier or automatic promotion."
+  ],
+  "protocol_revisions": [
+    9
+  ]
+}
