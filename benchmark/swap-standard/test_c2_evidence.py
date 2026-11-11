@@ -273,6 +273,219 @@ class C2IndependentEvidenceTests(unittest.TestCase):
                 spec["config_id"], spec["id"], "single", spec, binding())
 
 
+
+class C2EventOperationIdentityTests(unittest.TestCase):
+    def test_later_records_cannot_change_the_begin_identity(self):
+        common = dict(key=10, count=3, order=2)
+        values = [event("op_begin", 1, **common),
+                  event("store_alloc", 2, subpage=0, **common),
+                  event("publish", 3, subpage=2, **common),
+                  event("op_end", 4, subpage=3, **common)]
+        self.assertEqual(len(evidence.c2_events(event_lines(values), 1)), 4)
+        for index in (1, 2, 3):
+            for field, value in (("key", 11), ("count", 4), ("order", 3),
+                                 ("kind", "load"), ("type", 2)):
+                changed = copy.deepcopy(values)
+                changed[index][field] = value
+                with self.subTest(index=index, field=field), self.assertRaises(ValueError):
+                    evidence.c2_events(event_lines(changed), 1)
+
+    def test_overlap_cannot_substitute_the_current_begin_key(self):
+        values = [event("op_begin", 1, key=10),
+                  event("op_begin", 2, op=2, kind="load", key=20),
+                  event("overlap", 3, op=2, kind="load", key=10, peer=1),
+                  event("op_end", 4, op=2, kind="load", key=20),
+                  event("op_end", 5, key=10)]
+        with self.assertRaises(ValueError):
+            evidence.c2_events(event_lines(values), 1)
+
+    def test_real_intersection_uses_different_begin_bases(self):
+        first = dict(key=8, count=99, order=3)
+        second = dict(op=2, kind="load", key=12, count=2, order=2)
+        values = [event("op_begin", 1, **first), event("op_begin", 2, **second),
+                  event("overlap", 3, peer=1, subpage=3, **second),
+                  event("op_end", 4, **second), event("op_end", 5, subpage=7, **first)]
+        self.assertEqual(len(evidence.c2_events(event_lines(values), 1)), 5)
+        for index, field, value in ((0, "key", 20), (1, "key", 20),
+                                    (0, "order", 0), (1, "count", 1)):
+            changed = copy.deepcopy(values)
+            changed[index][field] = value
+            with self.subTest(index=index, field=field), self.assertRaises(ValueError):
+                evidence.c2_events(event_lines(changed), 1)
+
+    def test_count_is_a_positive_selector_and_not_an_overlap_length(self):
+        values = [event("op_begin", 1, key=10, count=32),
+                  event("op_begin", 2, op=2, kind="load", key=20, count=32),
+                  event("overlap", 3, op=2, kind="load", key=20, count=32, peer=1),
+                  event("op_end", 4, op=2, kind="load", key=20, count=32),
+                  event("op_end", 5, key=10, count=32)]
+        with self.assertRaisesRegex(ValueError, "ranges do not intersect"):
+            evidence.c2_events(event_lines(values), 1)
+        for position in ("begin", "later", "both"):
+            values = [event("op_begin", 1), event("op_end", 2)]
+            for index in ((0,) if position == "begin" else (1,) if position == "later" else (0, 1)):
+                values[index]["count"] = 0
+            with self.subTest(position=position), self.assertRaises(ValueError):
+                evidence.c2_events(event_lines(values), 1)
+
+    def test_unsigned_folio_span_cannot_wrap(self):
+        maximum = (1 << 64) - 1
+        for key, order in ((maximum, 1), (maximum - 1, 15)):
+            values = [event("op_begin", 1, key=key, order=order),
+                      event("op_end", 2, key=key, order=order)]
+            with self.subTest(key=key, order=order), self.assertRaises(ValueError):
+                evidence.c2_events(event_lines(values), 1)
+        for key, order in ((maximum, 0), (maximum - 3, 2)):
+            values = [event("op_begin", 1, key=key, order=order, count=maximum),
+                      event("op_end", 2, key=key, order=order, count=maximum, subpage=(1 << order) - 1)]
+            with self.subTest(key=key, order=order):
+                self.assertEqual(len(evidence.c2_events(event_lines(values), 1)), 2)
+
+    def test_real_multi_subpage_changes_are_preserved(self):
+        common = dict(key=10, count=3, order=2)
+        values = [event("op_begin", 1, owner=11, flags=1, **common),
+                  event("store_alloc", 2, subpage=0, allocated=1, length=96,
+                        requested_nid=0, actual_node_mask=1, node_pages=1, **common),
+                  event("charge_return", 3, subpage=1, owner=11, charged=2, flags=32, **common),
+                  event("publish", 4, subpage=2, owner=11, published=3, length=112, **common),
+                  event("op_end", 5, subpage=3, allocated=4, charged=4, published=4,
+                        owner=10, data_generation=2, flags=1, **common)]
+        parsed = evidence.c2_events(event_lines(values), 1)
+        self.assertEqual([item["subpage"] for item in parsed], [0, 0, 1, 2, 3])
+        self.assertEqual(parsed[-1]["owner"], 10)
+        self.assertEqual(parsed[-1]["data_generation"], 2)
+
+
+class C2ControlOperationBindingTests(unittest.TestCase):
+    def control(self, command="begin", **updates):
+        values = dict(schema=1, command=command, type=1, generation=1, token=1, status="ok")
+        values.update({
+            "begin": dict(key=10, count=1),
+            "arm": dict(point="entry_alloc", key=10, count=1, order=0, subpage=0, errno="ENOMEM"),
+            "hold": dict(point="load_after_lookup", key=10, count=1, timeout_ms=1000),
+            "retain_write": dict(key=10, count=1, timeout_ms=1000),
+            "end": dict(last=2),
+        }[command])
+        values.update(updates)
+        return fields("XSWAP_CONTROL", values)
+
+    def parse(self, values=None, opening=None, controls=()):
+        values = values or [event("op_begin", 1), event("op_end", 2)]
+        text, spec = group_log()
+        first_policy = "COMPRESS_POLICY phase=independent_roundtrip point=before"
+        text = text.replace(first_policy, self.control(**(opening or {})) + "\n"
+                            + "\n".join(controls) + ("\n" if controls else "") + first_policy, 1)
+        reset_policy = "COMPRESS_POLICY phase=independent_roundtrip point=reset"
+        copied = [self.control("end", last=values[-1]["seq"]), *event_lines(values),
+                  fields("XSWAP_CONTROL", dict(schema=1, command="ack_events", token=1,
+                                               status="ok", last=values[-1]["seq"]))]
+        text = text.replace(reset_policy, "\n".join(copied) + "\n" + reset_policy, 1)
+        return evidence.c2_compression_evidence(text, spec, binding())
+
+    def rejected(self, **kwargs):
+        try:
+            gates, records = self.parse(**kwargs)
+        except ValueError:
+            return
+        self.assertFalse(gates["compression_independent_roundtrip"], records["independent_roundtrip"])
+
+    def phase(self, name, values, controls):
+        gates, records = self.parse(values=values, opening=dict(key="next"), controls=controls)
+        self.assertTrue(all(gates.values()), records)
+        record = records["independent_roundtrip"]
+        record["phase"] = record["identity"]["phase"] = name
+        return record
+
+    def test_control_counts_are_positive_and_retention_is_exactly_one(self):
+        maximum = (1 << 64) - 1
+        for command in ("begin", "arm", "hold", "retain_write"):
+            with self.subTest(command=command):
+                self.assertEqual(evidence.c2_control(self.control(command))["count"], 1)
+            for count in ("0", "01", "+1", "-1", "1.0", str(maximum + 1)):
+                with self.subTest(command=command, count=count), self.assertRaises(ValueError):
+                    evidence.c2_control(self.control(command, count=count))
+            if command != "retain_write":
+                self.assertEqual(evidence.c2_control(self.control(command, count=maximum))["count"], maximum)
+        for count in (2, maximum):
+            with self.subTest(retained_count=count), self.assertRaises(ValueError):
+                evidence.c2_control(self.control("retain_write", count=count))
+
+    def test_opening_selector_must_match_the_actual_selected_operation(self):
+        gates, records = self.parse()
+        self.assertTrue(all(gates.values()), records)
+        for opening in (dict(key=999), dict(count=0), dict(count=2), dict(key=999, count=0),
+                        dict(key="next", count=2), dict(generation=2), dict(type=2)):
+            with self.subTest(opening=opening):
+                self.rejected(opening=opening)
+
+    def test_next_resolves_only_at_the_first_selected_store(self):
+        gates, records = self.parse(opening=dict(key="next"))
+        self.assertTrue(all(gates.values()), records)
+        load = [event("op_begin", 1, kind="load"), event("op_end", 2, kind="load")]
+        gates, records = self.parse(values=load)
+        self.assertTrue(all(gates.values()), records)
+        for values in (load, load + [event("op_begin", 3, op=2), event("op_end", 4, op=2)]):
+            with self.subTest(operations=len(values) // 2):
+                self.rejected(values=values, opening=dict(key="next"))
+        values = [event("op_begin", 1, key=20), event("op_end", 2, key=20),
+                  event("op_begin", 3, op=2), event("op_end", 4, op=2)]
+        self.rejected(values=values)
+
+    def test_full_phase_keeps_intersecting_peer_bases_and_subpage_changes(self):
+        first = dict(key=8, count=3, order=3)
+        second = dict(op=2, kind="load", key=12, count=2, order=2)
+        values = [event("op_begin", 1, **first), event("op_begin", 2, **second),
+                  event("overlap", 3, peer=1, subpage=3, **second),
+                  event("op_end", 4, **second), event("op_end", 5, subpage=7, **first)]
+        for key in (8, "next"):
+            gates, records = self.parse(values=values, opening=dict(key=key, count=3))
+            with self.subTest(key=key):
+                self.assertTrue(all(gates.values()), records)
+        self.rejected(values=values, opening=dict(key=12, count=2))
+
+    def test_hold_count_and_next_key_bind_the_actual_held_operation(self):
+        for key in (10, 11):
+            held = dict(op=2, kind="load", key=key, count=2)
+            peer = dict(op=3, kind="invalidate", key=key, count=3)
+            values = [event("op_begin", 1, order=2), event("op_end", 2, order=2),
+                      event("op_begin", 3, **held),
+                      event("hold_enter", 4, stage="load_after_lookup", **held),
+                      event("op_begin", 5, **peer), event("overlap", 6, peer=2, **peer),
+                      event("op_end", 7, **peer),
+                      event("hold_release", 8, stage="load_after_lookup", **held),
+                      event("op_end", 9, **held)]
+            record = self.phase("fault_cow_invalidate", values,
+                                [self.control("hold", key=key, count=2)])
+            evidence.c2_phase_semantics(record)
+            selector = next(item for item in record["controls"] if item["command"] == "hold")
+            selector["count"] = 3
+            with self.subTest(key=key, mutation="count"), self.assertRaises(ValueError):
+                evidence.c2_phase_semantics(record)
+            selector["count"], selector["key"] = 2, "next"
+            if key == 10:
+                evidence.c2_phase_semantics(record)
+            else:
+                with self.assertRaises(ValueError):
+                    evidence.c2_phase_semantics(record)
+
+    def test_next_arm_cannot_retarget_an_intersecting_later_store(self):
+        for key in (10, 11):
+            failed = dict(op=2, key=key, count=2)
+            values = [event("op_begin", 1, order=2), event("op_end", 2, order=2),
+                      event("op_begin", 3, **failed),
+                      event("hook_hit", 4, stage="entry_alloc", result=-12, flags=16, **failed),
+                      event("op_end", 5, flags=512, **failed)]
+            record = self.phase("entry_refusal", values, [self.control("arm", key=key, count=2)])
+            evidence.c2_phase_semantics(record)
+            selector = next(item for item in record["controls"] if item["command"] == "arm")
+            selector["key"] = "next"
+            if key == 10:
+                evidence.c2_phase_semantics(record)
+            else:
+                with self.assertRaises(ValueError):
+                    evidence.c2_phase_semantics(record)
+
+
 class C2RawAdapterTests(unittest.TestCase):
     def test_actual_intersecting_operation_journal(self):
         values = [event("op_begin", 1), event("charge_call", 2, flags=32),

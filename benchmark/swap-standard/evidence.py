@@ -778,6 +778,7 @@ def c2_events(lines, token):
     require(first > 0 and first <= last and last - first + 1 == len(lines) - 2 <= 4096,
             "journal gap or overflow")
     records, active, finished = [], {}, set()
+    identity_keys = ("kind", "type", "key", "count", "order")
     for sequence, line in enumerate(lines[1:-1], first):
         record = c2_fields(line, "XSWAP_EVENT", C2_EVENT_KEYS)
         require(record["schema"] == "1", "unknown event schema")
@@ -793,23 +794,26 @@ def c2_events(lines, token):
         require(record["seq"] == sequence and record["token"] == token
                 and record["type"] < 32 and record["generation"] > 0 and record["op"] > 0
                 and record["kind"] in C2_KINDS and record["event"] in C2_EVENTS
-                and record["flags"] < 1024 and record["order"] < 16
-                and record["subpage"] < 1 << record["order"], "event identity/range mismatch")
+                and record["flags"] < 1024 and record["order"] < 16 and record["count"] > 0
+                and record["subpage"] < 1 << record["order"]
+                and record["key"] + (1 << record["order"]) <= (1 << 64),
+                "event identity/range mismatch")
         key = record["generation"], record["op"]
         event = record["event"]
         if event == "op_begin":
             require(key not in active and key not in finished, "duplicate operation begin")
             active[key] = record
         else:
-            require(key in active and active[key]["kind"] == record["kind"]
-                    and active[key]["type"] == record["type"], "event outside its actual operation")
+            require(key in active, "event outside its actual operation")
+            require(all(record[field] == active[key][field] for field in identity_keys),
+                    "event changed immutable operation identity")
         if event == "overlap":
             peer = (record["generation"], record["peer"])
             require(peer != key and peer in active, "overlap has no other active kernel operation")
-            other = active[peer]
-            size, peer_size = 1 << record["order"], 1 << other["order"]
-            require(record["key"] < other["key"] + peer_size
-                    and other["key"] < record["key"] + size, "overlap key ranges do not intersect")
+            current, other = active[key], active[peer]
+            size, peer_size = 1 << current["order"], 1 << other["order"]
+            require(current["key"] < other["key"] + peer_size
+                    and other["key"] < current["key"] + size, "overlap key ranges do not intersect")
         if event == "charge_call":
             require(record["flags"] & 32 and not record["flags"] & 16, "charge call is only injected")
         if event == "bio_complete":
@@ -1054,6 +1058,10 @@ def c2_control(line):
             require(command in ("begin", "arm", "hold", "retain_write"), "unresolved key after capture")
         else:
             values[key] = c2_uint(values[key], key)
+    if "count" in values:
+        require(values["count"] > 0, "control operation selector must be positive")
+        require(command != "retain_write" or values["count"] == 1,
+                "retained write must select exactly one base page")
     if "timeout_ms" in values:
         require(values["timeout_ms"] == 1000, "debug wait deadline differs from contract")
     if "token" in values:
@@ -1291,6 +1299,7 @@ def c2_phase_semantics(record):
                 ("type" not in item or item["type"] == owners[item["generation"]])
                 for item in controls if "generation" in item),
             "control acknowledgement uses an unobserved generation/type")
+    next_key = None
     if events:
         end = [item for item in controls if item["command"] == "end"]
         acknowledgements = [item for item in controls if item["command"] == "ack_events"]
@@ -1301,6 +1310,15 @@ def c2_phase_semantics(record):
         opens = [item for item in controls if item["command"] in ("begin", "prepare_create")]
         require(len(opens) == 1 and (opens[0]["command"] == "prepare_create" if name == "init_refusal"
                 else opens[0].get("generation") == header["generation"]), "targeted window begin missing")
+        if name != "init_refusal":
+            opening, selected = opens[0], events[0]
+            require(selected["event"] == "op_begin"
+                    and all(opening[key] == selected[key] for key in ("generation", "type", "count"))
+                    and (selected["kind"] == "store" if opening["key"] == "next"
+                         else opening["key"] == selected["key"]),
+                    "window selector differs from its first actual selected operation")
+            if selected["kind"] == "store":
+                next_key = selected["key"]
     if record["test_config"]:
         acknowledged = [item["generation"] for item in controls if item["command"] == "ack"]
         require(set(acknowledged) == generations and len(acknowledged) == len(generations)
@@ -1421,7 +1439,7 @@ def c2_phase_semantics(record):
             require(len(armed) == 1 and armed[0]["generation"] == hit["generation"]
                     and armed[0]["count"] == hit["count"] > 0
                     and armed[0]["order"] == hit["order"] and armed[0]["subpage"] == hit["subpage"]
-                    and (armed[0]["key"] == "next" or armed[0]["key"] == hit["key"]),
+                    and (next_key if armed[0]["key"] == "next" else armed[0]["key"]) == hit["key"],
                     "injected effect differs from its exact once-only selector")
         operation = [event for event in events if
                      (event["generation"], event["op"]) == (hit["generation"], hit["op"])]
@@ -1514,10 +1532,12 @@ def c2_phase_semantics(record):
         released = [event for event in events if event["event"] == "hold_release"]
         selectors = [item for item in controls if item["command"] == "hold"]
         require(len(holds) == len(released) == len(selectors) == 1
-                and holds[0]["op"] == released[0]["op"]
+                and (holds[0]["generation"], holds[0]["op"])
+                    == (released[0]["generation"], released[0]["op"])
                 and released[0]["result"] == 0 and selectors[0]["point"] == holds[0]["stage"]
                 and selectors[0]["generation"] == holds[0]["generation"]
-                and (selectors[0]["key"] == "next" or selectors[0]["key"] == holds[0]["key"])
+                and selectors[0]["count"] == holds[0]["count"] > 0
+                and (next_key if selectors[0]["key"] == "next" else selectors[0]["key"]) == holds[0]["key"]
                 and any(holds[0]["seq"] < event["seq"] < released[0]["seq"] for event in overlaps),
                 name + ": actual selected bounded hold interval absent")
         if name == "backing_swapoff_overlap":
