@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r5-2026-11-10",
+  "state": "visually_checked",
+  "evidence_sha256": "c2e24110f9c096e5175441dc91fc9b90570a226fa862442524bd13b5aabdceb3",
+  "artifacts": {
+    "summary.json": "5daff43bbffb30eb095d6a96fcdd0855703ae94805a801db6473e1d2aa6aac97",
+    "REPORT.md": "86c910cdbf847baf1844bc6931c67fd7ee5542f418de64cf5c1eec16690e4c8c",
+    "explainer.json": "12b51b991ef464a50b0700b18334f1db38fd2fc51a60b3cfe4b859a7b65253a1",
+    "explainer.html": "ae3f8d67e02b6b231ff806bdfcb61f0f2025a02f1b5b5736b035297395f647a1",
+    "generate_report.py": "75c2448a0adc51b14e7990f0f6bda93ad47fde6c3ac71c5a18b49e8b32c89bfe"
+  },
+  "story_sha256": "346027d4508136c470ccd3387a18c451b477a5a9fc4213f6bc3e2ecea884d31f",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1794389493.2813766
+    },
+    {
+      "state": "generated",
+      "time": 1794389717.1872234
+    },
+    {
+      "state": "generated",
+      "time": 1794389931.6609337
+    },
+    {
+      "state": "generated",
+      "time": 1794390234.8135252
+    },
+    {
+      "state": "generated",
+      "time": 1794390265.998576
+    },
+    {
+      "state": "visually_checked",
+      "time": 1794390312.3023772
+    }
+  ],
+  "visual_check": {
+    "artifact_sha256": "ae3f8d67e02b6b231ff806bdfcb61f0f2025a02f1b5b5736b035297395f647a1",
+    "reviewer": "Coordinator; fresh real Chrome screenshots and visual inspection",
+    "views": [
+      {
+        "width": 1440,
+        "theme": "light",
+        "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-20261111/1440-light.png",
+        "sha256": "89ebef2f7dcf9678ffa97bc4a608586fcec6735be67a1529252d5f259b4827ed",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-20261111/1440-dark.png",
+        "sha256": "893c454a71dc56b63e7c56b2340e7379878d1eca1827e31ad42ce0269e2d5479",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-20261111/390-light.png",
+        "sha256": "04145a52267ecb0971db72649c07b7757306c9b33219671805c19e6dedf88903",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-20261111/390-dark.png",
+        "sha256": "ab29c24057f3211263386533dd301329debf33faa41ac7d3548e8749f4530735",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      }
+    ]
+  }
+}

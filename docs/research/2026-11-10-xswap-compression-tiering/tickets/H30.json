@@ -1,0 +1,59 @@
+{
+  "id": "H30",
+  "status": "final-pass-report-ready",
+  "owner": "/root/final_independent_review",
+  "task": "Independent final review of actual C1 result, cumulative resources, prepared C2 boundary, and grouped R5/R6 report delivery. The user explicitly requested a final independent reviewer.",
+  "output": "H30-final-family-review.md",
+  "read_first": [
+    "AGENTS.md",
+    "PLAN.md",
+    "H27-trace-diagnostic-admission.md",
+    "H28-blocked-handoff.md",
+    "runtime-incident-006.md",
+    "runtime-incident-007.md"
+  ],
+  "read_scope": [
+    "K1 exact commit 7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad/tree8b085adc109e3b5467c3de998f11b04517f052a5; source vs original A5e84ca928deeacb4eee656806a003f27d1eca82f, K2 exact review and canonical matrix",
+    "All six closed C1 frozen ledgers/budgets/reservations/source identities; original failed attempts and unlaunched R6 reservation",
+    "R5 actual eight correctness raw rows, two disabled builds and first failed baseline timing row; archived harness replay and proof hashes",
+    "R5/R6 report story/observations/generator/HTML/REPORT/native delivery source bindings",
+    "campaigns/render_compression_closeout.py, group_report_index.py, report-groups.json and Pages workflow; all routes retained, one family card plus closed evidence links",
+    "H24/H29 final prepared implementation commits when supplied; inactive profile, revision8 preserved, missing guest/noncompressed timing capability explicitly fails closed; H28 partial work remains isolated and untested"
+  ],
+  "current_main": "5476fce37c5cbbea4667fb7ba824f57bac747734",
+  "reports": {
+    "codex-compress-lib-r5-2026-11-10": {
+      "html_sha256": "ae3f8d67e02b6b231ff806bdfcb61f0f2025a02f1b5b5736b035297395f647a1",
+      "native_evidence_sha256": "c2e24110f9c096e5175441dc91fc9b90570a226fa862442524bd13b5aabdceb3",
+      "visual_verification": "campaigns/codex-compress-lib-r5-2026-11-10/report/visual-verification.json"
+    },
+    "codex-compress-lib-r6-2026-11-10": {
+      "html_sha256": "2cbec4007319a74788606bfc83e9b3a717dcdb0231514e967d08ea7145df061c",
+      "native_evidence_sha256": "a16191636484436c8a898724486547b2abb22b24e54695febae9b6d0e0305a45",
+      "visual_verification": "campaigns/codex-compress-lib-r6-2026-11-10/report/visual-verification.json"
+    }
+  },
+  "current_boundary": "C1 R5 functional correctness passed; no accepted calibration or performance. Totals: 20 counted, 19 launched, 9 builds. R6 expired before final admission and is closed. H29 is integrated with its fixture follow-up; H24 is integrated; full project checks and the merged identity-fix checks passed; final independent review passed for closeout, inactive preparation and report readiness. C2 has no kernel candidate, kernel build, image or guest. Its profile stays inactive. H28 interrupted partial work remains isolated; no retry or reassignment. C3 has not executed. Both final reports are visually checked and await final review and publication.",
+  "forbidden": [
+    "Read-only review except owned H30 document. No implementation/state/raw/contract/test/build/VM/image/push/publication/delegation.",
+    "Do not resume, rephrase or reassign the refused H28 action. Missing capability remains blocking."
+  ],
+  "acceptance": [
+    "Exact source/lifetime/error-boundary judgment and inherited review provenance; no claimed independent frontend from C1 extraction",
+    "Historical correctness/failure/validity/runtime distinctions, hashes and budgets reconcile",
+    "C1 report states useful result/cost and no performance win; C2/C3 unfinished boundary visible; groupedindex retains native canonical routes",
+    "Report any concrete blocker first, then final independent verdict only after supplied final sources/tests/visual receipts. Source review or synthetic tests never become runtime proof."
+  ],
+  "report_corrections": [
+    "Removed stale R4/four-contract core-patch intro from both authored stories and regenerated both reports. All narrative sections scanned for stale R4 clock-failure claims."
+  ],
+  "prepared_sources": {
+    "H29": "9192dde921b4e07bc73c7c5a8099b2d2d2bb91c9",
+    "H29_fixture_followup": "66177c9420648afd1e5b1bc8723fde3b6991db58",
+    "H24": "bbbce6bd6f079c606f77e240c1a6acfc05b104b2",
+    "H24_followup": "2ac2ee3630b4580c87e66ba72429211dd73349cd"
+  },
+  "final_project_checks": "campaigns/codex-compress-lib-r6-2026-11-10/runs/control/final-project-checks/results.json",
+  "followup_project_checks": "campaigns/codex-compress-lib-r6-2026-11-10/runs/control/final-project-checks/followup-results.json",
+  "review_sha256": "de4af7fa3e62e4692db61ea293befaed17ab1a14b4b9232319f2beec2f5f9b1c"
+}

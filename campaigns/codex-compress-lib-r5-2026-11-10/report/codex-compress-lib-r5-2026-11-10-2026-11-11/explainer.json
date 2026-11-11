@@ -1,0 +1,880 @@
+{
+  "title": "Shared compression library: correctness passed, timing unresolved",
+  "subtitle": "codex (gpt-6-astra) \u00b7 line: xswap-compression-tiering \u00b7 base 5e84ca92 \u00b7 1 candidate \u00b7 9 guests / 5 builds",
+  "verdict": {
+    "status": "inconclusive",
+    "headline": "The full correctness matrix passed. The first baseline timing guest failed decode observation, leaving performance unmeasured.",
+    "tiles": [
+      {
+        "label": "Shared library",
+        "value": "Functional pass",
+        "note": "Full R5 matrix and disabled builds."
+      },
+      {
+        "label": "Performance",
+        "value": "Unresolved",
+        "note": "Baseline decode observation failed."
+      },
+      {
+        "label": "Decision",
+        "value": "Retain for development",
+        "note": "Original baseline and promotion gate remain."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "limits",
+      "title": "Material limits",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Calibration stopped performance comparison: INCOMPLETE."
+        }
+      ]
+    },
+    {
+      "id": "context",
+      "title": "Separate reusable mechanism from frontend policy",
+      "lead": "The experiment extracts codec contexts and compressed-object storage from ZSwap. Existing policy, indexes, accounting and lifetime ownership stay with the frontend. This is the first step toward independent XSwap and later tier migration.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The full correctness matrix passed. The first baseline timing guest failed decode observation, leaving performance unmeasured."
+        },
+        {
+          "type": "note",
+          "text": "R5 collected eight fresh correctness guests and two disabled-configuration builds before timing. All required correctness rows passed; its subsequent baseline measurement failed."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "1. Whole system: restore the application page",
+      "lead": "An application needs its full page in physical RAM. Stored contents may be compressed inside RAM or reside on a backing device. Compression trades CPU work for less storage traffic.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "The changed engine serves compressed contents inside RAM",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "sub": "Needs page A",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "fault",
+              "label": "Kernel swap path",
+              "sub": "Find stored contents",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "page",
+              "label": "Full page A",
+              "sub": "Physical RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "compressed",
+              "label": "Compressed A",
+              "sub": "Inside physical RAM",
+              "col": 1,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "disk",
+              "label": "Backing device",
+              "sub": "Outside RAM",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "fault"
+            },
+            {
+              "from": "fault",
+              "to": "page",
+              "label": "already resident"
+            },
+            {
+              "from": "fault",
+              "to": "compressed",
+              "label": "decode"
+            },
+            {
+              "from": "compressed",
+              "to": "page"
+            },
+            {
+              "from": "disk",
+              "to": "page",
+              "label": "read"
+            },
+            {
+              "from": "fault",
+              "to": "disk"
+            }
+          ],
+          "note": "Schematic path, with no illustrative size or timing used as a measurement."
+        },
+        {
+          "type": "note",
+          "text": "The candidate changes the compressed-storage implementation. The existing frontend still decides admission, accounting and writeback. No new RAM-to-disk migration policy is implemented here."
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "2. Subsystem: policy keeps the object identity",
+      "lead": "ZSwap retains the entry index, memory-group charge, ordering and lifetime pins. A shared page library owns per-CPU codec contexts, scratch buffers and compressed-object storage.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Data moves through the engine; policy stays with the frontend",
+          "nodes": [
+            {
+              "id": "entry",
+              "label": "ZSwap entry",
+              "sub": "Handle + length",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "library",
+              "label": "Page library",
+              "sub": "Codec + CPU context",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "object",
+              "label": "Object A",
+              "sub": "Compressed RAM",
+              "col": 2,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "policy",
+              "label": "ZSwap policy",
+              "sub": "Index, charge, LRU",
+              "col": 0,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "release",
+              "label": "Release boundary",
+              "sub": "Drain users, then free",
+              "col": 2,
+              "row": 1,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "entry",
+              "to": "library",
+              "label": "store / load"
+            },
+            {
+              "from": "library",
+              "to": "object",
+              "label": "allocate / copy"
+            },
+            {
+              "from": "policy",
+              "to": "entry",
+              "label": "pin"
+            },
+            {
+              "from": "entry",
+              "to": "release"
+            },
+            {
+              "from": "release",
+              "to": "object",
+              "label": "free"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "The unchanged ownership boundary passed exact-source review. R5 subsequently passed complete required correctness, including NUMA placement, guest CPU hotplug, legacy behavior and accounting."
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "3. Concrete change: one object engine, the same frontend owner",
+      "lead": "Before extraction, ZSwap owns both policy and the codec/object engine. After extraction, the library returns a handle and length while ZSwap keeps publication, charges, LRU and references. Each stored object retains its original representation.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Move the reusable engine behind an explicit ownership boundary",
+          "nodes": [
+            {
+              "id": "before",
+              "label": "Before: ZSwap",
+              "sub": "Policy + codec + object store",
+              "col": 0,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "after",
+              "label": "After: ZSwap",
+              "sub": "Policy, index, charge, references",
+              "col": 1,
+              "row": 0,
+              "tone": "default"
+            },
+            {
+              "id": "engine",
+              "label": "Page library",
+              "sub": "CPU context, codec, handle store",
+              "col": 1,
+              "row": 1,
+              "tone": "focus"
+            },
+            {
+              "id": "object",
+              "label": "Compressed object A",
+              "sub": "Same handle / stored length",
+              "col": 2,
+              "row": 1,
+              "tone": "focus"
+            }
+          ],
+          "edges": [
+            {
+              "from": "before",
+              "to": "after",
+              "label": "extract engine"
+            },
+            {
+              "from": "after",
+              "to": "engine",
+              "label": "store / load / free"
+            },
+            {
+              "from": "engine",
+              "to": "object"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "The review found no per-object wrapper or context-size increase. Extraction adds a pool allocation and a small requested pool-size increase; allocator rounding is unmeasured. New API and test obligations remain."
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Measured results",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "No complete paired performance result is available."
+        }
+      ],
+      "lead": "R5 completed correctness before its first baseline timing attempt. The latter produced no valid timing sample. R6 later expired before guest admission."
+    },
+    {
+      "id": "next",
+      "title": "Proceed to independent XSwap with fresh measurement evidence",
+      "lead": "Keep original A as the comparison anchor. C2 must demonstrate actual compressed objects, decoder calls, generic objcg charges and balanced teardown with ZSWAP disabled. Its prospective observer isolation is applied to both arms and needs fresh calibration.",
+      "blocks": [
+        {
+          "type": "flow",
+          "takeaway": "Functional dependency passes; performance remains a separate gate",
+          "nodes": [
+            {
+              "id": "library",
+              "label": "Shared library",
+              "sub": "C1 functional matrix passed",
+              "col": 0,
+              "row": 0,
+              "tone": "good"
+            },
+            {
+              "id": "independent",
+              "label": "Independent XSwap",
+              "sub": "ZSWAP disabled, real accounting",
+              "col": 1,
+              "row": 0,
+              "tone": "focus"
+            },
+            {
+              "id": "measure",
+              "label": "Fresh measurement",
+              "sub": "Matched observer + calibration",
+              "col": 1,
+              "row": 1,
+              "tone": "default"
+            },
+            {
+              "id": "tier",
+              "label": "Pressure migration",
+              "sub": "After C2 correctness and review",
+              "col": 2,
+              "row": 0,
+              "tone": "muted"
+            }
+          ],
+          "edges": [
+            {
+              "from": "library",
+              "to": "independent"
+            },
+            {
+              "from": "independent",
+              "to": "measure"
+            },
+            {
+              "from": "independent",
+              "to": "tier"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "text": "Source identities and saved correctness have high confidence. The timing cause remains unresolved: R6 collected no trace. No performance winner, baseline advancement or code promotion exists. C2/C3 execution still requires its own gates."
+        }
+      ]
+    },
+    {
+      "id": "patches",
+      "title": "Core shared-library patches",
+      "blocks": [
+        {
+          "type": "diff",
+          "takeaway": "Same K1: the API keeps publication, accounting and handle lifetime with its caller",
+          "patch": "--- /dev/null\n+++ b/include/linux/page_compress.h\n@@ -0,0 +8,43 @@\n+struct folio;\n+struct page_compress_pool;\n+\n+enum page_compress_failure {\n+\tPAGE_COMPRESS_NONE,\n+\tPAGE_COMPRESS_CODEC,\n+\tPAGE_COMPRESS_ALLOC,\n+};\n+\n+struct page_compress_result {\n+\tunsigned long handle;\n+\tunsigned int length;\n+\tenum page_compress_failure failure;\n+};\n+\n+/*\n+ * Pools own their codec contexts and object storage, but no frontend references.\n+ * The caller pins the pool and handle across each operation, and drains all\n+ * handles and users before destroy. Creation requires initialized crypto.\n+ */\n+struct page_compress_pool *page_compress_create(const char *codec,\n+\t\t\t\t\t\tconst char *name);\n+void page_compress_destroy(struct page_compress_pool *pool);\n+/* The returned name remains valid while the caller pins the pool. */\n+const char *page_compress_codec(struct page_compress_pool *pool);\n+\n+/*\n+ * Store/load operate on one base page and may sleep for codec completion even\n+ * with a nonblocking allocation mask. A successful store transfers one handle;\n+ * a failed store leaves handle/length zero. PAGE_SIZE length denotes raw data.\n+ * Load does not consume the handle, including on error. The caller owns folio\n+ * locking, index publication, accounting and the decision to store raw data.\n+ */\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result);\n+int page_compress_store_raw(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\t    long index, gfp_t gfp, int nid,\n+\t\t\t    struct page_compress_result *result);\n+int page_compress_load(struct page_compress_pool *pool, unsigned long handle,\n+\t\t       unsigned int length, struct folio *folio, long index);\n+void page_compress_free(struct page_compress_pool *pool, unsigned long handle);\n+unsigned long page_compress_backing_pages(struct page_compress_pool *pool);\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "Same K1: the library compresses and allocates before returning a usable handle",
+          "patch": "--- /dev/null\n+++ b/mm/page_compress.c\n@@ -0,0 +257,50 @@\n+int page_compress_store(struct page_compress_pool *pool, struct folio *folio,\n+\t\t\tlong index, gfp_t gfp, int nid,\n+\t\t\tstruct page_compress_result *result)\n+{\n+\tstruct page_compress_ctx *ctx;\n+\tstruct scatterlist input, output;\n+\tunsigned int dlen;\n+\tunsigned long handle;\n+\tu8 *dst;\n+\tint ret;\n+\n+\t*result = (struct page_compress_result) {\n+\t\t.failure = PAGE_COMPRESS_CODEC,\n+\t};\n+\tif (index < 0 || index >= folio_nr_pages(folio))\n+\t\treturn -EINVAL;\n+\n+\tctx = raw_cpu_ptr(pool->ctx);\n+\tmutex_lock(&ctx->mutex);\n+\n+\tdst = ctx->buffer;\n+\tsg_init_table(&input, 1);\n+\tsg_set_folio(&input, folio, PAGE_SIZE, index * PAGE_SIZE);\n+\tsg_init_one(&output, dst, PAGE_SIZE);\n+\tacomp_request_set_params(ctx->req, &input, &output, PAGE_SIZE, PAGE_SIZE);\n+\n+\t/* The frontend is synchronous even when the codec completes async. */\n+\tret = crypto_wait_req(crypto_acomp_compress(ctx->req), &ctx->wait);\n+\tdlen = ctx->req->dlen;\n+\tif (ret || !dlen || dlen >= PAGE_SIZE) {\n+\t\tret = ret ? ret : -EINVAL;\n+\t\tgoto unlock;\n+\t}\n+\n+\thandle = pc_object_alloc(pool->zs_pool, dlen, gfp, nid);\n+\tif (IS_ERR_VALUE(handle)) {\n+\t\tresult->failure = PAGE_COMPRESS_ALLOC;\n+\t\tret = PTR_ERR((void *)handle);\n+\t\tgoto unlock;\n+\t}\n+\n+\tzs_obj_write(pool->zs_pool, handle, dst, dlen);\n+\tresult->handle = handle;\n+\tresult->length = dlen;\n+\tresult->failure = PAGE_COMPRESS_NONE;\n+\tret = 0;\n+unlock:\n+\tmutex_unlock(&ctx->mutex);\n+\treturn ret;\n+}\n"
+        },
+        {
+          "type": "diff",
+          "takeaway": "Same K1: frontend pool creation delegates the engine and preserves its reference lifetime",
+          "patch": "--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -152,13 +140,10 @@ struct crypto_acomp_ctx {\n  * needs to be verified that it's still valid in the tree.\n  */\n struct zswap_pool {\n-\tstruct zs_pool *zs_pool;\n-\tstruct crypto_acomp_ctx __percpu *acomp_ctx;\n+\tstruct page_compress_pool *compress;\n \tstruct percpu_ref ref;\n \tstruct rcu_work release_rwork;\n-\tstruct hlist_node node;\n \tu8 idx;\n-\tchar tfm_name[CRYPTO_MAX_ALG_NAME];\n };\n \n /*\n@@ -309,33 +266,9 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \n \t/* unique name for each pool specifically required by zsmalloc */\n \tsnprintf(name, 38, \"zswap%x\", atomic_inc_return(&zswap_pools_count));\n-\tpool->zs_pool = zs_create_pool(name);\n-\tif (!pool->zs_pool)\n-\t\tgoto error;\n-\n-\tstrscpy(pool->tfm_name, compressor, sizeof(pool->tfm_name));\n-\n-\t/* Many things rely on the zero-initialization. */\n-\tpool->acomp_ctx = alloc_percpu_gfp(*pool->acomp_ctx,\n-\t\t\t\t\t   GFP_KERNEL | __GFP_ZERO);\n-\tif (!pool->acomp_ctx) {\n-\t\tpr_err(\"percpu alloc failed\\n\");\n-\t\tgoto error;\n-\t}\n-\n-\t/*\n-\t * This is serialized against CPU hotplug operations. Hence, cores\n-\t * cannot be offlined until this finishes.\n-\t */\n-\tret = cpuhp_state_add_instance(CPUHP_MM_ZSWP_POOL_PREPARE,\n-\t\t\t\t       &pool->node);\n-\n-\t/*\n-\t * cpuhp_state_add_instance() will not cleanup on failure since\n-\t * we don't register a hotunplug callback.\n-\t */\n-\tif (ret)\n-\t\tgoto cpuhp_add_fail;\n+\tpool->compress = page_compress_create(compressor, name);\n+\tif (IS_ERR(pool->compress))\n+\t\tgoto free_pool;\n \n \t/* being the current pool takes 1 ref; this func expects the\n \t * caller to always add the new pool as the current pool\n@@ -343,7 +276,7 @@ static struct zswap_pool *zswap_pool_create(char *compressor)\n \tret = percpu_ref_init(&pool->ref, __zswap_pool_empty,\n \t\t\t      PERCPU_REF_ALLOW_REINIT, GFP_KERNEL);\n \tif (ret)\n-\t\tgoto ref_fail;\n+\t\tgoto destroy_compress;\n \n \t/*\n \t * Publish only after the pool is fully built, so lockless walkers\n"
+        }
+      ],
+      "lead": "These hunks belong to the unchanged K1 source used throughout C1. R5 supplies complete correctness; R6 adds no runtime sample."
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Every retained outcome",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "07bd9dd43a244a7590f9ca7ea1b8fc77",
+              "control",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "adf0fccb7e8c4a0dbedc7d7d99af2760",
+              "c1-shared-store-r5",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "457baa414e03478ead7089412884a4fb",
+              "c1-shared-store-r5",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "4977d4969cfc4195aa78d8c0f83f3cd4",
+              "control",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "96a631933b224dd98e46e3d0ef2d2a39",
+              "c1-shared-store-r5",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "cea9eee3891045ad869e90600f7e11c0",
+              "c1-shared-store-r5",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "c9173cca017042b3a004b7494281ef01",
+              "c1-shared-store-r5",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "bf0dafb88d744b5192f634e4e1f49580",
+              "c1-shared-store-r5",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "5239a706edc54efaa166e63f9da152b8",
+              "c1-shared-store-r5",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "b9816127cec74100a6ff7ce7bdaa297e",
+              "c1-shared-store-r5",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "48fd11859f014277b7188b6874673175",
+              "c1-shared-store-r5",
+              "probe",
+              "INCOMPLETE",
+              "probe run identity or correctness failed"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": []
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "c1-shared-store-r5",
+              "null"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/campaign.json",
+              "0735185ff256eda0ccb876a9c13982a5d23950b44128b20feb348624baf569ca"
+            ],
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5.json",
+              "5505eadf040cfe2ffb87b7b9a873246ed4d51b81d93bc28cb45f68d79325f2bb"
+            ],
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/ledger/budget.json",
+              "4183d55eb370ca2540332433d95a9101bb4750639ecab41d1182cc52cbde63bb"
+            ],
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/ledger/ledger.json",
+              "61a9f2a39720a09794338efcd9796c9b0b92b447aee0d91999961e7b04b3cf52"
+            ],
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/ledger/session-closeout.json",
+              "71eb8dd5279d197d6a7dd12de38ab5615aa40a149ae139fff6564caa71f0e1bf"
+            ],
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch",
+              "69e085f0b3703ae2929c0cc8e863b6f606fce1b15e8a4d3ab3fd378ef785f704"
+            ],
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/policy.json",
+              "283245b9ee065feb8b89858127d1dc03ca564e91bc72ce356c74e516d9af5881"
+            ],
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/protocol.json",
+              "e9e282998de6bc59c2563b398f5968c33f1a5ee219a06cca6e15267d9a9511e3"
+            ],
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/research.json",
+              "0958b23d9b7233a43c25986fbf1885860265bcbfd0eeff94aef0cc4b46c32ca1"
+            ],
+            [
+              "campaigns/codex-compress-lib-r5-2026-11-10/reviews/k2-c1-shared-store-r5-7d5a3cf.json",
+              "338762caaa8645b5ec3ac132719c150b43341eadf3be8bb0375f7f9b6ac7f2ba"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "R5 complete functional coverage",
+          "columns": [
+            "Case",
+            "Configuration",
+            "Topology",
+            "Functional gates",
+            "Valid"
+          ],
+          "rows": [
+            [
+              "b-common",
+              "c1-common",
+              "single",
+              "19 / 19",
+              true
+            ],
+            [
+              "b-legacy",
+              "c1-legacy",
+              "single",
+              "15 / 15",
+              true
+            ],
+            [
+              "c-common",
+              "c1-common",
+              "single",
+              "19 / 19",
+              true
+            ],
+            [
+              "c-compressed",
+              "c1-common",
+              "single",
+              "15 / 15",
+              true
+            ],
+            [
+              "c-debug",
+              "c1-debug-v2",
+              "single",
+              "20 / 20",
+              true
+            ],
+            [
+              "c-legacy",
+              "c1-legacy",
+              "single",
+              "20 / 20",
+              true
+            ],
+            [
+              "c-numa",
+              "c1-debug-v2",
+              "numa2-nehalem-v3",
+              "17 / 17",
+              true
+            ],
+            [
+              "c-race",
+              "c1-kcsan",
+              "single",
+              "17 / 17",
+              true
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "All retained C1 attempts",
+          "columns": [
+            "Contract",
+            "Run",
+            "Functional pass",
+            "Run valid",
+            "Failure / invalid reason"
+          ],
+          "rows": [
+            [
+              "codex-compress-lib-2026-11-10",
+              "c1-b-common-001",
+              false,
+              true,
+              "configuration_identity"
+            ],
+            [
+              "codex-compress-lib-2026-11-10",
+              "c1-b-common-002",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-2026-11-10",
+              "c1-b-legacy-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r2-2026-11-10",
+              "c1r2-b-common-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r2-2026-11-10",
+              "c1r2-c-debug-001",
+              false,
+              true,
+              "parse_complete"
+            ],
+            [
+              "codex-compress-lib-r3-2026-11-10",
+              "c1r3-b-common-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r3-2026-11-10",
+              "c1r3-c-debug-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r3-2026-11-10",
+              "c1r3-c-numa-001",
+              false,
+              true,
+              "no_kernel_warnings, no_new_kernel_warnings"
+            ],
+            [
+              "codex-compress-lib-r4-2026-11-10",
+              "c1r4-b-common-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r4-2026-11-10",
+              "c1r4-c-numa-001",
+              true,
+              false,
+              "clocksource_fallback"
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              "48fd11859f014277b7188b6874673175-swapin-compressed-0",
+              false,
+              true,
+              "parse_complete"
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              "c1r5-b-common-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              "c1r5-b-legacy-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              "c1r5-c-common-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              "c1r5-c-compressed-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              "c1r5-c-debug-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              "c1r5-c-legacy-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              "c1r5-c-numa-001",
+              true,
+              true,
+              "none"
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              "c1r5-c-race-001",
+              true,
+              true,
+              "none"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Counted reservations and actual launches",
+          "columns": [
+            "Contract",
+            "Counted",
+            "Launched",
+            "Builds"
+          ],
+          "rows": [
+            [
+              "codex-compress-lib-2026-11-10",
+              3,
+              3,
+              3
+            ],
+            [
+              "codex-compress-lib-r2-2026-11-10",
+              2,
+              2,
+              1
+            ],
+            [
+              "codex-compress-lib-r3-2026-11-10",
+              3,
+              3,
+              0
+            ],
+            [
+              "codex-compress-lib-r4-2026-11-10",
+              2,
+              2,
+              0
+            ],
+            [
+              "codex-compress-lib-r5-2026-11-10",
+              9,
+              9,
+              5
+            ],
+            [
+              "Cumulative C1",
+              19,
+              19,
+              9
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "R5 timing failure retained exactly",
+          "columns": [
+            "Field",
+            "Value"
+          ],
+          "rows": [
+            [
+              "run",
+              "48fd11859f014277b7188b6874673175-swapin-compressed-0"
+            ],
+            [
+              "source",
+              "5e84ca928deeacb4eee656806a003f27d1eca82f"
+            ],
+            [
+              "integration_pass",
+              false
+            ],
+            [
+              "run_valid",
+              true
+            ],
+            [
+              "parse_error",
+              "missing or duplicate evidence: ^COMPRESSED_SAMPLES seq=(\\d+) rand=(\\d+) target_checks=(\\d+) decoded=(\\d+) trace_lost=(\\d+) probe_missed=(\\d+) probe_hits=(\\d+)$"
+            ],
+            [
+              "result SHA-256",
+              "062011b64633567f5d4546129c385c14536e2c2121bb5b9f03eedd0bffbb51fb"
+            ],
+            [
+              "serial SHA-256",
+              "5018cc8eddbe54aa8aee59baf90272b23f08bab15259004ce10fa91f454502ed"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Historical proof and observation pins",
+          "columns": [
+            "Artifact",
+            "SHA-256"
+          ],
+          "rows": [
+            [
+              "R5 canonical correctness",
+              "f53bf3552546426a382657f4580d5b25bd25287e74fb032873da8ba8246d45cd"
+            ],
+            [
+              "R5 runtime archive",
+              "5a385e3b3ebae82697d0917b4be8607aa736fd812c243be4e8c009ac1f33e041"
+            ],
+            [
+              "Public observations",
+              "1aa93cb274448ecc6ab6d08e2d6033f8e8fb8f1c3076b128350632bf3491785a"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "date": "2026-11-11",
+  "harness": "codex",
+  "model": "gpt-6-astra"
+}

@@ -1,0 +1,67 @@
+{
+  "id": "H24",
+  "status": "integrated-source-and-fixtures-complete",
+  "owner": "/root/campaign_validation_research",
+  "task": "Prepare the complete trusted C2 independent-XSwap capability in isolation. No activation, integration or runtime until coordinator admits C1 dependency and C2 review.",
+  "worktree": "worktrees/framework-c2-independent-01a1c6b6",
+  "branch": "infra/c2-independent-01a1c6b6",
+  "base": "1144d83",
+  "contributor": "codex-tiering-01a1c6b6",
+  "read_first": [
+    "AGENTS.md",
+    "docs/research/2026-11-10-xswap-compression-tiering/C2-execution-brief.md",
+    "docs/research/2026-11-10-xswap-compression-tiering/C2-validation-contract.md",
+    "docs/research/2026-11-10-xswap-compression-tiering/C2-coordinator-decisions.md",
+    "docs/research/2026-11-10-xswap-compression-tiering/H22-Nehalem-admission-review.md"
+  ],
+  "primary_choices": [
+    "A=5e84ca928deeacb4eee656806a003f27d1eca82f; K=7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad; cumulative A-to-C comparison, K exact predecessor only.",
+    "Per-device cap is 20 percent total guest RAM in allocator backing pages; cap zero bypasses independent admission for physical cases; no raw PAGE_SIZE admission.",
+    "No new cgroup ABI. Real generic objcg charges with ZSWAP=n, legacy memory.zswap controls remain legacy.",
+    "Internal default-off XSWAP_TEST symbol may supply targeted once-only generation/key-bound hooks in new debug-common/race-common/independent debug inputs. Kernel worker will implement them later.",
+    "Injected frontend charge-boundary refusal is labeled injected; actual positive generic calls are mandatory. Physical error proof reaches actual BIO completion owner, not submission mocks.",
+    "Matched source-role observer A zswap_load return0, C xswap_load_folio DONE0; same timing interval, tracing shape and 128MiB target.",
+    "Twelve exact correctness boots, nine candidate config builds plus one typed expected-unsupported A/independent build; reuse both existing A controls natively; 32 probe/88 fast/10 builds/18h, no retry slots for builds.",
+    "New C2 NUMA ID derives the now-runtime-valid C1 Nehalem identity but does not widen C1 resolvers. All timing stays single/max."
+  ],
+  "first_deliverable": "Write C2-wire-contract.md in shared research directory before substantial implementation: exact per-generation stats/control/failpoint/reset/teardown wire names and grammar, workload phase binding, required actual observations, source-role observer selection. Choose local naming details within the fixed semantics; coordinator reviews the concrete wire before kernel implementation. Missing real-path feasibility is a blocker, never a synthetic PASS.",
+  "owned_paths": [
+    "benchmark/swap-standard/configurations.py",
+    "benchmark/swap-standard/validity.py",
+    "benchmark/swap-standard/run.py",
+    "benchmark/swap-standard/guest-init",
+    "benchmark/swap-standard/bench.sh",
+    "benchmark/swap-standard/compression.c",
+    "benchmark/swap-standard/swapin.c",
+    "benchmark/swap-standard/evidence.py",
+    "benchmark/swap-standard/prepare-image.py",
+    "benchmark/swap-standard/test_*.py",
+    "benchmark/config/compression-c2-*.config (new only)",
+    "evolve/control/guest_budget.py",
+    "evolve/control/correctness_proof.py",
+    "evolve/standard_workflow.py",
+    "evolve/reference_cache.py",
+    "evolve/session.py (only typed C2 coverage/planning if needed)",
+    "evolve/test_*.py (focused relevant tests)",
+    "evolve/control/tests/test_*.py (focused relevant tests)",
+    "evolve/profiles/xswap-independent-v1.json (new draft only; no activation)"
+  ],
+  "forbidden": [
+    "No Linux source, existing config bytes, builder/toolchain files or current campaign state/protocol/raw edits.",
+    "No kernel build, VM, QMP, image preparation, runtime probe, push, publication, host mutation, AGY or further delegation.",
+    "No shared-main implementation edits; all implementation is in the isolated worktree.",
+    "No weakening gates or count/sample/noise/timing changes. Preserve revision8 and old topology behavior.",
+    "C1 runtime is active: for now read/edit only; do not run test suites or compilation until coordinator grants a non-competing check window."
+  ],
+  "acceptance": [
+    "One exact revision9 identity through reservation, runner, result/sidecars, parser replay, full matrix, typed negative build, cache and durable planner.",
+    "C2 record schema fails closed on missing/duplicate/wrong config/source/generation/observer and fake zero/raw/cache/physical independent traffic; all current gates persist.",
+    "Ordered actual phase/effect/data/reset proof including real high-order input, all rollback positions, decode-over-old-physical, actual completion errors and witnessed kernel overlap.",
+    "Preserve source/build cache environment. Expected negative is successful full A build with ZSWAP=n and XSWAP absent; no guest eligibility or positive cache entry.",
+    "Focused meaningful positive/adversarial tests and old regression/replay preservation in a permitted check window; do not claim source fixtures establish runtime."
+  ],
+  "output": "H24-result.md with small early checkpoints, exact changed files/commit, tests and missing work. Local Eric commit allowed, no Signed-off-by. Coordinator owns integration and activation.",
+  "completed_commit": "bbbce6bd6f079c606f77e240c1a6acfc05b104b2",
+  "review_followup_commit": "2ac2ee3630b4580c87e66ba72429211dd73349cd",
+  "integrated_commit": "5476fce37c5cbbea4667fb7ba824f57bac747734"
+}

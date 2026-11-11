@@ -68,8 +68,24 @@ Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
 
 Baseline origin: upstream or imported reference.
 
+[Campaign report](../codex-compress-lib-r5-2026-11-10/report/REPORT.md)
+
 | Candidate | Status | Reason |
 | --- | --- | --- |
 | [c1-shared-store-r5](../codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5.json) | closed | calibrate failed; inspect campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-a38c3d737d1e3842e1c39e21-0dd8a119.log. Retain all started attempts. |
 
-Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r5-2026-11-10)
+## codex-compress-lib-r6-2026-11-10
+
+Status: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-11.
+
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Baseline origin: upstream or imported reference.
+
+[Campaign report](../codex-compress-lib-r6-2026-11-10/report/REPORT.md)
+
+| Candidate | Status | Reason |
+| --- | --- | --- |
+| [c1-shared-store-r6](../codex-compress-lib-r6-2026-11-10/candidates/c1-shared-store-r6.json) | closed | Campaign deadline exhausted; retain all attempts and finish report delivery. |
+
+Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r6-2026-11-10)

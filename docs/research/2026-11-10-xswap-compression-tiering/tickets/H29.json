@@ -1,0 +1,43 @@
+{
+  "id": "H29",
+  "status": "integrated-source-and-fixtures-complete",
+  "owner": "/root/timing_diagnostic",
+  "task": "Implement the separately frozen revision-9 matched frontend timing observer and observer-memory isolation; preserve revision-8 behavior and original failed evidence.",
+  "worktree": "worktrees/framework-c2-timing-observer-01a1c6b6",
+  "branch": "infra/c2-timing-observer-01a1c6b6",
+  "base": "dc0027fb76b1adc008c493b0f84208c11e711102",
+  "contributor": "codex-tiering-01a1c6b6",
+  "read_first": [
+    "AGENTS.md",
+    "C2-wire-contract.md",
+    "C2-coordinator-decisions.md",
+    "H25-timing-observer-diagnosis.md",
+    "H26-result.md",
+    "H27-trace-diagnostic-admission.md"
+  ],
+  "owned_paths": [
+    "benchmark/swap-standard/swapin.c",
+    "benchmark/swap-standard/test_c2_timing_observer.py"
+  ],
+  "primary_choices": [
+    "New explicit compressed CLI retains old six arguments, then appends xswap-independent-v1 ROLE FULL_SOURCE_SHA pid_kretprobe_frontend_v2 FRONTEND (argc11); baseline requires legacy, candidate requires independent. No symbol selection from environment or fallback. Old argc3/argc6 behavior remains revision8.",
+    "Baseline zswap_load and candidate xswap_load_folio use return0, r64, PID filter,16KiB trace,CLOCK_MONOTONIC_RAW,128MiB/orderzero target,90percent eligibility,fixed order and unchanged t0/touch/t1. Verify actual kprobe registration/readbacks and source identity. Preserve H26 failure-only first-read trace diagnostics.",
+    "For revision9 compressed only, after allocations and before reclaim, lock current/future observer mappings with mlockall(MCL_CURRENT|MCL_FUTURE), then munlock exact target mapping. Verify actual /proc/self/smaps before reclaim and after measurement: complete target coverage with no lo; all accessible private mappings outside target carry lo except explicitly named kernel special mappings (vvar,vvar_vclock,vdso,vsyscall). Unknown/unlocked mappings or syscall failure reject setup. Record locked bytes/mappings and target unlocked bytes; do not infer success from syscall0 alone, because mlockall may ignore per-VMA errors. No target warming after reclaim.",
+    "This is a prospective measurement-isolation change in revision9 applied identically to A/C. The R5 root cause remains unproven; R6 expired without runtime and is not renewed. Pinning overhead/setup and retained memory are disclosed, no old sample is rescored.",
+    "Source A uses existing legacy snapshots plus actual codec/cap readbacks. C uses exact generation-bound raw frontend snapshots from shared wire, validates compressed stored length/zero raw/nonbinding cap/no physical fallback. Emit source-bound records for H24 strict host parser; coordinate exact fields before implementation.",
+    "No change to topology, sample counts, target/data, acceptance predicates, oldimage or frozeninputs. Missing real proof fails closed."
+  ],
+  "acceptance": [
+    "First checkpoint source-feasibility of exact anchor mlock/munlock and source-role snapshot path; report a concrete impossibility before choosing alternate semantics.",
+    "Strict argument/smaps/snapshot/registration positive and adversarial fixture tests, old swap-standard regression tests; fixture evidence is not runtime.",
+    "Meaningful syscall-failure and target-remains-unlocked tests via injected wrappers only, no host pinning experiment. C source/test checks allowed because no guest currentlyrunning.",
+    "Isolated Eric Zhang commit without DCO; concise H29-result with exactsource/tests/remainingruntime."
+  ],
+  "forbidden": [
+    "No kernel source/build/guest/image/runtime/hostchanges/push/activation/delegation/AGY.",
+    "No H24 host/parser/catalog/config edits or H28 guest/shell edits; coordinate peers by sharedwire and messages.",
+    "No main implementation, historicalraw/protocol/budget/deadline mutation or acceptance relaxation."
+  ],
+  "output": "H29-result.md",
+  "completed_commit": "66177c9420648afd1e5b1bc8723fde3b6991db58"
+}

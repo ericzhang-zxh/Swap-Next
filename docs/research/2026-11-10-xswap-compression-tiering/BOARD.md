@@ -1,5 +1,27 @@
 # XSwap compression and tiering board
 
+## Current closeout: 2026-11-11
+
+C1 established a reusable page-compression implementation with complete retained functional coverage. Its first baseline timing attempt failed decode observation, so no calibration, performance comparison, baseline advancement or promotion was accepted. The exact kernel source remains `7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad`.
+
+| Phase | Completed evidence | Current decision |
+| --- | --- | --- |
+| C1 shared compression library | R5: eight valid correctness guests and two disabled builds; all six contracts and original failures retained | Closed, functionally useful, timing unresolved |
+| C2 independent XSwap | Source-feasibility contract; inactive host validation and matched observer preparation; guest-free checks | No kernel candidate, kernel build, image or guest; missing guest capability remains blocking |
+| C3 pressure tier migration | Research and dependency plan | Not executed; requires C2 correctness and its reviewed migration contract |
+
+C1 cumulative resources are **20 counted reservations, 19 launched guests and nine kernel builds**. R6's one unlaunched reservation remains counted; its deadline expired before final runtime admission. No execution resource or budget was renewed during this closeout.
+
+The H28 guest-driver worker was interrupted by platform content-safety review without an exact refused step or detailed reason. Its incomplete uncommitted source is preserved in isolation. No refused work was retried, rephrased or reassigned. Separable H24/H29 preparation remains behind an inactive profile, and missing physical timing capability fails closed.
+
+Final independent review: [H30](H30-final-family-review.md) passes for C1 closeout, inactive C2 preparation and report readiness. Its operation/control identity finding is resolved in exact follow-up `2ac2ee3`, integrated as `5476fce`. The full integrated project checks passed; the merged correction additionally passes 249 standard-suite and 92 native checks. Report regeneration and all four visual views passed for each final report. Publication verification is the remaining delivery step.
+
+Current evidence: [C1 family report](../../../campaigns/codex-compress-lib-r6-2026-11-10/report/REPORT.md), [R5 functional proof](../../../campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/correctness.json), [H24 host preparation](H24-result.md), [H29 observer preparation](H29-result.md), [C2 wire contract](C2-wire-contract.md), [K3 source feasibility](K3-C2-source-feasibility.md), [interrupted guest handoff](H28-blocked-handoff.md).
+
+The entries below are retained chronological checkpoints; the current closeout above governs status.
+
+---
+
 ## Current checkpoint: C1 functional coverage passed; C2 capability in progress
 
 R5 completed the full shared-library correctness matrix (eight guests and two disabled builds), then closed on a failed baseline timing observer. R6 added source-reviewed first-failure diagnostics but expired during a usage interruption before final runtime admission: one reservation remains counted and no guest was launched. H27 independently verifies native closure, unchanged deadline/budget, released claim and no owned runtime process. C1 totals are **20 counted reservations, 19 launched guests and 9 builds**. There is no accepted calibration, speed or equivalence result.
