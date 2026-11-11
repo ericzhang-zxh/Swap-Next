@@ -14,9 +14,11 @@ C1 cumulative resources are **20 counted reservations, 19 launched guests and ni
 
 The H28 guest-driver worker was interrupted by platform content-safety review without an exact refused step or detailed reason. Its incomplete uncommitted source is preserved in isolation. No refused work was retried, rephrased or reassigned. Separable H24/H29 preparation remains behind an inactive profile, and missing physical timing capability fails closed.
 
-Final independent review: [H30](H30-final-family-review.md) passes for C1 closeout, inactive C2 preparation and report readiness. Its operation/control identity finding is resolved in exact follow-up `2ac2ee3`, integrated as `5476fce`. The full integrated project checks passed; the merged correction additionally passes 249 standard-suite and 92 native checks. Report regeneration and all four visual views passed for each final report. Publication verification is the remaining delivery step.
+Final independent review: [H30](H30-final-family-review.md) passes for C1 closeout, inactive C2 preparation and report readiness. Its operation/control identity finding is resolved in exact follow-up `2ac2ee3`, integrated as `5476fce`. The full integrated project checks passed; the merged correction additionally passes 249 standard-suite and 92 native checks. Report regeneration and all four visual views passed for each final report. Publication is verified for commit `0bfd1d43b274ef5d47d8cfeb2eddb395fa3ea8fd`, Pages run `43001802483`: both native delivery states are `live_verified`, all six canonical and both new dated routes match their reviewed bytes, and the first homepage card is the single C1 family entry.
 
 Current evidence: [C1 family report](../../../campaigns/codex-compress-lib-r6-2026-11-10/report/REPORT.md), [R5 functional proof](../../../campaigns/codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5/correctness.json), [H24 host preparation](H24-result.md), [H29 observer preparation](H29-result.md), [C2 wire contract](C2-wire-contract.md), [K3 source feasibility](K3-C2-source-feasibility.md), [interrupted guest handoff](H28-blocked-handoff.md).
+
+Finished clean worktrees were removed after delivery: seventeen framework/preparation worktrees and six owned C1 kernel worktrees. Their branches and exact evidence remain. H28's incomplete worktree is preserved, foreign worktrees are untouched, and no owned experiment remains running.
 
 The entries below are retained chronological checkpoints; the current closeout above governs status.
 

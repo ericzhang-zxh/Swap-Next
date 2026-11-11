@@ -1,0 +1,6 @@
+{
+  "kind": "publication",
+  "commit": "0bfd1d43b274ef5d47d8cfeb2eddb395fa3ea8fd",
+  "run_id": 43001802483,
+  "reason": "Final independent H30 review passed (SHA256 de4af7fa3e62e4692db61ea293befaed17ab1a14b4b9232319f2beec2f5f9b1c). Fresh four-view visual QA, exact Pages deployment and eight live route hashes passed; all original contract links remain discoverable. Verify the canonical page and index through the native delivery action."
+}
