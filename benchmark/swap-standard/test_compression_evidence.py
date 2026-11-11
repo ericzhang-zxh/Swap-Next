@@ -555,11 +555,22 @@ class TraceObserverTests(unittest.TestCase):
     def test_compressed_workload_refuses_non_guest_execution(self):
         binary = Path(self.temp.name) / 'swapin'
         subprocess.run(['gcc', '-O2', '-Wall', '-Wextra', '-Werror', str(BASE / 'swapin.c'), '-o', str(binary)], check=True)
-        result = subprocess.run([str(binary), '134217728', '/sys/fs/cgroup/bench/memory.reclaim',
-                                 'compressed', '1', '/sys/fs/cgroup/bench'], text=True,
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self.assertEqual(result.returncode, 1)
-        self.assertIn('SWAPIN_FAIL compressed_observer_setup', result.stdout)
+        command = [str(binary), '134217728', '/sys/fs/cgroup/bench/memory.reclaim',
+                   'compressed', '1', '/sys/fs/cgroup/bench']
+        for extra in ([], ['isolate-c1-observer']):
+            with self.subTest(extra=extra):
+                result = subprocess.run(command + extra, text=True, stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn('SWAPIN_FAIL compressed_observer_setup', result.stdout)
+
+        invalid = [command + ['unknown-observer'],
+                   command[:3] + ['disk'] + command[4:] + ['isolate-c1-observer'],
+                   command[:3] + ['isolate-c1-observer']]
+        for argv in invalid:
+            with self.subTest(argv=argv[3:]):
+                result = subprocess.run(argv, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 2)
 
     def test_success_and_negative_trace_envelopes(self):
         valid = '# tracer: nop\n# entries-in-buffer/entries-written: 1/1   #P:4\n swapin-12 [000] ... 1.000: decode_return: (func <- ret) ret=0\n'

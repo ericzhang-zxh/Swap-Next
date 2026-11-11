@@ -1317,16 +1317,20 @@ int main(int argc, char **argv)
 	volatile uint64_t sink = 0;
 	char *buf, unit = '\0';
 	int i;
+	bool isolate_c1 = argc == 7;
+	bool isolate_observer;
 	uint64_t before_stored = 0, before_pool = 0, before_raw = 0;
 	uint64_t stored = 0, pool = 0, raw = 0;
 
-	if ((argc != 3 && argc != 6 && argc != 11) ||
+	if ((argc != 3 && argc != 6 && argc != 7 && argc != 11) ||
+	    (isolate_c1 && strcmp(argv[6], "isolate-c1-observer")) ||
 	    (argc == 11 && c2_arguments(argc, argv)) ||
 	    sscanf(argv[1], "%zu%c", &bytes, &unit) < 1) {
-		fprintf(stderr, "usage: swapin SIZE[K|M|G] MEMORY_RECLAIM [compressed TYPE CGROUP]\n");
+		fprintf(stderr, "usage: swapin SIZE[K|M|G] MEMORY_RECLAIM [compressed TYPE CGROUP [isolate-c1-observer]]\n");
 		return 2;
 	}
-	if (argc == 6 || argc == 11) {
+	isolate_observer = isolate_c1 || c2_mode;
+	if (argc == 6 || argc == 7 || argc == 11) {
 		char *end;
 		long type = strtol(argv[4], &end, 10);
 		if (strcmp(argv[3], "compressed") || *end || type < 0 || type > 31 ||
@@ -1365,12 +1369,12 @@ int main(int argc, char **argv)
 		perror("alloc");
 		return 1;
 	}
-	if (madvise(buf, bytes, MADV_NOHUGEPAGE) && c2_mode) {
+	if (madvise(buf, bytes, MADV_NOHUGEPAGE) && isolate_observer) {
 		puts("SWAPIN_FAIL compressed_target_order");
 		return 1;
 	}
 	fill(buf, pages);
-	if (c2_mode && c2_isolate(buf, bytes)) {
+	if (isolate_observer && c2_isolate(buf, bytes)) {
 		puts("SWAPIN_FAIL compressed_observer_isolation");
 		return 1;
 	}
@@ -1467,9 +1471,8 @@ int main(int argc, char **argv)
 			puts("SWAPIN_FAIL compressed_observer_loss");
 			return 1;
 		}
-		if (c2_mode &&
-		    (compression_snapshot("after", &stored, &pool, &raw) ||
-		     c2_isolation_snapshot("after_measurement", buf, bytes))) {
+		if ((c2_mode && compression_snapshot("after", &stored, &pool, &raw)) ||
+		    (isolate_observer && c2_isolation_snapshot("after_measurement", buf, bytes))) {
 			puts("SWAPIN_FAIL compressed_final_proof");
 			return 1;
 		}
