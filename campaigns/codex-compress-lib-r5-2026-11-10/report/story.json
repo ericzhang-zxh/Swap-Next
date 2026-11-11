@@ -8,7 +8,7 @@
     {
       "id": "context",
       "title": "Why make compression reusable?",
-      "lead": "Linux can save RAM by compressing inactive application data. ZSwap is its existing compressed-memory cache; XSwap is this project's alternative swap design. XSwap currently relies on ZSwap for compression.",
+      "lead": "Linux can save working memory (RAM) by compressing inactive application data. ZSwap is its existing compressed-memory cache; XSwap is this project's alternative swap design. XSwap currently relies on ZSwap for compression.",
       "evidence": [
         "campaigns/codex-compress-lib-r5-2026-11-10/research.json",
         "campaigns/codex-compress-lib-r5-2026-11-10/ledger/session-closeout.json"
@@ -362,5 +362,5 @@
       "url": "https://ericzhang-zxh.github.io/Swap-Next/codex-compress-lib-r4-2026-11-10/"
     }
   ],
-  "source_commit": "aebf8ec3109b57aea2ca826e7715ec6c61930a1f"
+  "source_commit": "b47bfb6542b4234d7e276c8ce747650ed2c54764"
 }

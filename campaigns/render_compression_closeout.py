@@ -105,6 +105,8 @@ def generate(root, campaign):
 
     def report_spec(observed, explanation):
         spec = make_spec(observed, explanation)
+        # The Results section explains this retained timing failure in full.
+        spec['sections'] = [s for s in spec['sections'] if s['id'] != 'limits']
         if family:
             spec.update(candidates_count=1, guests=obs['totals']['counted'], builds=obs['totals']['builds'])
             spec['subtitle'] = (
@@ -160,7 +162,7 @@ def generate(root, campaign):
         if count != 1:
             raise ValueError('expected one scene: ' + section)
     page = page.replace('</style>', CSS + '</style>')
-    coverage_html = '<div class="coverage"><span>Data restored correctly</span><span>Existing behavior preserved</span><span>Memory and locking checks passed</span><span>Concurrent cleanup passed</span><span>CPU and memory placement checked</span><span class="missing">Timing incomplete</span></div>'
+    coverage_html = '<div class="coverage"><span>Data restored correctly</span><span>Existing behavior preserved</span><span>Memory and locking checks passed</span><span>Concurrent cleanup passed</span><span>Processor and memory placement checked</span><span class="missing">Timing incomplete</span></div>'
     page = page.replace('<section id="results">', '<section id="results">' + coverage_html)
     page, count = re.subn(r'<section id="patches">.*?</section>',
                          lambda m: '<details class="audit"><summary>Implementation details: shared compression library</summary>' + m.group(0) + '</details>',
