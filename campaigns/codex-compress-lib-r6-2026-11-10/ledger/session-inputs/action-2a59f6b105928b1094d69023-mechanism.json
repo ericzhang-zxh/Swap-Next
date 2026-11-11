@@ -1,0 +1,5 @@
+{
+  "kind": "reviewed_structure",
+  "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+  "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+}

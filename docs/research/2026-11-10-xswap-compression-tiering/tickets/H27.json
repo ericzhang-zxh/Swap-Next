@@ -1,0 +1,97 @@
+{
+  "id": "H27",
+  "status": "closed-without-runtime-admission",
+  "owner": "/root/final_independent_review",
+  "output": "docs/research/2026-11-10-xswap-compression-tiering/H27-trace-diagnostic-admission.md",
+  "task": "Independent H26 failure-only diagnostic source review, then exact R6 admission before any guest.",
+  "implementation_commit": "454b6f45aa89a9dddff0d5c6e00a5dcd6ac7fd83",
+  "integrated_commit": "d82bd89",
+  "main_checks": "All 179 swap-standard tests passed on main, no skips; retained log inspected by H27.",
+  "campaign": "codex-compress-lib-r6-2026-11-10",
+  "current_contract_state": "Frozen inputs committed. Native open/owner/claim/brief/propose/controller-created FF K1/static PASS/K2 exact-source reuse/mechanism complete. All ten matrix build-coverage rows natively reused eight distinct existing builds, zero new builds. Initial b-common reservation is RESERVED, no guest/raw runtime launched. Diagnostic image complete.",
+  "candidate": "c1-shared-store-r6",
+  "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+  "planned_execution": "Eight fresh native correctness guests on diagnostic image, reusing verified existing builds; only after full matrix, one original-baseline compressed diagnostic. Stop after attempt. No new kernel build, fast run or accepted calibration.",
+  "caps": {
+    "probe_guests": 9,
+    "fast_guests": 1,
+    "builds": 1,
+    "wall_seconds": 3600
+  },
+  "prior_spent": {
+    "guests": 19,
+    "builds": 9
+  },
+  "latest_allowed_deadline": 1794403009.6756349,
+  "checks": [
+    "Exact first-read bytes survive parser; bounded original read/error/truncation metadata and post-failure readbacks; no reread substitution.",
+    "Original successful behavior and rejection set, target/reclaim/sample ordering/timed interval unchanged.",
+    "Native full correctness gate preserved on new image; no historical guest reclassified or reused as fresh performance.",
+    "All five old frozen protocol/budget hashes and original120/10phase caps unchanged; nativepositive unused fast/buildcaps not plannedwork.",
+    "Final native reservation/protocol/image/build/source/static/review bindings before final PASS."
+  ],
+  "forbidden": [
+    "No implementation edits, state mutation, build, image, guest/QMP/runtime/push/publication/delegation. Write only owned H27 review document."
+  ],
+  "read_first": [
+    "H25-timing-observer-diagnosis.md",
+    "H26-result.md",
+    "runtime-incident-006.md"
+  ],
+  "frozen_input_commit": "dc0027fb76b1adc008c493b0f84208c11e711102",
+  "pins": {
+    "campaigns/codex-compress-lib-r6-2026-11-10/protocol.json": "f89b124964ed885cfc3e17596f558948e31c6cb7a14d3536a33f7c5d64fa92da",
+    "campaigns/codex-compress-lib-r6-2026-11-10/policy.json": "e4dfb59ccea57eb5aadd7db2e4a6104cb5ab5533d70dbebc2723b9b38b8d7862",
+    "campaigns/codex-compress-lib-r6-2026-11-10/continuation.json": "41fac7ef6d887310897b5b111c01b518a99594496a54c3518da44e1dd4e2d3ac",
+    "campaigns/codex-compress-lib-r6-2026-11-10/research.json": "f2d9c3366a14f892790f748de200f6779c8f608774ddaf6208c187bb2542320c",
+    "campaigns/codex-compress-lib-r6-2026-11-10/owner.json": "0a695c7d10a17effe173fa64b4553884c14a9cc83b75f694d7bed23021d93d8e",
+    "campaigns/codex-compress-lib-r6-2026-11-10/campaign.json": "ea1374fb31d8f95fd88b1de87a153a3386b23203671fb7189219f4c2ea1beb72",
+    "campaigns/codex-compress-lib-r6-2026-11-10/ledger/budget.json": "985b39c79d5fbb0f2f7d471679458e8c3c4906ff35fbfa378b91796654d7baf2",
+    "campaigns/codex-compress-lib-r6-2026-11-10/ledger/guest-reservations/c1r6-b-common-001.json": "986349a697dd92262afd5c43feb44b36c685f72941f15718aa51f3745a44642d",
+    "campaigns/codex-compress-lib-r6-2026-11-10/candidates/c1-shared-store-r6/static.json": "57d54955d127eecaddf5a52c837b52d995a81e624a4235a7d88ea4cd6f1ad413",
+    "campaigns/codex-compress-lib-r6-2026-11-10/candidates/c1-shared-store-r6/mechanism.json": "7bcf3e879102d517387572d632313594b170e328413ba14c775e8a6b37f71862",
+    "campaigns/codex-compress-lib-r6-2026-11-10/reviews/k2-c1-shared-store-r6-7d5a3cf.json": "c3f73540b8b8ebf896011b7d8406dc9622b047b0dba6dae20a734b053553fa7d",
+    "benchmark/swap-standard/image.json": "f32fc1be1d5d36ebeeea7283be3157ad98ef0f282b3fec952d375dc6f1ee62d4"
+  },
+  "budget_created": 1794354546.1003957,
+  "actual_deadline": 1794358146.1003957,
+  "image": {
+    "image_sha256": "4b3d7c36cbf3c319eff5fa6d3037dd9a8977a19b53055a83877da456887aba5d",
+    "initrd_sha256": "eecead7a8aa2a3880e1eaa9693db2dda213d67cd91c86568ade3d069b5c7a494",
+    "sources": {
+      "guest-init": "feabf7576c5c49c5b2a917569577f115f81d2d77b39b9404c7ef76ebdb5ff168",
+      "bench.sh": "05e248c84e9ddbf4fc21173a26137640d4b6eeb614abafade7c89a03c8de7178",
+      "params.sh": "0eaa3bba3a33b2b53d90aa35c5a5ef581a3c60eb678817ecb7198a6ed38e7f96",
+      "swapin.c": "26080a666441fed1b0b66d59f9f205e621a5cc734e1cccd785106ee281e577a9",
+      "churn.c": "0c81e556b7c8c374687523a09241f73aa15fcd331531e099bb85747e9d380ddb",
+      "correctness.c": "52543ded020427294e36b5b1a45d075a69638ae1cf95c1f3d2e34068b2701965",
+      "compression.c": "c345b1ebe76025f2da3c941ccb418bb4e56b6d31f0d49f4c5999a346157aad57",
+      "console-drain.c": "76b7bf5d6e0ab346416a273b25a9c851043d476d054a3a51d97984f870a7e2e1",
+      "prepare-image.py": "1fbef8036b099cf16fe1400133149e38b14f6612d5405f56bc69feb0c4e7eb3d",
+      "tools.json": "151daa7ee1f4f467e6a15584772552f49bfe09e4eb8b4a86cb03fd67c3849784"
+    },
+    "binary_sha256": {
+      "usemem": "2296328d96c66feb2c4dfd75d8e412c5a465f0e4f1ad287ac3f063efd414ac9e",
+      "valkey-server": "05f775fedd50617a58a541573da9eab0e966343e4062fdd8ca39ca81333fa200",
+      "valkey-benchmark": "9c6831df22a48234fd5c063f6174d40b8a48dfea31fb7cdc7cf8491229baf45b",
+      "valkey-cli": "3f3b52173f70b0605a0e8abace9765f4f9d0694fcfe6fa1e11789bebf996bc24",
+      "swapin": "f081c695c384e5549ccf7bbf1b2960a926f75b05075d6810b49ace312e54ae52",
+      "churn": "c6e78e703ee3ccbdc4f3c528ca15972507f771e217cd9c6a34bd215d652c48a8",
+      "correctness": "fff8a5391f60f6196e3517406f18467b0ee8910791b524c5084bf867c323ca7d",
+      "compression": "5ea1a8c2332bfed2e8c311f16f1eea491caa1d6cc3c23c41fe26810945a913f0",
+      "console-drain": "b955085dab6e59797d1b6dd221d0c14a68610ff79ddeafca648a35ef1de30a71"
+    }
+  },
+  "build_rows": "campaigns/codex-compress-lib-r6-2026-11-10/runs/control/*-build.json",
+  "initial_reservation": "campaigns/codex-compress-lib-r6-2026-11-10/ledger/guest-reservations/c1r6-b-common-001.json",
+  "launch_gate": "Do not start any guest until H27 final PASS. Revalidate pins and unchanged state immediately before launch.",
+  "closeout": {
+    "reason": "Frozen deadline elapsed during usage interruption before final admission and any guest launch.",
+    "counted_reservations": 1,
+    "launched_guests": 0,
+    "new_builds": 0,
+    "review_sha256": "ca0e4eb10256ca0761e47ddff67c194a00043330aa9ed1245177d53cd2a527c3",
+    "session_stage": "explain"
+  }
+}

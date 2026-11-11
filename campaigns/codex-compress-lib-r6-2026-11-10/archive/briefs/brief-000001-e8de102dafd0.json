@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "brief-000001-e8de102dafd0",
+  "campaign": "codex-compress-lib-r6-2026-11-10",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "fingerprint": "1aad0d8eb7e5e7602d10213937915fd1b8fa6ed2b1119845a707312804358d34",
+  "sequence": 1,
+  "eligible": {},
+  "sample_seed": 16779867050038271779,
+  "persisted": true,
+  "parent": {
+    "id": null,
+    "candidate_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "source_tree": null,
+    "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "patch": "",
+    "generation": 0,
+    "mechanism": null,
+    "probe_signals": {},
+    "analysis": {},
+    "report": null,
+    "parent_eligible": true,
+    "kind": "baseline",
+    "review_blockers": []
+  },
+  "allowed_parents": [
+    "5e84ca928deeacb4eee656806a003f27d1eca82f"
+  ],
+  "parent_bindings": {
+    "5e84ca928deeacb4eee656806a003f27d1eca82f": {
+      "candidate": null,
+      "source_tree": null
+    }
+  },
+  "inspirations": [],
+  "last_outcomes": [],
+  "older_relevant_failures": [],
+  "line_history": "# xswap-compression-tiering line\n\nCampaigns in opening order, with their recorded baselines and outcomes.\n\nFixed line anchor: `5e84ca928deeacb4eee656806a003f27d1eca82f`. This is an identity, not an inferred root-relative performance result.\n\n## codex-compress-lib-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../codex-compress-lib-2026-11-10/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-v1](../codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1.json) | closed | Infrastructure-incomplete: the frozen c1-debug input sets SLUB_TINY=y, which disables the required KASAN. K1 compiled but no candidate guest or timing ran. Preserve this contract, code and spent 3 guests/3 builds; a separately frozen corrected C1 contract must deduct these costs and elapsed time from the original phase caps, with no reset or candidate outcome claim. |\n\n## codex-compress-lib-r2-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../codex-compress-lib-r2-2026-11-10/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-r2](../codex-compress-lib-r2-2026-11-10/candidates/c1-shared-store-r2.json) | closed | Infrastructure-incomplete: the retained c-debug run completed but strict parsing rejects the expected invalid-codec diagnostic; diagnostic-only replay also identifies false rejection of KUnit zero-skip summaries. Preserve original raw and counted costs (two probe guests, one build). No timing occurred. Continue only under corrected trusted parsing with remaining original logical-phase resources and deadline, unchanged kernel source, and fresh counted correctness evidence. |\n\n## codex-compress-lib-r3-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../codex-compress-lib-r3-2026-11-10/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-r3](../codex-compress-lib-r3-2026-11-10/candidates/c1-shared-store-r3.json) | closed | Infrastructure-incomplete: the two-node correctness guest triggered topology_sane during boot because the trusted implicit single-package CPU topology conflicts with the two NUMA nodes. Preserve the failed warning gates and all three counted attempts; stop this frozen protocol before a separately reviewed topology correction. |\n\n## codex-compress-lib-r4-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../codex-compress-lib-r4-2026-11-10/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-r4](../codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4.json) | closed | Infrastructure-incomplete: the explicit two-socket NUMA guest passed all functional and kernel-warning gates, but the frozen validity check rejected boot-time TSC instability and HPET fallback. Preserve its original integration_pass=true and run_valid=false, both counted attempts, and the frozen contract. No timing or full correctness acceptance. |\n\n## codex-compress-lib-r5-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-r5](../codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5.json) | closed | calibrate failed; inspect campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-a38c3d737d1e3842e1c39e21-0dd8a119.log. Retain all started attempts. |\n\nCurrent baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r5-2026-11-10)\n",
+  "remaining": {
+    "fast": {
+      "spent": 0,
+      "ceiling": 1,
+      "remaining": 1
+    },
+    "probe": {
+      "spent": 0,
+      "ceiling": 9,
+      "remaining": 9
+    },
+    "total": {
+      "spent": 0,
+      "ceiling": 10
+    }
+  },
+  "anchor_comparison": "measured campaign baseline",
+  "prompt": {
+    "system": "You propose Linux swap experiments within the frozen campaign contract.",
+    "user": "Campaign proposal binding\n{\"allowed_parents\": [\"5e84ca928deeacb4eee656806a003f27d1eca82f\"], \"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"campaign\": \"codex-compress-lib-r6-2026-11-10\", \"fingerprint\": \"1aad0d8eb7e5e7602d10213937915fd1b8fa6ed2b1119845a707312804358d34\", \"id\": \"brief-000001-e8de102dafd0\", \"line_anchor_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\"}\n\nChoose the campaign baseline or the sampled exact parent commit. State the choice,\nhypothesis, expected mechanism and falsifier. Preserve the cumulative scope and\ncompare every child with the frozen campaign baseline. A neutral screen may be an\nexploratory parent; advancing a campaign baseline requires improvement beyond its\ncalibrated noise. Screens are not acceptance or permission for a slow run.\n\nSampled parent and cumulative patch evidence\n{\"analysis\": {}, \"baseline_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"candidate_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"generation\": 0, \"id\": null, \"kind\": \"baseline\", \"line_anchor_commit\": \"5e84ca928deeacb4eee656806a003f27d1eca82f\", \"mechanism\": null, \"parent_eligible\": true, \"patch\": \"\", \"probe_signals\": {}, \"report\": null, \"review_blockers\": [], \"source_tree\": null}\n\nInspirations (negative examples are never eligible parents)\n[]\n\nLast three outcomes\n[]\n\nRelevant earlier failures\n[]\n\nLine history\n# xswap-compression-tiering line\n\nCampaigns in opening order, with their recorded baselines and outcomes.\n\nFixed line anchor: `5e84ca928deeacb4eee656806a003f27d1eca82f`. This is an identity, not an inferred root-relative performance result.\n\n## codex-compress-lib-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../codex-compress-lib-2026-11-10/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-v1](../codex-compress-lib-2026-11-10/candidates/c1-shared-store-v1.json) | closed | Infrastructure-incomplete: the frozen c1-debug input sets SLUB_TINY=y, which disables the required KASAN. K1 compiled but no candidate guest or timing ran. Preserve this contract, code and spent 3 guests/3 builds; a separately frozen corrected C1 contract must deduct these costs and elapsed time from the original phase caps, with no reset or candidate outcome claim. |\n\n## codex-compress-lib-r2-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../codex-compress-lib-r2-2026-11-10/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-r2](../codex-compress-lib-r2-2026-11-10/candidates/c1-shared-store-r2.json) | closed | Infrastructure-incomplete: the retained c-debug run completed but strict parsing rejects the expected invalid-codec diagnostic; diagnostic-only replay also identifies false rejection of KUnit zero-skip summaries. Preserve original raw and counted costs (two probe guests, one build). No timing occurred. Continue only under corrected trusted parsing with remaining original logical-phase resources and deadline, unchanged kernel source, and fresh counted correctness evidence. |\n\n## codex-compress-lib-r3-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../codex-compress-lib-r3-2026-11-10/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-r3](../codex-compress-lib-r3-2026-11-10/candidates/c1-shared-store-r3.json) | closed | Infrastructure-incomplete: the two-node correctness guest triggered topology_sane during boot because the trusted implicit single-package CPU topology conflicts with the two NUMA nodes. Preserve the failed warning gates and all three counted attempts; stop this frozen protocol before a separately reviewed topology correction. |\n\n## codex-compress-lib-r4-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n[Campaign report](../codex-compress-lib-r4-2026-11-10/report/REPORT.md)\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-r4](../codex-compress-lib-r4-2026-11-10/candidates/c1-shared-store-r4.json) | closed | Infrastructure-incomplete: the explicit two-socket NUMA guest passed all functional and kernel-warning gates, but the frozen validity check rejected boot-time TSC instability and HPET fallback. Preserve its original integration_pass=true and run_valid=false, both counted attempts, and the frozen contract. No timing or full correctness acceptance. |\n\n## codex-compress-lib-r5-2026-11-10\n\nStatus: closed; machine: hurricpc; opened: 2026-11-10; closed: 2026-11-10.\n\nBaseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.\n\nBaseline origin: upstream or imported reference.\n\n| Candidate | Status | Reason |\n| --- | --- | --- |\n| [c1-shared-store-r5](../codex-compress-lib-r5-2026-11-10/candidates/c1-shared-store-r5.json) | closed | calibrate failed; inspect campaigns/codex-compress-lib-r5-2026-11-10/runs/session/action-a38c3d737d1e3842e1c39e21-0dd8a119.log. Retain all started attempts. |\n\nCurrent baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r5-2026-11-10)\n\n\nRemaining guest pools and build budget\n{\"fast\": {\"ceiling\": 1, \"remaining\": 1, \"spent\": 0}, \"probe\": {\"ceiling\": 9, \"remaining\": 9, \"spent\": 0}, \"total\": {\"ceiling\": 10, \"spent\": 0}}\n"
+  }
+}

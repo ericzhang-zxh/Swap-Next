@@ -1,20 +1,14 @@
 # XSwap compression and tiering board
 
-## Current checkpoint: C1 functional coverage complete, timing incomplete
+## Current checkpoint: C1 functional coverage passed; C2 capability in progress
 
-R5 is closed after full C1 correctness (eight guests and two disabled builds) and one failed baseline timing guest. Native correctness source and raw failure are preserved; see runtime-incident-006.md. Total logical C1 costs are nineteen guests and nine builds. No guest or build is running. H24 prepares C2 trusted capability in isolation; K3 reviews exact source feasibility; H25 independently diagnoses the timing observer. C2 has no implementation or runtime result yet. Final family review and delivery remain pending.
+R5 completed the full shared-library correctness matrix (eight guests and two disabled builds), then closed on a failed baseline timing observer. R6 added source-reviewed first-failure diagnostics but expired during a usage interruption before final runtime admission: one reservation remains counted and no guest was launched. H27 independently verifies native closure, unchanged deadline/budget, released claim and no owned runtime process. C1 totals are **20 counted reservations, 19 launched guests and 9 builds**. There is no accepted calibration, speed or equivalence result.
 
-## Current coordinator checkpoint (2026-11-10)
+The unchanged K1 source remains `7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad`, tree `8b085adc109e3b5467c3de998f11b04517f052a5`. R5 functional evidence supports continued capability development; the cross-campaign baseline remains original A `5e84ca928deeacb4eee656806a003f27d1eca82f`. The six C1 contracts retain their frozen inputs, failures, costs and deadlines. No further C1 runtime is planned.
 
-C1 remains incomplete. The unchanged shared-library candidate is `7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad` / tree `8b085adc109e3b5467c3de998f11b04517f052a5`. The original contract and R2-R4 are closed, preserving ten guest attempts and four builds. No calibration or performance result exists. C2/C3 execution still depends on full C1 correctness.
+Active isolated work: H24 owns C2 host catalog/parser/native proof; H28 owns the actual guest driver and shell integration; H29 owns the prospective revision-9 matched timing observer and non-target memory isolation. C2 is still preparation only, with no kernel candidate/build/guest. Its test-only retention phases have moved to its existing debug group without dropping predicates or adding a configuration. All three workers may run focused guest-free checks because no guest/build is active. No AGY; workers never delegate.
 
-- R3 has two valid correctness rows and one NUMA boot-warning failure. R4 fixes the virtual package layout and passes its NUMA semantic gates, but its clocksource validity gate fails. Both remain recorded failures under their frozen contracts.
-- H18 independently identifies the AMD multi-package TSC heuristic and recommends a separately versioned, correctness-only Intel CPU model. H19 implements `numa2-nehalem-v3` in its isolated trusted-code worktree. Source model support is not runtime validation; H22 admission and a fresh counted guest are still required.
-- A possible R5 continuation may spend at most 110 further guests and six builds before the earlier R4 deadline. The explicit pool rebalance is 24 probe / 86 fast; the ten prior attempts and all old frozen inputs remain intact.
-- Original C1 and R2 reports are live verified. R3 passed independent H21 and visual QA; R4 visual QA is complete and H23 report integrity review is finishing. The coordinator owns combined publication and live verification.
-- H13 C2 validation preparation and coordinator decisions are available. No independent-XSwap kernel implementation, capability activation, or C2/C3 runtime has occurred.
-
-Active ownership: H19 implementation is `campaign_validation_research`; H23 report audit is `report_integrity_review`; final independent/admission review is `final_independent_review`; integration, runtime, accounting and publication stay with the coordinator. No AGY. Workers do not delegate or launch runtime.
+Report delivery for R5/R6 remains outstanding and will be presented with the family evidence. Original/R2/R3/R4 reports remain live. Final independent exact-source/evidence/budget/report review remains required before the family handoff. C3 execution requires full C2 correctness and its separately reviewed migration/pressure contract.
 
 ## Retained board history
 
