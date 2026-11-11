@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "logical_phase": "C1 shared compression library",
+  "replacement_campaign": "codex-compress-lib-r7-2026-11-11",
+  "superseded_campaigns": [
+    {
+      "campaign": "codex-compress-lib-2026-11-10",
+      "budget": {
+        "created": 1794340417.3836553,
+        "guests": 0,
+        "probe_guests": 3,
+        "builds": 3
+      },
+      "budget_sha256": "2e03ba0eee0c337bc1ee57e4729b5dd912f7e78d0d4ce30d23091173fe5dac0b",
+      "protocol_sha256": "62f82170cbdc317605f08f6289708d807db63748590c30ee0fc5b34218ed1426",
+      "deadline": 1794405217.3836553
+    },
+    {
+      "campaign": "codex-compress-lib-r2-2026-11-10",
+      "budget": {
+        "created": 1794344444.500093,
+        "guests": 0,
+        "probe_guests": 2,
+        "builds": 1
+      },
+      "budget_sha256": "b529da364b87c259df26d92cb83e01a60752c6e96fd3a1bc04bc3bb4990e511e",
+      "protocol_sha256": "dd5d28e9b355c0c94cc85750c4393ce8e5f125756013ca82581a2132b1035ed0",
+      "deadline": 1794404672.500093
+    },
+    {
+      "campaign": "codex-compress-lib-r3-2026-11-10",
+      "budget": {
+        "created": 1794345695.3209484,
+        "guests": 0,
+        "probe_guests": 3,
+        "builds": 0
+      },
+      "budget_sha256": "cc2aa3e137730bf12f1fc8a0615cb347fd83de7087e8a86d33eccd8faa570b1f",
+      "protocol_sha256": "d454195000ec05241c2c3a325060abed3960360723163b8ed2ed0038f9b77edf",
+      "deadline": 1794404093.3209484
+    },
+    {
+      "campaign": "codex-compress-lib-r4-2026-11-10",
+      "budget": {
+        "created": 1794347289.5792072,
+        "guests": 0,
+        "probe_guests": 2,
+        "builds": 0
+      },
+      "budget_sha256": "555c93a456a9be410aa12faeb0d7dac1ceaff0cff96cc0900ed400041a1938eb",
+      "protocol_sha256": "d7f4c5ff044dc227a26f75a78e50edd5927b4d6d97dd20727762aad9a7cd3ab6",
+      "deadline": 1794403573.5792072
+    },
+    {
+      "campaign": "codex-compress-lib-r5-2026-11-10",
+      "budget": {
+        "created": 1794350186.6756349,
+        "guests": 0,
+        "probe_guests": 9,
+        "builds": 5
+      },
+      "budget_sha256": "4183d55eb370ca2540332433d95a9101bb4750639ecab41d1182cc52cbde63bb",
+      "protocol_sha256": "e9e282998de6bc59c2563b398f5968c33f1a5ee219a06cca6e15267d9a9511e3",
+      "deadline": 1794403009.6756349
+    },
+    {
+      "campaign": "codex-compress-lib-r6-2026-11-10",
+      "budget": {
+        "created": 1794354546.1003957,
+        "guests": 0,
+        "probe_guests": 1,
+        "builds": 0
+      },
+      "budget_sha256": "985b39c79d5fbb0f2f7d471679458e8c3c4906ff35fbfa378b91796654d7baf2",
+      "protocol_sha256": "f89b124964ed885cfc3e17596f558948e31c6cb7a14d3536a33f7c5d64fa92da",
+      "deadline": 1794358146.1003957
+    }
+  ],
+  "reason": "Fresh owner-authorized follow-up to collect the first-failure trace that R6 never ran. No old campaign is reopened and no diagnostic sample enters timing acceptance.",
+  "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+  "original_phase_caps": {
+    "probe_guests": 32,
+    "fast_guests": 88,
+    "total_guests": 120,
+    "builds": 10,
+    "wall_seconds": 64800
+  },
+  "spent": {
+    "probe_guests": 20,
+    "fast_guests": 0,
+    "builds": 9
+  },
+  "resource_reallocation": {
+    "from_pool": "none",
+    "to_pool": "none",
+    "slots": 0,
+    "available_before_narrowing": {
+      "probe_guests": 12,
+      "fast_guests": 88,
+      "builds": 1
+    },
+    "reason": "The fresh diagnostic consumes at most nine planned guests. The positive fast and build caps are unused schema minima."
+  },
+  "maximum_replacement_caps": {
+    "probe_guests": 9,
+    "fast_guests": 1,
+    "total_guests": 10,
+    "builds": 1
+  },
+  "replacement_wall_seconds": 3600,
+  "prepared_unix": 1794439759.3661203,
+  "open_deadline_guard": "Use the new native one-hour deadline and both STOP gates. Retain all predecessor deadline and ledger bytes.",
+  "reuse_rule": "Only exact natively validated unchanged build artifacts may be reused. Original build costs and timestamps remain. No prior guest or diagnostic replay becomes a fresh successful sample.",
+  "family_caps_unchanged": {
+    "logical_phases": 3,
+    "total_guests": 360,
+    "builds": 30
+  },
+  "diagnostic_only": {
+    "planned_guest_attempts": 9,
+    "kernel_candidate_creation": true,
+    "calibration_sample": false,
+    "source_role": "baseline",
+    "reuse_correctness_for_performance": false,
+    "stop_after_attempt": true,
+    "planned_baseline_diagnostic_attempts": 1,
+    "new_kernel_hypothesis": false,
+    "correctness_guests": 8,
+    "guest_image_manifest_sha256": "a404958a24822c6a8e3d68ca4ea5c9cda1472afc0bd5495c178abb0cbb810b27",
+    "guest_image_sha256": "f0b2b88805d8e303b659ce70077c043b33a7c5ad7b87a2b6454eab8f4ff02ab2",
+    "initrd_sha256": "52712e0878c8aff8745331079284f3b52097867121cf14dc1373b616b8a8d345"
+  },
+  "prior_inherited_deadline_unix": 1794403009.6756349
+}
