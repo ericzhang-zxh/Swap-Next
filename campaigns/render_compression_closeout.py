@@ -89,6 +89,11 @@ def generate(root, campaign):
         spec = make_spec(observed, explanation)
         if family:
             spec.update(candidates_count=1, guests=obs['totals']['counted'], builds=obs['totals']['builds'])
+            spec['subtitle'] = (
+                f"{story['harness']} ({story['model']}) · line: {observed['line']} · "
+                f"base {observed['baseline_commit'][:8]} · 1 candidate · "
+                f"{obs['totals']['counted']} counted / {obs['totals']['launched']} launched guests / "
+                f"{obs['totals']['builds']} builds")
         spec['verdict']['tiles'] = [
             {'label': 'Shared library', 'value': 'Functional pass', 'note': 'Full R5 matrix and disabled builds.'},
             {'label': 'Performance', 'value': 'Unresolved', 'note': 'Baseline decode observation failed.'},

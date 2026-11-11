@@ -198,7 +198,7 @@
         },
         {
           "type": "note",
-          "text": "High-confidence source review supports this unchanged ownership boundary. NUMA functional observations now cover placement, hotplug and accounting without kernel warnings. The separate clock-validity failure still prevents a valid complete matrix."
+          "text": "The unchanged ownership boundary passed exact-source review. R5 subsequently passed complete required correctness, including NUMA placement, guest CPU hotplug, legacy behavior and accounting."
         }
       ]
     },
@@ -267,7 +267,7 @@
         },
         {
           "type": "note",
-          "text": "The exact-source review finds no per-object wrapper or context-size increase. The prototype adds one library-pool allocation and about eight requested bytes per pool on LP64; allocator slab rounding is unmeasured. Shared code is a capability benefit, with additional API and test obligations."
+          "text": "The review found no per-object wrapper or context-size increase. Extraction adds a pool allocation and a small requested pool-size increase; allocator rounding is unmeasured. New API and test obligations remain."
         }
       ]
     },
@@ -334,7 +334,7 @@
         },
         {
           "type": "note",
-          "text": "Confidence is high in retained source identities, native closure and saved correctness outcomes. The R5 timing failure cause is unresolved: H26 added diagnostics, but R6 collected no trace. C2/C3 were still preparation at this report boundary. No performance winner, baseline advancement or code promotion follows."
+          "text": "Source identities and saved correctness have high confidence. The timing cause remains unresolved: R6 collected no trace. No performance winner, baseline advancement or code promotion exists. C2/C3 execution still requires its own gates."
         }
       ]
     }
@@ -358,7 +358,7 @@
   ],
   "date": "2026-11-11",
   "harness": "codex",
-  "model": "gpt-6",
+  "model": "gpt-6-astra",
   "reading": [
     "campaigns/codex-compress-lib-2026-11-10/protocol.json",
     "campaigns/codex-compress-lib-2026-11-10/policy.json",
@@ -392,8 +392,8 @@
     "docs/research/2026-11-10-xswap-compression-tiering/runtime-incident-007.md",
     "campaigns/render_compression_closeout.py"
   ],
-  "patches_title": "Core kernel patches",
-  "patches_lead": "The exact K1 source remains unchanged across all four infrastructure contracts. These pinned excerpts explain the shared-library hypothesis; R4 adds functional observations, not a new kernel change.",
+  "patches_title": "Core shared-library patches",
+  "patches_lead": "These hunks belong to the unchanged K1 source used throughout C1. R5 supplies complete correctness; R6 adds no runtime sample.",
   "observations_sha256": "1aa93cb274448ecc6ab6d08e2d6033f8e8fb8f1c3076b128350632bf3491785a",
   "related_reports": [
     {
@@ -413,5 +413,5 @@
       "url": "https://ericzhang-zxh.github.io/Swap-Next/codex-compress-lib-r4-2026-11-10/"
     }
   ],
-  "source_commit": "a6d1e5aab3059a11068b8acd29f57eb32a0303d5"
+  "source_commit": "f06795b44cbc3f5b7a43c685a086328ee75bc235"
 }
