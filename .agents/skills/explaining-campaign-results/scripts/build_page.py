@@ -399,8 +399,9 @@ def chart_card(block, budget, body, table):
     return f'<div class="card"><p class="chart-title">{title}</p>{body}{note}{table}</div>'
 
 
-def badge(status):
+def badge(status, display_label=None):
     var, icon, label = STATUS[status]
+    label = esc(display_label or label)
     return f'<span class="badge"><i class="dot" style="background:var({var})"></i>{icon} {label}</span>'
 
 
@@ -442,7 +443,7 @@ def build(spec):
                     f'<div class="value">{esc(t["value"])}</div>'
                     f'<div class="note">{budget.text(t.get("note", ""), "tile")}</div></div>'
                     for t in v.get("tiles", [])[:4])
-    parts = [f'<div class="card"><div class="verdict">{badge(v["status"])}'
+    parts = [f'<div class="card"><div class="verdict">{badge(v["status"], v.get("label"))}'
              f'<span>{budget.text(v["headline"], "headline")}</span></div><div class="tiles">{tiles}</div></div>']
     toc = []
     for s in spec["sections"]:

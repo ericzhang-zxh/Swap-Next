@@ -27,21 +27,39 @@ CSS = '''
 '''
 
 SCENES = {
-'system': '''<section id="system"><h2>1. Whole system: compressed contents still live in RAM</h2>
-<p class="lead">The application needs a full page. Compression saves RAM by storing a smaller representation, then spends CPU time to restore it on a fault.</p>
-<div class="scene"><div class="scene-grid"><div class="scene-box"><p class="scene-label">Application</p><h3>Read page A</h3><div class="pages"><div class="page-object">A</div></div><p>Access triggers the swap-in path when the page is absent.</p></div>
-<div class="scene-box memory"><p class="scene-label">Physical RAM</p><h3>Two representations</h3><div class="pages"><div class="page-object">A</div><div class="page-object compressed">A</div></div><p>Full page after decode; compressed object before decode. The compressed object is inside RAM.</p><div class="engine"><strong>Changed location</strong><br>Codec context + compressed-object store</div></div>
-<div class="scene-box"><p class="scene-label">Backing storage</p><h3>Physical swap device</h3><p>A separate fallback path can read stored contents from a device.</p><p class="scene-note">The compressed correctness case excludes lower physical backing.</p></div></div><p class="scene-route">Application fault → selected frontend → <strong>decode object A</strong> → full page A</p><p class="scene-note">Schematic objects and sizes; no latency is illustrated. C1 adds no tier-migration policy.</p></div></section>''',
-'subsystem': '''<section id="subsystem"><h2>2. Subsystem: policy owns the object; the library runs the engine</h2>
-<p class="lead">At this C1 boundary, XSwap still reaches compressed storage through ZSwap. The new library makes that mechanism reusable while preserving the current owner.</p>
-<div class="scene"><div class="scene-grid"><div class="scene-box"><p class="scene-label">Logical swap path</p><h3>XSwap or ordinary swap</h3><p>Logical entry identity and existing physical fallback remain outside the extracted library.</p></div>
-<div class="scene-box"><p class="scene-label">ZSwap frontend</p><h3>Keep ownership here</h3><div class="owner">Index · object reference · charge · LRU · admission</div><p>The frontend decides when a handle becomes reachable and when it can be freed.</p></div>
-<div class="scene-box focus"><p class="scene-label">Shared page library</p><h3>Execute the mechanism</h3><div class="engine"><span>CPU context</span><span>Codec</span><span>Object allocator</span></div><div class="pages"><div class="page-object compressed">A</div><div class="page-object compressed">B</div></div></div></div><p class="scene-route">Frontend retains handle + length → library store / load / free</p><p class="scene-cost">Independent XSwap is the next capability to implement and verify. The C1 library alone does not supply it.</p></div></section>''',
-'changes': '''<section id="changes"><h2>3. Concrete change: move code ownership, retain the stored object</h2>
-<p class="lead">The object representation and frontend lifetime rules remain. The codec and allocator implementation cross one new API boundary.</p>
-<div class="scene"><div class="scene-grid"><div class="scene-box"><p class="scene-label">Before</p><h3>ZSwap contains both roles</h3><div class="owner">Frontend policy, accounting and references</div><div class="engine"><span>CPU context</span><span>Codec</span><span>Object allocator</span></div><div class="pages"><div class="page-object compressed">A</div></div></div>
-<div class="scene-box"><p class="scene-label">After · unchanged K1 source</p><h3>ZSwap calls a shared engine</h3><div class="owner">Same frontend policy, accounting and references</div><div class="engine"><strong>page_compress library</strong><br><span>CPU context</span><span>Codec</span><span>Object allocator</span></div><div class="pages"><div class="page-object compressed">A</div></div></div></div><p class="scene-cost">Benefit: one reusable implementation. Cost: a new API/lifetime boundary, one pool allocation and additional configuration/test obligations. Slab rounding and performance equivalence remain unmeasured.</p></div></section>'''
+'system': '''<section id="system"><h2>1. The system: keep application data available</h2>
+<p class="lead">A memory page is a fixed-size block of application data. When a page is removed from active RAM, the kernel must keep its contents somewhere so the application can use it again.</p>
+<div class="scene"><div class="scene-grid"><div class="scene-box"><p class="scene-label">Application</p><h3>Read block A</h3><div class="pages"><div class="page-object">A</div></div><p>If A is no longer in active RAM, the kernel restores it from its stored copy.</p></div>
+<div class="scene-box memory"><p class="scene-label">Inside RAM</p><h3>Compress, then restore</h3><div class="pages"><div class="page-object compressed">A</div><div class="page-object">A</div></div><p>The small stored copy saves space. Decompression uses processor time to restore the full block.</p><div class="engine"><strong>This experiment changes</strong><br>The code that compresses and stores data here</div></div>
+<div class="scene-box"><p class="scene-label">On disk</p><h3>Another place to store data</h3><p>Pages can also be stored on disk and read back when needed.</p><p class="scene-note">A later stage would move compressed data from RAM to disk when RAM is tight.</p></div></div><p class="scene-route">Application reads A → kernel finds its stored copy → <strong>restore full block A in RAM</strong></p><p class="scene-note">The blocks illustrate the idea; their sizes are not measurements.</p></div></section>''',
+'subsystem': '''<section id="subsystem"><h2>2. The boundary: decisions versus compression</h2>
+<p class="lead">ZSwap is the existing compressed-memory cache. XSwap is this project's alternative swap design. At this stage, XSwap still uses ZSwap; the extraction makes the compression code available for future callers.</p>
+<div class="scene"><div class="scene-grid"><div class="scene-box"><p class="scene-label">Request</p><h3>Store or restore a page</h3><p>Either the ordinary swap path or XSwap asks ZSwap to handle the compressed data.</p></div>
+<div class="scene-box"><p class="scene-label">ZSwap keeps the decisions</p><h3>Track and manage data</h3><div class="owner">What to keep · where it is · memory usage · when it can be freed</div><p>Data stays alive while another operation is using it.</p></div>
+<div class="scene-box focus"><p class="scene-label">Shared library does the work</p><h3>Compress and store</h3><div class="engine"><span>Compress</span><span>Restore</span><span>Allocate / free storage</span></div><div class="pages"><div class="page-object compressed">A</div><div class="page-object compressed">B</div></div></div></div><p class="scene-route">Swap request → ZSwap's decisions and tracking → <strong>shared compression library</strong></p><p class="scene-cost">Independent XSwap would call the library without ZSwap. That next step still needs implementation and testing.</p></div></section>''',
+'changes': '''<section id="changes"><h2>3. The change: extract one reusable library</h2>
+<p class="lead">Move the compression and storage implementation out of ZSwap into a library named page_compress. Keep the stored data format and the rules for tracking and freeing it.</p>
+<div class="scene"><div class="scene-grid"><div class="scene-box"><p class="scene-label">Before</p><h3>ZSwap contains both roles</h3><div class="owner">Decisions and data tracking</div><div class="engine"><span>Compression</span><span>Storage allocation</span></div><div class="pages"><div class="page-object compressed">A</div></div></div>
+<div class="scene-box"><p class="scene-label">After</p><h3>ZSwap calls a shared library</h3><div class="owner">The same decisions and data tracking</div><div class="engine"><strong>Shared page_compress library</strong><br><span>Compression</span><span>Storage allocation</span></div><div class="pages"><div class="page-object compressed">A</div></div></div></div><p class="scene-cost">Benefit: future callers can reuse one implementation. Cost: another interface to maintain and another allocation per storage pool, the container for compressed data. Actual memory overhead and speed remain unmeasured.</p></div></section>'''
 }
+
+RESULT_LEAD = ('Functional checks passed, but the speed comparison could not begin. '
+              'In the original, unchanged kernel, the timing tool could not confirm '
+              'that the measured reads had successfully decompressed stored pages.')
+RESULT_DETAIL = ('It therefore produced no complete valid timing sample. The cause is still unknown. '
+                 'A later diagnostic attempt was reserved but never launched before its time window expired. '
+                 'There is no measured speedup or slowdown for the library change.')
+LIMITS = [
+    'Functional checks cover the retained source, kernel configurations and test image. '
+    'They support continuing development; performance and real-world memory overhead remain unmeasured. '
+    'The library remains an experimental candidate, with no code promotion or change to the reference kernel.',
+    'Independent XSwap test support is incomplete. An automated platform content-safety review interrupted '
+    'its test-driver worker; the exact refused operation was not supplied. The partial driver was retained '
+    'and the blocked operation was not retried. Independent XSwap and pressure-driven movement to disk have not run.',
+    'Earlier failed attempts and the reserved diagnostic that never launched remain in the resource totals. '
+    'Replaying archived results checks their interpretation; it adds no new experiment.'
+]
+
 
 
 def generate(root, campaign):
@@ -94,14 +112,25 @@ def generate(root, campaign):
                 f"base {observed['baseline_commit'][:8]} · 1 candidate · "
                 f"{obs['totals']['counted']} counted / {obs['totals']['launched']} launched guests / "
                 f"{obs['totals']['builds']} builds")
+        provenance = spec['subtitle']
+        spec['subtitle'] = 'A first step toward sharing compression between Linux swap designs.'
+        spec['card_metadata'] = 'Shared compression code · Required functional checks passed'
+        spec['verdict']['label'] = 'Performance unmeasured'
         spec['verdict']['tiles'] = [
-            {'label': 'Shared library', 'value': 'Functional pass', 'note': 'Full R5 matrix and disabled builds.'},
-            {'label': 'Performance', 'value': 'Unresolved', 'note': 'Baseline decode observation failed.'},
-            {'label': 'Decision', 'value': 'Retain for development', 'note': 'Original baseline and promotion gate remain.'}]
+            {'label': 'Function', 'value': 'Required checks passed', 'note': 'Data, concurrency, cleanup and configuration checks.'},
+            {'label': 'Speed', 'value': 'Not measured', 'note': 'Timing failed on the unchanged reference kernel.'},
+            {'label': 'Decision', 'value': 'Continue development', 'note': 'Keep the library as an experimental candidate.'}]
         results = next(s for s in spec['sections'] if s['id'] == 'results')
-        results['lead'] = 'R5 completed correctness before its first baseline timing attempt. The latter produced no valid timing sample. R6 later expired before guest admission.'
+        results['title'] = 'Results: function checked, speed still unknown'
+        results['lead'] = RESULT_LEAD
+        results['blocks'] = [{'type': 'note', 'text': RESULT_DETAIL}]
         evidence = next(s for s in spec['sections'] if s['id'] == 'evidence')
         evidence['blocks'] += [
+            {'type': 'table', 'takeaway': 'Report provenance and verdict meaning',
+             'columns': ['Field', 'Meaning'], 'rows': [
+                 ['Native status', observed['verdict']],
+                 ['Why inconclusive', 'Performance comparison is incomplete; functional coverage passed.'],
+                 ['Execution provenance', provenance]]},
             {'type': 'table', 'takeaway': 'R5 complete functional coverage',
              'columns': ['Case', 'Configuration', 'Topology', 'Functional gates', 'Valid'],
              'rows': [[a['case'], a['config_id'], a['topology_id'], str(sum(a['gates'].values())) + ' / ' + str(len(a['gates'])), a['run_valid']] for a in coverage]},
@@ -131,8 +160,19 @@ def generate(root, campaign):
         if count != 1:
             raise ValueError('expected one scene: ' + section)
     page = page.replace('</style>', CSS + '</style>')
-    coverage_html = '<div class="coverage"><span>Roundtrip + physical regression: pass</span><span>Legacy ZSwap: pass</span><span>KASAN / lockdep: pass</span><span>KCSAN lifecycle: pass</span><span>NUMA + hotplug: pass</span><span class="missing">Timing: unresolved</span></div>'
+    coverage_html = '<div class="coverage"><span>Data restored correctly</span><span>Existing behavior preserved</span><span>Memory and locking checks passed</span><span>Concurrent cleanup passed</span><span>CPU and memory placement checked</span><span class="missing">Timing incomplete</span></div>'
     page = page.replace('<section id="results">', '<section id="results">' + coverage_html)
+    page, count = re.subn(r'<section id="patches">.*?</section>',
+                         lambda m: '<details class="audit"><summary>Implementation details: shared compression library</summary>' + m.group(0) + '</details>',
+                         page, count=1, flags=re.S)
+    if count != 1:
+        raise ValueError('expected one implementation section')
+    limits = '<details class="audit"><summary>Limits and follow-up status</summary>' + ''.join('<p>' + html.escape(x) + '</p>' for x in LIMITS) + '</details>'
+    page = page.replace('</main>', limits + '</main>')
+    page = page.replace('</script>', '''document.querySelectorAll('nav a').forEach(a => a.addEventListener('click', () => {
+      let element = document.getElementById(a.getAttribute('href').slice(1));
+      while (element) { if (element.tagName === 'DETAILS') element.open = true; element = element.parentElement; }
+    }));</script>''')
     for item in story['patches']:
         source = item['source']
         href = 'https://github.com/ericzhang-zxh/Swap-Next/blob/' + story['source_commit'] + '/' + source
@@ -149,20 +189,31 @@ def generate(root, campaign):
     (dated / 'explainer.html').write_text(page)
     (report / 'explainer.html').unlink()
     (report / 'explainer.json').replace(dated / 'explainer.json')
-    markdown = (report / 'REPORT.md').read_text()
-    marker = markdown.index('## Limitations\n')
-    rows = ['<details>', '<summary>Functional coverage and cumulative resources</summary>', '',
-            '| Case | Configuration | Gate result | Valid |', '| --- | --- | --- | --- |']
+    rows = ['# ' + story['title'], '', '**Functional checks passed; performance unmeasured.** ' + story['headline'], '']
+    for section in story['sections']:
+        if section['id'] == 'next':
+            rows += ['## Results: function checked, speed still unknown', '', RESULT_LEAD, '', RESULT_DETAIL, '']
+        rows += ['## ' + section['title'], '', section['lead'], '']
+        rows += [b['text'] + '\n' for b in section['blocks'] if b['type'] == 'note']
+        rows += ['<details>', '<summary>Sources for this explanation</summary>', '']
+        rows += ['- [' + ref + '](https://github.com/ericzhang-zxh/Swap-Next/blob/' + story['source_commit'] + '/' + ref + ')' for ref in section['evidence']]
+        rows += ['', '</details>', '']
+    rows += ['<details>', '<summary>Implementation details: shared compression library</summary>', '', story['patches_lead'], '']
+    for item in story['patches']:
+        rows += ['### ' + item['takeaway'], '', 'Source: `' + item['source'] + '`', '', '```diff', item['patch'].rstrip(), '```', '']
+    rows += ['</details>', '', '<details>', '<summary>Exact outcomes, functional coverage and resources</summary>', '',
+             'Native verdict: `' + summary['verdict'] + '`. It refers to the unfinished performance comparison.', '',
+             '| Evaluation | Candidate | Tier | Result |', '| --- | --- | --- | --- |']
+    rows += ['| ' + ' | '.join(str(row.get(k) or '').replace('|', '/').replace('\n', ' ') for k in ('id', 'candidate', 'tier', 'status')) + ' |' for row in summary['evaluations']]
+    rows += ['', '| Case | Configuration | Gate result | Valid |', '| --- | --- | --- | --- |']
     rows += ['| ' + a['case'] + ' | ' + a['config_id'] + ' | all pass | true |' for a in coverage]
     rows += ['', '| Contract | Counted | Launched | Builds |', '| --- | --- | --- | --- |']
     rows += ['| ' + x['campaign'] + ' | ' + str(x['counted']) + ' | ' + str(x['launched']) + ' | ' + str(x['builds']) + ' |' for x in obs['resources']]
-    rows += ['', '[Public observations and exact hashes](observations.json)', '', '</details>', '',
-             '## Limitations', '',
-             'C1 functional coverage is complete on the retained R5 source/config/image. Its first baseline timing guest failed before complete latency samples. The saved run validity and failed integration fields remain separate. No calibration, performance equivalence, speedup, baseline advancement or code promotion is established.', '',
-             'H26 diagnostics are source-reviewed, while R6 expired before final admission and collected no runtime trace. One unlaunched R6 reservation remains counted. The earlier observer cause remains unproven. C2/C3 implementation and runtime are not C1 outcomes.', '',
-             'The archived-parser reconciliation reproduces historical gates and metrics; it creates no fresh runtime sample. Per-object/context representation is preserved by source review. Requested pool overhead and unmeasured allocator rounding remain distinct.', '',
-             '[Interactive explanation](' + dated_name + '/explainer.html)', '']
-    (report / 'REPORT.md').write_text(markdown[:marker] + '\n'.join(rows))
+    rows += ['', '[Public observations and exact hashes](observations.json)', '', '</details>', '', '## Limitations', '']
+    for text in LIMITS:
+        rows += [text, '']
+    rows += ['[Interactive explanation](' + dated_name + '/explainer.html)', '']
+    (report / 'REPORT.md').write_text('\n'.join(rows))
     receipt['artifacts'] = {name: delivery.digest_bytes(((dated if name in {'explainer.html', 'explainer.json'} else report) / name).read_bytes()) for name in delivery.OUTPUTS}
     delivery.write(report / 'delivery.json', receipt)
     print(json.dumps({'campaign': campaign, 'state': receipt['state'], 'html_sha256': receipt['artifacts']['explainer.html']}))

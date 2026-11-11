@@ -2,7 +2,7 @@
   "schema_version": 1,
   "groups": [
     {
-      "title": "Shared compression library C1",
+      "title": "Shared memory-compression library",
       "representative": "codex-compress-lib-r6-2026-11-10",
       "members": [
         "codex-compress-lib-2026-11-10",

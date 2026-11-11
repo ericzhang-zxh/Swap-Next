@@ -13,10 +13,39 @@ implementation and results. Prefer diagrams and charts to tables. Use short
 captions to connect the pictures; keep exact measurements and audit material
 available on demand.
 
+## Reader contract
+
+Write for a technically curious reader encountering the project for the first
+time. They have not read the conversation, board, earlier reports or source.
+The default reading path must stand alone:
+
+- Explain the user-visible goal, the current system and why the experiment was
+  worth trying before relying on project-specific names. Introduce a component
+  by its role, then its name; define necessary terms and acronyms at first use.
+- Use descriptive stage names in prose, diagrams, captions and navigation.
+  Internal campaign/round/ticket IDs, raw gate names, commit hashes and execution
+  metadata belong in closed evidence or provenance details. A glossary is a
+  supplement, not a prerequisite for understanding the overview.
+- Separate what was implemented, what functional checks established, what
+  performance measurements established, and what remains planned. A status such
+  as `inconclusive` must identify the unresolved question and its concrete cause.
+  Use `verdict.label` for a plain-language badge while preserving the native
+  `verdict.status`; use `card_metadata` for readable homepage context.
+- State the main benefit, cost, uncertainty and next decision in ordinary
+  language. Explain mechanisms without assuming that a shorter code path is a
+  measured speedup. Keep the failure and its consequence visible even when its
+  diagnostic code lives in the evidence details.
+- Review the initial page with all evidence closed. A new reader must be able
+  to answer: What problem matters? What changed? What was actually tested?
+  What happened? Why is any conclusion unresolved? What happens next?
+  Rewrite any answer that requires an internal label or an earlier report.
+
 ## The page, in order
 
-1. **Verdict.** Start with accepted / rejected / inconclusive / needs-review,
-   whether to continue, and the main benefit and cost in plain language. Prefer
+1. **Verdict.** Start with the plain-language finding and decision, including
+   whether to continue and the main benefit and cost. Preserve the native
+   accepted / rejected / inconclusive / needs-review status in the data, and
+   explain its scope visibly; it cannot replace the finding. Prefer
    qualitative summary tiles; exact effect sizes belong in expandable details.
 2. **Context and motivation.** Show the original path, the cost or problem being
    addressed, and why the proposed mechanism might help. Assume the reader has
@@ -42,7 +71,9 @@ available on demand.
    `diff` blocks (`story["patches"]` in `evolve/delivery.py`). Each block states
    a one-line takeaway, cites its pinned `campaigns/<c>/patches/<cand>.patch`
    source, and shows the key kernel implementation diff in both `explainer.html`
-   and `REPORT.md`. End with expandable evidence: measurement protocol, full
+   and `REPORT.md`, inside a closed technical-details disclosure. Its summary
+   states what the code implements without requiring code literacy.
+   End with expandable evidence: measurement protocol, full
    samples, counters, and audit tables.
 
 ## Default visual standard
@@ -143,8 +174,9 @@ separate evidence. On phones, reflow scenes rather than shrinking the whole pict
 4. Render light and dark themes and a narrow mobile viewport. Check readable
    labels, no overlap or whole-page overflow, visible charts, no visible numeric
    tables on initial load, and working evidence expand/collapse controls.
-   Capture fresh, unique per-campaign Visual QA screenshots (desktop light/dark,
-   mobile light/dark); never copy screenshot files or hashes from prior campaigns.
+   Apply the Reader contract to the title, badge, diagrams and homepage card,
+   not only the prose. Capture fresh, unique per-campaign Visual QA screenshots
+   (desktop light/dark, mobile light/dark); never copy screenshot files or hashes from prior campaigns.
 5. **Async Publication Decoupling**: Once a campaign is closed with `close-campaign`,
    decouple report rendering, Visual QA, and publication so a dedicated report
    worker runs publication asynchronously on main while subsequent machine
@@ -155,7 +187,10 @@ separate evidence. On phones, reflow scenes rather than shrinking the whole pict
    entry.
 7. **Standardized Card Metadata & Layout**: Run `scripts/build_site.py campaigns/ _site/`.
    - Card Top-Right Badge: Display resolved `YYYY-MM-DD` date (via multi-tier fallback: explicit `date` in `explainer.json`, `YYYY-MM-DD` in directory name, timestamps in `campaign.json`, `delivery.json`, or subtitle).
-   - Card Bottom Metadata Bar: Unified, self-explanatory format across all homepage cards:
+   - Card Bottom Metadata Bar: Supply `card_metadata` with useful plain-language
+     context for new reports. Keep harness/model, internal line, baseline hash
+     and exact resource counts in the report's closed provenance details.
+     The renderer retains this legacy fallback for older reports:
      `<harness> (<model>) · line: <line> · base <short-sha> · <N> candidate · <G> guests / <B> build`
      * Harness/model mapping: `agy (gemini4argon)` for exp1 through exp5, `codex (gpt-6-astra)` for codex-r01/r02, `grok-bot / claudecode (opus5.5)` for rev7 kbench, and `claudecode (opus5.5)` for historical 2026-10-21..2026-10-24.
      * `line: <line>`: from campaign line record (e.g. `line: demand`, `line: exp2-stride-gated-ra`).
@@ -171,8 +206,9 @@ separate evidence. On phones, reflow scenes rather than shrinking the whole pict
 ## Spec reference
 
 ```json
-{"title": "...", "subtitle": "<harness> (<model>) · line: <line> · base <short-sha> · <N> candidate · <G> guests / <B> build",
- "verdict": {"status": "rejected", "headline": "...", "tiles": [{"label": "", "value": "", "note": ""}]},
+{"title": "...", "subtitle": "<plain-language purpose of this experiment>",
+ "card_metadata": "<plain-language scope and environment>",
+ "verdict": {"status": "rejected", "label": "<specific outcome>", "headline": "...", "tiles": [{"label": "", "value": "", "note": ""}]},
  "sections": [{"id": "data", "title": "What the data shows", "lead": "one sentence",
    "blocks": [{"type": "strip", "takeaway": "...", "x_label": "", "groups": [], "series": [],
                "points": [{"group": "", "series": "", "value": 0, "tip": ""}]}]}]}
@@ -200,6 +236,8 @@ Every chart block takes `takeaway` (rendered as its title) and an optional
 | A neutral chart title ("Mapped clusters") | State the finding in plain language; keep exact figures expandable |
 | Four or more series on one chart | Split into small multiples; the builder colors three |
 | Typing numbers into the spec by hand | Generate the spec from the summary with a script |
+| Unexplained C1/R5-style IDs or acronyms in the overview | Name the stage by its purpose; define necessary terms where first used |
+| A bare "inconclusive" badge | Say which conclusion is unresolved, why, and which results are already established |
 | Starting with context before the verdict | Lead with the decision, then explain context and motivation |
 | Showing exact data or tables by default | Keep visuals visible and exact data in closed details |
 | A paragraph explaining a chart | Use a short caption or a cause-chain diagram; move detailed lookup into closed evidence |

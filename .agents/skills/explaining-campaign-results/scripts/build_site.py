@@ -258,6 +258,8 @@ def resolve_metadata_bar(page, spec=None, camp_dir=None):
     <harness> (<model>) · line: <line> · base <short-sha> · <N> candidate · <G> guests / <B> build
     Never show hostnames like hurricpc or protocol jargon like rev7.
     """
+    if spec and spec.get("card_metadata"):
+        return spec["card_metadata"]
     name = published_name(page)
     harness_model = resolve_harness_model(name, spec, camp_dir)
     line = resolve_line(page, spec, camp_dir)
@@ -337,6 +339,7 @@ def build_site(campaigns, site):
 
         verdict = spec.get("verdict", {})
         var, icon, label = STATUS.get(verdict.get("status"), ("--muted", "·", "Report"))
+        label = html.escape(verdict.get("label") or label)
         date_html = (f'<span style="font-size:13px;color:var(--muted);font-weight:600">'
                      f'{html.escape(date_str)}</span>') if date_str else ""
         meta_bar = resolve_metadata_bar(page, spec, camp_dir)
