@@ -1,5 +1,21 @@
 # XSwap compression and tiering board
 
+## Continuation request audit: 2026-11-11
+
+The owner requested continuation of independent XSwap and pressure tier migration.
+Read-only reconciliation identified the earlier worker stop as an explicit
+`cyber_policy` platform safeguard reporting possible cybersecurity risk. The
+specific rejected operation was not supplied. This is distinct from the earlier
+usage interruption and expired diagnostic window.
+
+The retained guest-driver diff is unchanged. Host validation and the matched
+compressed observer are already integrated; the missing guest driver still
+blocks C2 activation, and C3 depends on C2 correctness. No new kernel candidate,
+build or guest was launched. Existing owner authorization remains sufficient;
+the affected implementation awaits platform review or applicable approved
+access. See [the resume audit](C2-resume-audit-2026-11-11.json).
+
+
 ## Current closeout: 2026-11-11
 
 C1 established a reusable page-compression implementation with complete retained functional coverage. Its first baseline timing attempt failed decode observation, so no calibration, performance comparison, baseline advancement or promotion was accepted. The exact kernel source remains `7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad`.
