@@ -179,6 +179,21 @@ int main(int argc, char **argv)
         }
         return 0;
     }
+    if (!strcmp(argv[1], "counter_read")) {
+        char path[256];
+        uint64_t value;
+
+        if (argc != 3)
+            return 96;
+        snprintf(path, sizeof(path), C2_ZSWAP_DEBUG "/%s", argv[2]);
+        if (c2_read(path, raw, sizeof(raw), &n))
+            return 2;
+        printf("FIXTURE_COUNTER_READ_OK bytes=%zu\n", n);
+        if (debug_number(argv[2], &value))
+            return 1;
+        printf("FIXTURE_COUNTER_VALUE value=%" PRIu64 "\n", value);
+        return 0;
+    }
     if (!strcmp(argv[1], "legacy")) {
         if (c2_legacy_snapshot("before", 0, 0, 0))
             return 1;
@@ -571,10 +586,21 @@ int main(int argc, char **argv)
 
     def test_legacy_counters_require_canonical_unsigned_decimal(self):
         for name in ("pool_limit_hit", "written_back_pages", "reject_compress_poor"):
-            for raw in ("-1\\n", "+0\\n", "00\\n", "18446744073709551616\\n", "0 extra\\n"):
+            for value in (0, (1 << 64) - 1):
+                with self.subTest(name=name, control=value):
+                    self.setUp()
+                    raw = f"{value}\n"
+                    (self.debug / name).write_text(raw)
+                    output = self.assertPass("counter_read", None, name)
+                    self.assertEqual(output, f"FIXTURE_COUNTER_READ_OK bytes={len(raw)}\n"
+                                             f"FIXTURE_COUNTER_VALUE value={value}\n")
+            for raw in ("-1\n", "+0\n", "00\n", "18446744073709551616\n", "0 extra\n"):
                 with self.subTest(name=name, raw=raw):
                     self.setUp()
                     (self.debug / name).write_text(raw)
+                    result = self.run_case("counter_read", None, name)
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    self.assertEqual(result.stdout, f"FIXTURE_COUNTER_READ_OK bytes={len(raw)}\n")
                     self.assertFail("legacy")
 
     def test_memory_readback_missing_duplicate_or_noncanonical_rejects(self):
