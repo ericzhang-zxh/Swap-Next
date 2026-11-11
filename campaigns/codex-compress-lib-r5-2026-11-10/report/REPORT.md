@@ -1,54 +1,89 @@
-# Shared compression library: correctness passed, timing unresolved
+# Sharing memory-compression code: functional checks passed, performance unmeasured
 
-**inconclusive** — The full correctness matrix passed. The first baseline timing guest failed decode observation, leaving performance unmeasured.
+**Functional checks passed; performance unmeasured.** The shared compression library passed its required functional checks. A failure in the timing setup left its effect on speed unknown.
 
-## Separate reusable mechanism from frontend policy
+## Why make compression reusable?
 
-The experiment extracts codec contexts and compressed-object storage from ZSwap. Existing policy, indexes, accounting and lifetime ownership stay with the frontend. This is the first step toward independent XSwap and later tier migration.
+Linux can save working memory (RAM) by compressing inactive application data. ZSwap is its existing compressed-memory cache; XSwap is this project's alternative swap design. XSwap currently relies on ZSwap for compression.
 
-The full correctness matrix passed. The first baseline timing guest failed decode observation, leaving performance unmeasured.
+The goal is to let both systems use the same compression code. Later work would let XSwap operate independently and move stored data to disk when RAM is tight.
 
-R5 collected eight fresh correctness guests and two disabled-configuration builds before timing. All required correctness rows passed; its subsequent baseline measurement failed.
+<details>
+<summary>Sources for this explanation</summary>
 
-Evidence: campaigns/codex-compress-lib-r5-2026-11-10/research.json, campaigns/codex-compress-lib-r5-2026-11-10/ledger/session-closeout.json
+- [campaigns/codex-compress-lib-r5-2026-11-10/research.json](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/research.json)
+- [campaigns/codex-compress-lib-r5-2026-11-10/ledger/session-closeout.json](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/ledger/session-closeout.json)
 
-## 1. Whole system: restore the application page
+</details>
 
-An application needs its full page in physical RAM. Stored contents may be compressed inside RAM or reside on a backing device. Compression trades CPU work for less storage traffic.
+## 1. The system: keep application data available
 
-The candidate changes the compressed-storage implementation. The existing frontend still decides admission, accounting and writeback. No new RAM-to-disk migration policy is implemented here.
+A memory page is a fixed-size block of application data. When an inactive page is removed from active RAM, its contents must remain available in compressed RAM or on disk, ready to restore when needed.
 
-Evidence: campaigns/codex-compress-lib-r5-2026-11-10/research.json, campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch
+This experiment changes the compression code inside RAM. Moving stored data from RAM to disk under memory pressure is a later stage.
 
-## 2. Subsystem: policy keeps the object identity
+<details>
+<summary>Sources for this explanation</summary>
 
-ZSwap retains the entry index, memory-group charge, ordering and lifetime pins. A shared page library owns per-CPU codec contexts, scratch buffers and compressed-object storage.
+- [campaigns/codex-compress-lib-r5-2026-11-10/research.json](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/research.json)
+- [campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch)
 
-The unchanged ownership boundary passed exact-source review. R5 subsequently passed complete required correctness, including NUMA placement, guest CPU hotplug, legacy behavior and accounting.
+</details>
 
-Evidence: campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch, campaigns/codex-compress-lib-r5-2026-11-10/reviews/k2-c1-shared-store-r5-7d5a3cf.json
+## 2. The boundary: decisions versus compression
 
-## 3. Concrete change: one object engine, the same frontend owner
+ZSwap decides which data to keep, tracks where it is stored and accounts for its memory use. The new library compresses, stores, restores and frees that data. XSwap still reaches the library through ZSwap at this stage.
 
-Before extraction, ZSwap owns both policy and the codec/object engine. After extraction, the library returns a handle and length while ZSwap keeps publication, charges, LRU and references. Each stored object retains its original representation.
+ZSwap remains responsible for keeping stored data alive while another operation uses it. The library does the compression and storage work without taking over those decisions.
 
-The review found no per-object wrapper or context-size increase. Extraction adds a pool allocation and a small requested pool-size increase; allocator rounding is unmeasured. New API and test obligations remain.
+<details>
+<summary>Sources for this explanation</summary>
 
-Evidence: campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch, campaigns/codex-compress-lib-r5-2026-11-10/reviews/k2-c1-shared-store-r5-7d5a3cf.json
+- [campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch)
+- [campaigns/codex-compress-lib-r5-2026-11-10/reviews/k2-c1-shared-store-r5-7d5a3cf.json](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/reviews/k2-c1-shared-store-r5-7d5a3cf.json)
 
-## Proceed to independent XSwap with fresh measurement evidence
+</details>
 
-Keep original A as the comparison anchor. C2 must demonstrate actual compressed objects, decoder calls, generic objcg charges and balanced teardown with ZSWAP disabled. Its prospective observer isolation is applied to both arms and needs fresh calibration.
+## 3. The change: extract one reusable library
 
-Source identities and saved correctness have high confidence. The timing cause remains unresolved: R6 collected no trace. No performance winner, baseline advancement or code promotion exists. C2/C3 execution still requires its own gates.
+Before the change, compression and storage code lived inside ZSwap. After the change, ZSwap calls a shared library named page_compress. The stored data format and the rules for tracking and freeing it stay the same.
 
-Evidence: campaigns/codex-compress-lib-r5-2026-11-10/research.json, campaigns/codex-compress-lib-r5-2026-11-10/ledger/session-closeout.json
+Benefit: future callers can reuse one implementation. Cost: another interface to maintain and another allocation for each storage pool, the container for compressed data. The actual memory overhead and effect on speed remain unmeasured.
 
-## Core shared-library patches
+<details>
+<summary>Sources for this explanation</summary>
 
-These hunks belong to the unchanged K1 source used throughout C1. R5 supplies complete correctness; R6 adds no runtime sample.
+- [campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch)
+- [campaigns/codex-compress-lib-r5-2026-11-10/reviews/k2-c1-shared-store-r5-7d5a3cf.json](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/reviews/k2-c1-shared-store-r5-7d5a3cf.json)
 
-### Same K1: the API keeps publication, accounting and handle lifetime with its caller
+</details>
+
+## Results: function checked, speed still unknown
+
+Functional checks passed, but the speed comparison could not begin. In the original, unchanged kernel, the timing tool could not confirm that the measured reads had successfully decompressed stored pages.
+
+It therefore produced no complete valid timing sample. The cause is still unknown. A later diagnostic attempt was reserved but never launched before its time window expired. There is no measured speedup or slowdown for the library change.
+
+## Next: finish measurement and independent XSwap support
+
+Keep the library as a development candidate. First make the timing setup reliable enough to compare the original and modified kernels. Separately, finish the test support needed for XSwap to use the library with ZSwap disabled.
+
+Reject the next design if it corrupts data, miscounts memory or frees data still in use. Any speed claim requires repeatable measurements of both versions. Independent XSwap and pressure-driven disk migration have not run.
+
+<details>
+<summary>Sources for this explanation</summary>
+
+- [campaigns/codex-compress-lib-r5-2026-11-10/research.json](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/research.json)
+- [campaigns/codex-compress-lib-r5-2026-11-10/ledger/session-closeout.json](https://github.com/ericzhang-zxh/Swap-Next/blob/2c026d27660f6427da9b2e7019d148b805000e4a/campaigns/codex-compress-lib-r5-2026-11-10/ledger/session-closeout.json)
+
+</details>
+
+<details>
+<summary>Implementation details: shared compression library</summary>
+
+The following source excerpts show the tested library extraction. All experiment continuations used this same kernel change.
+
+### The caller keeps responsibility for tracking and freeing stored data
 
 Source: `campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch`
 
@@ -101,7 +136,7 @@ Source: `campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.p
 +unsigned long page_compress_backing_pages(struct page_compress_pool *pool);
 ```
 
-### Same K1: the library compresses and allocates before returning a usable handle
+### The library compresses a page and returns its storage reference
 
 Source: `campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch`
 
@@ -161,7 +196,7 @@ Source: `campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.p
 +}
 ```
 
-### Same K1: frontend pool creation delegates the engine and preserves its reference lifetime
+### ZSwap delegates compression storage while preserving its existing lifetime rules
 
 Source: `campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.patch`
 
@@ -231,7 +266,12 @@ Source: `campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.p
  	 * Publish only after the pool is fully built, so lockless walkers
 ```
 
-## Outcomes
+</details>
+
+<details>
+<summary>Exact outcomes, functional coverage and resources</summary>
+
+Native verdict: `inconclusive`. It refers to the unfinished performance comparison.
 
 | Evaluation | Candidate | Tier | Result |
 | --- | --- | --- | --- |
@@ -246,9 +286,6 @@ Source: `campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.p
 | 5239a706edc54efaa166e63f9da152b8 | c1-shared-store-r5 | correctness | BUILD_VERIFIED |
 | b9816127cec74100a6ff7ce7bdaa297e | c1-shared-store-r5 | correctness | BUILD_VERIFIED |
 | 48fd11859f014277b7188b6874673175 | c1-shared-store-r5 | probe | INCOMPLETE |
-
-<details>
-<summary>Functional coverage and cumulative resources</summary>
 
 | Case | Configuration | Gate result | Valid |
 | --- | --- | --- | --- |
@@ -275,10 +312,10 @@ Source: `campaigns/codex-compress-lib-r5-2026-11-10/patches/c1-shared-store-r5.p
 
 ## Limitations
 
-C1 functional coverage is complete on the retained R5 source/config/image. Its first baseline timing guest failed before complete latency samples. The saved run validity and failed integration fields remain separate. No calibration, performance equivalence, speedup, baseline advancement or code promotion is established.
+Functional checks cover the retained source, kernel configurations and test image. They support continuing development; performance and real-world memory overhead remain unmeasured. The library remains an experimental candidate, with no code promotion or change to the reference kernel.
 
-H26 diagnostics are source-reviewed, while R6 expired before final admission and collected no runtime trace. One unlaunched R6 reservation remains counted. The earlier observer cause remains unproven. C2/C3 implementation and runtime are not C1 outcomes.
+Independent XSwap test support is incomplete. An automated platform content-safety review interrupted its test-driver worker; the exact refused operation was not supplied. The partial driver was retained and the blocked operation was not retried. Independent XSwap and pressure-driven movement to disk have not run.
 
-The archived-parser reconciliation reproduces historical gates and metrics; it creates no fresh runtime sample. Per-object/context representation is preserved by source review. Requested pool overhead and unmeasured allocator rounding remain distinct.
+Earlier failed attempts remain in the resource totals. The final family report also counts the diagnostic reservation that never launched. Replaying archived results checks their interpretation; it adds no new experiment.
 
 [Interactive explanation](codex-compress-lib-r5-2026-11-10-2026-11-11/explainer.html)

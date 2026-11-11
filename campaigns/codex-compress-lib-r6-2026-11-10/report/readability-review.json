@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "scope": "First-time-reader report revision; no experimental changes",
+  "source_commit": "2c026d27660f6427da9b2e7019d148b805000e4a",
+  "before_commit": "bf96436237e9e4413e4023b0bc19ebf004445487",
+  "independent_review": "PASS",
+  "findings_resolved": [
+    "Scoped the unlaunched diagnostic reservation to the cumulative report only."
+  ],
+  "evidence_checks": [
+    "Both native summaries and public observations unchanged byte-for-byte.",
+    "All prior evidence tables and core patch excerpts retained.",
+    "Pinned sources and 19 original result hashes verified.",
+    "Native verdict remains inconclusive; functional and performance conclusions are separately explained."
+  ],
+  "validation": {
+    "site_tests_passed": 10,
+    "delivery_tests_passed": 12,
+    "skill_validation": "PASS",
+    "repeated_generation": "identical outputs",
+    "reports": {
+      "codex-compress-lib-r5-2026-11-10": {
+        "html_sha256": "424fed3071cdadc2dce0f2f07d40fd3cc2bb69f404b0823dbd37228208f275cb",
+        "views_checked": 4,
+        "state": "visually_checked"
+      },
+      "codex-compress-lib-r6-2026-11-10": {
+        "html_sha256": "aac4bd0c0d06e85844fda2084645a65a10771e0a4be8b5ad4b82b4dae8fc1726",
+        "views_checked": 4,
+        "state": "visually_checked"
+      }
+    }
+  }
+}

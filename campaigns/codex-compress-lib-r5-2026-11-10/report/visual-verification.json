@@ -1,12 +1,12 @@
 {
-  "artifact_sha256": "ae3f8d67e02b6b231ff806bdfcb61f0f2025a02f1b5b5736b035297395f647a1",
-  "reviewer": "Coordinator; fresh real Chrome screenshots and visual inspection",
+  "artifact_sha256": "424fed3071cdadc2dce0f2f07d40fd3cc2bb69f404b0823dbd37228208f275cb",
+  "reviewer": "Coordinator: fresh Chrome captures and visual inspection; independent content and evidence review passed",
   "views": [
     {
       "width": 1440,
       "theme": "light",
-      "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-20261111/1440-light.png",
-      "sha256": "89ebef2f7dcf9678ffa97bc4a608586fcec6735be67a1529252d5f259b4827ed",
+      "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-readability-20261111/1440-light.png",
+      "sha256": "b1e5d725b3f230b127c655a6e73a2c8e40e5463d2fb29070c14dce15a1056912",
       "readable": true,
       "no_overflow": true,
       "collapsed_evidence": true,
@@ -15,8 +15,8 @@
     {
       "width": 1440,
       "theme": "dark",
-      "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-20261111/1440-dark.png",
-      "sha256": "893c454a71dc56b63e7c56b2340e7379878d1eca1827e31ad42ce0269e2d5479",
+      "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-readability-20261111/1440-dark.png",
+      "sha256": "ae74be93c37e03eefe3f944af089b18995be4a298b524339b668841801055420",
       "readable": true,
       "no_overflow": true,
       "collapsed_evidence": true,
@@ -25,8 +25,8 @@
     {
       "width": 390,
       "theme": "light",
-      "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-20261111/390-light.png",
-      "sha256": "04145a52267ecb0971db72649c07b7757306c9b33219671805c19e6dedf88903",
+      "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-readability-20261111/390-light.png",
+      "sha256": "a64dc9d2202f5e8533fc05fd93dc784d0c52bb54ad3afc8305f57954a3f4d05d",
       "readable": true,
       "no_overflow": true,
       "collapsed_evidence": true,
@@ -35,8 +35,8 @@
     {
       "width": 390,
       "theme": "dark",
-      "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-20261111/390-dark.png",
-      "sha256": "ab29c24057f3211263386533dd301329debf33faa41ac7d3548e8749f4530735",
+      "screenshot": "campaigns/codex-compress-lib-r5-2026-11-10/runs/visual-qa-readability-20261111/390-dark.png",
+      "sha256": "fa4c6793e3b7a914b04fc7efceed900c155951a6e1983e7e889ba09e94f0af5b",
       "readable": true,
       "no_overflow": true,
       "collapsed_evidence": true,
