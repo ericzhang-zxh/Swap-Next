@@ -1,0 +1,18 @@
+{
+  "id": "c1r7-c-numa-001",
+  "campaign": "codex-compress-lib-r7-2026-11-11",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794440290.5405283,
+  "identity": {
+    "build": "c1-7d5a3cfab2ab-debug-v2",
+    "backend": "compressed",
+    "mode": "xswap",
+    "workload": "compression",
+    "config_id": "c1-debug-v2",
+    "correctness_case": "c-numa",
+    "topology_id": "numa2-nehalem-v3"
+  },
+  "protocol_sha256": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+  "started_unix": 1794440290.588336
+}

@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "line_contract": {
+    "schema_version": 1,
+    "line": "xswap-compression-tiering",
+    "profile": "xswap-compression-library-v1",
+    "profile_version": 1,
+    "profile_sha256": "ce18e7423e89422f2cf7bd3d5f97583e48463e806020ecf228135c665a8c6142",
+    "anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "value_policy": {
+      "min_useful_effect": 0.05,
+      "equivalence_margin": 0.03,
+      "requires_upstream_comparison": false,
+      "rationale": "C1 is an architecture preparation hypothesis. Preserve resource and semantic behavior; a speed claim needs at least 5% improvement above noise, and an equivalence claim requires uncertainty within 3%. Shared code alone is not performance progress."
+    },
+    "contributor": "codex-tiering-01a1c6b6",
+    "scientific_sha256": "bbc971b15141614d3f9613b3d1ecae482f1ed7baa0d5c4c427f4515d676628b3"
+  },
+  "selected_idea": {
+    "id": "shared-page-store",
+    "status": "proposed",
+    "priority": 100,
+    "change_type": "redesign",
+    "bottleneck": "XSwap depends on ZSwap global policy and lifetime because the compression/storage mechanism is embedded in that frontend.",
+    "mechanism": "Extract crypto-acomp CPU contexts and zsmalloc object store into page_compress; adapt ZSwap without moving indexes, charges, admission or LRU ownership.",
+    "mechanism_evidence_type": "reviewed_structure",
+    "affected_paths": [
+      "mm/zswap.c",
+      "mm/Kconfig",
+      "mm/Makefile",
+      "include/linux/cpuhotplug.h",
+      "mm/page_compress.c",
+      "include/linux/page_compress.h",
+      "mm/page_compress_test.c"
+    ],
+    "expected_benefit": "Reusable compressed-object mechanism with preserved existing frontend behavior; establishes preparation for later independent XSwap, not a presumed speedup.",
+    "simpler_alternative": "Retain the integrated ZSwap implementation, or reuse crypto-acomp alone and duplicate pool/context cleanup in a new frontend.",
+    "falsifier": "Reject on ownership/charge drift, failed real compressed-path/lifecycle coverage, new metadata or context footprint, or calibrated swap-in guard regression.",
+    "required_evidence": [
+      "Exact-tree independent API, ownership, lock and failure review",
+      "Eight counted configuration-bound correctness boots and disabled build coverage",
+      "Real nonzero compressed residency, demand decode and no lower backing for compressed timing",
+      "Fresh same-protocol probe and fast calibration with all guards",
+      "Recorded baseline-relative complexity and uncertainty"
+    ],
+    "upstream_refs": [],
+    "no_upstream_reason": "The exact original XSwap/ZSwap implementation is the common control. Reusing crypto-acomp directly would retain duplicated pool/context cleanup; replacing it with zram zcomp changes allocator and hotplug behavior. No separate compatible page/object-library arm was identified in the pinned source audit.",
+    "estimated_cost": {
+      "guest_attempts": 108,
+      "build_attempts": 8
+    },
+    "selection_reason": "Test the minimum shared mechanism boundary before independent frontend and migration state changes.",
+    "complexity": {
+      "parent": {
+        "state": {
+          "change": "unchanged",
+          "reason": "Keep frontend entry layout, pool IDs, policy and logical indexes; add no object wrapper."
+        },
+        "lifetime": {
+          "change": "mixed",
+          "reason": "Frontend lifetime pins remain; library explicitly owns context and object-pool destruction."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Retain per-CPU context mutex and synchronous crypto completion; frontend locks remain."
+        },
+        "error_paths": {
+          "change": "mixed",
+          "reason": "Move allocation and crypto cleanup into common mechanism while preserving categories and rollback."
+        },
+        "configuration": {
+          "change": "increased",
+          "reason": "Add hidden library and focused KUnit configuration; validate disabled clients and legacy ZSwap."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Require pool/context errors, NUMA/hotplug, memcg, large-folio, KASAN/lockdep/KCSAN coverage."
+        },
+        "interfaces": {
+          "change": "increased",
+          "reason": "A small handle/length API separates compression mechanism from frontend ownership."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Preserve compact entry metadata, zsmalloc handles and existing per-CPU workspace sizes."
+        }
+      },
+      "baseline": {
+        "state": {
+          "change": "unchanged",
+          "reason": "Keep frontend entry layout, pool IDs, policy and logical indexes; add no object wrapper."
+        },
+        "lifetime": {
+          "change": "mixed",
+          "reason": "Frontend lifetime pins remain; library explicitly owns context and object-pool destruction."
+        },
+        "locking": {
+          "change": "unchanged",
+          "reason": "Retain per-CPU context mutex and synchronous crypto completion; frontend locks remain."
+        },
+        "error_paths": {
+          "change": "mixed",
+          "reason": "Move allocation and crypto cleanup into common mechanism while preserving categories and rollback."
+        },
+        "configuration": {
+          "change": "increased",
+          "reason": "Add hidden library and focused KUnit configuration; validate disabled clients and legacy ZSwap."
+        },
+        "test_burden": {
+          "change": "increased",
+          "reason": "Require pool/context errors, NUMA/hotplug, memcg, large-folio, KASAN/lockdep/KCSAN coverage."
+        },
+        "interfaces": {
+          "change": "increased",
+          "reason": "A small handle/length API separates compression mechanism from frontend ownership."
+        },
+        "memory_cost": {
+          "change": "unchanged",
+          "reason": "Preserve compact entry metadata, zsmalloc handles and existing per-CPU workspace sizes."
+        }
+      }
+    },
+    "provenance": [
+      {
+        "kind": "source-audit",
+        "path": "docs/research/2026-11-10-xswap-compression-tiering/compression.md",
+        "commit": "5e84ca928deeacb4eee656806a003f27d1eca82f"
+      },
+      {
+        "kind": "owner-direction",
+        "path": "docs/research/2026-11-10-xswap-compression-tiering/authorization.json"
+      }
+    ]
+  },
+  "upstream_refs": [],
+  "protocol_sha256": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+  "policy_sha256": "e4dfb59ccea57eb5aadd7db2e4a6104cb5ab5533d70dbebc2723b9b38b8d7862",
+  "allowed_tiers": [
+    "probe",
+    "fast"
+  ]
+}

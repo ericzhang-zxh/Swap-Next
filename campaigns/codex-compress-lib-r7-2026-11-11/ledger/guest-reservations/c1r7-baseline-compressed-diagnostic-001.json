@@ -1,0 +1,18 @@
+{
+  "id": "c1r7-baseline-compressed-diagnostic-001",
+  "campaign": "codex-compress-lib-r7-2026-11-11",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794440435.10104,
+  "identity": {
+    "build": "c1-base-common-20261110",
+    "backend": "compressed",
+    "mode": "xswap",
+    "workload": "swapin",
+    "config_id": "c1-common",
+    "correctness_case": null,
+    "topology_id": "single"
+  },
+  "protocol_sha256": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+  "started_unix": 1794440462.2382247
+}

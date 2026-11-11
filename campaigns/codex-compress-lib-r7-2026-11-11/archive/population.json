@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r7-2026-11-11",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "entries": {},
+  "sample_sequence": 1,
+  "briefs": {
+    "brief-000001-012bab895ee3": {
+      "fingerprint": "c72d711b115208da39a436f97e70a39022811b96cea1d3206b8178b0a4b7b991",
+      "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "allowed_parents": [
+        "5e84ca928deeacb4eee656806a003f27d1eca82f"
+      ],
+      "parent_bindings": {
+        "5e84ca928deeacb4eee656806a003f27d1eca82f": {
+          "candidate": null,
+          "source_tree": null
+        }
+      },
+      "sample_seed": 84349624527315945,
+      "sequence": 1,
+      "file": "archive/briefs/brief-000001-012bab895ee3.json",
+      "sha256": "5d545ce2a6841d5b50ef6225159f1282f20b0899c6505b4e2f5f95d58e0dad4c",
+      "consumed_by": "c1-shared-store-r7",
+      "chosen_parent": "5e84ca928deeacb4eee656806a003f27d1eca82f"
+    }
+  }
+}

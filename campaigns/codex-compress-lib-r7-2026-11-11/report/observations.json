@@ -1,0 +1,157 @@
+{
+  "native_evidence_sha256": "5901b92d59279d265e96a20384c462eb1028e23cd3934ab45d92363d1573edda",
+  "attempts": [
+    {
+      "id": "c1r7-b-common-001",
+      "purpose": "correctness",
+      "case": "b-common",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "bb103b70f344b76af2ebbb0678f844d4096dbd5d723b7357789d18b7d299655f",
+      "serial_sha256": "7de0aff9f24f1b1598fe81570f9667d47d23551a40185ebc4ab8b617bd30d677"
+    },
+    {
+      "id": "c1r7-b-legacy-001",
+      "purpose": "correctness",
+      "case": "b-legacy",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "e637a691efc7ffcb0b14101597a7f24e3bd9148e5af5dc6961605d0161372680",
+      "serial_sha256": "6885c506e64278fc195b67db12614793fdc10acb0368dbc3a7af4ba6467f1797"
+    },
+    {
+      "id": "c1r7-baseline-compressed-diagnostic-001",
+      "purpose": "baseline diagnosis",
+      "case": null,
+      "run_valid": true,
+      "integration_pass": false,
+      "result_sha256": "54c67700bb3ca2ac6be2370cf1ec4e5eb0809b19e29a267e63b4921676968193",
+      "serial_sha256": "7aa37f77f315787458f6c8e7da6d7f1deb4c4ce4b7ac560feef770f2869db2c5"
+    },
+    {
+      "id": "c1r7-c-common-001",
+      "purpose": "correctness",
+      "case": "c-common",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "2fbed617f121155004e38a8aaefd6848b24fe83280a1dc52a7cd3c516c52782b",
+      "serial_sha256": "159a15f4e16d067fb11ff1a859713b3ad51290048895aaa22cb49fdc3805ab14"
+    },
+    {
+      "id": "c1r7-c-compressed-001",
+      "purpose": "correctness",
+      "case": "c-compressed",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "e8107fec38c85d34407f9add1a8d6b96c37433d570af1ccf270116af772fad63",
+      "serial_sha256": "68dc6a7b1a5d01d34451981fa64dc39584ea0d8c9e26efe69efb0712440c1be8"
+    },
+    {
+      "id": "c1r7-c-debug-001",
+      "purpose": "correctness",
+      "case": "c-debug",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "b05c5f0a53628e8bc05ef2bfdce85b387f53c39111ed449458be9511827e91d5",
+      "serial_sha256": "ec24ac16e5cca77fa739a56c0163885258f0b2bc3ce884228020da58ed8a1aef"
+    },
+    {
+      "id": "c1r7-c-legacy-001",
+      "purpose": "correctness",
+      "case": "c-legacy",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "4f011a165cfee566111d1866a3b09b31d467f53dcc5c6b9736985e90499ba85e",
+      "serial_sha256": "c14a54da64c2c3e90458b27243acd6fac899563f8e230012711ebe1f6e5ee244"
+    },
+    {
+      "id": "c1r7-c-numa-001",
+      "purpose": "correctness",
+      "case": "c-numa",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "e45a596c4b4009279cd992c334028787e3ab1bae9abe9d19a3b4d86f79e31963",
+      "serial_sha256": "9369b892f599e12c85dcfda3438e3e898cda0fd86fa7b7c497bec6eda973934f"
+    },
+    {
+      "id": "c1r7-c-race-001",
+      "purpose": "correctness",
+      "case": "c-race",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "ed57fca6ef7816cde42b2dd48320d35665558c60d8e8283e16fd4e716670ab77",
+      "serial_sha256": "cff0bd9d48cd38e38c9c56a31f84924ac96c7c4939903cdcdf77d1ae1561a40e"
+    }
+  ],
+  "correctness_proof_sha256": "baa3027c1b4dbfd808b250deb03ead1098c09ad64efb7860ef277f3678af6db1",
+  "diagnostic": {
+    "fields": {
+      "schema": "1",
+      "order": "seq",
+      "target_index": "0",
+      "read_result": "0",
+      "read_stage": "complete",
+      "read_errno": "0",
+      "bytes": "745",
+      "truncated": "0",
+      "parse_attempted": "1",
+      "parse_reason": "entry_count",
+      "scan_complete": "1",
+      "headers": "1",
+      "entries": "2",
+      "written": "2",
+      "records": "2",
+      "bad_record": "0",
+      "bad_offset": "0",
+      "bad_length": "0",
+      "return_present": "0",
+      "return_value": "0",
+      "disable_result": "0",
+      "disable_errno": "0"
+    },
+    "first_read_sha256": "b265b3847c0a714141a31a53e79fcd025c1af4ea736184bab140062502d7a592",
+    "successful_returns": 2,
+    "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "raw_result_sha256": "54c67700bb3ca2ac6be2370cf1ec4e5eb0809b19e29a267e63b4921676968193",
+    "raw_serial_sha256": "7aa37f77f315787458f6c8e7da6d7f1deb4c4ce4b7ac560feef770f2869db2c5",
+    "valid_environment": true
+  },
+  "audit_rows": [
+    [
+      "Fresh functional guests passed",
+      8
+    ],
+    [
+      "Disabled-build checks passed",
+      2
+    ],
+    [
+      "First observation window",
+      "Sequential target index zero"
+    ],
+    [
+      "Successful returns in that window",
+      2
+    ],
+    [
+      "Expected successful returns",
+      1
+    ],
+    [
+      "Read length (bytes)",
+      745
+    ],
+    [
+      "Original trace SHA-256",
+      "b265b3847c0a714141a31a53e79fcd025c1af4ea736184bab140062502d7a592"
+    ],
+    [
+      "New counted guests / builds",
+      "9 / 0"
+    ],
+    [
+      "Cumulative counted guests / builds",
+      "29 / 9"
+    ]
+  ]
+}

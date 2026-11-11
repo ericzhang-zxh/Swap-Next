@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r7-2026-11-11",
+  "mode": "research",
+  "reason": "The planned baseline diagnostic reproduced the rejected sample and captured two successful decoder returns in its first target observation. All eight functional guests and both disabled-build rows passed. This diagnosis is not a calibration sample or performance comparison.",
+  "frozen_inputs": {
+    "owner.json": "12e142954ab0f5d1975c8354ff2df6b67a5134a3ebde52a8f02a4682293e98db",
+    "policy.json": "e4dfb59ccea57eb5aadd7db2e4a6104cb5ab5533d70dbebc2723b9b38b8d7862",
+    "protocol.json": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+    "research.json": "9b31817212ed5c6c0e9ad8af95c6896440fbf1177ba91e8f9e26a667cd0cdd73"
+  },
+  "decisions": [
+    {
+      "id": "decision-cc8cc8238e966baaa6f6e6c1",
+      "action_id": "action-c23016f12c7735b0c8ef526c",
+      "kind": "propose",
+      "identity": {
+        "brief_id": "brief-000001-012bab895ee3",
+        "brief_sha256": "5d545ce2a6841d5b50ef6225159f1282f20b0899c6505b4e2f5f95d58e0dad4c",
+        "allowed_parents": [
+          "5e84ca928deeacb4eee656806a003f27d1eca82f"
+        ],
+        "idea": "shared-page-store"
+      },
+      "input_hashes": {
+        "evolve/session.py": "a07c13cc39e1bfa6ec7a23e0a5d84c26b6c9656ae8ef4d4ff942bbb01f9b461d",
+        "evolve/control/controller.py": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "evolve/standard_workflow.py": "8f38a7c9eb142c055aecb3436234515d6911a7f5f092df7e6c3cab9517dc9c3c",
+        "evolve/research.py": "4fd4cbc7b7aeba4398504f41ab7cd2d382286e126a92bb8855baebc04367b76d",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "7061a7b7a97d1f52aa05b416e2eecb93eaf42f5d3a18379ba604c5b5a8a72293",
+        "evolve/calibration_cache.py": "3be207df36ce814c78ba8de89fd8ad9e3ea2a32fcb69270d5ca9e6b0fac0e8f0",
+        "evolve/reference_cache.py": "4e46ec71ea70dd7d88343f01d616d66e37934278710ce57458291fec09107c28",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "linux/scripts/checkpatch.pl": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926",
+        "campaigns/codex-compress-lib-r7-2026-11-11/campaign.json": "bb0e9624ff88394a85a5e2bdc51426d778e7048031e98c16fe553aa4ae4681dd",
+        "campaigns/codex-compress-lib-r7-2026-11-11/protocol.json": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+        "campaigns/codex-compress-lib-r7-2026-11-11/policy.json": "e4dfb59ccea57eb5aadd7db2e4a6104cb5ab5533d70dbebc2723b9b38b8d7862",
+        "campaigns/codex-compress-lib-r7-2026-11-11/research.json": "9b31817212ed5c6c0e9ad8af95c6896440fbf1177ba91e8f9e26a667cd0cdd73",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/ledger.json": null,
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/budget.json": null,
+        "benchmark/kernel/builds/c1-base-common-20261110/result.json": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+        "benchmark/swap-standard/image.json": "a404958a24822c6a8e3d68ca4ea5c9cda1472afc0bd5495c178abb0cbb810b27",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/calibration-probe.json": null,
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/calibration-fast.json": null,
+        "campaigns/codex-compress-lib-r7-2026-11-11/archive/population.json": "6a56e2c72db4ff61e8d42a2d9bc64bae24b122ee763c1b7db7ec199945af2504",
+        "campaigns/codex-compress-lib-r7-2026-11-11/archive/briefs/brief-000001-012bab895ee3.json": "5d545ce2a6841d5b50ef6225159f1282f20b0899c6505b4e2f5f95d58e0dad4c"
+      },
+      "payload": {
+        "kind": "propose",
+        "candidate": "c1-shared-store-r7",
+        "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "hypothesis": "Extracting codec CPU contexts and zsmalloc storage into a page_compress library can preserve existing ZSwap frontend ownership, charging, lifecycle and compressed roundtrip behavior while providing a reusable page/object mechanism for subsequent independent XSwap.",
+        "mechanism": {
+          "kind": "reviewed_structure",
+          "claim": "ZSwap delegates pool/context and handle store/load/free operations to page_compress while retaining its entry layout, refs, indexes, admission, LRU and memcg policy; one common implementation serves future frontends without per-object wrapper allocations.",
+          "falsifier": "Reject on ownership or accounting drift, non-exercised compression, failed lifecycle/error/configuration coverage, increased per-object/context footprint, or calibrated swap-in/metadata guard regression."
+        },
+        "reason": "Use the unchanged shared-library candidate for correctness on the exact refreshed diagnostic image, then collect one anchor trace. Carry all 20 previously counted reservations and nine builds."
+      }
+    },
+    {
+      "id": "decision-3b8e6ae4004b38126ac9d821",
+      "action_id": "action-8db815a89dc873a6574a6d60",
+      "kind": "stop",
+      "identity": {
+        "candidate": "c1-shared-store-r7",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "input_hashes": {
+        "evolve/session.py": "a07c13cc39e1bfa6ec7a23e0a5d84c26b6c9656ae8ef4d4ff942bbb01f9b461d",
+        "evolve/control/controller.py": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+        "evolve/standard_workflow.py": "8f38a7c9eb142c055aecb3436234515d6911a7f5f092df7e6c3cab9517dc9c3c",
+        "evolve/research.py": "4fd4cbc7b7aeba4398504f41ab7cd2d382286e126a92bb8855baebc04367b76d",
+        "evolve/reviews.py": "dc819cd73a5a09effc4fb486ff7486a538272114994218ad8d1e5e0da7c3a1ae",
+        "evolve/population.py": "1e96708e642d1545debdbc7a258450802bc9fe3be64d5de90341d53347df695b",
+        "evolve/comparisons.py": "a25552345a19a9d236ccaef31460779fd0432a962017c4bbda9aa12efdcacecb",
+        "evolve/delivery.py": "7061a7b7a97d1f52aa05b416e2eecb93eaf42f5d3a18379ba604c5b5a8a72293",
+        "evolve/calibration_cache.py": "3be207df36ce814c78ba8de89fd8ad9e3ea2a32fcb69270d5ca9e6b0fac0e8f0",
+        "evolve/reference_cache.py": "4e46ec71ea70dd7d88343f01d616d66e37934278710ce57458291fec09107c28",
+        "evolve/comparison_runtime.py": "57749dd91d30e833d940939aff4bd70b7db9b0613102de4ffbe573f689e64659",
+        "linux/scripts/checkpatch.pl": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926",
+        "campaigns/codex-compress-lib-r7-2026-11-11/campaign.json": "bb0e9624ff88394a85a5e2bdc51426d778e7048031e98c16fe553aa4ae4681dd",
+        "campaigns/codex-compress-lib-r7-2026-11-11/protocol.json": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+        "campaigns/codex-compress-lib-r7-2026-11-11/policy.json": "e4dfb59ccea57eb5aadd7db2e4a6104cb5ab5533d70dbebc2723b9b38b8d7862",
+        "campaigns/codex-compress-lib-r7-2026-11-11/research.json": "9b31817212ed5c6c0e9ad8af95c6896440fbf1177ba91e8f9e26a667cd0cdd73",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/ledger.json": "d0a14d18c544f8c0ada7ff4351bafab4121b698406d816532f17a47d1d581a64",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/934bde821b4a45738f13ed773801169c/report.json": "5fac5074f1a25d40dbf59e26e3518ec588456d6e405484cfd85009146b6cd49c",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/67d8cad1fef94d7b8267cd0d7cb35765/report.json": "2c81262a71b0780a19ad23347bbc96d3b20ffe1b8523432b4cc015bb15c094e7",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/7ce469d27aab4e81b0a8fc5450a7ed67/report.json": "b4b2eaefa58ea72586520fb2c12a586b0691e784519d922e6f9e0d1cdf31de3a",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/38b7c0d3567846faa82ed7a6e734f292/report.json": "eaddc91df966626bccd95b07b1822e0ebff024f6053fef644b12fef7edea670f",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/469296fa54e54fe6a4613a5aea1291ef/report.json": "07cc2194f7f7e330caefe20fa00bf24f88bd7e7d46aa4751395f4876cd32865a",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/5e4c4ba57a9b41b3a9b418c2c1c7917b/report.json": "8b113258afd479d222e3510fd3aa95705827426bdfd070963b89320404f63ad5",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/22a12ace9bc24955b099fb1d70d4eefb/report.json": "11558cdc0fe412395709f7fed4b0ae457a49a7cd0ce585c0be49b0ca94f1575a",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/0c19c25272044be39b5b5ae3f5ed6427/report.json": "c863500136a1ea4b0ddfaf38a3b6ff33412c515f4d2016cdd99ad091ab576f42",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/782eb931e28d4f2d9d55f0f3d54bb3f3/report.json": "5413a99764ef67ad5827def96e0eeb341bc0760e23dc382a23b72cd82937ebd8",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/evaluations/8f9c8c5f334a4d6d9cd69e767452cdaf/report.json": "4fb47577653f8e4153dffacebbf45e7ef4ee9bab4412e8fcaeb2d008e768749f",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/budget.json": "18205ca7fadb84e7ec03e3fdc7465c08978bc659d08d9464abb1c4db06e9b2f7",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/guest-reservations/c1r7-c-numa-001.json": "907a3683e0ecdf44120c4890aecce997ec78928d632ed99606133e94bd80ff1f",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/guest-reservations/c1r7-baseline-compressed-diagnostic-001.json": "4380e9cb6d2288ab89dae647b9cc60fff9e4dac8a14314c8177edbc1c2b24f51",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/guest-reservations/c1r7-c-race-001.json": "1efbda4c673328011102e8fa3b5d3fda2607e6cc28a1608aeafd4aea246d52b8",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/guest-reservations/c1r7-b-legacy-001.json": "1582c3f327d2face0817c182c1f0248ef580d64c6f92b2f401d6ddcba4d520a7",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/guest-reservations/c1r7-b-common-001.json": "485e7cf9c02afb3643fb107a56e88bb46449332933c7121b6968391b3be1eee0",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/guest-reservations/c1r7-c-compressed-001.json": "53be6012408df3631a3356a787d7199d0fbb4574f19c83858dd3239cc7256093",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/guest-reservations/c1r7-c-debug-001.json": "460b54fa8afa441fcf801ceaceb239a3b48d4b99858b218c8d1accbe25e14993",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/guest-reservations/c1r7-c-common-001.json": "bd72b239272a4566d6a85f462379c244ecc8c720a4eabf32c826b54fabe6c7ac",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/guest-reservations/c1r7-c-legacy-001.json": "65181c841e15c98788937580fdf15c624d834f732867044d84bb5c276ac4a9a0",
+        "benchmark/kernel/builds/c1-base-common-20261110/result.json": "8f15f75eb6ae661d7531f99392902ae184e1f58d04989064d5098f8db8c0a5b2",
+        "benchmark/swap-standard/image.json": "a404958a24822c6a8e3d68ca4ea5c9cda1472afc0bd5495c178abb0cbb810b27",
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/calibration-probe.json": null,
+        "campaigns/codex-compress-lib-r7-2026-11-11/ledger/calibration-fast.json": null,
+        "campaigns/codex-compress-lib-r7-2026-11-11/candidates/c1-shared-store-r7.json": "53d1f7d8498e5a015d915e27e255055c71d6d70065b7b0c925bb80c3c8d7b6fe",
+        "campaigns/codex-compress-lib-r7-2026-11-11/candidates/c1-shared-store-r7/static.json": "c662a8ccc3ec6c8a36e8fdab150fb6c5cf0a2f8a720178f28a121a8595758d07",
+        "campaigns/codex-compress-lib-r7-2026-11-11/archive/population.json": "205d73e960d7eea2ce29881fd06f3173c83c4b89ed23cd0f031db0324cd4a04e",
+        "campaigns/codex-compress-lib-r7-2026-11-11/candidates/c1-shared-store-r7/mechanism.json": "33cedaa8cad53a326b00afc7282037e5377ca08b85779c8265b5ddfcc525f128",
+        "campaigns/codex-compress-lib-r7-2026-11-11/candidates/c1-shared-store-r7/correctness.json": "baa3027c1b4dbfd808b250deb03ead1098c09ad64efb7860ef277f3678af6db1",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-b-common-001/result.json": "bb103b70f344b76af2ebbb0678f844d4096dbd5d723b7357789d18b7d299655f",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-b-common-001/serial.log": "7de0aff9f24f1b1598fe81570f9667d47d23551a40185ebc4ab8b617bd30d677",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-b-legacy-001/result.json": "e637a691efc7ffcb0b14101597a7f24e3bd9148e5af5dc6961605d0161372680",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-b-legacy-001/serial.log": "6885c506e64278fc195b67db12614793fdc10acb0368dbc3a7af4ba6467f1797",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-baseline-compressed-diagnostic-001/result.json": "54c67700bb3ca2ac6be2370cf1ec4e5eb0809b19e29a267e63b4921676968193",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-baseline-compressed-diagnostic-001/serial.log": "7aa37f77f315787458f6c8e7da6d7f1deb4c4ce4b7ac560feef770f2869db2c5",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-common-001/result.json": "2fbed617f121155004e38a8aaefd6848b24fe83280a1dc52a7cd3c516c52782b",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-common-001/serial.log": "159a15f4e16d067fb11ff1a859713b3ad51290048895aaa22cb49fdc3805ab14",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-compressed-001/result.json": "e8107fec38c85d34407f9add1a8d6b96c37433d570af1ccf270116af772fad63",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-compressed-001/serial.log": "68dc6a7b1a5d01d34451981fa64dc39584ea0d8c9e26efe69efb0712440c1be8",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-debug-001/result.json": "b05c5f0a53628e8bc05ef2bfdce85b387f53c39111ed449458be9511827e91d5",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-debug-001/serial.log": "ec24ac16e5cca77fa739a56c0163885258f0b2bc3ce884228020da58ed8a1aef",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-legacy-001/result.json": "4f011a165cfee566111d1866a3b09b31d467f53dcc5c6b9736985e90499ba85e",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-legacy-001/serial.log": "c14a54da64c2c3e90458b27243acd6fac899563f8e230012711ebe1f6e5ee244",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-numa-001/result.json": "e45a596c4b4009279cd992c334028787e3ab1bae9abe9d19a3b4d86f79e31963",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-numa-001/serial.log": "9369b892f599e12c85dcfda3438e3e898cda0fd86fa7b7c497bec6eda973934f",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-race-001/result.json": "ed57fca6ef7816cde42b2dd48320d35665558c60d8e8283e16fd4e716670ab77",
+        "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-race-001/serial.log": "cff0bd9d48cd38e38c9c56a31f84924ac96c7c4939903cdcdf77d1ae1561a40e"
+      },
+      "payload": {
+        "kind": "stop",
+        "reason": "The planned baseline diagnostic reproduced the rejected sample and captured two successful decoder returns in its first target observation. All eight functional guests and both disabled-build rows passed. This diagnosis is not a calibration sample or performance comparison."
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "action-e09327ed22f740779a3c40f8",
+      "command": "open",
+      "identity": {
+        "protocol_sha256": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+        "policy_sha256": "e4dfb59ccea57eb5aadd7db2e4a6104cb5ab5533d70dbebc2723b9b38b8d7862"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r7-2026-11-11/runs/session/action-e09327ed22f740779a3c40f8-997314a3.log"
+    },
+    {
+      "action_id": "action-cedef90748b496b42469497f",
+      "command": "brief",
+      "identity": {
+        "fingerprint": "c72d711b115208da39a436f97e70a39022811b96cea1d3206b8178b0a4b7b991",
+        "idea": "shared-page-store"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r7-2026-11-11/runs/session/action-cedef90748b496b42469497f-c1fe511c.log"
+    },
+    {
+      "action_id": "action-c1ded3ef05bf68867969b032",
+      "command": "new",
+      "identity": {
+        "brief_id": "brief-000001-012bab895ee3",
+        "idea": "shared-page-store"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r7-2026-11-11/runs/session/action-c1ded3ef05bf68867969b032-9d0f1940.log"
+    },
+    {
+      "action_id": "action-847dccdb8245509a330d8056",
+      "command": "check",
+      "identity": {
+        "candidate": "c1-shared-store-r7",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837",
+        "checker_identity": {
+          "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+          "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+        }
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r7-2026-11-11/runs/session/action-847dccdb8245509a330d8056-af9262da.log"
+    },
+    {
+      "action_id": "action-62ae04f75d8e3ce2cb4df686",
+      "command": "close-candidate",
+      "identity": {
+        "candidate": "c1-shared-store-r7",
+        "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+        "source_tree": "8b085adc109e3b5467c3de998f11b04517f052a5",
+        "parent_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+        "parent_tree": "657cffbcbb1bff41ba1de6c232377cead2c2a837"
+      },
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r7-2026-11-11/runs/session/action-62ae04f75d8e3ce2cb4df686-56350d0e.log"
+    },
+    {
+      "action_id": "action-b6087ed9311c0cbbdd4e6c72",
+      "command": "close-campaign",
+      "identity": {},
+      "status": "completed",
+      "returncode": 0,
+      "log": "campaigns/codex-compress-lib-r7-2026-11-11/runs/session/action-b6087ed9311c0cbbdd4e6c72-d4ff430d.log"
+    }
+  ],
+  "candidate_reasons": {
+    "c1-shared-store-r7": "The planned baseline diagnostic reproduced the rejected sample and captured two successful decoder returns in its first target observation. All eight functional guests and both disabled-build rows passed. This diagnosis is not a calibration sample or performance comparison."
+  },
+  "performance_accepted": false,
+  "auto_promote": false
+}

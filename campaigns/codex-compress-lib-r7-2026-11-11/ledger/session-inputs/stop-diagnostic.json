@@ -1,0 +1,4 @@
+{
+  "kind": "stop",
+  "reason": "The planned baseline diagnostic reproduced the rejected sample and captured two successful decoder returns in its first target observation. All eight functional guests and both disabled-build rows passed. This diagnosis is not a calibration sample or performance comparison."
+}

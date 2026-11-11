@@ -1,0 +1,63 @@
+{
+  "proof_schema_version": 2,
+  "workload": "correctness",
+  "campaign": "codex-compress-lib-r7-2026-11-11",
+  "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "protocol_sha256": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+  "runs": [
+    {
+      "case_id": "b-common",
+      "result_path": "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-b-common-001/result.json",
+      "result_sha256": "bb103b70f344b76af2ebbb0678f844d4096dbd5d723b7357789d18b7d299655f"
+    },
+    {
+      "case_id": "b-legacy",
+      "result_path": "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-b-legacy-001/result.json",
+      "result_sha256": "e637a691efc7ffcb0b14101597a7f24e3bd9148e5af5dc6961605d0161372680"
+    },
+    {
+      "case_id": "c-common",
+      "result_path": "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-common-001/result.json",
+      "result_sha256": "2fbed617f121155004e38a8aaefd6848b24fe83280a1dc52a7cd3c516c52782b"
+    },
+    {
+      "case_id": "c-legacy",
+      "result_path": "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-legacy-001/result.json",
+      "result_sha256": "4f011a165cfee566111d1866a3b09b31d467f53dcc5c6b9736985e90499ba85e"
+    },
+    {
+      "case_id": "c-compressed",
+      "result_path": "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-compressed-001/result.json",
+      "result_sha256": "e8107fec38c85d34407f9add1a8d6b96c37433d570af1ccf270116af772fad63"
+    },
+    {
+      "case_id": "c-debug",
+      "result_path": "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-debug-001/result.json",
+      "result_sha256": "b05c5f0a53628e8bc05ef2bfdce85b387f53c39111ed449458be9511827e91d5"
+    },
+    {
+      "case_id": "c-race",
+      "result_path": "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-race-001/result.json",
+      "result_sha256": "ed57fca6ef7816cde42b2dd48320d35665558c60d8e8283e16fd4e716670ab77"
+    },
+    {
+      "case_id": "c-numa",
+      "result_path": "campaigns/codex-compress-lib-r7-2026-11-11/runs/guests/c1r7-c-numa-001/result.json",
+      "result_sha256": "e45a596c4b4009279cd992c334028787e3ab1bae9abe9d19a3b4d86f79e31963"
+    }
+  ],
+  "builds": [
+    {
+      "case_id": "c-noswap",
+      "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-noswap/result.json",
+      "build_manifest_sha256": "d08d6aaee0576169527a23e38462728a0065430960056447f8260452e7575bf6"
+    },
+    {
+      "case_id": "c-no-frontends",
+      "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-no-frontends/result.json",
+      "build_manifest_sha256": "5b5def31917e8673cf19c78ee3a76cf2dc8fa304b2e2c263561f58f76b2f72f4"
+    }
+  ]
+}

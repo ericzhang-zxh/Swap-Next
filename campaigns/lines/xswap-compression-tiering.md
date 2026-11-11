@@ -88,4 +88,16 @@ Baseline origin: upstream or imported reference.
 | --- | --- | --- |
 | [c1-shared-store-r6](../codex-compress-lib-r6-2026-11-10/candidates/c1-shared-store-r6.json) | closed | Campaign deadline exhausted; retain all attempts and finish report delivery. |
 
-Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r6-2026-11-10)
+## codex-compress-lib-r7-2026-11-11
+
+Status: closed; machine: hurricpc; opened: 2026-11-11; closed: 2026-11-11.
+
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Baseline origin: upstream or imported reference.
+
+| Candidate | Status | Reason |
+| --- | --- | --- |
+| [c1-shared-store-r7](../codex-compress-lib-r7-2026-11-11/candidates/c1-shared-store-r7.json) | closed | The planned baseline diagnostic reproduced the rejected sample and captured two successful decoder returns in its first target observation. All eight functional guests and both disabled-build rows passed. This diagnosis is not a calibration sample or performance comparison. |
+
+Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r7-2026-11-11)

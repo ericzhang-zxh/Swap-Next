@@ -1,0 +1,17 @@
+{
+  "campaign": "codex-compress-lib-r7-2026-11-11",
+  "status": "closed",
+  "line": "xswap-compression-tiering",
+  "baseline_from": null,
+  "machine": "hurricpc",
+  "opened": "2026-11-11",
+  "closed": "2026-11-11",
+  "line_anchor_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "budget": {
+    "guest_attempts": 1,
+    "wall_seconds": 3600,
+    "probe_guest_attempts": 9,
+    "approved_over_cap": null
+  },
+  "contributor": "codex-tiering-01a1c6b6"
+}

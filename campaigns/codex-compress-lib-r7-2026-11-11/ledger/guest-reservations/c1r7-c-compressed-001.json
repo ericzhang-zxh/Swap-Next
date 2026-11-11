@@ -1,0 +1,18 @@
+{
+  "id": "c1r7-c-compressed-001",
+  "campaign": "codex-compress-lib-r7-2026-11-11",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794440096.6139092,
+  "identity": {
+    "build": "c1-7d5a3cfab2ab-common",
+    "backend": "compressed",
+    "mode": "xswap",
+    "workload": "compression",
+    "config_id": "c1-common",
+    "correctness_case": "c-compressed",
+    "topology_id": "single"
+  },
+  "protocol_sha256": "cfef1e4ada05554e34f9fcedbc17235f1aa4cf76daca72a33cdb11dec86d874b",
+  "started_unix": 1794440096.6633127
+}
