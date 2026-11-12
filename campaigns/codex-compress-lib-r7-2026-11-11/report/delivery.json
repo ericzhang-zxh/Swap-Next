@@ -4,13 +4,13 @@
   "state": "visually_checked",
   "artifacts": {
     "summary.json": "dafdce3eec92d3dbd680d2dda2db10695a10d934b9b5f2cb88dab9631d797086",
-    "REPORT.md": "78d8fc5fae19bb7f18ccc1835155cc0e0d95beb374d906d5db26e82ec629e07d",
-    "explainer.json": "ac641173e6c90fb95d632e8e649778c0e01622b1ba5464693bff769a1f14580a",
-    "explainer.html": "0dc625b56cf036402aa997fa15b4184ce7dc669a9570e8a8e3f010cd286dd4c4",
+    "REPORT.md": "b75fa2c76bb0fd8c3656c9349d6132163e7e2ad25fdf460141cf92bc96dddc02",
+    "explainer.json": "59bf7fbcf0bb353401a1abf52dc7879c1f112db9f06519003487b3b6284bd31c",
+    "explainer.html": "8a35782f16774d1d56c4982067a75d612ef671dacc9ca8ab069c7b0f9a51b5b7",
     "generate_report.py": "1cafce8dce4f31bd6c65c7fb538922674239921be0c0a9e6872b222fbd1476a6"
   },
   "evidence_sha256": "5901b92d59279d265e96a20384c462eb1028e23cd3934ab45d92363d1573edda",
-  "story_sha256": "bc032b72b1eb157baf207a75cf171959cf8c4672ee007f6dadca65228dfae98c",
+  "story_sha256": "94f297a7d12f7bf037e2c761a0148a9dc3a665644e7178957ad6faac71545e20",
   "history": [
     {
       "state": "generated",
@@ -23,17 +23,25 @@
     {
       "state": "visually_checked",
       "time": 1794441210.4055202
+    },
+    {
+      "state": "generated",
+      "time": 1794441976.4105213
+    },
+    {
+      "state": "visually_checked",
+      "time": 1794442017.5153394
     }
   ],
   "visual_check": {
-    "artifact_sha256": "0dc625b56cf036402aa997fa15b4184ce7dc669a9570e8a8e3f010cd286dd4c4",
+    "artifact_sha256": "8a35782f16774d1d56c4982067a75d612ef671dacc9ca8ab069c7b0f9a51b5b7",
     "reviewer": "coordinator",
     "views": [
       {
         "width": 1440,
         "theme": "light",
-        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/1440-light.png",
-        "sha256": "ac20ef9634f5ece0136f293d3f30e9447486d7d369e38c1c99babeb3db6e552f",
+        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7-wording/1440-light.png",
+        "sha256": "04588750eac6a74d36b7a66b8d2a411dbcbdada0ed25eb7da112b77f417b0d2c",
         "readable": true,
         "no_overflow": true,
         "collapsed_evidence": true,
@@ -42,8 +50,8 @@
       {
         "width": 1440,
         "theme": "dark",
-        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/1440-dark.png",
-        "sha256": "c92872d983bb0ef91d2c86bffb22ddbb6b9111d1e4e4f396e072beab99df62a0",
+        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7-wording/1440-dark.png",
+        "sha256": "e6872a611774fd11acb9bb23ef174fe101b396556dec706786e4c09a54455853",
         "readable": true,
         "no_overflow": true,
         "collapsed_evidence": true,
@@ -52,8 +60,8 @@
       {
         "width": 390,
         "theme": "light",
-        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/390-light.png",
-        "sha256": "0c2c64d6c502e5788f94f04f88eff7c08366a76823173f476c22df7e5336ee72",
+        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7-wording/390-light.png",
+        "sha256": "e319789927320d8740b796865d53528ee3d3ee47e0e459fd14a5c6949c7b4ba8",
         "readable": true,
         "no_overflow": true,
         "collapsed_evidence": true,
@@ -62,8 +70,8 @@
       {
         "width": 390,
         "theme": "dark",
-        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/390-dark.png",
-        "sha256": "a6cb2288ce87133281978add81e36318fd05628bbaaf6f4b939d49ce678187f9",
+        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7-wording/390-dark.png",
+        "sha256": "a9b6025ddc7ebbe165455b1ca79bc03a47e886dfa79997ba2d2aea75ed88cfe6",
         "readable": true,
         "no_overflow": true,
         "collapsed_evidence": true,

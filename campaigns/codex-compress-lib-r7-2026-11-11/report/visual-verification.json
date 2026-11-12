@@ -1,12 +1,12 @@
 {
-  "artifact_sha256": "0dc625b56cf036402aa997fa15b4184ce7dc669a9570e8a8e3f010cd286dd4c4",
+  "artifact_sha256": "8a35782f16774d1d56c4982067a75d612ef671dacc9ca8ab069c7b0f9a51b5b7",
   "reviewer": "coordinator",
   "views": [
     {
       "width": 1440,
       "theme": "light",
-      "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/1440-light.png",
-      "sha256": "ac20ef9634f5ece0136f293d3f30e9447486d7d369e38c1c99babeb3db6e552f",
+      "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7-wording/1440-light.png",
+      "sha256": "04588750eac6a74d36b7a66b8d2a411dbcbdada0ed25eb7da112b77f417b0d2c",
       "readable": true,
       "no_overflow": true,
       "collapsed_evidence": true,
@@ -15,8 +15,8 @@
     {
       "width": 1440,
       "theme": "dark",
-      "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/1440-dark.png",
-      "sha256": "c92872d983bb0ef91d2c86bffb22ddbb6b9111d1e4e4f396e072beab99df62a0",
+      "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7-wording/1440-dark.png",
+      "sha256": "e6872a611774fd11acb9bb23ef174fe101b396556dec706786e4c09a54455853",
       "readable": true,
       "no_overflow": true,
       "collapsed_evidence": true,
@@ -25,8 +25,8 @@
     {
       "width": 390,
       "theme": "light",
-      "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/390-light.png",
-      "sha256": "0c2c64d6c502e5788f94f04f88eff7c08366a76823173f476c22df7e5336ee72",
+      "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7-wording/390-light.png",
+      "sha256": "e319789927320d8740b796865d53528ee3d3ee47e0e459fd14a5c6949c7b4ba8",
       "readable": true,
       "no_overflow": true,
       "collapsed_evidence": true,
@@ -35,8 +35,8 @@
     {
       "width": 390,
       "theme": "dark",
-      "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/390-dark.png",
-      "sha256": "a6cb2288ce87133281978add81e36318fd05628bbaaf6f4b939d49ce678187f9",
+      "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7-wording/390-dark.png",
+      "sha256": "a9b6025ddc7ebbe165455b1ca79bc03a47e886dfa79997ba2d2aea75ed88cfe6",
       "readable": true,
       "no_overflow": true,
       "collapsed_evidence": true,

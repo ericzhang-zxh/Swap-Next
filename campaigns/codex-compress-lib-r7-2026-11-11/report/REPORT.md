@@ -6,7 +6,7 @@
 
 The original kernel reproduced the timing failure in a valid virtual machine. Its first observation contained two successful return records for the same process and no missed probe.
 
-The trace reader completed without truncation. The observer requires exactly one decode per timed page, so the workload stopped before collecting usable measurements. The trace does not identify the addresses of the two pages.
+The trace reader completed without truncation. The observer requires exactly one decode per timed page, so the workload stopped before collecting usable measurements. The trace does not identify the page address for either return.
 
 ## Why time compressed swap
 

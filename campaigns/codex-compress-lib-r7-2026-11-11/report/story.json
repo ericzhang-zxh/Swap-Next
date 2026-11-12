@@ -171,7 +171,7 @@
     }
   ],
   "results_lead": "The original kernel reproduced the timing failure in a valid virtual machine. Its first observation contained two successful return records for the same process and no missed probe.",
-  "results_detail": "The trace reader completed without truncation. The observer requires exactly one decode per timed page, so the workload stopped before collecting usable measurements. The trace does not identify the addresses of the two pages.",
+  "results_detail": "The trace reader completed without truncation. The observer requires exactly one decode per timed page, so the workload stopped before collecting usable measurements. The trace does not identify the page address for either return.",
   "source_commit": "78fc4bbc351d11872768b83b80956b8954bca73c",
   "observations_sha256": "72e96a98c06e9aeec84e7ca5386fe1a9995a60dbc2bf5e15e69a6d153159e1a8",
   "chart": {
