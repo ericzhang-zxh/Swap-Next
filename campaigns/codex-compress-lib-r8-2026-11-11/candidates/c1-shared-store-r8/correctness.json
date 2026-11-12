@@ -1,0 +1,63 @@
+{
+  "proof_schema_version": 2,
+  "workload": "correctness",
+  "campaign": "codex-compress-lib-r8-2026-11-11",
+  "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "protocol_sha256": "0f909f614f21999d97ca2636177c43f5b7f378eb1c3399e4541c78b422e614d5",
+  "runs": [
+    {
+      "case_id": "b-common",
+      "result_path": "campaigns/codex-compress-lib-r8-2026-11-11/runs/guests/c1r8-b-common-001/result.json",
+      "result_sha256": "1e16d2fdde2c01b5d103ef25569e626fb47fe230d033e305e7bb4b7a4ba64019"
+    },
+    {
+      "case_id": "b-legacy",
+      "result_path": "campaigns/codex-compress-lib-r8-2026-11-11/runs/guests/c1r8-b-legacy-001/result.json",
+      "result_sha256": "a7a48d2e245f76b27ee75c58d7d41bb43276c8c30ae43622ff33005811a51443"
+    },
+    {
+      "case_id": "c-common",
+      "result_path": "campaigns/codex-compress-lib-r8-2026-11-11/runs/guests/c1r8-c-common-001/result.json",
+      "result_sha256": "dbab976ea9967d07f67298cb9ff3fc182c56c552280ca356e8ebc450b49cda2d"
+    },
+    {
+      "case_id": "c-legacy",
+      "result_path": "campaigns/codex-compress-lib-r8-2026-11-11/runs/guests/c1r8-c-legacy-001/result.json",
+      "result_sha256": "80aed4029c9a282802314538652dc0feb32bbb4a503147a639dfa56a4b4a0bed"
+    },
+    {
+      "case_id": "c-compressed",
+      "result_path": "campaigns/codex-compress-lib-r8-2026-11-11/runs/guests/c1r8-c-compressed-001/result.json",
+      "result_sha256": "403a93bc731dcc6521d205968a5c8b455937a6b0feb4b0bed3c552793147e07a"
+    },
+    {
+      "case_id": "c-debug",
+      "result_path": "campaigns/codex-compress-lib-r8-2026-11-11/runs/guests/c1r8-c-debug-001/result.json",
+      "result_sha256": "9722802b714d205476891216454335c9293e4b14484b8bfa9555b2f38cf9a73a"
+    },
+    {
+      "case_id": "c-race",
+      "result_path": "campaigns/codex-compress-lib-r8-2026-11-11/runs/guests/c1r8-c-race-001/result.json",
+      "result_sha256": "4fafb1f4ddc55385efe572416a1c93e27934e534531acb1c7ed4149531c2c43b"
+    },
+    {
+      "case_id": "c-numa",
+      "result_path": "campaigns/codex-compress-lib-r8-2026-11-11/runs/guests/c1r8-c-numa-001/result.json",
+      "result_sha256": "40cb1a41d56c83ef3a94ce05258f34c4a17851362a70d3ea2043d2215fdc4679"
+    }
+  ],
+  "builds": [
+    {
+      "case_id": "c-noswap",
+      "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-noswap/result.json",
+      "build_manifest_sha256": "d08d6aaee0576169527a23e38462728a0065430960056447f8260452e7575bf6"
+    },
+    {
+      "case_id": "c-no-frontends",
+      "build_manifest": "benchmark/kernel/builds/c1-7d5a3cfab2ab-no-frontends/result.json",
+      "build_manifest_sha256": "5b5def31917e8673cf19c78ee3a76cf2dc8fa304b2e2c263561f58f76b2f72f4"
+    }
+  ]
+}

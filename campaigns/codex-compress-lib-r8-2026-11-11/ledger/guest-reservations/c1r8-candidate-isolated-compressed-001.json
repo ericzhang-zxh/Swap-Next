@@ -1,0 +1,18 @@
+{
+  "id": "c1r8-candidate-isolated-compressed-001",
+  "campaign": "codex-compress-lib-r8-2026-11-11",
+  "pool": "probe",
+  "status": "STARTED",
+  "reserved_unix": 1794442101.7461598,
+  "identity": {
+    "build": "c1-7d5a3cfab2ab-common",
+    "backend": "compressed",
+    "mode": "xswap",
+    "workload": "swapin",
+    "config_id": "c1-common",
+    "correctness_case": null,
+    "topology_id": "single"
+  },
+  "protocol_sha256": "0f909f614f21999d97ca2636177c43f5b7f378eb1c3399e4541c78b422e614d5",
+  "started_unix": 1794442101.8875496
+}

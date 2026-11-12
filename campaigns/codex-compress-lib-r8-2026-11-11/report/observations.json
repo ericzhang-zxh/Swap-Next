@@ -1,0 +1,238 @@
+{
+  "native_evidence_sha256": "f1a23f58c43d7a984a93d1e9902e994fc877d681ab4ba74e933c78080c3efd2c",
+  "attempts": [
+    {
+      "id": "c1r8-b-common-001",
+      "purpose": "correctness",
+      "case": "b-common",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "1e16d2fdde2c01b5d103ef25569e626fb47fe230d033e305e7bb4b7a4ba64019",
+      "serial_sha256": "31f0b2a78cebcdfd35db181756265f1e6b05c8f129e59f05eca9682bcd5d23aa"
+    },
+    {
+      "id": "c1r8-b-legacy-001",
+      "purpose": "correctness",
+      "case": "b-legacy",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "a7a48d2e245f76b27ee75c58d7d41bb43276c8c30ae43622ff33005811a51443",
+      "serial_sha256": "1de91960d0b2e3e8392ee9bfcc9b7e0ea6536694071f48a51ecd054ebbffc789"
+    },
+    {
+      "id": "c1r8-baseline-isolated-compressed-001",
+      "purpose": "isolation diagnostic",
+      "case": null,
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "2c0a4026faa3cab306e4d0e50bc5c9b85fdd3aa3555d1b7287d8d02fa4550b40",
+      "serial_sha256": "100f81aacfce4c1b2648f5bf0ee5c6a091e5f76b8ae7720bcb7a5ec14550684c"
+    },
+    {
+      "id": "c1r8-c-common-001",
+      "purpose": "correctness",
+      "case": "c-common",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "dbab976ea9967d07f67298cb9ff3fc182c56c552280ca356e8ebc450b49cda2d",
+      "serial_sha256": "e65efb7d89012494ff4ca9a7700528d64655445ec27aa1da9be9778858ad5a2e"
+    },
+    {
+      "id": "c1r8-c-compressed-001",
+      "purpose": "correctness",
+      "case": "c-compressed",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "403a93bc731dcc6521d205968a5c8b455937a6b0feb4b0bed3c552793147e07a",
+      "serial_sha256": "903d9f6104ffdc5c1c017c6f0b26e41d9bee6b14eb8ea3ba845ae82cee64ce0b"
+    },
+    {
+      "id": "c1r8-c-debug-001",
+      "purpose": "correctness",
+      "case": "c-debug",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "9722802b714d205476891216454335c9293e4b14484b8bfa9555b2f38cf9a73a",
+      "serial_sha256": "4082aba774ec144ddcc793d160f8f50092df6a07ffe19be391de58bb9b669f9a"
+    },
+    {
+      "id": "c1r8-c-legacy-001",
+      "purpose": "correctness",
+      "case": "c-legacy",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "80aed4029c9a282802314538652dc0feb32bbb4a503147a639dfa56a4b4a0bed",
+      "serial_sha256": "0ee6f6802f46696fceacc696a9ba04a643a5d6c6c1d1d317e5f1af1a0f971055"
+    },
+    {
+      "id": "c1r8-c-numa-001",
+      "purpose": "correctness",
+      "case": "c-numa",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "40cb1a41d56c83ef3a94ce05258f34c4a17851362a70d3ea2043d2215fdc4679",
+      "serial_sha256": "b7a1bebf97a1cb7d270d05fbacc5d68835507f1a151d7663925cb8970eb83949"
+    },
+    {
+      "id": "c1r8-c-race-001",
+      "purpose": "correctness",
+      "case": "c-race",
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "4fafb1f4ddc55385efe572416a1c93e27934e534531acb1c7ed4149531c2c43b",
+      "serial_sha256": "c5589e989df05dfa571f1170608761e11fe185b3650a1532859f73a559188a7d"
+    },
+    {
+      "id": "c1r8-candidate-isolated-compressed-001",
+      "purpose": "isolation diagnostic",
+      "case": null,
+      "run_valid": true,
+      "integration_pass": true,
+      "result_sha256": "929dbe95faf2ab2479475e2fc0d0aa75f35842bfc0d87e3a3cc6204668b78c44",
+      "serial_sha256": "d42506be8414bd571d9c9441617df9a7869657a3034e97f8ab54497ce73c069f"
+    }
+  ],
+  "diagnostics": {
+    "baseline": {
+      "source_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+      "samples": {
+        "seq": 16384,
+        "rand": 16384,
+        "target_checks": 32768,
+        "decoded": 32768,
+        "trace_lost": 0,
+        "probe_missed": 0,
+        "probe_hits": 32768
+      },
+      "isolation": [
+        {
+          "phase": "before_reclaim",
+          "locked_mapping_bytes": 3424256,
+          "target_unlocked_bytes": 134217728
+        },
+        {
+          "phase": "after_measurement",
+          "locked_mapping_bytes": 3424256,
+          "target_unlocked_bytes": 134217728
+        }
+      ],
+      "failed_gates": [],
+      "failure_markers": [],
+      "parse_error": null,
+      "passed": true,
+      "run_valid": true,
+      "raw_result_sha256": "2c0a4026faa3cab306e4d0e50bc5c9b85fdd3aa3555d1b7287d8d02fa4550b40",
+      "raw_serial_sha256": "100f81aacfce4c1b2648f5bf0ee5c6a091e5f76b8ae7720bcb7a5ec14550684c"
+    },
+    "candidate": {
+      "source_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+      "samples": {
+        "seq": 16384,
+        "rand": 16384,
+        "target_checks": 32768,
+        "decoded": 32768,
+        "trace_lost": 0,
+        "probe_missed": 0,
+        "probe_hits": 32768
+      },
+      "isolation": [
+        {
+          "phase": "before_reclaim",
+          "locked_mapping_bytes": 3424256,
+          "target_unlocked_bytes": 134217728
+        },
+        {
+          "phase": "after_measurement",
+          "locked_mapping_bytes": 3424256,
+          "target_unlocked_bytes": 134217728
+        }
+      ],
+      "failed_gates": [],
+      "failure_markers": [],
+      "parse_error": null,
+      "passed": true,
+      "run_valid": true,
+      "raw_result_sha256": "929dbe95faf2ab2479475e2fc0d0aa75f35842bfc0d87e3a3cc6204668b78c44",
+      "raw_serial_sha256": "d42506be8414bd571d9c9441617df9a7869657a3034e97f8ab54497ce73c069f"
+    }
+  },
+  "correctness_proof_sha256": "e7fa85a1725158edb58ba5d4382d55fa9d2906f8d4f68497cf0526c418961dd3",
+  "original_failure": {
+    "fields": {
+      "schema": "1",
+      "order": "seq",
+      "target_index": "0",
+      "read_result": "0",
+      "read_stage": "complete",
+      "read_errno": "0",
+      "bytes": "745",
+      "truncated": "0",
+      "parse_attempted": "1",
+      "parse_reason": "entry_count",
+      "scan_complete": "1",
+      "headers": "1",
+      "entries": "2",
+      "written": "2",
+      "records": "2",
+      "bad_record": "0",
+      "bad_offset": "0",
+      "bad_length": "0",
+      "return_present": "0",
+      "return_value": "0",
+      "disable_result": "0",
+      "disable_errno": "0"
+    },
+    "first_read_sha256": "b265b3847c0a714141a31a53e79fcd025c1af4ea736184bab140062502d7a592",
+    "successful_returns": 2,
+    "baseline_commit": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+    "raw_result_sha256": "54c67700bb3ca2ac6be2370cf1ec4e5eb0809b19e29a267e63b4921676968193",
+    "raw_serial_sha256": "7aa37f77f315787458f6c8e7da6d7f1deb4c4ce4b7ac560feef770f2869db2c5",
+    "valid_environment": true
+  },
+  "cumulative_budget": {
+    "guest_attempts": 39,
+    "build_attempts": 9
+  },
+  "audit_rows": [
+    [
+      "Fresh functional guests passed",
+      8
+    ],
+    [
+      "Disabled-build checks passed",
+      2
+    ],
+    [
+      "New counted guests / builds",
+      "10 / 0"
+    ],
+    [
+      "Cumulative counted guests / builds",
+      "39 / 9"
+    ],
+    [
+      "Baseline diagnostic",
+      "Passed"
+    ],
+    [
+      "Baseline verified decodes",
+      32768
+    ],
+    [
+      "Baseline lost / missed",
+      "0 / 0"
+    ],
+    [
+      "Candidate diagnostic",
+      "Passed"
+    ],
+    [
+      "Candidate verified decodes",
+      32768
+    ],
+    [
+      "Candidate lost / missed",
+      "0 / 0"
+    ]
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "status": "SCOPE_PASS",
+  "parent": "5e84ca928deeacb4eee656806a003f27d1eca82f",
+  "candidate_commit": "7d5a3cfab2abb37b33afc03ed365d3024bd3d5ad",
+  "changed_paths": [
+    "include/linux/cpuhotplug.h",
+    "include/linux/page_compress.h",
+    "mm/Kconfig",
+    "mm/Makefile",
+    "mm/page_compress.c",
+    "mm/page_compress_test.c",
+    "mm/zswap.c"
+  ],
+  "added_paths": [
+    "include/linux/page_compress.h",
+    "mm/page_compress.c",
+    "mm/page_compress_test.c"
+  ],
+  "changed_lines": 1362,
+  "checker_identity": {
+    "controller_sha256": "698cdc19297a7d764e8854573fb4978dc4ba93dd560dfd9d96ea67215bd740ab",
+    "checkpatch_sha256": "71a116671b369b3a0b8724c25560a2c176ae1adabfd90bf5e7304fe67f31c926"
+  },
+  "diff-check": {
+    "exit_code": 0,
+    "evidence": "campaigns/codex-compress-lib-r8-2026-11-11/candidates/c1-shared-store-r8/static/1794441115861092729-698cdc19297a/diff-check.log",
+    "sha256": "9a22c7a1663def78f58286a1a63ac0ca19f559b16c4a838fbff0abb90f327c4a"
+  },
+  "checkpatch": {
+    "exit_code": 1,
+    "evidence": "campaigns/codex-compress-lib-r8-2026-11-11/candidates/c1-shared-store-r8/static/1794441115861092729-698cdc19297a/checkpatch.log",
+    "sha256": "4b4c1c403e690396be8d32d4764064fbac82545c5b84a9c4139d798ba1169f6a"
+  },
+  "checkpatch-filtered": {
+    "exit_code": 0,
+    "evidence": "campaigns/codex-compress-lib-r8-2026-11-11/candidates/c1-shared-store-r8/static/1794441115861092729-698cdc19297a/checkpatch-filtered.log",
+    "sha256": "d389ca0959a3993e5e016122260552c115eead6d4e1572c2d640a37db6dc5d3c"
+  },
+  "checkpatch_advisory": {
+    "type": "FILE_PATH_CHANGES",
+    "classification": "administrative_allowed_add",
+    "added_paths": [
+      "include/linux/page_compress.h",
+      "mm/page_compress.c",
+      "mm/page_compress_test.c"
+    ],
+    "validated_by": "checkpatch-filtered"
+  }
+}

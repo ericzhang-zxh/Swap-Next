@@ -1,0 +1,4 @@
+{
+  "kind": "stop",
+  "reason": "Both isolated-observer diagnostics passed with no loss or misses. The eight correctness guests and both disabled builds passed. The bounded diagnostics do not supply calibration or comparison."
+}

@@ -96,8 +96,22 @@ Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
 
 Baseline origin: upstream or imported reference.
 
+[Campaign report](../codex-compress-lib-r7-2026-11-11/report/REPORT.md)
+
 | Candidate | Status | Reason |
 | --- | --- | --- |
 | [c1-shared-store-r7](../codex-compress-lib-r7-2026-11-11/candidates/c1-shared-store-r7.json) | closed | The planned baseline diagnostic reproduced the rejected sample and captured two successful decoder returns in its first target observation. All eight functional guests and both disabled-build rows passed. This diagnosis is not a calibration sample or performance comparison. |
 
-Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r7-2026-11-11)
+## codex-compress-lib-r8-2026-11-11
+
+Status: closed; machine: hurricpc; opened: 2026-11-11; closed: 2026-11-12.
+
+Baseline: `5e84ca928deeacb4eee656806a003f27d1eca82f`.
+
+Baseline origin: upstream or imported reference.
+
+| Candidate | Status | Reason |
+| --- | --- | --- |
+| [c1-shared-store-r8](../codex-compress-lib-r8-2026-11-11/candidates/c1-shared-store-r8.json) | closed | Both isolated-observer diagnostics passed with no loss or misses. The eight correctness guests and both disabled builds passed. The bounded diagnostics do not supply calibration or comparison. |
+
+Current baseline: 5e84ca928deeacb4eee656806a003f27d1eca82f (codex-compress-lib-r8-2026-11-11)
