@@ -1,0 +1,477 @@
+{
+  "title": "Isolating the compressed swap timing tool",
+  "subtitle": "A trace-driven repair and matched diagnostic runs.",
+  "verdict": {
+    "status": "inconclusive",
+    "headline": "Both kernels completed the compressed-swap diagnostic with exactly one verified decompression for every timed page. The shared library also passed the functional rerun.",
+    "tiles": [
+      {
+        "label": "Function",
+        "value": "Checks passed",
+        "note": "Data, concurrency and cleanup passed again."
+      },
+      {
+        "label": "Observer",
+        "value": "Both kernels passed",
+        "note": "Every timed read had one verified return."
+      },
+      {
+        "label": "Performance",
+        "value": "Unmeasured",
+        "note": "Repeated calibration and comparison are pending."
+      }
+    ],
+    "label": "Observer repair verified"
+  },
+  "sections": [
+    {
+      "id": "context",
+      "title": "Why time compressed swap",
+      "lead": "A memory page can be stored as a smaller compressed copy. Restoring it takes work, so the experiment measures how long the application waits.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The shared library moves compression and storage code behind one interface. The experiment tests whether existing behavior survives the change."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where compressed swap operates",
+      "lead": "An application reads a page that is no longer resident in working memory.",
+      "blocks": [
+        {
+          "type": "flow",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "ram",
+              "label": "Compressed copy in RAM",
+              "col": 1,
+              "row": 0
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "ram",
+              "label": "fault"
+            }
+          ],
+          "takeaway": "Where compressed swap operates"
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "What the timing observer sees",
+      "lead": "A return probe reports successful decompression for the benchmark process.",
+      "blocks": [
+        {
+          "type": "flow",
+          "nodes": [
+            {
+              "id": "load",
+              "label": "Read a page",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "probe",
+              "label": "Observe decompression return",
+              "col": 1,
+              "row": 0
+            }
+          ],
+          "edges": [
+            {
+              "from": "load",
+              "to": "probe"
+            }
+          ],
+          "takeaway": "What the timing observer sees"
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Keep the timing tool resident",
+      "lead": "The original trace identified the process. It did not record a page address for either return. The repair keeps the tool's non-target mappings resident and leaves the test region available to swap.",
+      "blocks": [
+        {
+          "type": "flow",
+          "nodes": [
+            {
+              "id": "front",
+              "label": "Swap cache frontend",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "lib",
+              "label": "Shared compression library",
+              "col": 1,
+              "row": 0
+            }
+          ],
+          "edges": [
+            {
+              "from": "front",
+              "to": "lib"
+            }
+          ],
+          "takeaway": "Shared compression and diagnostic capture"
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "title": "What the run established",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The timing tool verified that its own mappings stayed locked and the target range stayed unlocked. Neither run lost or missed a probe. One run per kernel shows the measurement path works and leaves the speed difference unmeasured."
+        },
+        {
+          "type": "bars",
+          "takeaway": "Every timed read had a verified decompression",
+          "categories": [
+            "Original kernel",
+            "Shared-library kernel"
+          ],
+          "series": [
+            "Timed pages",
+            "Verified decodes"
+          ],
+          "values": {
+            "Timed pages": [
+              32768,
+              32768
+            ],
+            "Verified decodes": [
+              32768,
+              32768
+            ]
+          },
+          "y_label": "Pages"
+        }
+      ],
+      "lead": "The old timing tool saw two decoder returns for one timed access. With the tool's own memory pinned, the baseline and the shared-library kernel each completed the sequential and shuffled reads with full data checks."
+    },
+    {
+      "id": "next",
+      "title": "What remains to test",
+      "lead": "The full comparison needs repeated calibration plus matched runs for the compressed and physical paths. It needs more guest attempts than remain in the original budget.",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Independent XSwap still needs its guest driver and physical-path validation. A platform review interrupted the driver work. The pressure-driven migration test starts after independent XSwap passes correctness."
+        }
+      ]
+    },
+    {
+      "id": "patches",
+      "title": "Core kernel patches",
+      "blocks": [
+        {
+          "type": "diff",
+          "takeaway": "Free compressed objects through the shared library",
+          "patch": "diff --git a/mm/zswap.c b/mm/zswap.c\nindex 789730c22..e5b93c7da 100644\n--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -780,7 +693,7 @@ static void zswap_entry_free(struct zswap_entry *entry)\n \n \tzswap_lru_del(entry);\n \tif (!WARN_ON_ONCE(!pool)) {\n-\t\tzs_free(pool->zs_pool, entry->handle);\n+\t\tpage_compress_free(pool->compress, entry->handle);\n \t\tzswap_pool_put(pool);\n \t}\n \tif (entry->objcg) {\n"
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence and exact results",
+      "blocks": [
+        {
+          "type": "table",
+          "takeaway": "Diagnostic and resource evidence",
+          "columns": [
+            "Observation",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Fresh functional guests passed",
+              8
+            ],
+            [
+              "Disabled-build checks passed",
+              2
+            ],
+            [
+              "New counted guests / builds",
+              "10 / 0"
+            ],
+            [
+              "Cumulative counted guests / builds",
+              "39 / 9"
+            ],
+            [
+              "Baseline diagnostic",
+              "Passed"
+            ],
+            [
+              "Baseline verified decodes",
+              32768
+            ],
+            [
+              "Baseline lost / missed",
+              "0 / 0"
+            ],
+            [
+              "Candidate diagnostic",
+              "Passed"
+            ],
+            [
+              "Candidate verified decodes",
+              32768
+            ],
+            [
+              "Candidate lost / missed",
+              "0 / 0"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Counted follow-up attempts",
+          "columns": [
+            "Run",
+            "Purpose",
+            "Valid environment",
+            "Passed workload"
+          ],
+          "rows": [
+            [
+              "c1r8-b-common-001",
+              "correctness",
+              true,
+              true
+            ],
+            [
+              "c1r8-b-legacy-001",
+              "correctness",
+              true,
+              true
+            ],
+            [
+              "c1r8-baseline-isolated-compressed-001",
+              "isolation diagnostic",
+              true,
+              true
+            ],
+            [
+              "c1r8-c-common-001",
+              "correctness",
+              true,
+              true
+            ],
+            [
+              "c1r8-c-compressed-001",
+              "correctness",
+              true,
+              true
+            ],
+            [
+              "c1r8-c-debug-001",
+              "correctness",
+              true,
+              true
+            ],
+            [
+              "c1r8-c-legacy-001",
+              "correctness",
+              true,
+              true
+            ],
+            [
+              "c1r8-c-numa-001",
+              "correctness",
+              true,
+              true
+            ],
+            [
+              "c1r8-c-race-001",
+              "correctness",
+              true,
+              true
+            ],
+            [
+              "c1r8-candidate-isolated-compressed-001",
+              "isolation diagnostic",
+              true,
+              true
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Every retained outcome",
+          "columns": [
+            "ID",
+            "Candidate",
+            "Tier",
+            "Status",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "a908a34aca8240e29fafb9696de271e0",
+              "c1-shared-store-r8",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "170d3ec3537040928aeab698e3fa3bdb",
+              "c1-shared-store-r8",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "aa977ba5a31849b4b13603eac07037d6",
+              "control",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "3837b8d27e93465ba8e4848f2af9529e",
+              "control",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "b4efcc469efb48d6af0ebabdfa7e8eaa",
+              "c1-shared-store-r8",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "a0ace67a88d84d07a2582da8fb1cb8dd",
+              "c1-shared-store-r8",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "a7100b00ac0d4414a6e24229f7b490d4",
+              "c1-shared-store-r8",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "4676bd8570f342d2b5084719e7cacfc3",
+              "c1-shared-store-r8",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "3c786a2be49b4aa8a2892bdc05c6b1bb",
+              "c1-shared-store-r8",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ],
+            [
+              "c01c178508814ae590617c243d4acfd8",
+              "c1-shared-store-r8",
+              "correctness",
+              "BUILD_VERIFIED",
+              ""
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Regressions",
+          "columns": [
+            "Evaluation",
+            "Metric",
+            "Role",
+            "Guard"
+          ],
+          "rows": []
+        },
+        {
+          "type": "table",
+          "takeaway": "Complexity and value decisions",
+          "columns": [
+            "Candidate",
+            "Decision"
+          ],
+          "rows": [
+            [
+              "c1-shared-store-r8",
+              "null"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "takeaway": "Pinned sources",
+          "columns": [
+            "Source",
+            "SHA256"
+          ],
+          "rows": [
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/campaign.json",
+              "e6417ac79b485e9b1153c62dd17f3168fb85bf0e7213a1db7dd5cb111a041f2c"
+            ],
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/candidates/c1-shared-store-r8.json",
+              "0da71b9fc0475505719cee0bc97798c64f3ced22fbff411578d9afe437cc19b8"
+            ],
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/ledger/budget.json",
+              "8ba5ec388bd9005df21fc0296ecea0d4a4045468a26528aaae465fd9075636e3"
+            ],
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/ledger/ledger.json",
+              "cf44ca5a90f8d1eeb35d2633ea1b27573450e8748c0641ad57b52615b4b19b2a"
+            ],
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/ledger/session-closeout.json",
+              "7f0b94f1b93a28cbfac4940a218b42350f4c5f909bf9c75d3944770ff30aaf33"
+            ],
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/patches/c1-shared-store-r8.patch",
+              "69e085f0b3703ae2929c0cc8e863b6f606fce1b15e8a4d3ab3fd378ef785f704"
+            ],
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/policy.json",
+              "e4dfb59ccea57eb5aadd7db2e4a6104cb5ab5533d70dbebc2723b9b38b8d7862"
+            ],
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/protocol.json",
+              "0f909f614f21999d97ca2636177c43f5b7f378eb1c3399e4541c78b422e614d5"
+            ],
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/research.json",
+              "2af61a3285ea9e8cf81e0d6adc58a1bf71b91ffe11c037093920471d7d762aae"
+            ],
+            [
+              "campaigns/codex-compress-lib-r8-2026-11-11/reviews/k2-c1-shared-store-r8-7d5a3cf.json",
+              "6670380d72450958f1f01845245ae43e7ea2999192cb4cd501efbdbc025ea0dc"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "date": "2026-11-11",
+  "card_metadata": "Shared compression library \u00b7 Timing observer follow-up"
+}

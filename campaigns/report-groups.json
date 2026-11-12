@@ -3,14 +3,16 @@
   "groups": [
     {
       "title": "Shared memory-compression library",
-      "representative": "codex-compress-lib-r6-2026-11-10",
+      "representative": "codex-compress-lib-r8-2026-11-11",
       "members": [
         "codex-compress-lib-2026-11-10",
         "codex-compress-lib-r2-2026-11-10",
         "codex-compress-lib-r3-2026-11-10",
         "codex-compress-lib-r4-2026-11-10",
         "codex-compress-lib-r5-2026-11-10",
-        "codex-compress-lib-r6-2026-11-10"
+        "codex-compress-lib-r6-2026-11-10",
+        "codex-compress-lib-r7-2026-11-11",
+        "codex-compress-lib-r8-2026-11-11"
       ]
     }
   ]

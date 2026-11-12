@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r8-2026-11-11",
+  "evidence_sha256": "f1a23f58c43d7a984a93d1e9902e994fc877d681ab4ba74e933c78080c3efd2c",
+  "title": "Isolating the compressed swap timing tool",
+  "headline": "Both kernels completed the compressed-swap diagnostic with exactly one verified decompression for every timed page. The shared library also passed the functional rerun.",
+  "sections": [
+    {
+      "id": "context",
+      "title": "Why time compressed swap",
+      "lead": "A memory page can be stored as a smaller compressed copy. Restoring it takes work, so the experiment measures how long the application waits.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r8-2026-11-11/protocol.json",
+        "campaigns/codex-compress-lib-r8-2026-11-11/patches/c1-shared-store-r8.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "The shared library moves compression and storage code behind one interface. The experiment tests whether existing behavior survives the change."
+        }
+      ]
+    },
+    {
+      "id": "system",
+      "title": "Where compressed swap operates",
+      "lead": "An application reads a page that is no longer resident in working memory.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r8-2026-11-11/protocol.json",
+        "campaigns/codex-compress-lib-r8-2026-11-11/patches/c1-shared-store-r8.patch"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "nodes": [
+            {
+              "id": "app",
+              "label": "Application",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "ram",
+              "label": "Compressed copy in RAM",
+              "col": 1,
+              "row": 0
+            }
+          ],
+          "edges": [
+            {
+              "from": "app",
+              "to": "ram",
+              "label": "fault"
+            }
+          ],
+          "takeaway": "Where compressed swap operates"
+        }
+      ]
+    },
+    {
+      "id": "subsystem",
+      "title": "What the timing observer sees",
+      "lead": "A return probe reports successful decompression for the benchmark process.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r8-2026-11-11/ledger/ledger.json",
+        "campaigns/codex-compress-lib-r8-2026-11-11/patches/c1-shared-store-r8.patch"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "nodes": [
+            {
+              "id": "load",
+              "label": "Read a page",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "probe",
+              "label": "Observe decompression return",
+              "col": 1,
+              "row": 0
+            }
+          ],
+          "edges": [
+            {
+              "from": "load",
+              "to": "probe"
+            }
+          ],
+          "takeaway": "What the timing observer sees"
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Keep the timing tool resident",
+      "lead": "The original trace identified the process. It did not record a page address for either return. The repair keeps the tool's non-target mappings resident and leaves the test region available to swap.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r8-2026-11-11/ledger/ledger.json",
+        "campaigns/codex-compress-lib-r8-2026-11-11/patches/c1-shared-store-r8.patch"
+      ],
+      "blocks": [
+        {
+          "type": "flow",
+          "nodes": [
+            {
+              "id": "front",
+              "label": "Swap cache frontend",
+              "col": 0,
+              "row": 0
+            },
+            {
+              "id": "lib",
+              "label": "Shared compression library",
+              "col": 1,
+              "row": 0
+            }
+          ],
+          "edges": [
+            {
+              "from": "front",
+              "to": "lib"
+            }
+          ],
+          "takeaway": "Shared compression and diagnostic capture"
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "What remains to test",
+      "lead": "The full comparison needs repeated calibration plus matched runs for the compressed and physical paths. It needs more guest attempts than remain in the original budget.",
+      "evidence": [
+        "campaigns/codex-compress-lib-r8-2026-11-11/protocol.json",
+        "campaigns/codex-compress-lib-r8-2026-11-11/patches/c1-shared-store-r8.patch"
+      ],
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Independent XSwap still needs its guest driver and physical-path validation. A platform review interrupted the driver work. The pressure-driven migration test starts after independent XSwap passes correctness."
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "takeaway": "Free compressed objects through the shared library",
+      "source": "campaigns/codex-compress-lib-r8-2026-11-11/patches/c1-shared-store-r8.patch",
+      "patch": "diff --git a/mm/zswap.c b/mm/zswap.c\nindex 789730c22..e5b93c7da 100644\n--- a/mm/zswap.c\n+++ b/mm/zswap.c\n@@ -780,7 +693,7 @@ static void zswap_entry_free(struct zswap_entry *entry)\n \n \tzswap_lru_del(entry);\n \tif (!WARN_ON_ONCE(!pool)) {\n-\t\tzs_free(pool->zs_pool, entry->handle);\n+\t\tpage_compress_free(pool->compress, entry->handle);\n \t\tzswap_pool_put(pool);\n \t}\n \tif (entry->objcg) {\n"
+    }
+  ],
+  "date": "2026-11-11",
+  "subtitle": "A trace-driven repair and matched diagnostic runs.",
+  "card_metadata": "Shared compression library \u00b7 Timing observer follow-up",
+  "verdict_label": "Observer repair verified",
+  "verdict_tiles": [
+    {
+      "label": "Function",
+      "value": "Checks passed",
+      "note": "Data, concurrency and cleanup passed again."
+    },
+    {
+      "label": "Observer",
+      "value": "Both kernels passed",
+      "note": "Every timed read had one verified return."
+    },
+    {
+      "label": "Performance",
+      "value": "Unmeasured",
+      "note": "Repeated calibration and comparison are pending."
+    }
+  ],
+  "results_lead": "The old timing tool saw two decoder returns for one timed access. With the tool's own memory pinned, the baseline and the shared-library kernel each completed the sequential and shuffled reads with full data checks.",
+  "results_detail": "The timing tool verified that its own mappings stayed locked and the target range stayed unlocked. Neither run lost or missed a probe. One run per kernel shows the measurement path works and leaves the speed difference unmeasured.",
+  "source_commit": "8da7561b69705d0f6738cf312a52bef94453d94f",
+  "observations_sha256": "9d20b56e0a36c9f661a7b9dc32170f12511084cbb3aca2e389c494b068e9602c",
+  "chart": {
+    "type": "bars",
+    "takeaway": "Every timed read had a verified decompression",
+    "categories": [
+      "Original kernel",
+      "Shared-library kernel"
+    ],
+    "series": [
+      "Timed pages",
+      "Verified decodes"
+    ],
+    "values": {
+      "Timed pages": [
+        32768,
+        32768
+      ],
+      "Verified decodes": [
+        32768,
+        32768
+      ]
+    },
+    "y_label": "Pages"
+  }
+}
