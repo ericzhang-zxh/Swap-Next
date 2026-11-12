@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "campaign": "codex-compress-lib-r7-2026-11-11",
+  "state": "visually_checked",
+  "artifacts": {
+    "summary.json": "dafdce3eec92d3dbd680d2dda2db10695a10d934b9b5f2cb88dab9631d797086",
+    "REPORT.md": "78d8fc5fae19bb7f18ccc1835155cc0e0d95beb374d906d5db26e82ec629e07d",
+    "explainer.json": "ac641173e6c90fb95d632e8e649778c0e01622b1ba5464693bff769a1f14580a",
+    "explainer.html": "0dc625b56cf036402aa997fa15b4184ce7dc669a9570e8a8e3f010cd286dd4c4",
+    "generate_report.py": "1cafce8dce4f31bd6c65c7fb538922674239921be0c0a9e6872b222fbd1476a6"
+  },
+  "evidence_sha256": "5901b92d59279d265e96a20384c462eb1028e23cd3934ab45d92363d1573edda",
+  "story_sha256": "bc032b72b1eb157baf207a75cf171959cf8c4672ee007f6dadca65228dfae98c",
+  "history": [
+    {
+      "state": "generated",
+      "time": 1794440937.7698584
+    },
+    {
+      "state": "generated",
+      "time": 1794441154.4023438
+    },
+    {
+      "state": "visually_checked",
+      "time": 1794441210.4055202
+    }
+  ],
+  "visual_check": {
+    "artifact_sha256": "0dc625b56cf036402aa997fa15b4184ce7dc669a9570e8a8e3f010cd286dd4c4",
+    "reviewer": "coordinator",
+    "views": [
+      {
+        "width": 1440,
+        "theme": "light",
+        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/1440-light.png",
+        "sha256": "ac20ef9634f5ece0136f293d3f30e9447486d7d369e38c1c99babeb3db6e552f",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/1440-dark.png",
+        "sha256": "c92872d983bb0ef91d2c86bffb22ddbb6b9111d1e4e4f396e072beab99df62a0",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/390-light.png",
+        "sha256": "0c2c64d6c502e5788f94f04f88eff7c08366a76823173f476c22df7e5336ee72",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "screenshot": "campaigns/codex-compress-lib-r7-2026-11-11/runs/visual-qa-r7/390-dark.png",
+        "sha256": "a6cb2288ce87133281978add81e36318fd05628bbaaf6f4b939d49ce678187f9",
+        "readable": true,
+        "no_overflow": true,
+        "collapsed_evidence": true,
+        "charts_visible": true
+      }
+    ]
+  }
+}
