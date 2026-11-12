@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "codex-compress-lib-r7-2026-11-11",
-  "state": "visually_checked",
+  "state": "live_verified",
   "artifacts": {
     "summary.json": "dafdce3eec92d3dbd680d2dda2db10695a10d934b9b5f2cb88dab9631d797086",
     "REPORT.md": "b75fa2c76bb0fd8c3656c9349d6132163e7e2ad25fdf460141cf92bc96dddc02",
@@ -31,6 +31,10 @@
     {
       "state": "visually_checked",
       "time": 1794442017.5153394
+    },
+    {
+      "state": "live_verified",
+      "time": 1794443113.5434375
     }
   ],
   "visual_check": {
@@ -78,5 +82,13 @@
         "charts_visible": true
       }
     ]
+  },
+  "publication": {
+    "commit": "7406c56afff8848d207325c84a69240573248321",
+    "run_id": "43127015482",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/codex-compress-lib-r7-2026-11-11/",
+    "html_sha256": "8a35782f16774d1d56c4982067a75d612ef671dacc9ca8ab069c7b0f9a51b5b7",
+    "index_sha256": "37443a86cb094fddb1b470b33988ffade69ee027def91c2c2c8c18d79b6a507e",
+    "verified_unix": 1794443113.5434353
   }
 }
