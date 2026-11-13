@@ -138,6 +138,10 @@ separate evidence. On phones, reflow scenes rather than shrinking the whole pict
     }
   ]
   ```
+  Generate excerpts with a script from `git diff <parent> <child>` or the pinned
+  patch (see `campaigns/xswap-radix-hole-reclaim-2026-11-06/report/build_patch_excerpts.py`);
+  never retype, paraphrase or invent code. Headline and notes may only state
+  numbers present in the ledger or value decisions; label hypotheses as such.
   `evolve/delivery.py` validates that every `source` is a pinned `.patch` in
   `summary["sources"]` and renders syntax-highlighted `<pre class="diff">` cards
   in `explainer.html` plus fenced ```` ```diff ```` sections in `REPORT.md`.
