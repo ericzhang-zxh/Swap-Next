@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "campaign": "xswap-radix-hole-reclaim-2026-11-06",
-  "state": "visually_checked",
+  "state": "live_verified",
   "evidence_sha256": "4eda4bafc0786f753fe60a8ff5d116e42d0cf33bba577a13cd866c3b461082cc",
   "artifacts": {
     "summary.json": "b0ea3450a7b78f5607183e8616f832354739c5e2ea8763e768f1009841397f5a",
@@ -43,6 +43,10 @@
     {
       "state": "visually_checked",
       "time": 1794541970.6057782
+    },
+    {
+      "state": "live_verified",
+      "time": 1794542010.7893689
     }
   ],
   "visual_check": {
@@ -98,5 +102,13 @@
         "disclosure_works": true
       }
     ]
+  },
+  "publication": {
+    "commit": "98273b9e81235594c417c95cbbf4db407c2dcfd3",
+    "run_id": "43361877124",
+    "url": "https://ericzhang-zxh.github.io/Swap-Next/xswap-radix-hole-reclaim-2026-11-06/",
+    "html_sha256": "313c0c89840a0fb9a5f6f422a36f349aedf0245a8f0a246b1dbf67a4ed3407a4",
+    "index_sha256": "8c9f6c03ee21ae3b4d6f0ae4a6609956dfcc149131d356569b7d2b7498f6d7cc",
+    "verified_unix": 1794542010.7893615
   }
 }
